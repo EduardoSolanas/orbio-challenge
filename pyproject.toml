@@ -1,0 +1,30 @@
+[project]
+name = "northstar-support-intake"
+version = "0.1.0"
+description = "Fictional Northstar Shop support intake application (FastAPI)."
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit", "tests/integration"]
+asyncio_mode = "auto"
+addopts = "--strict-markers --strict-config"
+markers = ["live: paid provider smoke, requires explicit opt-in"]
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+omit = ["app/main.py", "app/schemas.py", "app/prompts.py", "app/errors.py"]
+
+[tool.coverage.json]
+show_contexts = true
+
+[tool.coverage.report]
+fail_under = 95
+show_missing = true
+
+[tool.mutmut]
+source_paths = ["app/"]
+do_not_mutate = ["app/__init__.py", "app/main.py", "app/schemas.py", "app/prompts.py", "app/errors.py"]
+pytest_add_cli_args_test_selection = ["tests/unit", "tests/integration"]
+also_copy = ["tests/", "pyproject.toml"]
+mutate_only_covered_lines = false

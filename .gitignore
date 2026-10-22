@@ -3,6 +3,7 @@
 .venv/
 __pycache__/
 .pytest_cache/
+.mutmut-cache/
 data/
 tmp/
 *.pyc
@@ -11,3 +12,4 @@ mutants/
 .coverage
 htmlcov/
 test-results/
+reports/playwright/
