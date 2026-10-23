@@ -25,6 +25,7 @@ from app.prompts import (
     RECEIPT_TEMPLATE,
     REJECT_PROMPT,
     REVIEW_POLICY_FOLLOWUP,
+    SOCIAL_ACKNOWLEDGMENT,
     build_review_reply,
     build_summary,
 )
@@ -383,6 +384,7 @@ class ConversationEngine:
             session, extraction, outcome
         )
         current_review_valid = _current_review_valid(session)
+        pure_social = _is_pure_social(extraction)
         pure_question = _is_pure_question(extraction)
         pure_confirmation = _is_pure_confirmation(
             session,
@@ -404,6 +406,18 @@ class ConversationEngine:
             status = "collecting"
             summary = None
             review_revision = None
+        elif pure_social:
+            follow_up = _question_follow_up(
+                session, review_rejected, current_review_valid
+            )
+            reply = (
+                SOCIAL_ACKNOWLEDGMENT
+                if follow_up is None
+                else f"{SOCIAL_ACKNOWLEDGMENT}\n\n{follow_up}"
+            )
+            status = session.status
+            summary = session.summary
+            review_revision = session.pending_review_revision
         elif pure_question:
             answer_text, citations = await self._answer_policy_question(
                 command.text
@@ -462,7 +476,7 @@ class ConversationEngine:
             summary = None
             review_revision = None
 
-        if extraction.has_question and not pure_question:
+        if extraction.has_question and not pure_question and not pure_social:
             reply = f"{reply} {POLICY_QUESTION_SUFFIX}"
 
         return TurnPlan(
@@ -579,6 +593,10 @@ def _has_facts(extraction: Extraction) -> bool:
         or bool(extraction.explicit_corrections)
         or bool(extraction.ambiguous_fields)
     )
+
+
+def _is_pure_social(extraction: Extraction) -> bool:
+    return extraction.intent == "social" and not _has_facts(extraction)
 
 
 def _is_pure_question(extraction: Extraction) -> bool:

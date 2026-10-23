@@ -8,7 +8,14 @@ import pytest
 
 from app.conversation import ConversationEngine
 from app.errors import AppError
-from app.prompts import GREETING
+from app.prompts import (
+    ABSTENTION,
+    GREETING,
+    MISSING_ORDER,
+    REJECT_PROMPT,
+    REVIEW_POLICY_FOLLOWUP,
+    SOCIAL_ACKNOWLEDGMENT,
+)
 from app.schemas import Citation, ConfirmRequest, KnowledgeAnswer, TurnRequest
 from app.storage import JsonSessionRepository
 from tests.support.unit_fakes import (
@@ -2302,4 +2309,177 @@ async def test_engine_never_uses_a_global_none_lock_key(tmp_path):
             second.session_id, confirm_request(revision=1, review_revision=1)
         )
         assert confirmed.status == "completed"
+    provider.assert_exhausted()
+
+
+# --- Social intent routing: acknowledge, then resume intake (IC §5.3) --------
+# A pure social turn never retrieves and never abstains, even when the literal
+# has_question flag is true ("Hello, how are you?").
+
+
+def social_extraction(has_question: bool = False):
+    return make_extraction(intent="social", has_question=has_question)
+
+
+async def test_pure_social_acknowledges_then_resumes_intake_without_rag(tmp_path):
+    for text, has_question in (
+        ("Hello", False),
+        ("Thank you", False),
+        ("Hello, how are you?", True),
+        ("How is your day?", True),
+    ):
+        engine, repository, provider = build_engine(
+            tmp_path, script=[("extract", social_extraction(has_question))]
+        )
+        created = await engine.create_session()
+
+        response = await engine.turn(created.session_id, turn_request(text))
+
+        assert response.reply == f"{SOCIAL_ACKNOWLEDGMENT}\n\n{MISSING_ORDER}"
+        assert ABSTENTION not in response.reply
+        assert response.citations == []
+        assert response.status == "collecting"
+        assert response.slots == make_slots()
+        assert response.pending_clarifications == {}
+        assert response.pending_review_revision is None
+        assert response.summary is None
+        assert [method for method, _ in provider.calls] == ["extract"]
+
+        stored = await repository.load(created.session_id)
+        assert stored.revision == 1
+        assert stored.collection_turn_count == 1
+        assert stored.messages[-2].text == text
+        assert stored.messages[-1].text == response.reply
+        assert stored.messages[-1].citations == []
+        provider.assert_exhausted()
+
+
+async def test_social_at_a_valid_review_appends_the_review_reminder(tmp_path):
+    engine, repository, provider = build_engine(
+        tmp_path,
+        script=[("extract", FULL_EXTRACTION), ("extract", social_extraction(True))],
+    )
+    created = await engine.create_session()
+    sid = created.session_id
+    await engine.turn(sid, turn_request())
+
+    response = await engine.turn(sid, turn_request("Hello, how are you?", revision=1))
+
+    assert response.reply == f"{SOCIAL_ACKNOWLEDGMENT}\n\n{REVIEW_POLICY_FOLLOWUP}"
+    assert response.revision == 2
+    assert response.status == "awaiting_confirmation"
+    assert response.pending_review_revision == 1
+    assert response.summary == SUMMARY
+    assert response.slots == FULL_SLOTS
+    assert response.citations == []
+    stored = await repository.load(sid)
+    assert stored.pending_review_revision == 1
+    assert stored.summary == SUMMARY
+    assert stored.review_rejected is False
+    provider.assert_exhausted()
+
+
+async def test_social_while_rejected_keeps_rejection_and_asks_for_the_change(tmp_path):
+    engine, repository, provider = build_engine(
+        tmp_path,
+        script=[
+            ("extract", FULL_EXTRACTION),
+            ("extract", rejection()),
+            ("extract", social_extraction()),
+        ],
+    )
+    created = await engine.create_session()
+    sid = created.session_id
+    await engine.turn(sid, turn_request())
+    await engine.turn(sid, turn_request("No", revision=1))
+
+    response = await engine.turn(sid, turn_request("Thank you", revision=2))
+
+    assert response.reply == f"{SOCIAL_ACKNOWLEDGMENT}\n\n{REJECT_PROMPT}"
+    assert response.status == "collecting"
+    assert response.pending_review_revision is None
+    assert response.summary is None
+    stored = await repository.load(sid)
+    assert stored.review_rejected is True
+    provider.assert_exhausted()
+
+
+async def test_social_with_a_pending_issue_reasks_it_without_the_policy_suffix(
+    tmp_path,
+):
+    engine, repository, provider = build_engine(
+        tmp_path,
+        script=[
+            ("extract", make_extraction(candidates={"order_number": "123"})),
+            ("extract", social_extraction(True)),
+        ],
+    )
+    created = await engine.create_session()
+    sid = created.session_id
+    await engine.turn(sid, turn_request("My order is 123"))
+
+    response = await engine.turn(sid, turn_request("Hello, how are you?", revision=1))
+
+    assert response.reply == (
+        f"{SOCIAL_ACKNOWLEDGMENT}\n\n"
+        "Please use NS- followed by exactly six digits, for example NS-123456."
+    )
+    assert response.pending_clarifications["order_number"].code == "invalid"
+    stored = await repository.load(sid)
+    assert stored.pending_clarifications["order_number"].code == "invalid"
+    provider.assert_exhausted()
+
+
+async def test_social_with_facts_falls_through_to_normal_intake(tmp_path):
+    engine, repository, provider = build_engine(
+        tmp_path,
+        script=[
+            (
+                "extract",
+                make_extraction(intent="social", candidates={"order_number": "NS-000123"}),
+            )
+        ],
+    )
+    created = await engine.create_session()
+
+    response = await engine.turn(
+        created.session_id, turn_request("Hi, my order is NS-000123")
+    )
+
+    assert response.reply == (
+        "Is this about delivery, a damaged item, a wrong item, a return/refund, or something else?"
+    )
+    assert SOCIAL_ACKNOWLEDGMENT not in response.reply
+    assert response.slots.order_number == "NS-000123"
+    provider.assert_exhausted()
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["Hello, how long does delivery take?", "Thank you, how long does delivery take?"],
+)
+async def test_social_preface_with_a_policy_question_still_uses_rag(tmp_path, text):
+    record = make_record(record_id="faq-delivery", title="Delivery times")
+    answer = KnowledgeAnswer(
+        answerable=True,
+        answer="Standard delivery takes 2 to 5 business days after dispatch.",
+        cited_ids=["faq-delivery"],
+    )
+    engine, repository, provider = build_engine(
+        tmp_path,
+        script=[
+            ("extract", make_extraction(intent="question", has_question=True)),
+            ("answer_knowledge", answer),
+        ],
+        kb_answers={text: [record]},
+    )
+    created = await engine.create_session()
+
+    response = await engine.turn(created.session_id, turn_request(text))
+
+    assert response.reply == f"{answer.answer}\n\n{MISSING_ORDER}"
+    assert SOCIAL_ACKNOWLEDGMENT not in response.reply
+    assert response.citations[0].source_id == "faq-delivery"
+    assert [method for method, _ in provider.calls] == ["extract", "answer_knowledge"]
+    assert provider.calls[1][1].question == text
     provider.assert_exhausted()
