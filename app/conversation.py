@@ -16,18 +16,11 @@ from typing import Protocol
 from uuid import UUID, uuid4
 
 from app.errors import AppError, app_error
-from app.prompts import (
-    ABSTENTION,
-    CAPABILITY,
-    GREETING,
-    MISSING_QUESTION_BY_FIELD,
-    POLICY_QUESTION_SUFFIX,
-    RECEIPT_TEMPLATE,
-    REJECT_PROMPT,
-    REVIEW_POLICY_FOLLOWUP,
-    SOCIAL_ACKNOWLEDGMENT,
+from app.localization import (
     build_review_reply,
     build_summary,
+    missing_question,
+    text,
 )
 from app.schemas import (
     Citation,
@@ -40,7 +33,9 @@ from app.schemas import (
     KnowledgeAnswer,
     KnowledgeContext,
     KnowledgeRecord,
+    Language,
     Message,
+    MessageView,
     ReplayRecord,
     Session,
     SessionView,
@@ -130,17 +125,30 @@ def _find_replay(session: Session, request_id: UUID) -> ReplayRecord | None:
     return None
 
 
-def _view(session: Session) -> SessionView:
+def _view(session: Session, speech_languages: frozenset[str]) -> SessionView:
     return SessionView(
         session_id=session.session_id,
         revision=session.revision,
         status=session.status,
+        reply_language=session.reply_language,
         slots=session.slots,
-        messages=session.messages,
+        messages=[
+            MessageView(
+                **message.model_dump(),
+                speech_available=_speech_available(message, speech_languages),
+            )
+            for message in session.messages
+        ],
         pending_clarifications=session.pending_clarifications,
         pending_review_revision=session.pending_review_revision,
         summary=session.summary,
     )
+
+
+def _speech_available(message: Message, speech_languages: frozenset[str]) -> bool:
+    """Playback availability from the saved message language and operator profiles."""
+
+    return message.role == "assistant" and message.language in speech_languages
 
 
 def _revision_conflict(current_revision: int) -> AppError:
@@ -171,11 +179,32 @@ def _first_issue(pending: dict[FieldName, Clarification]) -> Clarification | Non
     return None
 
 
-def _first_missing(slots: Slots) -> str | None:
+def _first_missing(slots: Slots, language: Language) -> str | None:
     for field in FIELD_ORDER:
         if getattr(slots, field) is None:
-            return MISSING_QUESTION_BY_FIELD[field]
+            return missing_question(field, language)
     return None
+
+
+def _reply_language(session: Session, extraction: Extraction) -> Language:
+    """An explicit requested language wins; otherwise a supported detection does."""
+
+    if extraction.requested_language is not None:
+        return extraction.requested_language
+    if extraction.detected_language in ("en", "es"):
+        return extraction.detected_language
+    return session.reply_language
+
+
+def _unchanged_outcome(session: Session) -> MergeOutcome:
+    """Outcome that accepts nothing, for input the demo cannot understand."""
+
+    return MergeOutcome(
+        slots=session.slots,
+        pending_clarifications=session.pending_clarifications,
+        accepted_fields=frozenset(),
+        cleared_fields=frozenset(),
+    )
 
 
 def _slots_complete(slots: Slots) -> bool:
@@ -190,10 +219,13 @@ class ConversationEngine:
         repository: JsonSessionRepository,
         provider: AIProvider,
         knowledge_base: KnowledgeBase,
+        *,
+        speech_languages: frozenset[str] = frozenset({"en"}),
     ) -> None:
         self.repository = repository
         self.provider = provider
         self.knowledge_base = knowledge_base
+        self.speech_languages = speech_languages
 
     async def create_session(self) -> SessionView:
         now = _now()
@@ -201,10 +233,11 @@ class ConversationEngine:
         greeting = Message(
             id=uuid4(),
             role="assistant",
-            text=GREETING,
+            text=text("greeting", "en"),
             input_mode="system",
             created_at=now,
             citations=[],
+            language="en",
         )
         session = Session(
             schema_version=1,
@@ -213,6 +246,7 @@ class ConversationEngine:
             created_at=now,
             updated_at=now,
             status="collecting",
+            reply_language="en",
             slots=Slots(
                 order_number=None,
                 category=None,
@@ -230,12 +264,12 @@ class ConversationEngine:
         )
         async with self.repository.locked(session_id):
             await self.repository.save(session)
-        return _view(session)
+        return _view(session, self.speech_languages)
 
     async def get_session(self, session_id: UUID) -> SessionView:
         async with self.repository.locked(session_id):
             session = await self.repository.load(session_id)
-        return _view(session)
+        return _view(session, self.speech_languages)
 
     async def turn(self, session_id: UUID, command: TurnRequest) -> TurnResponse:
         async with self.repository.locked(session_id):
@@ -260,36 +294,54 @@ class ConversationEngine:
                     extraction = await self.provider.extract(
                         _extraction_context(session, command.text)
                     )
-                    outcome = merge_extraction(
-                        session.slots, session.pending_clarifications, extraction
-                    )
-                    if at_limit:
-                        review_rejected, recovered_this_turn = _apply_transitions(
-                            session, extraction, outcome
+                    reply_language = _reply_language(session, extraction)
+                    if extraction.detected_language == "unsupported":
+                        if at_limit:
+                            raise app_error("turn_limit")
+                        outcome = _unchanged_outcome(session)
+                        plan = _unsupported_plan(session, extraction, reply_language)
+                    else:
+                        outcome = merge_extraction(
+                            session.slots,
+                            session.pending_clarifications,
+                            extraction,
+                            language=reply_language,
                         )
-                        if not _is_pure_confirmation(
+                        if at_limit:
+                            review_rejected, recovered_this_turn = _apply_transitions(
+                                session, extraction, outcome
+                            )
+                            if not _is_pure_confirmation(
+                                session,
+                                extraction,
+                                outcome,
+                                review_rejected=review_rejected,
+                                recovered_this_turn=recovered_this_turn,
+                                current_review_valid=_current_review_valid(session),
+                            ):
+                                raise app_error("turn_limit")
+                        plan = await self._plan_turn(
                             session,
+                            command,
                             extraction,
                             outcome,
-                            review_rejected=review_rejected,
-                            recovered_this_turn=recovered_this_turn,
-                            current_review_valid=_current_review_valid(session),
-                        ):
-                            raise app_error("turn_limit")
-                    plan = await self._plan_turn(
-                        session, command, extraction, outcome, session.revision + 1
-                    )
+                            reply_language,
+                            session.revision + 1,
+                        )
             except TimeoutError:
                 raise app_error("provider_timeout") from None
-            return await self._commit_turn(session, command, outcome, plan)
+            return await self._commit_turn(session, command, extraction, outcome, plan)
 
-    async def assistant_text(self, session_id: UUID, message_id: UUID) -> str:
+    async def assistant_message(self, session_id: UUID, message_id: UUID) -> Message:
         async with self.repository.locked(session_id):
             session = await self.repository.load(session_id)
             for message in session.messages:
                 if message.id == message_id and message.role == "assistant":
-                    return message.text
+                    return message
         raise app_error("message_not_found")
+
+    async def assistant_text(self, session_id: UUID, message_id: UUID) -> str:
+        return (await self.assistant_message(session_id, message_id)).text
 
     async def confirm(
         self, session_id: UUID, command: ConfirmRequest
@@ -317,7 +369,9 @@ class ConversationEngine:
 
             now = _now()
             new_revision = session.revision + 1
-            reply = RECEIPT_TEMPLATE.format(session_id=session.session_id)
+            reply = text("receipt", session.reply_language).format(
+                session_id=session.session_id
+            )
             user_message = Message(
                 id=uuid4(),
                 role="user",
@@ -325,6 +379,7 @@ class ConversationEngine:
                 input_mode="system",
                 created_at=now,
                 citations=[],
+                language=session.reply_language,
             )
             assistant_message = Message(
                 id=uuid4(),
@@ -333,11 +388,13 @@ class ConversationEngine:
                 input_mode="system",
                 created_at=now,
                 citations=[],
+                language=session.reply_language,
             )
             response = TurnResponse(
                 session_id=session.session_id,
                 revision=new_revision,
                 status="completed",
+                reply_language=session.reply_language,
                 reply=reply,
                 message_id=assistant_message.id,
                 slots=session.slots,
@@ -377,6 +434,7 @@ class ConversationEngine:
         command: TurnRequest,
         extraction: Extraction,
         outcome: MergeOutcome,
+        reply_language: Language,
         new_revision: int,
     ) -> "TurnPlan":
         pending = outcome.pending_clarifications
@@ -384,7 +442,11 @@ class ConversationEngine:
             session, extraction, outcome
         )
         current_review_valid = _current_review_valid(session)
-        pure_social = _is_pure_social(extraction)
+        has_active_review = session.pending_review_revision is not None
+        language_only = _is_language_only(extraction)
+        pure_social = _is_pure_social(extraction) and not language_only
+        pure_capability = _is_pure_capability(extraction) and not language_only
+        pure_unrelated = _is_pure_unrelated(extraction) and not language_only
         pure_question = _is_pure_question(extraction)
         pure_confirmation = _is_pure_confirmation(
             session,
@@ -393,91 +455,88 @@ class ConversationEngine:
             review_rejected=review_rejected,
             recovered_this_turn=recovered_this_turn,
             current_review_valid=current_review_valid,
-        )
+        ) and not language_only
 
         summary = session.summary
         review_revision = session.pending_review_revision
         status = session.status
         citations: tuple[Citation, ...] = ()
         completed = False
+        intake_directed = False
 
         if extraction.intent == "reject":
-            reply = REJECT_PROMPT
-            status = "collecting"
-            summary = None
-            review_revision = None
+            intake_directed = True
+            if has_active_review or session.review_rejected:
+                reply = text("reject_prompt", reply_language)
+                status = "collecting"
+                summary = None
+                review_revision = None
+            else:
+                reply = text("no_review_to_reject", reply_language)
         elif pure_social:
-            follow_up = _question_follow_up(
-                session, review_rejected, current_review_valid
-            )
-            reply = (
-                SOCIAL_ACKNOWLEDGMENT
-                if follow_up is None
-                else f"{SOCIAL_ACKNOWLEDGMENT}\n\n{follow_up}"
-            )
-            status = session.status
-            summary = session.summary
-            review_revision = session.pending_review_revision
+            reply = text("social_acknowledgment", reply_language)
+        elif pure_capability:
+            reply = text("capability_reply", reply_language)
         elif pure_question:
-            answer_text, citations = await self._answer_policy_question(
-                command.text
+            reply, citations = await self._answer_policy_question(
+                command.text, reply_language
             )
-            follow_up = _question_follow_up(
-                session, review_rejected, current_review_valid
-            )
-            reply = (
-                answer_text
-                if follow_up is None
-                else f"{answer_text}\n\n{follow_up}"
-            )
-            status = session.status
-            summary = session.summary
-            review_revision = session.pending_review_revision
         elif pure_confirmation:
-            reply = RECEIPT_TEMPLATE.format(session_id=session.session_id)
+            reply = text("receipt", reply_language).format(
+                session_id=session.session_id
+            )
             status = "completed"
             summary = session.summary
             review_revision = None
             completed = True
+        elif (
+            extraction.intent == "confirm"
+            and not has_active_review
+            and not session.review_rejected
+            and not recovered_this_turn
+            and not language_only
+        ):
+            reply = text("nothing_to_confirm", reply_language)
+        elif pure_unrelated:
+            reply = text("capability", reply_language)
         elif pending:
             reply = _first_issue(pending).question
             status = "collecting"
             summary = None
             review_revision = None
+            intake_directed = True
         elif review_rejected:
-            reply = REJECT_PROMPT
+            reply = text("reject_prompt", reply_language)
             status = "collecting"
             summary = None
             review_revision = None
-        elif extraction.intent == "unrelated" and not _has_facts(extraction):
-            reply = CAPABILITY
-            status = session.status
-            summary = session.summary
-            review_revision = session.pending_review_revision
+            intake_directed = True
         elif _slots_complete(outcome.slots):
+            intake_directed = True
             if outcome.accepted_fields or recovered_this_turn:
-                reply = build_review_reply(outcome.slots)
+                reply = build_review_reply(outcome.slots, reply_language)
                 status = "awaiting_confirmation"
-                summary = build_summary(outcome.slots)
+                summary = build_summary(outcome.slots, reply_language)
                 review_revision = new_revision
             elif current_review_valid:
-                reply = build_review_reply(outcome.slots)
+                reply = build_review_reply(outcome.slots, reply_language)
                 status = "awaiting_confirmation"
-                summary = session.summary
+                summary = build_summary(outcome.slots, reply_language)
                 review_revision = session.pending_review_revision
             else:
-                reply = build_review_reply(outcome.slots)
+                reply = build_review_reply(outcome.slots, reply_language)
                 status = "awaiting_confirmation"
-                summary = build_summary(outcome.slots)
+                summary = build_summary(outcome.slots, reply_language)
                 review_revision = new_revision
         else:
-            reply = _first_missing(outcome.slots)
+            reply = _first_missing(outcome.slots, reply_language)
             status = "collecting"
             summary = None
             review_revision = None
+            intake_directed = True
 
-        if extraction.has_question and not pure_question and not pure_social:
-            reply = f"{reply} {POLICY_QUESTION_SUFFIX}"
+        if extraction.has_question and intake_directed:
+            reply = f"{reply} {text('policy_question_suffix', reply_language)}"
 
         return TurnPlan(
             reply=reply,
@@ -487,36 +546,44 @@ class ConversationEngine:
             citations=citations,
             completed=completed,
             review_rejected=review_rejected,
+            language=reply_language,
         )
 
     async def _answer_policy_question(
-        self, question: str
+        self, question: str, reply_language: Language
     ) -> tuple[str, tuple[Citation, ...]]:
         retrieved = self.knowledge_base.retrieve(question)
         if not retrieved:
-            return ABSTENTION, ()
+            return text("abstention", reply_language), ()
         context = KnowledgeContext(
             question=question,
             kb_version=self.knowledge_base.version,
             sources=retrieved,
+            reply_language=reply_language,
         )
         answer = await self.provider.answer_knowledge(context)
         citations = _validate_knowledge_answer(
             answer, retrieved, self.knowledge_base.version
         )
         if not answer.answerable:
-            return ABSTENTION, ()
+            return text("abstention", reply_language), ()
         return answer.answer.strip(), citations
 
     async def _commit_turn(
         self,
         session: Session,
         command: TurnRequest,
+        extraction: Extraction,
         outcome: MergeOutcome,
         plan: "TurnPlan",
     ) -> TurnResponse:
         now = _now()
         new_revision = session.revision + 1
+        user_language: Language = (
+            extraction.detected_language
+            if extraction.detected_language in ("en", "es")
+            else plan.language
+        )
         user_message = Message(
             id=uuid4(),
             role="user",
@@ -524,6 +591,7 @@ class ConversationEngine:
             input_mode=command.input_mode,
             created_at=now,
             citations=[],
+            language=user_language,
         )
         assistant_message = Message(
             id=uuid4(),
@@ -532,11 +600,13 @@ class ConversationEngine:
             input_mode="system",
             created_at=now,
             citations=list(plan.citations),
+            language=plan.language,
         )
         response = TurnResponse(
             session_id=session.session_id,
             revision=new_revision,
             status=plan.status,
+            reply_language=plan.language,
             reply=plan.reply,
             message_id=assistant_message.id,
             slots=outcome.slots,
@@ -549,6 +619,7 @@ class ConversationEngine:
         committed.revision = new_revision
         committed.updated_at = now
         committed.status = plan.status
+        committed.reply_language = plan.language
         committed.slots = outcome.slots
         committed.pending_clarifications = outcome.pending_clarifications
         committed.pending_review_revision = plan.review_revision
@@ -585,6 +656,34 @@ class TurnPlan:
     citations: tuple[Citation, ...]
     completed: bool
     review_rejected: bool
+    language: Language
+
+
+def _unsupported_plan(
+    session: Session, extraction: Extraction, reply_language: Language
+) -> TurnPlan:
+    """Notice-only plan for input outside English and Spanish.
+
+    Facts are never accepted: the session keeps its slots, pending issues, review
+    token, summary and rejection state. A supported explicit language request is
+    still applied, and the customer is invited to restate the issue.
+    """
+
+    key = (
+        "language_switch_restate"
+        if extraction.requested_language is not None
+        else "unsupported_language"
+    )
+    return TurnPlan(
+        reply=text(key, reply_language),
+        status=session.status,
+        summary=session.summary,
+        review_revision=session.pending_review_revision,
+        citations=(),
+        completed=False,
+        review_rejected=session.review_rejected,
+        language=reply_language,
+    )
 
 
 def _has_facts(extraction: Extraction) -> bool:
@@ -599,10 +698,33 @@ def _is_pure_social(extraction: Extraction) -> bool:
     return extraction.intent == "social" and not _has_facts(extraction)
 
 
+def _is_language_only(extraction: Extraction) -> bool:
+    """An explicit language request with no facts and no question.
+
+    Such a turn only re-renders the current state in the requested language; it
+    never confirms, rejects, starts intake or accepts facts.
+    """
+
+    return (
+        extraction.requested_language is not None
+        and not _has_facts(extraction)
+        and not extraction.has_question
+        and extraction.intent != "reject"
+    )
+
+
+def _is_pure_capability(extraction: Extraction) -> bool:
+    return extraction.intent == "capability" and not _has_facts(extraction)
+
+
+def _is_pure_unrelated(extraction: Extraction) -> bool:
+    return extraction.intent == "unrelated" and not _has_facts(extraction)
+
+
 def _is_pure_question(extraction: Extraction) -> bool:
     return (
         extraction.has_question
-        and extraction.intent in ("question", "unrelated")
+        and extraction.intent == "question"
         and not _has_facts(extraction)
     )
 
@@ -637,7 +759,7 @@ def _apply_transitions(
     review_rejected = was_rejected
     recovered_this_turn = False
     if extraction.intent == "reject":
-        review_rejected = True
+        review_rejected = was_rejected or session.pending_review_revision is not None
     elif was_rejected and (
         (accepted_explicit_correction and not extraction.has_question)
         or unambiguous_reaffirmation
@@ -696,19 +818,6 @@ def _is_pure_confirmation(
         ):
             return False
     return True
-
-
-def _question_follow_up(
-    session: Session, review_rejected: bool, current_review_valid: bool
-) -> str | None:
-    if current_review_valid:
-        return REVIEW_POLICY_FOLLOWUP
-    issue = _first_issue(session.pending_clarifications)
-    if issue is not None:
-        return issue.question
-    if review_rejected:
-        return REJECT_PROMPT
-    return _first_missing(session.slots)
 
 
 def _validate_knowledge_answer(

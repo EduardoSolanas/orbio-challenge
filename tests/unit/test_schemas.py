@@ -129,6 +129,8 @@ def model_payloads():
             "candidates": slots_payload(),
             "explicit_corrections": [],
             "ambiguous_fields": [],
+        "detected_language": "en",
+        "requested_language": None,
         },
         ExtractionContext: {
             "slots": slots_payload(),
@@ -286,7 +288,17 @@ def test_status_literal_rejects_unknown_values():
 
 @pytest.mark.parametrize(
     "value",
-    ["provide_details", "correction", "confirm", "reject", "question", "unrelated", "social"],
+    [
+        "provide_details",
+        "correction",
+        "confirm",
+        "reject",
+        "question",
+        "unrelated",
+        "social",
+        "start_intake",
+        "capability",
+    ],
 )
 def test_intent_literal_accepts_contract_values(value):
     extraction = Extraction.model_validate({**MODELS[Extraction], "intent": value})

@@ -51,6 +51,8 @@ def make_extraction(
     candidates: dict[str, str | None] | None = None,
     explicit_corrections: Iterable[str] = (),
     ambiguous_fields: Iterable[str] = (),
+    detected_language: str = "en",
+    requested_language: str | None = None,
 ) -> Extraction:
     return Extraction(
         intent=intent,
@@ -58,6 +60,8 @@ def make_extraction(
         candidates=Slots(**{**NO_SLOTS, **(candidates or {})}),
         explicit_corrections=list(explicit_corrections),
         ambiguous_fields=list(ambiguous_fields),
+        detected_language=detected_language,
+        requested_language=requested_language,
     )
 
 
@@ -77,6 +81,7 @@ def make_session(
     session_id: UUID | None = None,
     revision: int = 0,
     status: str = "collecting",
+    reply_language: str = "en",
     slots: Slots | None = None,
     messages: list[Message] | None = None,
     pending_clarifications: dict | None = None,
@@ -95,6 +100,7 @@ def make_session(
         created_at=now,
         updated_at=now,
         status=status,
+        reply_language=reply_language,
         slots=slots or make_slots(),
         messages=messages or [],
         pending_clarifications=pending_clarifications or {},

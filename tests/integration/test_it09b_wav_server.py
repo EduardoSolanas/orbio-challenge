@@ -45,6 +45,8 @@ EXTRACTION = {
     },
     "explicit_corrections": [],
     "ambiguous_fields": [],
+"detected_language": "en",
+"requested_language": None,
 }
 
 TURN_TEXT = "My order NS-000123 arrived broken."

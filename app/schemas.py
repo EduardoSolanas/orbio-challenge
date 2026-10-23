@@ -26,8 +26,18 @@ from pydantic import (
 
 FieldName = Literal["order_number", "category", "description", "urgency"]
 Status = Literal["collecting", "awaiting_confirmation", "completed"]
+Language = Literal["en", "es"]
+DetectedLanguage = Literal["en", "es", "unsupported"]
 Intent = Literal[
-    "provide_details", "correction", "confirm", "reject", "question", "unrelated", "social"
+    "provide_details",
+    "correction",
+    "confirm",
+    "reject",
+    "question",
+    "unrelated",
+    "social",
+    "start_intake",
+    "capability",
 ]
 ClarificationCode = Literal["invalid", "ambiguous", "conflict"]
 RequestInputMode = Literal["text", "transcript"]
@@ -104,6 +114,8 @@ class Extraction(ContractModel):
     candidates: Slots
     explicit_corrections: list[FieldName]
     ambiguous_fields: list[FieldName]
+    detected_language: DetectedLanguage
+    requested_language: Language | None
 
     @field_validator("explicit_corrections", "ambiguous_fields")
     @classmethod
@@ -119,6 +131,7 @@ class ExtractionContext(ContractModel):
     recent_messages: list[RecentMessage]
     current_message: StrictStr
     status: Status
+    reply_language: Language = "en"
 
 
 class TurnRequest(ContractModel):
@@ -153,14 +166,27 @@ class Message(ContractModel):
     input_mode: MessageInputMode
     created_at: UtcTimestamp
     citations: list[Citation] = Field(default_factory=list)
+    language: Language = "en"
+
+
+class MessageView(Message):
+    """A stored message plus configuration-derived playback availability.
+
+    ``speech_available`` is computed at response serialization from the saved
+    message language and the operator's current speech profiles; it is never
+    written to storage.
+    """
+
+    speech_available: StrictBool
 
 
 class SessionView(ContractModel):
     session_id: CanonicalUUID
     revision: NonNegativeInt
     status: Status
+    reply_language: Language = "en"
     slots: Slots
-    messages: list[Message]
+    messages: list[MessageView]
     pending_clarifications: dict[FieldName, Clarification]
     pending_review_revision: NonNegativeInt | None
     summary: StrictStr | None
@@ -170,6 +196,7 @@ class TurnResponse(ContractModel):
     session_id: CanonicalUUID
     revision: NonNegativeInt
     status: Status
+    reply_language: Language = "en"
     reply: NonBlankText
     message_id: CanonicalUUID
     slots: Slots
@@ -197,6 +224,7 @@ class Session(ContractModel):
     created_at: UtcTimestamp
     updated_at: UtcTimestamp
     status: Status
+    reply_language: Language = "en"
     slots: Slots
     messages: list[Message]
     pending_clarifications: dict[FieldName, Clarification]
@@ -226,6 +254,7 @@ class KnowledgeContext(ContractModel):
     question: StrictStr
     kb_version: StrictStr
     sources: list[KnowledgeRecord]
+    reply_language: Language = "en"
 
 
 class KnowledgeAnswer(ContractModel):

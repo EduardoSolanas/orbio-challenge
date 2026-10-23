@@ -100,6 +100,8 @@ EXTRACTION_PAYLOAD = {
     },
     "explicit_corrections": [],
     "ambiguous_fields": [],
+"detected_language": "en",
+"requested_language": None,
 }
 
 ANSWER_PAYLOAD = {

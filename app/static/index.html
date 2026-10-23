@@ -8,7 +8,7 @@
 </head>
 <body>
   <main class="app">
-    <h1 class="app__title">Northstar support intake</h1>
+    <h1 id="app-title" class="app__title">Northstar support intake</h1>
 
     <div id="transcript" class="transcript" role="log" aria-live="polite" aria-relevant="additions"></div>
 
@@ -17,7 +17,7 @@
     <div id="alert" class="alert" role="alert" hidden></div>
 
     <div class="composer">
-      <label class="composer__label" for="message">Message</label>
+      <label id="message-label" class="composer__label" for="message">Message</label>
       <textarea id="message" class="composer__message" name="message" rows="4" aria-label="Message"></textarea>
       <p id="transcribe-help" class="composer__help" hidden>Send or clear your current draft before transcribing.</p>
 
@@ -32,7 +32,7 @@
         <button type="button" id="start-recording" class="btn">Start recording</button>
         <button type="button" id="stop-recording" class="btn" hidden>Stop recording</button>
         <button type="button" id="transcribe" class="btn">Transcribe audio</button>
-        <label class="voice__file" for="wav-recording">WAV recording</label>
+        <label id="wav-label" class="voice__file" for="wav-recording">WAV recording</label>
         <input id="wav-recording" type="file" accept="audio/wav,.wav,audio/wave" aria-label="WAV recording">
       </div>
 
@@ -42,6 +42,11 @@
       </div>
     </div>
   </main>
+  <script src="/static/i18n.js"></script>
+  <script src="/static/recording.js"></script>
+  <script src="/static/playback_labels.js"></script>
+  <script src="/static/request.js"></script>
+  <script src="/static/confirmation_retry.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>

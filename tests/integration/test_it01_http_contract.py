@@ -28,6 +28,7 @@ SESSION_VIEW_KEYS = {
     "session_id",
     "revision",
     "status",
+    "reply_language",
     "slots",
     "messages",
     "pending_clarifications",
@@ -39,14 +40,29 @@ TURN_RESPONSE_KEYS = {
     "session_id",
     "revision",
     "status",
+    "reply_language",
     "reply",
     "message_id",
+    "speech_available",
     "slots",
     "pending_clarifications",
     "pending_review_revision",
     "summary",
     "citations",
 }
+
+MESSAGE_VIEW_KEYS = {
+    "id",
+    "role",
+    "text",
+    "input_mode",
+    "created_at",
+    "citations",
+    "language",
+    "speech_available",
+}
+
+STORED_MESSAGE_KEYS = MESSAGE_VIEW_KEYS - {"speech_available"}
 
 
 def turn_body(
@@ -142,6 +158,15 @@ async def case_it01_04(client, app, provider, session_dir):
     assert set(view) == SESSION_VIEW_KEYS
     disk = json.loads(before.decode("utf-8"))
     for key in SESSION_VIEW_KEYS:
+        if key == "messages":
+            # The view adds the configuration-derived playback flag per message;
+            # every stored field must still match byte-for-byte.
+            assert len(view["messages"]) == len(disk["messages"])
+            for served, stored in zip(view["messages"], disk["messages"]):
+                assert set(served) == MESSAGE_VIEW_KEYS
+                assert {k: served[k] for k in STORED_MESSAGE_KEYS} == stored
+                assert served["speech_available"] is True
+            continue
         assert view[key] == disk[key], key
     assert path.read_bytes() == before
     assert_no_calls(provider)

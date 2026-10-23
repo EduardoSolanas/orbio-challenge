@@ -16,6 +16,7 @@ from app.schemas import KnowledgeAnswer
 from tests.integration.support_api import (
     ScriptedProvider,
     make_extraction,
+    persisted_response,
     read_session,
 )
 from tests.integration.test_it02_intake import (
@@ -39,9 +40,6 @@ RETURN_ANSWER_TEXT = (
     "its original packaging. Refund eligibility requires support review."
 )
 REVIEW_SUFFIX_TEXT = "Please confirm these details or tell me what to change."
-REVIEW_POLICY_FOLLOW_UP = (
-    "Please confirm the reviewed details or tell me what to change."
-)
 CONFIRM_USER_TEXT = "Confirm reviewed intake"
 STALE_REVIEW_MESSAGE = "The review changed. Review the latest details before confirming."
 RETURN_CITATION = {
@@ -126,7 +124,7 @@ async def ask_at_review(client, provider: ScriptedProvider, session_id: str) -> 
     assert payload["summary"] == FULL_SUMMARY
     assert payload["slots"] == FULL_SLOTS
     assert payload["pending_clarifications"] == {}
-    assert payload["reply"] == f"{RETURN_ANSWER_TEXT}\n\n{REVIEW_POLICY_FOLLOW_UP}"
+    assert payload["reply"] == RETURN_ANSWER_TEXT
     assert payload["citations"] == [RETURN_CITATION]
     return payload
 
@@ -195,7 +193,7 @@ async def test_it04_question_at_review_then_dedicated_confirm_completes(
     assert after["requests"][:-1] == before["requests"]
     assert len(after["requests"]) == len(before["requests"]) + 1
     assert after["requests"][-1]["request_id"] == request_id
-    assert after["requests"][-1]["response"] == payload
+    assert after["requests"][-1]["response"] == persisted_response(payload)
     assert not provider.extractions and not provider.answers
 
 
@@ -236,7 +234,7 @@ async def test_it04_question_at_review_then_yes_completes(
     assert after["messages"][-2]["input_mode"] == "text"
     assert after["messages"][-1]["text"] == receipt
     assert after["messages"][-1]["id"] == payload["message_id"]
-    assert after["requests"][-1]["response"] == payload
+    assert after["requests"][-1]["response"] == persisted_response(payload)
     assert not provider.extractions and not provider.answers
 
 

@@ -556,7 +556,7 @@ class UI:
         return self.page.get_by_role("button", name=name, exact=True, disabled=False)
 
     def play_button(self, message_id: str) -> Locator:
-        return self.page.get_by_role("button", name=f"Play reply {message_id}", exact=True)
+        return self.page.locator(f'button[data-message-id="{message_id}"]')
 
     # ---- journey bookkeeping ------------------------------------------------
 
@@ -595,6 +595,17 @@ class UI:
             lambda r: r.request.method == "POST" and r.url.endswith("/turns")
         ) as pending:
             self.button("Send", page=target).click()
+        return pending.value
+
+    def send_localized(self, text: str, *, page: Page | None = None) -> Response:
+        """Send in a Spanish session: stable element IDs, localized labels."""
+
+        target = page or self.page
+        target.fill("#message", text)
+        with target.expect_response(
+            lambda r: r.request.method == "POST" and r.url.endswith("/turns")
+        ) as pending:
+            target.click("#send")
         return pending.value
 
     def confirm(self) -> Response:

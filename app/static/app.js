@@ -9,14 +9,11 @@
   const DEADLINE_TURN_MS = 35000;
   const DEADLINE_STT_MS = 45000;
   const DEADLINE_TTS_MS = 30000;
-  const PLAYBACK_FALLBACK =
-    "Audio could not play; your text reply is still available.";
-  const CHAR_LIMIT_ALERT =
-    "Messages must contain at most 4000 characters.";
-  const MIC_DENIED_ALERT =
-    "Microphone access was denied or is unavailable. You can type or upload a WAV recording.";
-  const TIMEOUT_ALERT = "The AI request timed out. Please retry.";
-  const NETWORK_ALERT = "The AI service is unavailable. Please retry.";
+  const i18n = window.NorthstarI18n;
+
+  function ui(key, values) {
+    return i18n.t(state.language, key, values);
+  }
 
   const els = {
     log: document.getElementById("transcript"),
@@ -39,6 +36,7 @@
     sessionId: null,
     revision: 0,
     status: "collecting",
+    language: "en",
     summary: null,
     pendingReviewRevision: null,
     pendingClarifications: {},
@@ -50,7 +48,7 @@
     pending: false,
     sttPending: false,
     createPending: false,
-    retryKind: null, // "resume" | "turn" | "create" | null
+    retryKind: null, // "resume" | "turn" | "confirmation" | "create" | null
     retryPayload: null,
     charLimitAlert: false,
     audioBlob: null,
@@ -205,7 +203,7 @@
 
     if (overLimit && !state.charLimitAlert) {
       state.charLimitAlert = true;
-      showAlert(CHAR_LIMIT_ALERT);
+      showAlert(ui("charLimit"));
     } else if (!overLimit && state.charLimitAlert) {
       clearAlert();
     }
@@ -226,7 +224,7 @@
     if (!citations || !citations.length) return;
     const region = document.createElement("div");
     region.setAttribute("role", "region");
-    region.setAttribute("aria-label", "Sources");
+    region.setAttribute("aria-label", ui("sources"));
     region.className = "sources";
     for (const cite of citations) {
       const details = document.createElement("details");
@@ -242,7 +240,7 @@
       const version = document.createElement("p");
       version.className = "sources__version";
       version.appendChild(
-        textNode(`Knowledge base version: ${cite.kb_version}`)
+        textNode(ui("knowledgeBaseVersion", { version: cite.kb_version }))
       );
       details.appendChild(version);
       region.appendChild(details);
@@ -250,12 +248,12 @@
     container.appendChild(region);
   }
 
-  function renderMessage(msg) {
+  function renderMessage(msg, playbackNumber) {
     const wrap = document.createElement("article");
     wrap.className = `msg msg--${msg.role}`;
     const role = document.createElement("span");
     role.className = "msg__role";
-    role.appendChild(textNode(msg.role === "user" ? "You" : "Assistant"));
+    role.appendChild(textNode(msg.role === "user" ? ui("you") : ui("assistant")));
     wrap.appendChild(role);
     const text = document.createElement("div");
     text.className = "msg__text";
@@ -267,8 +265,23 @@
       const play = document.createElement("button");
       play.type = "button";
       play.className = "btn";
-      play.appendChild(textNode(`Play reply ${msg.id}`));
-      play.addEventListener("click", () => playReply(msg.id));
+      play.dataset.messageId = msg.id;
+      const playable = msg.speech_available !== false;
+      play.appendChild(
+        textNode(playable ? ui("playReply") : ui("speechUnavailable"))
+      );
+      play.setAttribute(
+        "aria-label",
+        playable
+          ? ui("playReplyNumbered", { number: playbackNumber })
+          : ui("speechUnavailable")
+      );
+      if (!playable) {
+        play.disabled = true;
+        play.title = ui("speechUnavailable");
+      } else {
+        play.addEventListener("click", () => playReply(msg.id));
+      }
       playWrap.appendChild(play);
       wrap.appendChild(playWrap);
       renderSources(wrap, msg.citations || []);
@@ -278,8 +291,10 @@
 
   function renderTranscript() {
     clearChildren(els.log);
+    let playbackNumber = 0;
     for (const msg of state.messages) {
-      els.log.appendChild(renderMessage(msg));
+      if (msg.role === "assistant" && msg.id) playbackNumber += 1;
+      els.log.appendChild(renderMessage(msg, playbackNumber));
     }
   }
 
@@ -290,6 +305,7 @@
     }
     state.revision = view.revision;
     state.status = view.status;
+    state.language = i18n.languageOf(view.reply_language);
     state.summary = view.summary;
     state.pendingReviewRevision = view.pending_review_revision;
     state.pendingClarifications = view.pending_clarifications || {};
@@ -298,8 +314,11 @@
       role: m.role,
       text: m.text,
       input_mode: m.input_mode,
+      language: m.language,
+      speech_available: m.speech_available,
       citations: m.citations || [],
     }));
+    i18n.applyStaticLabels(state.language);
     renderTranscript();
     renderReview();
     updateControls();
@@ -308,6 +327,7 @@
   function applyTurnResponse(response, userText, inputMode) {
     state.revision = response.revision;
     state.status = response.status;
+    state.language = i18n.languageOf(response.reply_language);
     state.summary = response.summary;
     state.pendingReviewRevision = response.pending_review_revision;
     state.pendingClarifications = response.pending_clarifications || {};
@@ -324,41 +344,32 @@
       role: "assistant",
       text: response.reply,
       input_mode: "system",
+      language: response.reply_language,
+      speech_available: response.speech_available,
       citations: response.citations || [],
     });
+    i18n.applyStaticLabels(state.language);
     renderTranscript();
     renderReview();
     updateControls();
   }
 
-  async function fetchWithDeadline(url, options, deadlineMs) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), deadlineMs);
-    try {
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-      });
-      return response;
-    } finally {
-      clearTimeout(timer);
-    }
-  }
+  const fetchWithDeadline = window.NorthstarRequest.fetchWithDeadline;
 
   async function parseError(response) {
     try {
       const data = await response.json();
-      const message =
-        (data && data.error && data.error.message) ||
-        NETWORK_ALERT;
       const code = data && data.error && data.error.code;
+      const message = code
+        ? i18n.translateError(code, state.language)
+        : ui("network");
       const retryable = !!(data && data.error && data.error.retryable);
       const currentRevision =
         data && data.error && data.error.current_revision;
       return { message, code, retryable, currentRevision, data };
     } catch (_) {
       return {
-        message: NETWORK_ALERT,
+        message: ui("network"),
         code: null,
         retryable: true,
         currentRevision: undefined,
@@ -421,7 +432,7 @@
         clearRetry();
       } catch (e) {
         const aborted = e && e.name === "AbortError";
-        showAlert(aborted ? TIMEOUT_ALERT : NETWORK_ALERT);
+        showAlert(aborted ? ui("timeout") : ui("network"));
         setRetry("create", null);
       } finally {
         state.createPending = false;
@@ -453,7 +464,7 @@
       clearRetry();
     } catch (e) {
       const aborted = e && e.name === "AbortError";
-      showAlert(aborted ? TIMEOUT_ALERT : NETWORK_ALERT);
+      showAlert(aborted ? ui("timeout") : ui("network"));
       setRetry("resume", { sessionId: stored });
       state.sessionId = stored;
       updateControls();
@@ -476,7 +487,7 @@
       clearRetry();
     } catch (e) {
       const aborted = e && e.name === "AbortError";
-      showAlert(aborted ? TIMEOUT_ALERT : NETWORK_ALERT);
+      showAlert(aborted ? ui("timeout") : ui("network"));
       setRetry("create", null);
     } finally {
       state.createPending = false;
@@ -505,7 +516,7 @@
         clearRetry();
       } catch (e) {
         const aborted = e && e.name === "AbortError";
-        showAlert(aborted ? TIMEOUT_ALERT : NETWORK_ALERT);
+        showAlert(aborted ? ui("timeout") : ui("network"));
         setRetry("resume", { sessionId: sid });
       }
       return;
@@ -516,11 +527,49 @@
     }
     if (state.retryKind === "turn" && state.retryPayload) {
       await submitTurnPayload(state.retryPayload, { isRetry: true });
+      return;
+    }
+    if (state.retryKind === "confirmation" && state.retryPayload) {
+      await submitConfirmationCommand(state.retryPayload, { isRetry: true });
     }
   }
 
+  function clearRecordingTimers(rec) {
+    for (const timer of rec.timers) {
+      clearTimeout(timer);
+      clearInterval(timer);
+    }
+    rec.timers.clear();
+  }
+
+  function closeRecordingResources(rec) {
+    rec.stopped = true;
+    clearRecordingTimers(rec);
+    try {
+      rec.processor.disconnect();
+      rec.source.disconnect();
+    } catch (_) {
+      /* ignore */
+    }
+    rec.stream.getTracks().forEach((track) => track.stop());
+    try {
+      rec.ctx.close();
+    } catch (_) {
+      /* ignore */
+    }
+    if (state.recording === rec) state.recording = null;
+  }
+
+  function discardRecording() {
+    if (!state.recording) return;
+    closeRecordingResources(state.recording);
+    updateControls();
+  }
+
   async function startNewIntake({ retryOnly = false } = {}) {
+    // Invalidate pending microphone permission before awaiting any new session work.
     state.generation += 1;
+    discardRecording();
     const gen = state.generation;
     bumpPlayback();
     revokeAudioUrl();
@@ -561,7 +610,7 @@
     } catch (e) {
       if (gen !== state.generation) return;
       const aborted = e && e.name === "AbortError";
-      showAlert(aborted ? TIMEOUT_ALERT : NETWORK_ALERT);
+      showAlert(aborted ? ui("timeout") : ui("network"));
       setRetry("create", null);
     } finally {
       if (gen === state.generation) {
@@ -655,7 +704,7 @@
     } catch (e) {
       if (gen !== state.generation) return;
       const aborted = e && e.name === "AbortError";
-      showAlert(aborted ? TIMEOUT_ALERT : NETWORK_ALERT);
+      showAlert(aborted ? ui("timeout") : ui("network"));
       els.message.value = payload.text;
       state.inputMode = payload.input_mode;
       setRetry("turn", payload);
@@ -686,22 +735,9 @@
     await submitTurnPayload(payload, { alreadyPending: true });
   }
 
-  async function onConfirm() {
-    if (
-      els.confirm.disabled ||
-      els.confirm.hidden ||
-      state.pending ||
-      state.createPending
-    ) {
-      return;
-    }
-    if (!canConfirm() || !state.sessionId) return;
+  async function submitConfirmationCommand(command) {
+    if (!state.sessionId) return;
     const gen = state.generation;
-    const payload = {
-      request_id: newRequestId(),
-      expected_revision: state.revision,
-      review_revision: state.pendingReviewRevision,
-    };
     state.pending = true;
     updateControls();
     clearAlert();
@@ -714,7 +750,7 @@
             "Content-Type": "application/json",
             Accept: "application/json",
           },
-          body: JSON.stringify(payload),
+          body: command.body,
         },
         DEADLINE_TURN_MS
       );
@@ -722,13 +758,18 @@
       if (!response.ok) {
         const err = await parseError(response);
         showAlert(err.message);
-        if (err.retryable) setRetry("turn", null);
+        if (err.retryable || response.status >= 500) {
+          setRetry("confirmation", command);
+        } else {
+          clearRetry();
+        }
         return;
       }
       const data = await response.json();
       if (gen !== state.generation) return;
       applyTurnResponse(data, null, null);
-      // Re-sync from GET so completed messages/receipt match durable state.
+      // Re-sync from GET so an idempotent replay after a lost response shows
+      // the durable completed state and receipt.
       try {
         const refreshed = await getSession(state.sessionId, { generation: gen });
         if (
@@ -747,13 +788,37 @@
     } catch (e) {
       if (gen !== state.generation) return;
       const aborted = e && e.name === "AbortError";
-      showAlert(aborted ? TIMEOUT_ALERT : NETWORK_ALERT);
+      showAlert(aborted ? ui("timeout") : ui("network"));
+      setRetry("confirmation", command);
     } finally {
       if (gen === state.generation) {
         state.pending = false;
         updateControls();
       }
     }
+  }
+
+  async function onConfirm() {
+    if (
+      els.confirm.disabled ||
+      els.confirm.hidden ||
+      state.pending ||
+      state.createPending
+    ) {
+      return;
+    }
+    if (!canConfirm() || !state.sessionId) return;
+    const payload = {
+      request_id: newRequestId(),
+      expected_revision: state.revision,
+      review_revision: state.pendingReviewRevision,
+    };
+    // Keep the exact serialized command: Retry must not construct a new one.
+    const command = window.NorthstarConfirmationRetry.createConfirmationCommand(
+      payload
+    );
+    clearRetry();
+    await submitConfirmationCommand(command);
   }
 
   async function playReply(messageId) {
@@ -804,13 +869,13 @@
         await els.audio.play();
       } catch (_) {
         if (gen === state.generation && token === state.playbackToken) {
-          showAlert(PLAYBACK_FALLBACK);
+          showAlert(ui("playbackFallback"));
         }
       }
     } catch (e) {
       if (gen !== state.generation || token !== state.playbackToken) return;
       const aborted = e && e.name === "AbortError";
-      showAlert(aborted ? TIMEOUT_ALERT : NETWORK_ALERT);
+      showAlert(aborted ? ui("timeout") : ui("network"));
     }
   }
 
@@ -823,7 +888,6 @@
     state.sttPending = true;
     updateControls();
     clearAlert();
-    const timer = setTimeout(() => controller.abort(), DEADLINE_STT_MS);
     try {
       const body = new FormData();
       body.append(
@@ -831,11 +895,15 @@
         state.audioBlob,
         state.audioBlob.name || "recording.wav"
       );
-      const response = await fetch("/api/transcriptions", {
-        method: "POST",
-        body,
-        signal: controller.signal,
-      });
+      const response = await fetchWithDeadline(
+        "/api/transcriptions",
+        {
+          method: "POST",
+          body,
+        },
+        DEADLINE_STT_MS,
+        controller
+      );
       if (gen !== state.generation) return;
       if (!response.ok) {
         const err = await parseError(response);
@@ -853,12 +921,11 @@
     } catch (e) {
       if (gen !== state.generation) return;
       if (e && e.name === "AbortError") {
-        showAlert(TIMEOUT_ALERT);
+        showAlert(ui("timeout"));
         return;
       }
-      showAlert(NETWORK_ALERT);
+      showAlert(ui("network"));
     } finally {
-      clearTimeout(timer);
       if (gen === state.generation) {
         state.sttPending = false;
         state.sttAbort = null;
@@ -902,42 +969,59 @@
     if (state.recording) return;
     clearAlert();
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      showAlert(MIC_DENIED_ALERT);
+      showAlert(ui("micDenied"));
       return;
     }
+    const gen = state.generation;
     let stream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch (_) {
-      showAlert(MIC_DENIED_ALERT);
+      showAlert(ui("micDenied"));
+      return;
+    }
+    // New intake or page exit may have happened while permission was pending.
+    if (gen !== state.generation) {
+      stream.getTracks().forEach((track) => track.stop());
       return;
     }
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     const ctx = new AudioCtx();
     if (ctx.state === "suspended") await ctx.resume();
+    if (gen !== state.generation) {
+      stream.getTracks().forEach((track) => track.stop());
+      try { ctx.close(); } catch (_) { /* ignore */ }
+      return;
+    }
     const source = ctx.createMediaStreamSource(stream);
     const processor = ctx.createScriptProcessor(4096, 1, 1);
-    const chunks = [];
-    let stopped = false;
+    const accumulator = new window.OrbioRecording.RecordingAccumulator(ctx.sampleRate);
+    const rec = {
+      stream,
+      ctx,
+      processor,
+      source,
+      accumulator,
+      chunks: accumulator.chunks,
+      stopped: false,
+      timers: new Set(),
+    };
 
     processor.onaudioprocess = (event) => {
-      if (stopped) return;
+      if (rec.stopped) return;
       const input = event.inputBuffer.getChannelData(0);
-      chunks.push(new Float32Array(input));
-      const total = chunks.reduce((n, c) => n + c.length, 0);
-      if (total / ctx.sampleRate >= MAX_RECORD_SECONDS) {
-        stopRecording();
-      }
+      if (!accumulator.append(input)) stopRecording({ force: true });
     };
     source.connect(processor);
     processor.connect(ctx.destination);
+    rec.timers.add(setTimeout(() => stopRecording({ force: true }), MAX_RECORD_SECONDS * 1000));
 
-    state.recording = { stream, ctx, processor, source, chunks, stopped: false };
+    state.recording = rec;
     els.stopRecording.hidden = false;
     updateControls();
   }
 
-  function stopRecording() {
+  function stopRecording({ force = false } = {}) {
     const rec = state.recording;
     if (!rec || rec.stopped) return;
     const hasSignal = rec.chunks.some((chunk) => {
@@ -948,11 +1032,16 @@
     });
     // Chromium's fake input starts with a short silent handshake. Keep the
     // live graph running briefly so a real take is not misclassified as silent.
-    if (!hasSignal && !rec.waitingForSignal) {
+    if (!force && !hasSignal && !rec.waitingForSignal) {
       rec.waitingForSignal = true;
-      setTimeout(stopRecording, 250);
+      const timer = setTimeout(() => {
+        rec.timers.delete(timer);
+        stopRecording();
+      }, 250);
+      rec.timers.add(timer);
       return;
     }
+    clearRecordingTimers(rec);
     rec.stopped = true;
     try {
       rec.processor.disconnect();
@@ -961,14 +1050,8 @@
       /* ignore */
     }
     rec.stream.getTracks().forEach((t) => t.stop());
-    const total = rec.chunks.reduce((n, c) => n + c.length, 0);
-    const merged = new Float32Array(total);
-    let offset = 0;
-    for (const c of rec.chunks) {
-      merged.set(c, offset);
-      offset += c.length;
-    }
     const sampleRate = rec.ctx.sampleRate;
+    const merged = rec.accumulator.toSamples(Math.floor(sampleRate * 0.005));
     try {
       rec.ctx.close();
     } catch (_) {
@@ -1005,6 +1088,8 @@
   }
 
   function onPageHide() {
+    state.generation += 1;
+    discardRecording();
     try {
       els.audio.pause();
     } catch (_) {

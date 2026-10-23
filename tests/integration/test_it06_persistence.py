@@ -29,7 +29,9 @@ from app.prompts import GREETING, INVALID_URGENCY, MISSING_URGENCY
 from app.schemas import Session
 from tests.integration.support_api import (
     make_extraction,
+    persisted_response,
     raw_asgi,
+    served_messages,
     read_session,
     session_files,
 )
@@ -167,7 +169,7 @@ async def case_it06_01(settings, provider, session_dir):
         assert record["request_id"] == request_id
         assert len(record["input_digest"]) == 64
         assert record["input_digest"] == record["input_digest"].lower()
-        assert record["response"] == response
+        assert record["response"] == persisted_response(response)
 
 
 # IT06-02 -------------------------------------------------------------------
@@ -198,7 +200,7 @@ async def case_it06_02(settings, provider, session_dir):
         assert view["revision"] == committed["revision"] == 1
         assert view["status"] == "collecting"
         assert view["slots"] == PART_SLOTS
-        assert view["messages"] == committed["messages"]
+        assert served_messages(view["messages"]) == committed["messages"]
         assert view["pending_clarifications"] == {}
         assert view["pending_review_revision"] is None
         assert view["summary"] is None
@@ -218,10 +220,10 @@ async def case_it06_02(settings, provider, session_dir):
         assert continued["status"] == "collecting"
         assert continued["pending_review_revision"] is None
         disk = read_session(session_dir, session_id)
-        assert disk["messages"][:3] == view["messages"]
+        assert disk["messages"][:3] == served_messages(view["messages"])
         assert disk["revision"] == 2
         assert len(disk["requests"]) == 2
-        assert disk["requests"][-1]["response"] == continued
+        assert disk["requests"][-1]["response"] == persisted_response(continued)
 
 
 # IT06-03 -------------------------------------------------------------------
@@ -294,7 +296,7 @@ async def case_it06_03(settings, provider, session_dir):
         assert len(disk["messages"]) == len(original_disk["messages"]) + 2
         assert len(disk["requests"]) == 2
         assert disk["requests"][-1]["request_id"] == request_id
-        assert disk["requests"][-1]["response"] == payload
+        assert disk["requests"][-1]["response"] == {key: value for key, value in payload.items() if key != "speech_available"}
         assert_no_temp_files(session_dir)
 
 
@@ -561,7 +563,7 @@ async def case_it06_08(settings, provider, session_dir):
             assert final_disk["review_rejected"] is False
             assert final_disk["pending_review_revision"] == 4
             assert final_disk["pending_clarifications"] == {}
-            assert final_disk["requests"][-1]["response"] == recovered_payload
+            assert final_disk["requests"][-1]["response"] == persisted_response(recovered_payload)
 
 
 CASES = [

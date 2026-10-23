@@ -236,6 +236,19 @@ class JsonBodyGuardMiddleware:
         await self.app(scope, replay, send)
 
 
+def _turn_payload(response: TurnResponse, speech_languages: frozenset[str]) -> dict[str, Any]:
+    """Serialize a turn response and add the configuration-derived playback flag.
+
+    ``speech_available`` describes the reply just returned; it is computed here
+    from the saved reply language and the operator's current profiles, never
+    persisted with the session or its replay records.
+    """
+
+    payload = response.model_dump(mode="json")
+    payload["speech_available"] = response.reply_language in speech_languages
+    return payload
+
+
 async def _read_upload(upload: UploadFile) -> bytes:
     """Read an upload in 64 KiB chunks, rejecting the 10 MiB file cap early."""
 
@@ -284,13 +297,16 @@ def create_app(
 
         active_provider = provider
         if active_provider is None:
+            profiles = {
+                "llm": active_settings.llm,
+                "rag": active_settings.rag,
+                "stt": active_settings.stt,
+                "tts": active_settings.tts,
+            }
+            if active_settings.tts_es is not None:
+                profiles["tts_es"] = active_settings.tts_es
             active_provider = OpenAICompatibleProvider(
-                {
-                    "llm": active_settings.llm,
-                    "rag": active_settings.rag,
-                    "stt": active_settings.stt,
-                    "tts": active_settings.tts,
-                },
+                profiles,
                 capacity=active_settings.provider_max_concurrency,
             )
         try:
@@ -299,12 +315,17 @@ def create_app(
             await active_provider.close()
             raise RuntimeError(KNOWLEDGE_INVALID_MESSAGE) from None
 
+        speech_languages = frozenset({"en"})
+        if active_settings.tts_es is not None:
+            speech_languages = speech_languages | {"es"}
+
         app.state.settings = active_settings
         app.state.repository = repository
         app.state.provider = active_provider
         app.state.knowledge_base = knowledge_base
+        app.state.speech_languages = speech_languages
         app.state.engine = ConversationEngine(
-            repository, active_provider, knowledge_base
+            repository, active_provider, knowledge_base, speech_languages=speech_languages
         )
         app.state.ready = True
         try:
@@ -376,7 +397,7 @@ def create_app(
         response: TurnResponse = await request.app.state.engine.turn(
             session_uuid, command
         )
-        return JSONResponse(response.model_dump(mode="json"))
+        return JSONResponse(_turn_payload(response, request.app.state.speech_languages))
 
     @app.post("/api/sessions/{session_id}/confirm")
     async def confirm(session_id: str, request: Request):
@@ -387,7 +408,7 @@ def create_app(
         response: TurnResponse = await request.app.state.engine.confirm(
             session_uuid, command
         )
-        return JSONResponse(response.model_dump(mode="json"))
+        return JSONResponse(_turn_payload(response, request.app.state.speech_languages))
 
     @app.post("/api/transcriptions")
     async def transcriptions(request: Request):
@@ -410,12 +431,15 @@ def create_app(
         command: SpeechRequest = _parse(
             SpeechRequest, _json_body(await request.body())
         )
-        text = await request.app.state.engine.assistant_text(
+        message = await request.app.state.engine.assistant_message(
             session_uuid, command.message_id
         )
+        text = message.text
         if len(text) > MAX_SPEECH_TEXT_CHARS:
             raise app_error("invalid_provider_response")
-        audio = await request.app.state.provider.synthesize(text)
+        if message.language not in request.app.state.speech_languages:
+            raise app_error("provider_configuration")
+        audio = await request.app.state.provider.synthesize(text, message.language)
         return Response(
             content=audio.data,
             media_type=audio.media_type,

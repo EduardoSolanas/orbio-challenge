@@ -19,8 +19,14 @@ from uuid import uuid4
 
 import pytest
 
+from app.prompts import CAPABILITY
 from app.schemas import KnowledgeAnswer
-from tests.integration.support_api import ScriptedProvider, make_extraction, read_session
+from tests.integration.support_api import (
+    ScriptedProvider,
+    make_extraction,
+    persisted_response,
+    read_session,
+)
 from tests.integration.test_it02_intake import (
     FULL_SLOTS,
     FULL_SUMMARY,
@@ -41,9 +47,6 @@ NO_TEXT = "No."
 CHANGE_TEXT = "Actually make the urgency low."
 RETURN_Q_TEXT = "Can I return an unused item?"
 POLICY_QUESTION_SUFFIX = "Please ask your policy question in a separate message."
-REVIEW_POLICY_FOLLOWUP = (
-    "Please confirm the reviewed details or tell me what to change."
-)
 RETURN_ANSWER_TEXT = (
     "You can request a return within 30 calendar days of delivery for an unused item in "
     "its original packaging. Refund eligibility requires support review."
@@ -231,7 +234,7 @@ def assert_turn_commit(
     assert disk["requests"][:-1] == before["requests"]
     assert len(disk["requests"]) == len(before["requests"]) + 1
     assert disk["requests"][-1]["request_id"] == request_id
-    assert disk["requests"][-1]["response"] == response
+    assert disk["requests"][-1]["response"] == persisted_response(response)
     for key in (
         "status",
         "slots",
@@ -330,7 +333,7 @@ def assert_dedicated_confirm_commit(
     assert disk["requests"][:-1] == before["requests"]
     assert len(disk["requests"]) == len(before["requests"]) + 1
     assert disk["requests"][-1]["request_id"] == request_id
-    assert disk["requests"][-1]["response"] == payload
+    assert disk["requests"][-1]["response"] == {key: value for key, value in payload.items() if key != "speech_available"}
     return disk
 
 
@@ -567,7 +570,7 @@ async def case_it04_05(client, provider, session_dir):
         summary=FULL_SUMMARY,
         token=1,
     )
-    assert payload["reply"] == f"{RETURN_ANSWER_TEXT}\n\n{REVIEW_POLICY_FOLLOWUP}"
+    assert payload["reply"] == RETURN_ANSWER_TEXT
     assert [citation["source_id"] for citation in payload["citations"]] == ["faq-returns"]
     assert payload["citations"][0]["title"]
     assert payload["citations"][0]["excerpt"]
@@ -898,7 +901,7 @@ async def case_it04_13(client, provider, session_dir):
         summary=None,
         token=None,
     )
-    assert payload["reply"] == REJECT_PROMPT
+    assert payload["reply"] == CAPABILITY
     disk = assert_turn_commit(
         session_dir=session_dir,
         session_id=session_id,
@@ -939,7 +942,7 @@ async def case_it04_14(client, provider, session_dir):
         summary=None,
         token=None,
     )
-    assert payload["reply"] == f"{RETURN_ANSWER_TEXT}\n\n{REJECT_PROMPT}"
+    assert payload["reply"] == RETURN_ANSWER_TEXT
     assert [citation["source_id"] for citation in payload["citations"]] == ["faq-returns"]
     disk = assert_turn_commit(
         session_dir=session_dir,

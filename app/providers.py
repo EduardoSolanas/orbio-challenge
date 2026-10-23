@@ -43,6 +43,8 @@ from app.schemas import (
 
 Role = str
 ROLES: tuple[Role, ...] = ("llm", "rag", "stt", "tts")
+SPANISH_SPEECH_ROLE: Role = "tts_es"
+SPEECH_ROLE_BY_LANGUAGE: dict[str, Role] = {"en": "tts", "es": SPANISH_SPEECH_ROLE}
 
 CHAT_COMPLETIONS_SUFFIX = "/chat/completions"
 TRANSCRIPTIONS_SUFFIX = "/audio/transcriptions"
@@ -106,6 +108,14 @@ TEXT_BUDGET = Budget(2, TEXT_ATTEMPT_TIMEOUT, TEXT_TOTAL_DEADLINE)
 STT_BUDGET = Budget(2, STT_ATTEMPT_TIMEOUT, STT_TOTAL_DEADLINE)
 TTS_BUDGET = Budget(1, TTS_ATTEMPT_TIMEOUT, TTS_TOTAL_DEADLINE)
 
+ROLE_BUDGETS: dict[Role, Budget] = {
+    "llm": TEXT_BUDGET,
+    "rag": TEXT_BUDGET,
+    "stt": STT_BUDGET,
+    "tts": TTS_BUDGET,
+    SPANISH_SPEECH_ROLE: TTS_BUDGET,
+}
+
 
 class AIProvider(Protocol):
     async def extract(self, context: ExtractionContext) -> Extraction: ...
@@ -114,7 +124,7 @@ class AIProvider(Protocol):
 
     async def transcribe(self, audio: bytes) -> str: ...
 
-    async def synthesize(self, text: str) -> SynthesizedAudio: ...
+    async def synthesize(self, text: str, language: str = "en") -> SynthesizedAudio: ...
 
     async def close(self) -> None: ...
 
@@ -406,16 +416,16 @@ class OpenAICompatibleProvider:
         clock: Callable[[], float] | None = None,
     ) -> None:
         self._profiles = {role: profiles[role] for role in ROLES}
+        if SPANISH_SPEECH_ROLE in profiles:
+            self._profiles[SPANISH_SPEECH_ROLE] = profiles[SPANISH_SPEECH_ROLE]
         self._sleep = sleep if sleep is not None else asyncio.sleep
         self._clock = clock if clock is not None else time.monotonic
         self._capacity = capacity
         self._in_use = 0
         self._closed = False
         self._clients: dict[Role, httpx.AsyncClient] = {
-            "llm": self._build_client("llm", TEXT_BUDGET, transports),
-            "rag": self._build_client("rag", TEXT_BUDGET, transports),
-            "stt": self._build_client("stt", STT_BUDGET, transports),
-            "tts": self._build_client("tts", TTS_BUDGET, transports),
+            role: self._build_client(role, ROLE_BUDGETS[role], transports)
+            for role in self._profiles
         }
 
     def _build_client(
@@ -429,7 +439,7 @@ class OpenAICompatibleProvider:
         if profile.auth_mode == "bearer":
             headers["Authorization"] = f"Bearer {profile.api_key}"
         return httpx.AsyncClient(
-            transport=None if transports is None else transports[role],
+            transport=None if transports is None else transports.get(role),
             follow_redirects=False,
             trust_env=False,
             headers=headers,
@@ -498,10 +508,13 @@ class OpenAICompatibleProvider:
         finally:
             self._release()
 
-    async def synthesize(self, text: str) -> SynthesizedAudio:
+    async def synthesize(self, text: str, language: str = "en") -> SynthesizedAudio:
         self._acquire()
         try:
-            profile = self._profiles["tts"]
+            role = SPEECH_ROLE_BY_LANGUAGE.get(language)
+            if role is None or role not in self._profiles:
+                raise app_error("provider_configuration")
+            profile = self._profiles[role]
             chunks = split_tts_text(text, profile.max_input_chars)
             if not chunks:
                 raise app_error("invalid_provider_response")
@@ -513,14 +526,19 @@ class OpenAICompatibleProvider:
             url = _join(profile.base_url, SPEECH_SUFFIX)
             if profile.audio_format == "mp3":
                 audio = await self._speech_request(
-                    url, profile, chunks[0], deadline, TTS_LIMIT
+                    self._clients[role], url, profile, chunks[0], deadline, TTS_LIMIT
                 )
                 return SynthesizedAudio(audio, "audio/mpeg")
             raw_total = 0
             parts: list[tuple[int, int, int, bytes]] = []
             for chunk in chunks:
                 raw = await self._speech_request(
-                    url, profile, chunk, deadline, TTS_LIMIT - raw_total
+                    self._clients[role],
+                    url,
+                    profile,
+                    chunk,
+                    deadline,
+                    TTS_LIMIT - raw_total,
                 )
                 raw_total += len(raw)
                 try:
@@ -536,6 +554,7 @@ class OpenAICompatibleProvider:
 
     async def _speech_request(
         self,
+        client: httpx.AsyncClient,
         url: str,
         profile: SpeechProfile,
         text: str,
@@ -554,7 +573,7 @@ class OpenAICompatibleProvider:
             raise app_error("provider_timeout")
         try:
             async with asyncio.timeout(min(TTS_BUDGET.attempt_timeout, remaining)):
-                async with self._clients["tts"].stream(
+                async with client.stream(
                     "POST", url, json=payload
                 ) as response:
                     if not 200 <= response.status_code < 300:

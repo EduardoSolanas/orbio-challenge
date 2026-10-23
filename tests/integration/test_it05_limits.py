@@ -22,7 +22,11 @@ import pytest
 from app.prompts import GREETING
 from app.schemas import Confirmation, Message, Session, Slots
 from app.storage import JsonSessionRepository
-from tests.integration.support_api import make_extraction, read_session
+from tests.integration.support_api import (
+    make_extraction,
+    persisted_response,
+    read_session,
+)
 from tests.integration.test_it02_intake import (
     FULL_SLOTS,
     FULL_SUMMARY,
@@ -467,7 +471,7 @@ async def case_it05_06(client, provider, session_dir):
     assert after["revision"] == AT_CAP + 1
     assert after["collection_turn_count"] == AT_CAP
     assert after["requests"][0]["request_id"] == request_id
-    assert after["requests"][0]["response"] == first_payload
+    assert after["requests"][0]["response"] == persisted_response(first_payload)
 
 
 CASES = [

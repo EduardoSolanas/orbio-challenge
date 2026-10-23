@@ -46,6 +46,33 @@ STOP_WORDS = frozenset(
     ).split()
 )
 
+# Fixed Spanish lexical map (IC FEAT-02): query tokens only, never the records.
+SPANISH_QUERY_TOKENS: dict[str, str] = {
+    "entrega": "delivery",
+    "entregas": "delivery",
+    "envio": "delivery",
+    "envios": "delivery",
+    "enviar": "delivery",
+    "tarda": "delivery",
+    "tardan": "delivery",
+    "danado": "damaged",
+    "danada": "damaged",
+    "danados": "damaged",
+    "danadas": "damaged",
+    "roto": "damaged",
+    "rota": "damaged",
+    "rotos": "damaged",
+    "rotas": "damaged",
+    "devolucion": "return",
+    "devoluciones": "return",
+    "devolver": "return",
+    "reembolso": "return",
+    "reembolsos": "return",
+    "urgencia": "urgency",
+    "urgente": "urgency",
+    "prioridad": "urgency",
+}
+
 TOP_K = 2
 KEYWORD_WEIGHT = 3
 
@@ -73,6 +100,19 @@ def tokenize(text: str) -> set[str]:
 
     normalised = unicodedata.normalize("NFKC", text).casefold()
     return {token for token in _TOKEN_PATTERN.findall(normalised) if token not in STOP_WORDS}
+
+
+def query_tokens(text: str) -> set[str]:
+    """NFKD-normalise a query, drop combining marks and map fixed Spanish tokens."""
+
+    decomposed = unicodedata.normalize("NFKD", text)
+    stripped = "".join(char for char in decomposed if not unicodedata.combining(char))
+    tokens = {
+        token
+        for token in _TOKEN_PATTERN.findall(stripped.casefold())
+        if token not in STOP_WORDS
+    }
+    return {SPANISH_QUERY_TOKENS.get(token, token) for token in tokens}
 
 
 def _is_int(value: object) -> bool:
@@ -147,7 +187,7 @@ class KnowledgeBase:
     def retrieve(self, question: str) -> list[ImmutableKnowledgeRecord]:
         """Rank records by the RAG section 3 score and return at most two."""
 
-        query = tokenize(question)
+        query = query_tokens(question)
         ranked: list[tuple[int, str, ImmutableKnowledgeRecord]] = []
         for record in self.records:
             keyword_hits = len(query & self._keywords[record.id])

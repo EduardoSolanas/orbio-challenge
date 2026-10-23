@@ -18,7 +18,9 @@ from uuid import uuid4
 from app.prompts import SOCIAL_ACKNOWLEDGMENT
 from tests.integration.support_api import (
     make_extraction,
+    persisted_response,
     read_session,
+    served_messages,
 )
 from tests.integration.test_it02_intake import (
     FULL_SLOTS,
@@ -115,7 +117,7 @@ async def test_orb39_01_review_state_resumes_across_restart(settings, provider, 
         assert view["revision"] == 2 == committed["revision"]
         assert view["status"] == "awaiting_confirmation"
         assert view["slots"] == FULL_SLOTS
-        assert view["messages"] == committed["messages"]
+        assert served_messages(view["messages"]) == committed["messages"]
         assert [m["role"] for m in view["messages"]] == [
             "assistant", "user", "assistant", "user", "assistant",
         ]
@@ -149,9 +151,9 @@ async def test_orb39_01_review_state_resumes_across_restart(settings, provider, 
             "confirmed_at": disk["confirmation"]["confirmed_at"],
             "review_revision": 1,
         }
-        assert disk["messages"] == view["messages"] + disk["messages"][-2:]
+        assert disk["messages"] == served_messages(view["messages"]) + disk["messages"][-2:]
         assert disk["requests"][-1]["request_id"] == confirm_id
-        assert disk["requests"][-1]["response"] == receipt
+        assert disk["requests"][-1]["response"] == persisted_response(receipt)
 
         replayed = await second.post(
             f"/api/sessions/{session_id}/confirm",

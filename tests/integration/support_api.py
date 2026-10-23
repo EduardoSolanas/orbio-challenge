@@ -35,6 +35,8 @@ def make_extraction(
     candidates: dict[str, str | None] | None = None,
     explicit_corrections: Iterable[str] = (),
     ambiguous_fields: Iterable[str] = (),
+    detected_language: str = "en",
+    requested_language: str | None = None,
 ) -> Extraction:
     """Build a strict extraction object for scripting the fake provider."""
 
@@ -44,6 +46,8 @@ def make_extraction(
         candidates=Slots(**{**NO_SLOTS, **(candidates or {})}),
         explicit_corrections=list(explicit_corrections),
         ambiguous_fields=list(ambiguous_fields),
+        detected_language=detected_language,
+        requested_language=requested_language,
     )
 
 
@@ -62,27 +66,37 @@ def full_extraction() -> Extraction:
     )
 
 
-def build_settings(session_dir: Path) -> Settings:
+def build_settings(session_dir: Path, *, tts_es: bool = False) -> Settings:
     """A complete isolated auth=none environment; no developer configuration is read."""
 
-    return Settings.from_env(
-        {
-            "AI_PROVIDER": "openai_compatible",
-            "LLM_BASE_URL": "http://127.0.0.1:9/v1",
-            "LLM_MODEL": "test-llm",
-            "LLM_AUTH_MODE": "none",
-            "LLM_OUTPUT_MODE": "json_schema",
-            "STT_BASE_URL": "http://127.0.0.1:9/v1",
-            "STT_MODEL": "test-stt",
-            "STT_AUTH_MODE": "none",
-            "TTS_BASE_URL": "http://127.0.0.1:9/v1",
-            "TTS_MODEL": "test-tts",
-            "TTS_AUTH_MODE": "none",
-            "TTS_VOICE": "test-voice",
-            "SESSION_DIR": str(session_dir),
-            "PROVIDER_MAX_CONCURRENCY": "4",
-        }
-    )
+    environ = {
+        "AI_PROVIDER": "openai_compatible",
+        "LLM_BASE_URL": "http://127.0.0.1:9/v1",
+        "LLM_MODEL": "test-llm",
+        "LLM_AUTH_MODE": "none",
+        "LLM_OUTPUT_MODE": "json_schema",
+        "STT_BASE_URL": "http://127.0.0.1:9/v1",
+        "STT_MODEL": "test-stt",
+        "STT_AUTH_MODE": "none",
+        "TTS_BASE_URL": "http://127.0.0.1:9/v1",
+        "TTS_MODEL": "test-tts",
+        "TTS_AUTH_MODE": "none",
+        "TTS_VOICE": "test-voice",
+        "SESSION_DIR": str(session_dir),
+        "PROVIDER_MAX_CONCURRENCY": "4",
+    }
+    if tts_es:
+        environ.update(
+            {
+                "TTS_ES_BASE_URL": "http://127.0.0.1:9/v1",
+                "TTS_ES_MODEL": "test-tts-es",
+                "TTS_ES_AUTH_MODE": "none",
+                "TTS_ES_VOICE": "test-voice-es",
+                "TTS_ES_AUDIO_FORMAT": "wav",
+                "TTS_ES_MAX_INPUT_CHARS": "200",
+            }
+        )
+    return Settings.from_env(environ)
 
 
 class ScriptedProvider:
@@ -94,6 +108,7 @@ class ScriptedProvider:
         self.transcriptions: deque[str] = deque()
         self.speech: deque[SynthesizedAudio] = deque()
         self.calls: list[tuple[str, Any]] = []
+        self.speech_languages: list[str] = []
         self.close_count = 0
 
     def script_extraction(self, extraction: Extraction) -> None:
@@ -129,8 +144,9 @@ class ScriptedProvider:
             raise AssertionError("unexpected transcribe() call")
         return self.transcriptions.popleft()
 
-    async def synthesize(self, text: str) -> SynthesizedAudio:
+    async def synthesize(self, text: str, language: str = "en") -> SynthesizedAudio:
         self.calls.append(("synthesize", text))
+        self.speech_languages.append(language)
         if not self.speech:
             raise AssertionError("unexpected synthesize() call")
         return self.speech.popleft()
@@ -204,6 +220,21 @@ async def raw_asgi(
         if message["type"] == "http.response.body"
     )
     return start["status"], dict(start.get("headers", [])), body
+
+
+def persisted_response(payload: dict[str, Any]) -> dict[str, Any]:
+    """Drop serialization-only fields the API adds but storage never keeps."""
+
+    return {key: value for key, value in payload.items() if key != "speech_available"}
+
+
+def served_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Served messages minus the configuration-derived playback flag."""
+
+    return [
+        {key: value for key, value in message.items() if key != "speech_available"}
+        for message in messages
+    ]
 
 
 def session_files(session_dir: Path) -> list[Path]:

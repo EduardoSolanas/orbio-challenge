@@ -24,7 +24,11 @@ from httpx import ASGITransport, AsyncClient
 
 from app.main import create_app
 from app.schemas import Extraction
-from tests.integration.support_api import ScriptedProvider, read_session
+from tests.integration.support_api import (
+    ScriptedProvider,
+    persisted_response,
+    read_session,
+)
 from tests.integration.test_it02_intake import (
     CATEGORY_TEXT,
     FULL_SLOTS,
@@ -111,7 +115,7 @@ def assert_single_commit(disk: dict, *, revision: int, request_id: str, response
     assert disk["messages"][-1]["id"] == response["message_id"]
     assert len(disk["requests"]) == 1
     assert disk["requests"][0]["request_id"] == request_id
-    assert disk["requests"][0]["response"] == response
+    assert disk["requests"][0]["response"] == persisted_response(response)
 
 
 # IT07-01 -------------------------------------------------------------------

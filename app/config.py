@@ -28,6 +28,15 @@ OUTPUT_MODES = ("json_schema", "json_object", "prompt_json")
 MAX_MODEL_LENGTH = 200
 MAX_API_KEY_LENGTH = 4096
 RAG_FIELDS = ("BASE_URL", "MODEL", "AUTH_MODE", "API_KEY", "OUTPUT_MODE")
+TTS_ES_FIELDS = (
+    "BASE_URL",
+    "MODEL",
+    "AUTH_MODE",
+    "API_KEY",
+    "VOICE",
+    "AUDIO_FORMAT",
+    "MAX_INPUT_CHARS",
+)
 
 
 def _fail() -> NoReturn:
@@ -124,6 +133,37 @@ def _tts_max_input_chars(raw: str) -> int:
     return value
 
 
+def _tts_es(env: Mapping[str, str]) -> SpeechProfile | None:
+    """Optional Spanish speech profile: all blank, or one complete explicit profile."""
+
+    values = {field: env.get(f"TTS_ES_{field}", "") for field in TTS_ES_FIELDS}
+    if all(value == "" for value in values.values()):
+        return None
+    if any(values[field] == "" for field in TTS_ES_FIELDS if field != "API_KEY"):
+        _fail()
+    raw_format = values["AUDIO_FORMAT"]
+    if raw_format not in AUDIO_FORMATS:
+        _fail()
+    raw_max = values["MAX_INPUT_CHARS"]
+    if not raw_max.isdigit():
+        _fail()
+    max_input_chars = int(raw_max)
+    if not MIN_TTS_MAX_INPUT_CHARS <= max_input_chars <= MAX_TTS_MAX_INPUT_CHARS:
+        _fail()
+    if raw_format == "mp3" and max_input_chars != MAX_TTS_MAX_INPUT_CHARS:
+        _fail()
+    _auth(values["AUTH_MODE"], values["API_KEY"])
+    return SpeechProfile(
+        base_url=_base_url(values["BASE_URL"]),
+        model=_model(values["MODEL"]),
+        auth_mode=values["AUTH_MODE"],
+        api_key=_api_key(values["API_KEY"]),
+        voice=_required(values["VOICE"]),
+        audio_format=raw_format,
+        max_input_chars=max_input_chars,
+    )
+
+
 @dataclass(frozen=True)
 class ServiceProfile:
     base_url: str
@@ -153,6 +193,7 @@ class Settings:
     tts: SpeechProfile
     session_dir: Path
     provider_max_concurrency: int
+    tts_es: SpeechProfile | None = None
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> Settings:
@@ -227,4 +268,5 @@ class Settings:
             provider_max_concurrency=_concurrency(
                 env.get("PROVIDER_MAX_CONCURRENCY", "")
             ),
+            tts_es=_tts_es(env),
         )

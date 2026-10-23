@@ -50,6 +50,8 @@ def make_extraction(
         candidates=make_slots(**(candidates or {})),
         explicit_corrections=explicit_corrections or [],
         ambiguous_fields=ambiguous_fields or [],
+        detected_language="en",
+        requested_language=None,
     )
 
 

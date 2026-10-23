@@ -48,6 +48,8 @@ PART_EXTRACTION = {
     },
     "explicit_corrections": [],
     "ambiguous_fields": [],
+"detected_language": "en",
+"requested_language": None,
 }
 
 

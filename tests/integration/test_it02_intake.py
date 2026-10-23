@@ -179,7 +179,11 @@ def assert_normal_turn(
     assert len(disk["requests"]) == len(before_disk["requests"]) + 1
     record = disk["requests"][-1]
     assert record["request_id"] == request_id
-    assert record["response"] == response
+    # ``speech_available`` is configuration-derived and never persisted, so the
+    # stored replay record is the response without that serialization-only flag.
+    assert record["response"] == {
+        key: value for key, value in response.items() if key != "speech_available"
+    }
     for key in (
         "status",
         "slots",
