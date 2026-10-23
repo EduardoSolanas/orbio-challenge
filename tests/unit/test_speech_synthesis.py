@@ -137,6 +137,38 @@ def test_decode_pcm_wav_returns_geometry_and_frames():
     assert frames == wav_geometry(audio)[3]
 
 
+def test_decode_pcm_wav_accepts_a_single_frame():
+    audio = raw_wav(frames=1)
+
+    channels, width, rate, frames = decode_pcm_wav(audio)
+
+    assert (channels, width, rate) == (1, 2, 16000)
+    assert frames == b"\x00\x00"
+
+
+@pytest.mark.parametrize(
+    ("audio", "message"),
+    [
+        (b"", "not a decodable PCM WAV"),
+        (b"RIFF\x00\x00\x00\x00WAVE", "not a decodable PCM WAV"),
+        (b"ID3-mp3-bytes", "not a decodable PCM WAV"),
+        (b"\x00" * 64, "not a decodable PCM WAV"),
+        (raw_wav(channels=3), "unsupported WAV geometry"),
+        (raw_wav(width=1), "unsupported WAV geometry"),
+        (raw_wav(width=4), "unsupported WAV geometry"),
+        (raw_wav(rate=7999), "unsupported WAV sample rate"),
+        (raw_wav(rate=48001), "unsupported WAV sample rate"),
+        (raw_wav(frames=0), "empty or truncated WAV frames"),
+        (make_wav()[:-8], "empty or truncated WAV frames"),
+    ],
+)
+def test_decode_pcm_wav_reports_the_exact_rejection_reason(audio, message):
+    with pytest.raises(ValueError) as caught:
+        decode_pcm_wav(audio)
+
+    assert str(caught.value) == message
+
+
 @pytest.mark.parametrize("rate", [8000, 48000])
 def test_decode_pcm_wav_accepts_the_sample_rate_window(rate):
     assert decode_pcm_wav(make_wav(rate=rate))[2] == rate
@@ -200,6 +232,36 @@ def test_assemble_wav_accepts_a_single_chunk_unchanged():
     part = decode_pcm_wav(make_wav(seconds=0.1))
 
     assert wav_geometry(assemble_wav([part]))[3] == part[3]
+
+
+@pytest.mark.parametrize(
+    ("parts", "message"),
+    [
+        ([], "no WAV chunks to assemble"),
+        (
+            [decode_pcm_wav(make_wav()), decode_pcm_wav(make_wav(rate=22050))],
+            "mismatched WAV geometry between chunks",
+        ),
+        (
+            [(1, 2, 16000, b"\x00" * (TTS_LIMIT + 1))],
+            "assembled WAV exceeds the response cap",
+        ),
+    ],
+    ids=["no-chunks", "geometry-mismatch", "over-cap"],
+)
+def test_assemble_wav_reports_the_exact_rejection_reason(parts, message):
+    with pytest.raises(ValueError) as caught:
+        assemble_wav(parts)
+
+    assert str(caught.value) == message
+
+
+def test_assemble_wav_accepts_frames_exactly_at_the_cap():
+    frames = b"\x00" * TTS_LIMIT
+
+    assembled = assemble_wav([(1, 2, 16000, frames)])
+
+    assert len(assembled) == 44 + TTS_LIMIT
 
 
 @pytest.mark.parametrize(
@@ -459,6 +521,79 @@ async def test_compressed_wav_success_is_rejected_without_decompression():
 
     assert caught.value.code == "invalid_provider_response"
     assert len(recorders["tts"].requests) == 1
+
+
+async def test_twenty_chunks_at_the_cap_are_accepted():
+    provider, recorders = build_provider(
+        {"tts": audio_responder(make_wav(seconds=0.1))}, profiles=profiles_with(WAV_PROFILE)
+    )
+
+    result = await provider.synthesize("A" * 4000)
+
+    assert len(recorders["tts"].requests) == 20
+    assert result.media_type == "audio/wav"
+    assert len(wav_geometry(result.data)[3]) == 20 * 1600 * 2
+
+
+def wav_of_size(total: int) -> bytes:
+    """A valid mono 16 kHz PCM WAV whose encoded size is exactly ``total`` bytes."""
+
+    buffer = BytesIO()
+    with wave.open(buffer, "wb") as writer:
+        writer.setnchannels(1)
+        writer.setsampwidth(2)
+        writer.setframerate(16000)
+        writer.writeframes(b"\x00" * (total - 44))
+    return buffer.getvalue()
+
+
+async def test_aggregate_raw_bytes_exactly_at_the_cap_are_accepted():
+    payloads = [
+        (wav_of_size(1044), {"content-type": "audio/wav"}),
+        (wav_of_size(TTS_LIMIT - 1044), {"content-type": "audio/wav"}),
+    ]
+    provider, recorders = build_provider(
+        {"tts": sequence_responder(payloads)}, profiles=profiles_with(WAV_PROFILE)
+    )
+
+    result = await provider.synthesize("A" * 201)
+
+    assert len(recorders["tts"].requests) == 2
+    assert 0 < len(result.data) <= TTS_LIMIT
+
+
+async def test_aggregate_raw_bytes_above_the_cap_with_valid_wav_chunks_is_rejected():
+    payloads = [
+        (wav_of_size(1044), {"content-type": "audio/wav"}),
+        (wav_of_size(TTS_LIMIT + 40 - 1044), {"content-type": "audio/wav"}),
+    ]
+    provider, recorders = build_provider(
+        {"tts": sequence_responder(payloads)}, profiles=profiles_with(WAV_PROFILE)
+    )
+
+    with pytest.raises(AppError) as caught:
+        await provider.synthesize("A" * 201)
+
+    assert caught.value.code == "invalid_provider_response"
+    assert len(recorders["tts"].requests) == 2
+
+
+async def test_raw_byte_total_accumulates_across_three_chunks():
+    sizes = [
+        3 * 1024 * 1024,
+        1024 * 1024,
+        TTS_LIMIT + 40 - 3 * 1024 * 1024 - 1024 * 1024,
+    ]
+    payloads = [(wav_of_size(size), {"content-type": "audio/wav"}) for size in sizes]
+    provider, recorders = build_provider(
+        {"tts": sequence_responder(payloads)}, profiles=profiles_with(WAV_PROFILE)
+    )
+
+    with pytest.raises(AppError) as caught:
+        await provider.synthesize("A" * 401)
+
+    assert caught.value.code == "invalid_provider_response"
+    assert len(recorders["tts"].requests) == 3
 
 
 # ---------------------------------------------------------------------------
