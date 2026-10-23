@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "session_id": "22222222-2222-4222-8222-222222222222",
+  "revision": 2,
+  "created_at": "2026-10-20T10:00:00Z",
+  "updated_at": "2026-10-20T10:02:00Z",
+  "status": "collecting",
+  "slots": {
+    "order_number": "NS-000123",
+    "category": "damaged_item",
+    "description": "My order arrived broken",
+    "urgency": null
+  },
+  "messages": [
+    {
+      "id": "b0000001-0000-4000-8000-000000000001",
+      "role": "assistant",
+      "text": "Hello! I can answer Northstar Shop policy questions or help record an order issue. How can I help? Please do not share payment details.",
+      "input_mode": "system",
+      "created_at": "2026-10-20T10:00:00Z",
+      "citations": []
+    },
+    {
+      "id": "b0000002-0000-4000-8000-000000000002",
+      "role": "user",
+      "text": "My order NS-000123 arrived broken.",
+      "input_mode": "text",
+      "created_at": "2026-10-20T10:01:00Z",
+      "citations": []
+    },
+    {
+      "id": "b0000003-0000-4000-8000-000000000003",
+      "role": "assistant",
+      "text": "What urgency should I record for this issue?",
+      "input_mode": "text",
+      "created_at": "2026-10-20T10:01:00Z",
+      "citations": []
+    }
+  ],
+  "pending_clarifications": {
+    "urgency": {
+      "code": "ambiguous",
+      "candidate": "whenever",
+      "question": "What urgency should I record for this issue?"
+    }
+  },
+  "pending_review_revision": null,
+  "review_rejected": false,
+  "collection_turn_count": 2,
+  "summary": null,
+  "confirmation": null,
+  "requests": []
+}

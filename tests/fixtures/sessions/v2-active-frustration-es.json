@@ -1,0 +1,82 @@
+{
+  "schema_version": 2,
+  "session_id": "66666666-6666-4666-8666-666666666666",
+  "revision": 2,
+  "created_at": "2026-10-21T09:00:00Z",
+  "updated_at": "2026-10-21T09:02:00Z",
+  "status": "collecting",
+  "reply_language": "es",
+  "frustration_active": true,
+  "slots": {
+    "order_number": "NS-000999",
+    "category": null,
+    "description": "El paquete llegó roto",
+    "urgency": null
+  },
+  "messages": [
+    {
+      "id": "a1000001-0000-4000-8000-000000000001",
+      "role": "assistant",
+      "text": "¡Hola! Puedo responder preguntas sobre las políticas de Northstar Shop o ayudarte a registrar un problema con un pedido. ¿Cómo puedo ayudarte? No compartas datos de pago.",
+      "input_mode": "system",
+      "created_at": "2026-10-21T09:00:00Z",
+      "citations": [],
+      "language": "es",
+      "sentiment": null,
+      "frustration": null
+    },
+    {
+      "id": "a1000002-0000-4000-8000-000000000002",
+      "role": "user",
+      "text": "Ya he preguntado tres veces y estoy muy frustrado. El pedido NS-000999 llegó roto.",
+      "input_mode": "text",
+      "created_at": "2026-10-21T09:01:00Z",
+      "citations": [],
+      "language": "es",
+      "sentiment": "negative",
+      "frustration": "present"
+    },
+    {
+      "id": "a1000003-0000-4000-8000-000000000003",
+      "role": "assistant",
+      "text": "Entiendo que esto es frustrante.\n\n¿Qué categoría debería registrar: entrega, artículo dañado, artículo incorrecto, devolución u otro?",
+      "input_mode": "text",
+      "created_at": "2026-10-21T09:01:00Z",
+      "citations": [],
+      "language": "es",
+      "sentiment": null,
+      "frustration": null
+    }
+  ],
+  "pending_clarifications": {},
+  "pending_review_revision": null,
+  "review_rejected": false,
+  "collection_turn_count": 1,
+  "summary": null,
+  "confirmation": null,
+  "requests": [
+    {
+      "request_id": "f1000001-0000-4000-8000-000000000001",
+      "input_digest": "2222222222222222222222222222222222222222222222222222222222222222",
+      "response": {
+        "session_id": "66666666-6666-4666-8666-666666666666",
+        "revision": 1,
+        "status": "collecting",
+        "reply_language": "es",
+        "frustration_active": false,
+        "reply": "¿Qué categoría debería registrar: entrega, artículo dañado, artículo incorrecto, devolución u otro?",
+        "message_id": "a1000003-0000-4000-8000-000000000003",
+        "slots": {
+          "order_number": "NS-000999",
+          "category": null,
+          "description": "El paquete llegó roto",
+          "urgency": null
+        },
+        "pending_clarifications": {},
+        "pending_review_revision": null,
+        "summary": null,
+        "citations": []
+      }
+    }
+  ]
+}

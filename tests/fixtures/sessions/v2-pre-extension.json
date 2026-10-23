@@ -1,0 +1,74 @@
+{
+  "schema_version": 2,
+  "session_id": "77777777-7777-4777-8777-777777777777",
+  "revision": 1,
+  "created_at": "2026-10-21T10:00:00Z",
+  "updated_at": "2026-10-21T10:01:00Z",
+  "status": "collecting",
+  "reply_language": "en",
+  "slots": {
+    "order_number": null,
+    "category": null,
+    "description": null,
+    "urgency": null
+  },
+  "messages": [
+    {
+      "id": "a2000001-0000-4000-8000-000000000001",
+      "role": "assistant",
+      "text": "Hello! I can answer Northstar Shop policy questions or help record an order issue. How can I help? Please do not share payment details.",
+      "input_mode": "system",
+      "created_at": "2026-10-21T10:00:00Z",
+      "citations": [],
+      "language": "en"
+    },
+    {
+      "id": "a2000002-0000-4000-8000-000000000002",
+      "role": "user",
+      "text": "Hello there.",
+      "input_mode": "text",
+      "created_at": "2026-10-21T10:01:00Z",
+      "citations": [],
+      "language": "en"
+    },
+    {
+      "id": "a2000003-0000-4000-8000-000000000003",
+      "role": "assistant",
+      "text": "Hello! I can help record your Northstar Shop issue.",
+      "input_mode": "text",
+      "created_at": "2026-10-21T10:01:00Z",
+      "citations": [],
+      "language": "en"
+    }
+  ],
+  "pending_clarifications": {},
+  "pending_review_revision": null,
+  "review_rejected": false,
+  "collection_turn_count": 1,
+  "summary": null,
+  "confirmation": null,
+  "requests": [
+    {
+      "request_id": "f2000001-0000-4000-8000-000000000001",
+      "input_digest": "3333333333333333333333333333333333333333333333333333333333333333",
+      "response": {
+        "session_id": "77777777-7777-4777-8777-777777777777",
+        "revision": 1,
+        "status": "collecting",
+        "reply_language": "en",
+        "reply": "Hello! I can help record your Northstar Shop issue.",
+        "message_id": "a2000003-0000-4000-8000-000000000003",
+        "slots": {
+          "order_number": null,
+          "category": null,
+          "description": null,
+          "urgency": null
+        },
+        "pending_clarifications": {},
+        "pending_review_revision": null,
+        "summary": null,
+        "citations": []
+      }
+    }
+  ]
+}

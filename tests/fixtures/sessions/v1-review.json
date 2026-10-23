@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "session_id": "44444444-4444-4444-8444-444444444444",
+  "revision": 2,
+  "created_at": "2026-10-20T12:00:00Z",
+  "updated_at": "2026-10-20T12:02:00Z",
+  "status": "awaiting_confirmation",
+  "slots": {
+    "order_number": "NS-000789",
+    "category": "wrong_item",
+    "description": "A blue lamp arrived instead of the red one",
+    "urgency": "low"
+  },
+  "messages": [
+    {
+      "id": "d0000001-0000-4000-8000-000000000001",
+      "role": "assistant",
+      "text": "Hello! I can answer Northstar Shop policy questions or help record an order issue. How can I help? Please do not share payment details.",
+      "input_mode": "system",
+      "created_at": "2026-10-20T12:00:00Z",
+      "citations": []
+    },
+    {
+      "id": "d0000002-0000-4000-8000-000000000002",
+      "role": "user",
+      "text": "Order NS-000789, wrong item, a blue lamp arrived instead of the red one, low urgency.",
+      "input_mode": "text",
+      "created_at": "2026-10-20T12:01:00Z",
+      "citations": []
+    },
+    {
+      "id": "d0000003-0000-4000-8000-000000000003",
+      "role": "assistant",
+      "text": "Order: NS-000789\nCategory: wrong_item\nProblem: A blue lamp arrived instead of the red one\nUrgency: low\nPlease confirm these details or tell me what to change.",
+      "input_mode": "text",
+      "created_at": "2026-10-20T12:01:00Z",
+      "citations": []
+    }
+  ],
+  "pending_clarifications": {},
+  "pending_review_revision": 2,
+  "review_rejected": false,
+  "collection_turn_count": 1,
+  "summary": "Order: NS-000789\nCategory: wrong_item\nProblem: A blue lamp arrived instead of the red one\nUrgency: low",
+  "confirmation": null,
+  "requests": []
+}

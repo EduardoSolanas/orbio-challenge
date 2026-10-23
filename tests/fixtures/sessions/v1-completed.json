@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "session_id": "55555555-5555-4555-8555-555555555555",
+  "revision": 3,
+  "created_at": "2026-10-20T13:00:00Z",
+  "updated_at": "2026-10-20T13:03:00Z",
+  "status": "completed",
+  "slots": {
+    "order_number": "NS-000321",
+    "category": "damaged_item",
+    "description": "The kettle arrived with a cracked lid",
+    "urgency": "normal"
+  },
+  "messages": [
+    {
+      "id": "e0000001-0000-4000-8000-000000000001",
+      "role": "assistant",
+      "text": "Hello! I can answer Northstar Shop policy questions or help record an order issue. How can I help? Please do not share payment details.",
+      "input_mode": "system",
+      "created_at": "2026-10-20T13:00:00Z",
+      "citations": []
+    },
+    {
+      "id": "e0000002-0000-4000-8000-000000000002",
+      "role": "user",
+      "text": "Order NS-000321, damaged item, the kettle arrived with a cracked lid, normal urgency.",
+      "input_mode": "text",
+      "created_at": "2026-10-20T13:01:00Z",
+      "citations": []
+    },
+    {
+      "id": "e0000003-0000-4000-8000-000000000003",
+      "role": "assistant",
+      "text": "Order: NS-000321\nCategory: damaged_item\nProblem: The kettle arrived with a cracked lid\nUrgency: normal\nPlease confirm these details or tell me what to change.",
+      "input_mode": "text",
+      "created_at": "2026-10-20T13:01:00Z",
+      "citations": []
+    },
+    {
+      "id": "e0000004-0000-4000-8000-000000000004",
+      "role": "user",
+      "text": "Confirm reviewed intake",
+      "input_mode": "system",
+      "created_at": "2026-10-20T13:03:00Z",
+      "citations": []
+    },
+    {
+      "id": "e0000005-0000-4000-8000-000000000005",
+      "role": "assistant",
+      "text": "Saved locally as 55555555-5555-4555-8555-555555555555. No request has been sent to a real support team.",
+      "input_mode": "system",
+      "created_at": "2026-10-20T13:03:00Z",
+      "citations": []
+    }
+  ],
+  "pending_clarifications": {},
+  "pending_review_revision": null,
+  "review_rejected": false,
+  "collection_turn_count": 1,
+  "summary": "Order: NS-000321\nCategory: damaged_item\nProblem: The kettle arrived with a cracked lid\nUrgency: normal",
+  "confirmation": {
+    "confirmed_at": "2026-10-20T13:03:00Z",
+    "review_revision": 2
+  },
+  "requests": [
+    {
+      "request_id": "f0000001-0000-4000-8000-000000000001",
+      "input_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+      "response": {
+        "session_id": "55555555-5555-4555-8555-555555555555",
+        "revision": 2,
+        "status": "awaiting_confirmation",
+        "reply": "Order: NS-000321\nCategory: damaged_item\nProblem: The kettle arrived with a cracked lid\nUrgency: normal\nPlease confirm these details or tell me what to change.",
+        "message_id": "e0000003-0000-4000-8000-000000000003",
+        "slots": {
+          "order_number": "NS-000321",
+          "category": "damaged_item",
+          "description": "The kettle arrived with a cracked lid",
+          "urgency": "normal"
+        },
+        "pending_clarifications": {},
+        "pending_review_revision": 2,
+        "summary": "Order: NS-000321\nCategory: damaged_item\nProblem: The kettle arrived with a cracked lid\nUrgency: normal",
+        "citations": []
+      }
+    }
+  ]
+}
