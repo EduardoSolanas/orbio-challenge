@@ -196,6 +196,10 @@ STRINGS: dict[str, dict[Language, str]] = {
         "en": "Spoken playback is not available for this reply's language.",
         "es": "La reproducción de voz no está disponible en el idioma de esta respuesta.",
     },
+    "frustration_acknowledgment": {
+        "en": "I understand this is frustrating.",
+        "es": "Entiendo que esto es frustrante.",
+    },
     "field_order_number": {"en": "order number", "es": "número de pedido"},
     "field_category": {"en": "problem category", "es": "categoría del problema"},
     "field_description": {"en": "problem description", "es": "descripción del problema"},

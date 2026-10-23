@@ -178,13 +178,14 @@ async def test_successful_turn_after_migration_writes_a_version_two_document(
     assert response.status_code == 200, response.text
     payload = response.json()
     assert payload["revision"] == document["revision"] + 1
-    assert payload["frustration_active"] is False
+    assert payload["frustration_active"] is True
+    assert payload["reply"].startswith("I understand this is frustrating.\n\n")
     assert payload["reply_language"] == "en"
 
     saved = json.loads(path.read_text(encoding="utf-8"))
     Session.model_validate(saved)
     assert saved["schema_version"] == 2
-    assert saved["frustration_active"] is False
+    assert saved["frustration_active"] is True
     assert saved["session_id"] == document["session_id"]
     assert saved["created_at"] == document["created_at"]
     assert saved["revision"] == 1
@@ -198,7 +199,7 @@ async def test_successful_turn_after_migration_writes_a_version_two_document(
     assert saved["messages"][-1]["sentiment"] is None
     assert saved["messages"][-1]["frustration"] is None
     assert len(saved["requests"]) == 1
-    assert saved["requests"][0]["response"]["frustration_active"] is False
+    assert saved["requests"][0]["response"]["frustration_active"] is True
     assert provider.methods() == ["extract"]
     assert_no_temp_files(session_dir)
 

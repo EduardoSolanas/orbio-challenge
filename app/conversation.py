@@ -30,6 +30,7 @@ from app.schemas import (
     Extraction,
     ExtractionContext,
     FieldName,
+    Frustration,
     KnowledgeAnswer,
     KnowledgeContext,
     KnowledgeRecord,
@@ -124,6 +125,28 @@ def _find_replay(session: Session, request_id: UUID) -> ReplayRecord | None:
         if record.request_id == request_id:
             return record
     return None
+
+
+def transition_frustration(
+    previous_active: bool, label: Frustration
+) -> tuple[bool, bool]:
+    """Return ``(next_active, acknowledge)`` for the committed episode table."""
+
+    if label == "present":
+        return True, not previous_active
+    if label == "uncertain":
+        return previous_active, False
+    return False, False
+
+
+def compose_frustration_reply(
+    base_reply: str, acknowledge: bool, language: Language
+) -> str:
+    """Prefix the localized acknowledgment exactly once, or return the base reply."""
+
+    if not acknowledge:
+        return base_reply
+    return f"{text('frustration_acknowledgment', language)}\n\n{base_reply}"
 
 
 def _view(session: Session, speech_languages: frozenset[str]) -> SessionView:
@@ -302,6 +325,12 @@ class ConversationEngine:
                     )
                     reply_language = _reply_language(session, extraction)
                     if extraction.detected_language == "unsupported":
+                        next_active, acknowledge = session.frustration_active, False
+                    else:
+                        next_active, acknowledge = transition_frustration(
+                            session.frustration_active, extraction.frustration
+                        )
+                    if extraction.detected_language == "unsupported":
                         if at_limit:
                             raise app_error("turn_limit")
                         outcome = _unchanged_outcome(session)
@@ -333,6 +362,8 @@ class ConversationEngine:
                             outcome,
                             reply_language,
                             session.revision + 1,
+                            next_active=next_active,
+                            acknowledge=acknowledge,
                         )
             except TimeoutError:
                 raise app_error("provider_timeout") from None
@@ -447,6 +478,9 @@ class ConversationEngine:
         outcome: MergeOutcome,
         reply_language: Language,
         new_revision: int,
+        *,
+        next_active: bool,
+        acknowledge: bool,
     ) -> "TurnPlan":
         pending = outcome.pending_clarifications
         review_rejected, recovered_this_turn = _apply_transitions(
@@ -549,6 +583,8 @@ class ConversationEngine:
         if extraction.has_question and intake_directed:
             reply = f"{reply} {text('policy_question_suffix', reply_language)}"
 
+        reply = compose_frustration_reply(reply, acknowledge, reply_language)
+
         return TurnPlan(
             reply=reply,
             status=status,
@@ -558,6 +594,7 @@ class ConversationEngine:
             completed=completed,
             review_rejected=review_rejected,
             language=reply_language,
+            frustration_active=next_active,
         )
 
     async def _answer_policy_question(
@@ -595,6 +632,16 @@ class ConversationEngine:
             if extraction.detected_language in ("en", "es")
             else plan.language
         )
+        effective_sentiment = (
+            "uncertain"
+            if extraction.detected_language == "unsupported"
+            else extraction.sentiment
+        )
+        effective_frustration = (
+            "uncertain"
+            if extraction.detected_language == "unsupported"
+            else extraction.frustration
+        )
         user_message = Message(
             id=uuid4(),
             role="user",
@@ -603,8 +650,8 @@ class ConversationEngine:
             created_at=now,
             citations=[],
             language=user_language,
-            sentiment=extraction.sentiment,
-            frustration=extraction.frustration,
+            sentiment=effective_sentiment,
+            frustration=effective_frustration,
         )
         assistant_message = Message(
             id=uuid4(),
@@ -622,7 +669,7 @@ class ConversationEngine:
             revision=new_revision,
             status=plan.status,
             reply_language=plan.language,
-            frustration_active=session.frustration_active,
+            frustration_active=plan.frustration_active,
             reply=plan.reply,
             message_id=assistant_message.id,
             slots=outcome.slots,
@@ -636,6 +683,7 @@ class ConversationEngine:
         committed.updated_at = now
         committed.status = plan.status
         committed.reply_language = plan.language
+        committed.frustration_active = plan.frustration_active
         committed.slots = outcome.slots
         committed.pending_clarifications = outcome.pending_clarifications
         committed.pending_review_revision = plan.review_revision
@@ -673,6 +721,7 @@ class TurnPlan:
     completed: bool
     review_rejected: bool
     language: Language
+    frustration_active: bool
 
 
 def _unsupported_plan(
@@ -699,6 +748,7 @@ def _unsupported_plan(
         completed=False,
         review_rejected=session.review_rejected,
         language=reply_language,
+        frustration_active=session.frustration_active,
     )
 
 

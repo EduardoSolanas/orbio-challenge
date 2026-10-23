@@ -193,8 +193,9 @@ async def test_legacy_session_labels_stay_null_and_the_next_turn_writes_version_
     stored = await repository.load(UUID(document["session_id"]))
     saved = json.loads(path.read_text(encoding="utf-8"))
     assert response.revision == 1
+    assert response.reply.startswith("I understand this is frustrating.\n\n")
     assert saved["schema_version"] == 2
-    assert saved["frustration_active"] is False
+    assert saved["frustration_active"] is True
     assert stored.messages[0].sentiment is None
     assert stored.messages[0].frustration is None
     assert stored.messages[-2].sentiment == "negative"
@@ -224,7 +225,9 @@ async def test_frustration_present_never_supplies_an_urgency_value(tmp_path):
     stored = await repository.load(created.session_id)
     assert response.slots.urgency is None
     assert stored.slots.urgency is None
-    assert response.reply == MISSING_URGENCY
+    assert response.reply == f"I understand this is frustrating.\n\n{MISSING_URGENCY}"
+    assert response.frustration_active is True
+    assert stored.frustration_active is True
     assert stored.messages[-2].frustration == "present"
     provider.assert_exhausted()
 
