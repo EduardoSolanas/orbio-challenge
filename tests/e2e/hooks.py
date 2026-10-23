@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -36,7 +37,7 @@ _state: dict[str, Any] = {
 
 
 def _is_e2e(nodeid: str) -> bool:
-    return nodeid.startswith(E2E_PREFIX)
+    return bool(re.match(r"tests/e2e/test_j\d+_[^:]+::", nodeid))
 
 
 def source_revision(root: Path) -> str:
