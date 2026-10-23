@@ -349,11 +349,36 @@ The time is build/tool wall-clock, not a productivity benchmark.
   order numbers from logs.
 - Demo video and live provider evidence are pending (below).
 
+### Emotion classification limits
+
+- Sentiment and frustration are labels from the **existing** extraction call:
+  there is no sentiment API, keyword classifier, confidence score, rationale or
+  second model request. The prompt, JSON Schema and few-shot examples carry both
+  fields in `json_schema`, `json_object` and `prompt_json` modes.
+- The configured model classifies only the current message, using accepted state
+  and recent committed messages. Quotation, negation, hypothetical examples,
+  mixed valence and ambiguous sarcasm remain difficult; the reviewed cases are a
+  small local smoke, not an accuracy benchmark or a guarantee.
+- Live local evaluation against the configured model (`DeepSeek-V4.1-Flash-1017`,
+  `prompt_json`) on 2026-10-23: **9 of 10** reviewed cases matched. The
+  mixed-valence case “I am still frustrated, but thank you for explaining.” was
+  labelled `negative/present` instead of the reviewed `uncertain/present`.
+  Sanitized record: `reports/logs/ORB-41/emotion-evaluation.json`; reproduce with
+  `scripts/evaluate_emotions.py` after exporting the configured LLM environment.
+- Labels never supply urgency, category, order facts or intent routing. A
+  `present` label alone does not add an acknowledgment in this story; episode
+  handling is separate required work.
+- Missing, null or invalid labels use the existing bounded repair attempt and
+  then fail safely as `invalid_provider_response`; they are never coerced to
+  `neutral`. Customer instructions to force a label are treated as untrusted
+  content, not classifier instructions.
+
 ## Deferred bonuses and potential improvements
 
-New required work, not claimed implemented: frustration detection and English/Spanish
-support, plus verification of session memory (implementation-contract.md FEAT-01,
-FEAT-02 and VERIFY-01).
+Implemented required extensions: frustration classification in the existing
+extraction call (Story 2) and English/Spanish support. Remaining required work:
+frustration episode acknowledgment (Story 3) and session-memory verification
+(implementation-contract.md FEAT-01, FEAT-02 and VERIFY-01).
 
 Still deferred: cross-session memory with identity/consent, streaming/duplex voice, and database-backed
 multi-worker operation. Also out of scope: real order integration, ticket-queue

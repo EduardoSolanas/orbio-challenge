@@ -285,6 +285,18 @@ def expect_error(error: BaseException, *, status: int, code: str) -> None:
     assert_app_error(error, status=status, code=code)
 
 
+SENTIMENT_ENUM = ["positive", "neutral", "negative", "uncertain"]
+FRUSTRATION_ENUM = ["none", "present", "uncertain"]
+
+
+def assert_emotion_schema(schema: dict) -> None:
+    """The extended extraction schema carries both required emotion labels."""
+
+    assert schema["properties"]["sentiment"]["enum"] == SENTIMENT_ENUM
+    assert schema["properties"]["frustration"]["enum"] == FRUSTRATION_ENUM
+    assert {"sentiment", "frustration"} <= set(schema["required"])
+
+
 # IT12-01..IT12-03: output modes ---------------------------------------------
 
 
@@ -305,6 +317,7 @@ async def case_it12_01(session_dir):
         assert len(harness.recorders["rag"].requests) == 1
 
         llm_payload = json.loads(harness.recorders["llm"].requests[0].content)
+        assert_emotion_schema(llm_payload["response_format"]["json_schema"]["schema"])
         assert llm_payload == {
             "model": "llm-model",
             "messages": [
@@ -357,6 +370,9 @@ async def case_it12_02(session_dir):
 
         llm_payload = json.loads(harness.recorders["llm"].requests[0].content)
         rag_payload = json.loads(harness.recorders["rag"].requests[0].content)
+        assert_emotion_schema(
+            json.loads(llm_payload["messages"][0]["content"].split(SCHEMA_INSTRUCTION, 1)[1])
+        )
         assert llm_payload["response_format"] == {"type": "json_object"}
         assert rag_payload["response_format"] == {"type": "json_object"}
         assert llm_payload["messages"][0]["content"] == (
@@ -392,6 +408,9 @@ async def case_it12_03(session_dir):
         assert extraction == Extraction.model_validate(EXTRACTION_PAYLOAD)
         payload = json.loads(harness.recorders["llm"].requests[0].content)
         assert "response_format" not in payload
+        assert_emotion_schema(
+            json.loads(payload["messages"][0]["content"].split(SCHEMA_INSTRUCTION, 1)[1])
+        )
         assert payload["messages"][0]["content"] == (
             EXTRACTION_SYSTEM_PROMPT
             + "\n\n"
