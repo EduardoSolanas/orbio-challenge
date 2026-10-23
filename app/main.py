@@ -21,8 +21,10 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
+from starlette.datastructures import UploadFile
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.audio import validate_wav
 from app.config import Settings
 from app.conversation import ConversationEngine
 from app.errors import (
@@ -48,7 +50,10 @@ from app.storage import JsonSessionRepository
 logger = logging.getLogger("app.main")
 
 MAX_JSON_BODY_BYTES = 64 * 1024
+MAX_AUDIO_FILE_BYTES = 10 * 1024 * 1024
+MAX_MULTIPART_BYTES = MAX_AUDIO_FILE_BYTES + 64 * 1024
 MAX_SPEECH_TEXT_CHARS = 4000
+AUDIO_FIELD = "file"
 DEFAULT_KNOWLEDGE_PATH = Path(__file__).parent / "knowledge" / "northstar-faq.json"
 STATIC_DIR = Path(__file__).parent / "static"
 HEALTHY = {"status": "ok"}
@@ -177,10 +182,12 @@ class CorrelationIdMiddleware:
 
 
 class JsonBodyGuardMiddleware:
-    """Pure ASGI preparse guard: count actual receive bytes on every JSON POST.
+    """Pure ASGI preparse guard: count actual receive bytes on every POST.
 
-    Content-Length is never trusted; a single ASGI message larger than the cap is
-    rejected before it is retained (IC §12).
+    JSON routes keep the 64 KiB cap; the transcription upload keeps its separate
+    10 MiB file / 10 MiB + 64 KiB multipart caps (IC §7, §12). Content-Length is
+    never trusted; a single ASGI message larger than the cap is rejected before
+    it is retained.
     """
 
     def __init__(self, app) -> None:
@@ -191,9 +198,14 @@ class JsonBodyGuardMiddleware:
             await self.app(scope, receive, send)
             return
         path = scope["path"]
-        if not path.startswith("/api/") or path == "/api/transcriptions":
+        if not path.startswith("/api/"):
             await self.app(scope, receive, send)
             return
+        limit = (
+            MAX_MULTIPART_BYTES
+            if path == "/api/transcriptions"
+            else MAX_JSON_BODY_BYTES
+        )
 
         chunks: list[bytes] = []
         total = 0
@@ -203,7 +215,7 @@ class JsonBodyGuardMiddleware:
                 return
             body = message.get("body", b"")
             total += len(body)
-            if total > MAX_JSON_BODY_BYTES:
+            if total > limit:
                 request_id = scope.get("state", {}).get("request_id") or str(uuid4())
                 await _send_error(send, app_error(INPUT_TOO_LARGE), request_id)
                 return
@@ -222,6 +234,22 @@ class JsonBodyGuardMiddleware:
             return await receive()
 
         await self.app(scope, replay, send)
+
+
+async def _read_upload(upload: UploadFile) -> bytes:
+    """Read an upload in 64 KiB chunks, rejecting the 10 MiB file cap early."""
+
+    chunks: list[bytes] = []
+    total = 0
+    while True:
+        chunk = await upload.read(64 * 1024)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > MAX_AUDIO_FILE_BYTES:
+            raise app_error(INPUT_TOO_LARGE)
+        chunks.append(chunk)
+    return b"".join(chunks)
 
 
 class SpeechRequest(ContractModel):
@@ -357,6 +385,21 @@ def create_app(
             session_uuid, command
         )
         return JSONResponse(response.model_dump(mode="json"))
+
+    @app.post("/api/transcriptions")
+    async def transcriptions(request: Request):
+        async with request.form(max_part_size=MAX_MULTIPART_BYTES) as form:
+            uploads = form.getlist(AUDIO_FIELD)
+            if (
+                set(form.keys()) != {AUDIO_FIELD}
+                or len(uploads) != 1
+                or not isinstance(uploads[0], UploadFile)
+            ):
+                raise app_error(INVALID_REQUEST)
+            audio = await _read_upload(uploads[0])
+        validate_wav(audio)
+        text = await request.app.state.provider.transcribe(audio)
+        return JSONResponse({"text": text})
 
     @app.post("/api/sessions/{session_id}/speech")
     async def speech(session_id: str, request: Request):
