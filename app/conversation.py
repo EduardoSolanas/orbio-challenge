@@ -38,6 +38,7 @@ from app.schemas import (
     Message,
     MessageView,
     ReplayRecord,
+    RecentMessage,
     Session,
     SESSION_SCHEMA_VERSION,
     SessionView,
@@ -182,17 +183,49 @@ def _revision_conflict(current_revision: int) -> AppError:
     return error
 
 
-def _extraction_context(session: Session, current_message: str) -> ExtractionContext:
-    recent = [
-        {"role": message.role, "text": message.text}
-        for message in session.messages[-RECENT_MESSAGE_LIMIT:]
-    ]
+def _intake_started(session: Session) -> bool:
+    """Whether this session's intake has begun, from its committed state.
+
+    Durable ``intake_started`` is UX-01's additive field; until it exists, the
+    documented inference rule decides: any accepted fact, pending issue,
+    rejection, review token, summary or completion means intake has begun.
+    """
+
+    return (
+        any(getattr(session.slots, field) is not None for field in FIELD_ORDER)
+        or bool(session.pending_clarifications)
+        or session.review_rejected
+        or session.pending_review_revision is not None
+        or session.summary is not None
+        or session.status == "completed"
+    )
+
+
+def build_extraction_context(
+    session: Session, current_message: str
+) -> ExtractionContext:
+    """Copy the authoritative session state into a detached extraction context.
+
+    ``recent_messages`` is exactly the last 12 committed messages in stored
+    order; the current message is supplied once, outside that list. Every nested
+    object is copied so a provider cannot mutate the loaded session by keeping a
+    reference (IC §13.4 "Exact model context and window algorithm").
+    """
+
     return ExtractionContext(
-        slots=session.slots,
-        pending_clarifications=session.pending_clarifications,
-        recent_messages=recent,
+        slots=session.slots.model_copy(deep=True),
+        pending_clarifications={
+            field: clarification.model_copy(deep=True)
+            for field, clarification in session.pending_clarifications.items()
+        },
+        recent_messages=[
+            RecentMessage(role=message.role, text=message.text)
+            for message in session.messages[-RECENT_MESSAGE_LIMIT:]
+        ],
         current_message=current_message,
         status=session.status,
+        intake_started=_intake_started(session),
+        reply_language=session.reply_language,
         frustration_active=session.frustration_active,
     )
 
@@ -321,7 +354,7 @@ class ConversationEngine:
             try:
                 async with asyncio.timeout(TEXT_TURN_DEADLINE_SECONDS):
                     extraction = await self.provider.extract(
-                        _extraction_context(session, command.text)
+                        build_extraction_context(session, command.text)
                     )
                     reply_language = _reply_language(session, extraction)
                     if extraction.detected_language == "unsupported":

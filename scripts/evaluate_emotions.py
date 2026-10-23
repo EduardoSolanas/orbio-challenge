@@ -61,6 +61,7 @@ def build_context(case: dict[str, object]) -> ExtractionContext:
         ],
         current_message=case["message"],
         status="collecting",
+        intake_started=False,
         frustration_active=case["frustration_active"],
     )
 

@@ -137,6 +137,7 @@ class ExtractionContext(ContractModel):
     recent_messages: list[RecentMessage]
     current_message: StrictStr
     status: Status
+    intake_started: StrictBool
     reply_language: Language = "en"
     frustration_active: StrictBool
 

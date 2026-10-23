@@ -595,6 +595,7 @@ def test_serialize_context_is_json_with_unicode_preserved() -> None:
         recent_messages=[RecentMessage(role="user", text="café")],
         current_message="café — broke",
         status="collecting",
+        intake_started=False,
         frustration_active=False,
     )
     serialized = serialize_context(context)

@@ -144,6 +144,7 @@ def model_payloads():
             "recent_messages": [],
             "current_message": "My order arrived broken.",
             "status": "collecting",
+            "intake_started": False,
             "frustration_active": False,
         },
         TurnRequest: {

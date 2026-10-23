@@ -86,6 +86,7 @@ def test_extraction_context_defaults_to_english_reply_language():
         recent_messages=[],
         current_message="hello",
         status="collecting",
+        intake_started=False,
         frustration_active=False,
     )
 
@@ -99,6 +100,7 @@ def test_extraction_context_accepts_spanish_reply_language():
         recent_messages=[],
         current_message="hola",
         status="collecting",
+        intake_started=False,
         reply_language="es",
         frustration_active=False,
     )

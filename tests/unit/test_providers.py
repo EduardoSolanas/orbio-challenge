@@ -94,6 +94,7 @@ def extraction_context(text: str = "My order NS-000123 arrived broken.") -> Extr
         recent_messages=[],
         current_message=text,
         status="collecting",
+        intake_started=False,
         frustration_active=False,
     )
 

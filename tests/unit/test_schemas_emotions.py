@@ -126,6 +126,7 @@ def extraction_context_payload() -> dict:
         "recent_messages": [],
         "current_message": "My item is broken.",
         "status": "collecting",
+        "intake_started": False,
         "frustration_active": False,
     }
 
@@ -294,6 +295,31 @@ def test_extraction_context_frustration_active_is_a_strict_boolean(value):
 def test_extraction_context_requires_frustration_active():
     payload = extraction_context_payload()
     del payload["frustration_active"]
+
+    with pytest.raises(ValidationError):
+        ExtractionContext.model_validate(payload)
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_extraction_context_intake_started_accepts_real_booleans(value):
+    context = ExtractionContext.model_validate(
+        {**extraction_context_payload(), "intake_started": value}
+    )
+
+    assert context.intake_started is value
+
+
+@pytest.mark.parametrize("value", [0, 1, "true", None], ids=str)
+def test_extraction_context_intake_started_is_a_strict_boolean(value):
+    with pytest.raises(ValidationError):
+        ExtractionContext.model_validate(
+            {**extraction_context_payload(), "intake_started": value}
+        )
+
+
+def test_extraction_context_requires_intake_started():
+    payload = extraction_context_payload()
+    del payload["intake_started"]
 
     with pytest.raises(ValidationError):
         ExtractionContext.model_validate(payload)
