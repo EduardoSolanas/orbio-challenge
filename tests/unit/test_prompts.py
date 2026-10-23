@@ -141,6 +141,62 @@ EXPECTED_EXAMPLES = [
         },
     },
     {
+        "customer_message": "How long does delivery take?",
+        "accepted_slots": EMPTY_SLOTS,
+        "pending_clarifications": {},
+        "extraction": {
+            "intent": "question",
+            "has_question": True,
+            "candidates": EMPTY_SLOTS,
+            "explicit_corrections": [],
+            "ambiguous_fields": [],
+            "detected_language": "en",
+            "requested_language": None,
+        },
+    },
+    {
+        "customer_message": "Which payment methods are accepted?",
+        "accepted_slots": EMPTY_SLOTS,
+        "pending_clarifications": {},
+        "extraction": {
+            "intent": "question",
+            "has_question": True,
+            "candidates": EMPTY_SLOTS,
+            "explicit_corrections": [],
+            "ambiguous_fields": [],
+            "detected_language": "en",
+            "requested_language": None,
+        },
+    },
+    {
+        "customer_message": "What can you help me with?",
+        "accepted_slots": EMPTY_SLOTS,
+        "pending_clarifications": {},
+        "extraction": {
+            "intent": "capability",
+            "has_question": True,
+            "candidates": EMPTY_SLOTS,
+            "explicit_corrections": [],
+            "ambiguous_fields": [],
+            "detected_language": "en",
+            "requested_language": None,
+        },
+    },
+    {
+        "customer_message": "Continue my issue",
+        "accepted_slots": EMPTY_SLOTS,
+        "pending_clarifications": {},
+        "extraction": {
+            "intent": "start_intake",
+            "has_question": False,
+            "candidates": EMPTY_SLOTS,
+            "explicit_corrections": [],
+            "ambiguous_fields": [],
+            "detected_language": "en",
+            "requested_language": None,
+        },
+    },
+    {
         "customer_message": "Mi pedido NS-000123 llegó dañado, urgencia alta",
         "accepted_slots": EMPTY_SLOTS,
         "pending_clarifications": {},
@@ -181,13 +237,22 @@ def test_system_instructions_are_the_exact_contract_text() -> None:
     assert SYSTEM_INSTRUCTIONS.count("\n") == 4
 
 
-def test_extraction_examples_are_the_seven_fixed_objects() -> None:
+def test_extraction_examples_are_the_eleven_fixed_objects() -> None:
     assert EXTRACTION_EXAMPLES == tuple(EXPECTED_EXAMPLES)
-    assert len(EXTRACTION_EXAMPLES) == 7
+    assert len(EXTRACTION_EXAMPLES) == 11
     assert {example["extraction"]["detected_language"] for example in EXTRACTION_EXAMPLES} == {
         "en",
         "es",
         "unsupported",
+    }
+    assert {example["extraction"]["intent"] for example in EXTRACTION_EXAMPLES} >= {
+        "provide_details",
+        "correction",
+        "unrelated",
+        "social",
+        "question",
+        "capability",
+        "start_intake",
     }
 
 

@@ -225,7 +225,7 @@ async def case_it11_08(settings, provider, session_dir, tmp_path):
             "kb_version": fixture["version"],
         }
         assert body["citations"] == [expected]
-        assert body["reply"] == f"{answer_text}\n\n{MISSING_ORDER}"
+        assert body["reply"] == answer_text
 
         disk = read_session(session_dir, session_id)
         assert disk["messages"][-1]["citations"] == [expected]
