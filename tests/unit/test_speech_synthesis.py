@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import struct
 import wave
 from dataclasses import replace
 from io import BytesIO
@@ -25,7 +26,7 @@ from app.providers import (
     decode_pcm_wav,
     split_tts_text,
 )
-from tests.support.fakes import make_wav
+from tests.support.fakes import make_streaming_wav, make_wav
 from tests.unit.test_providers import (
     LLM_PROFILE,
     RAG_PROFILE,
@@ -177,6 +178,167 @@ def test_decode_pcm_wav_accepts_the_sample_rate_window(rate):
 @pytest.mark.parametrize("channels", [1, 2])
 def test_decode_pcm_wav_accepts_mono_and_stereo(channels):
     assert decode_pcm_wav(make_wav(channels=channels))[0] == channels
+
+
+# ---------------------------------------------------------------------------
+# Streaming WAV: Groq Orpheus sends 0xFFFFFFFF RIFF/data sizes
+# ---------------------------------------------------------------------------
+
+
+def test_decode_pcm_wav_accepts_groq_streaming_unspecified_sizes():
+    audio = make_streaming_wav(rate=24000, frames=1600)
+
+    channels, width, rate, frames = decode_pcm_wav(audio)
+
+    assert (channels, width, rate) == (1, 2, 24000)
+    assert frames == b"\x00" * (1600 * 2)
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"riff_size": "finite"},
+        {"data_size": "finite"},
+        {"with_list": False},
+    ],
+    ids=["finite-riff-size", "finite-data-size", "no-list-chunk"],
+)
+def test_decode_pcm_wav_accepts_streaming_size_combinations(overrides):
+    audio = make_streaming_wav(frames=800)
+    if overrides.get("riff_size") == "finite":
+        audio = make_streaming_wav(frames=800, riff_size=len(audio) - 8)
+    elif overrides.get("data_size") == "finite":
+        audio = make_streaming_wav(frames=800, data_size=800 * 2)
+    else:
+        audio = make_streaming_wav(frames=800, with_list=False)
+
+    channels, width, rate, frames = decode_pcm_wav(audio)
+
+    assert (channels, width, rate) == (1, 2, 24000)
+    assert frames == b"\x00" * (800 * 2)
+
+
+def test_decode_pcm_wav_accepts_streaming_stereo_at_the_rate_window():
+    audio = make_streaming_wav(channels=2, rate=48000, frames=480)
+
+    channels, width, rate, frames = decode_pcm_wav(audio)
+
+    assert (channels, width, rate) == (2, 2, 48000)
+    assert frames == b"\x00" * (480 * 2 * 2)
+
+
+def float_format_wav() -> bytes:
+    audio = bytearray(make_streaming_wav(with_list=False))
+    audio[20:22] = struct.pack("<H", 3)  # WAVE_FORMAT_IEEE_FLOAT
+    return bytes(audio)
+
+
+def streaming_list_size_wav() -> bytes:
+    audio = bytearray(make_streaming_wav())
+    audio[40:44] = struct.pack("<L", 0xFFFFFFFF)  # LIST size unspecified
+    return bytes(audio)
+
+
+def test_decode_pcm_wav_accepts_streaming_with_an_odd_sized_padded_chunk():
+    audio = make_streaming_wav(with_list=False)
+    fmt_chunk = audio[12:36]
+    odd_chunk = b"LIST" + struct.pack("<L", 1) + b"x" + b"\x00"
+    audio = b"RIFF\xff\xff\xff\xffWAVE" + odd_chunk + fmt_chunk + audio[36:]
+
+    channels, width, rate, frames = decode_pcm_wav(audio)
+
+    assert (channels, width, rate) == (1, 2, 24000)
+    assert frames == b"\x00" * (1600 * 2)
+
+
+def test_decode_pcm_wav_accepts_streaming_with_many_empty_chunks():
+    empty_chunks = b"".join(b"JUNK" + struct.pack("<L", 0) for _ in range(3300))
+    audio = (
+        b"RIFF\xff\xff\xff\xffWAVE"
+        + empty_chunks
+        + make_streaming_wav(with_list=False)[12:]
+    )
+
+    channels, width, rate, frames = decode_pcm_wav(audio)
+
+    assert (channels, width, rate) == (1, 2, 24000)
+    assert frames == b"\x00" * (1600 * 2)
+
+
+@pytest.mark.parametrize(
+    ("audio", "message"),
+    [
+        (make_streaming_wav(frames=0), "empty or truncated WAV frames"),
+        (make_streaming_wav(frames=100) + b"\x00", "empty or truncated WAV frames"),
+        (make_streaming_wav(frames=100, data_size=202), "empty or truncated WAV frames"),
+        (make_streaming_wav(channels=3), "unsupported WAV geometry"),
+        (make_streaming_wav(width=1), "unsupported WAV geometry"),
+        (make_streaming_wav(width=4), "unsupported WAV geometry"),
+        (make_streaming_wav(rate=7999), "unsupported WAV sample rate"),
+        (make_streaming_wav(rate=48001), "unsupported WAV sample rate"),
+        (
+            make_streaming_wav(with_list=False)[:36],
+            "not a decodable PCM WAV",
+        ),
+        (b"RIFF\xff\xff\xff\xffWAVEfmt ", "not a decodable PCM WAV"),
+        (
+            make_streaming_wav(with_list=False)[:20] + b"\x00" * 4,
+            "not a decodable PCM WAV",
+        ),
+        (
+            b"RIFF\xff\xff\xff\xffWAVE"
+            + b"data\x04\x00\x00\x00\x00\x00\x00\x00",
+            "not a decodable PCM WAV",
+        ),
+        (float_format_wav(), "not a decodable PCM WAV"),
+        (streaming_list_size_wav(), "not a decodable PCM WAV"),
+        (make_streaming_wav(channels=0), "not a decodable PCM WAV"),
+        (make_streaming_wav(width=0), "not a decodable PCM WAV"),
+        (make_streaming_wav(width=2, bits=17), "empty or truncated WAV frames"),
+        (make_streaming_wav(width=2, bits=0xFFFF), "empty or truncated WAV frames"),
+        (b"", "not a decodable PCM WAV"),
+        (b"ID3-mp3-bytes", "not a decodable PCM WAV"),
+        (b"RIFF\xff\xff\xff\xffWAVE", "not a decodable PCM WAV"),
+        (
+            b"RIFF\xff\xff\xff\xffXXXX" + make_streaming_wav()[12:],
+            "not a decodable PCM WAV",
+        ),
+        (
+            b"XXXX\xff\xff\xff\xffWAVE" + make_streaming_wav()[12:],
+            "not a decodable PCM WAV",
+        ),
+    ],
+    ids=[
+        "empty-data",
+        "incomplete-frame",
+        "declared-data-exceeds-buffer",
+        "three-channels",
+        "eight-bit",
+        "thirty-two-bit",
+        "rate-below-window",
+        "rate-above-window",
+        "fmt-only",
+        "truncated-header",
+        "truncated-fmt-chunk",
+        "data-before-fmt",
+        "float-format",
+        "streaming-list-size",
+        "zero-channels",
+        "zero-bits",
+        "seventeen-bits",
+        "signed-overflow-bits",
+        "empty",
+        "mp3",
+        "header-only",
+        "wrong-wave-tag",
+        "wrong-riff-tag",
+    ],
+)
+def test_decode_pcm_wav_rejects_invalid_streaming_audio(audio, message):
+    with pytest.raises(ValueError) as caught:
+        decode_pcm_wav(audio)
+
+    assert str(caught.value) == message
 
 
 @pytest.mark.parametrize(
