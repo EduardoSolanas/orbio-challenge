@@ -87,9 +87,10 @@ Run the app locally and open `http://127.0.0.1:8000`:
 
 The Docker path is `docs/deployment/compose.yaml` with one `app` service, one
 Uvicorn worker and a named `sessions` volume at `/data`; it publishes only host
-loopback port 8000. No `.env.example` is committed in this revision — supply the
-same variables through `env_file` as described in `startup.md`. The container
-build, start and restart/resume gate has **not been run** here (see
+loopback port 8000. The example variable file is `docs/deployment/.env.example`
+(no secrets; copy it to `docs/deployment/.env`, which Git ignores). The image
+build and a boot smoke have been run; the Compose up/restart/resume and the live
+text/voice acceptance steps have **not** (see
 [Quality gates](#quality-gates-commands-and-actual-status)).
 
 ## Architecture and data flow
@@ -251,8 +252,9 @@ separate message.` — one policy question per message.
 
 Run from the repository root with the project `.venv` (Python 3.11.15,
 pytest 9.1.1, mutmut 3.8.0). Statuses below are the **actually observed** results
-recorded in `reports/gates/gate1.md` at revision `7f9f258`, plus the checks run for
-this documentation change. They are not projections.
+recorded in `reports/gates/gate1.md` (revision `7f9f258`), `reports/gates/gate2.md`
+(revision `1a91e86`) and the independent re-run in `reports/final-verification.md`
+(HEAD `eed3ac2`, logs in `reports/logs/ORB-20/`). They are not projections.
 
 ```bash
 .venv/bin/python -m pip check
@@ -266,13 +268,13 @@ this documentation change. They are not projections.
 | Gate | Actual status |
 |---|---|
 | `pip check` | **PASS** — exit 0, "No broken requirements found." |
-| Unit + integration + coverage | **PASS** — 1167 passed, 0 failed, 0 skipped; aggregate coverage 97.15% (gate 95%); 185/185 IT ids collected and passed once. |
+| Unit + integration + coverage | **PASS** — gate 1: 1167 passed, aggregate coverage 97.15% (gate 95%). Re-run at HEAD `eed3ac2`: 1249 passed, 0 failed, 0 skipped (coverage not re-measured since gate 1); 185/185 IT ids collected and passed exactly once. |
 | Playwright journeys J01–J10 | **PASS** — 10 passed, 0 failed, 0 skipped, 0 reruns (Chromium). |
-| E2E inventory checker | **PASS at revision `7f9f258`**; currently **FAILING at HEAD** with `stale source revision: evidence ['7f9f258…'] != HEAD` because `tests/e2e/cases.json` pins the revision it was generated at. It must be re-stamped and re-run at the final delivery revision. |
-| Example-session/README test | **PASS** — `.venv/bin/python -m pytest tests/unit/test_example_session.py -q`, 28 passed. The full `tests/unit tests/integration` suite at this documentation revision is 1195 passed (1167 gate-1 tests + these 28), exit 0. |
-| Mutation gate | **Mutation gate: incomplete.** Per-module `mutmut` runs exist in `reports/logs/ORB-01/…ORB-05` with argued-equivalent survivors, but there is no consolidated framework run at HEAD, no `reports/mutation-results.txt`, no `reports/mutation-summary.json` and no independently approved `reports/mutation-review.json`. Do not treat any per-module run as the gate. |
-| Container image build/smoke | **not verified** — no image was built for this revision. Command: `docker build -f docs/deployment/Dockerfile -t northstar-test .` then `docker run --rm --entrypoint python -v "$PWD/tests:/checks:ro" northstar-test /checks/support/image_smoke.py`. |
-| Live provider smoke | **Live provider smoke: not verified** — no real LLM/STT/TTS credentials or compatible servers were used. Command: `RUN_LIVE_TESTS=1 .venv/bin/python -m pytest tests/live -m live -q` with all four roles configured. |
+| E2E inventory checker | **PASS when stamped and run at the revision under test** (gate 1 at `7f9f258`; re-run at `eed3ac2` in a throwaway worktree with `tests/e2e/cases.json` re-stamped: 10/10 passed, checker exit 0). **FAILS in the committed checkout** (exit 1, `stale source revision`) because the manifest and `reports/e2e-*.json` pin an older revision than HEAD; any later commit re-stales it. Re-stamp `tests/e2e/cases.json` and re-run the Playwright command at the final delivery revision. |
+| Example-session/README test | **PASS** — `.venv/bin/python -m pytest tests/unit/test_example_session.py -q`, 28 passed. At this documentation revision the full suite was 1195 passed; it has since grown to 1249 (see above). |
+| Mutation gate | **Mutation gate: incomplete at HEAD as a literal command.** The full `mutmut` 3.8.0 run is complete and approved (`reports/gates/gate2.md`, revision `1a91e86`): 2360 generated, 2250 killed, 110 approved equivalent, 0 invalid, 0 unresolved; both checkers exit 0 when run at that pinned revision (re-verified in a worktree: `reports/logs/ORB-20/05b-…` and `06b-…`). In the committed checkout at HEAD both checkers exit 1 with `stale source revision` because they pin to git HEAD and later commits moved it. Residual: `_lock_context` is skipped by mutmut itself (no mutation evidence for the lock path). |
+| Container image build/smoke | **PASS (image only)** — `docker build -f docs/deployment/Dockerfile -t northstar-test .` exit 0; `docker run --rm --entrypoint python -v "$PWD/tests:/checks:ro" northstar-test /checks/support/image_smoke.py` exit 0 (uid 10001 non-root, `/health` ok, session/turn roundtrip). Two separate containers sharing one bind-mounted directory created then resumed a session (HTTP 200, revision 0). **Not verified:** `docker compose up` healthy state, restart/resume through Compose, and the live text/voice acceptance steps (startup.md steps 2–5). |
+| Live provider smoke | **Live provider smoke: not verified** — no real LLM/STT/TTS credentials or compatible servers were used. Command: configure all four role profiles, then `.venv/bin/python scripts/check_backends.py` (writes `reports/backend-compatibility.json`). It needs a real spoken WAV at `tests/fixtures/audio/spoken.wav` (or `--wav PATH`); none is committed, so the STT check fails with `fixture_missing` until the operator supplies one. There is no `tests/live` suite in this repository. |
 
 **Actual time spent:** approximately 4 hours 50 minutes of agent wall-clock from
 the first implementation commit (`2026-10-22T22:24Z`) to the Gate 1 run
