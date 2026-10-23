@@ -58,8 +58,9 @@ def _readme() -> str:
 
 def test_example_session_is_a_valid_completed_session():
     session = _load_example()
-    assert session.schema_version == 1
+    assert session.schema_version == 2
     assert session.status == "completed"
+    assert session.frustration_active is False
     assert session.confirmation is not None
     assert session.confirmation.review_revision == 1
     assert session.pending_review_revision is None

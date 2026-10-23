@@ -53,6 +53,8 @@ def make_extraction(
     ambiguous_fields: Iterable[str] = (),
     detected_language: str = "en",
     requested_language: str | None = None,
+    sentiment: str = "neutral",
+    frustration: str = "none",
 ) -> Extraction:
     return Extraction(
         intent=intent,
@@ -62,6 +64,8 @@ def make_extraction(
         ambiguous_fields=list(ambiguous_fields),
         detected_language=detected_language,
         requested_language=requested_language,
+        sentiment=sentiment,
+        frustration=frustration,
     )
 
 
@@ -82,10 +86,11 @@ def make_session(
     revision: int = 0,
     status: str = "collecting",
     reply_language: str = "en",
-    slots: Slots | None = None,
-    messages: list[Message] | None = None,
-    pending_clarifications: dict | None = None,
-    pending_review_revision: int | None = None,
+    frustration_active: bool = False,
+    slots=None,
+    messages: list | None = None,
+    pending_clarifications=None,
+    pending_review_revision=None,
     review_rejected: bool = False,
     collection_turn_count: int = 0,
     summary: str | None = None,
@@ -94,13 +99,14 @@ def make_session(
 ) -> Session:
     now = datetime.now(timezone.utc).replace(microsecond=0)
     return Session(
-        schema_version=1,
+        schema_version=2,
         session_id=session_id or uuid4(),
         revision=revision,
         created_at=now,
         updated_at=now,
         status=status,
         reply_language=reply_language,
+        frustration_active=frustration_active,
         slots=slots or make_slots(),
         messages=messages or [],
         pending_clarifications=pending_clarifications or {},
@@ -120,6 +126,8 @@ def make_message(text: str = "Hello", role: str = "assistant") -> Message:
         text=text,
         input_mode="system" if role == "assistant" else "text",
         created_at=datetime.now(timezone.utc).replace(microsecond=0),
+        sentiment=None if role == "assistant" else "neutral",
+        frustration=None if role == "assistant" else "none",
     )
 
 

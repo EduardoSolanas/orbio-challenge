@@ -73,6 +73,8 @@ def _seeded_messages(turns: int, now) -> list[Message]:
             input_mode="system",
             created_at=now,
             citations=[],
+            sentiment=None,
+            frustration=None,
         )
     ]
     for index in range(turns):
@@ -84,6 +86,8 @@ def _seeded_messages(turns: int, now) -> list[Message]:
                 input_mode="text",
                 created_at=now,
                 citations=[],
+                sentiment="neutral",
+                frustration="none",
             )
         )
         messages.append(
@@ -94,6 +98,8 @@ def _seeded_messages(turns: int, now) -> list[Message]:
                 input_mode="system",
                 created_at=now,
                 citations=[],
+                sentiment=None,
+                frustration=None,
             )
         )
     return messages
@@ -122,12 +128,13 @@ async def seed_session(
 
     now = _now()
     session = Session(
-        schema_version=1,
+        schema_version=2,
         session_id=uuid4(),
         revision=revision,
         created_at=now,
         updated_at=now,
         status=status,
+        frustration_active=False,
         slots=Slots(**slots),
         messages=_seeded_messages(revision, now),
         pending_clarifications={},

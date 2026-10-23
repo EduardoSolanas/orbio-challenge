@@ -37,6 +37,8 @@ def make_extraction(
         ambiguous_fields=ambiguous_fields or [],
         detected_language=detected_language,
         requested_language=requested_language,
+        sentiment="neutral",
+        frustration="none",
     )
 
 

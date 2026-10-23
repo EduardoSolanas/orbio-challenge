@@ -47,6 +47,8 @@ EXTRACTION = {
     "ambiguous_fields": [],
 "detected_language": "en",
 "requested_language": None,
+"sentiment": "neutral",
+"frustration": "none",
 }
 
 TURN_TEXT = "My order NS-000123 arrived broken."

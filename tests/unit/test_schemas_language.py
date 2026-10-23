@@ -35,6 +35,8 @@ def extraction_payload(**overrides):
         "ambiguous_fields": [],
         "detected_language": "en",
         "requested_language": None,
+        "sentiment": "neutral",
+        "frustration": "none",
     }
     payload.update(overrides)
     return payload
@@ -84,6 +86,7 @@ def test_extraction_context_defaults_to_english_reply_language():
         recent_messages=[],
         current_message="hello",
         status="collecting",
+        frustration_active=False,
     )
 
     assert context.reply_language == "en"
@@ -97,6 +100,7 @@ def test_extraction_context_accepts_spanish_reply_language():
         current_message="hola",
         status="collecting",
         reply_language="es",
+        frustration_active=False,
     )
 
     assert context.reply_language == "es"
@@ -117,6 +121,8 @@ def test_message_language_defaults_to_english_for_version_one_files():
         text="Hello",
         input_mode="system",
         created_at=NOW,
+        sentiment=None,
+        frustration=None,
     )
 
     assert message.language == "en"
@@ -130,6 +136,8 @@ def test_message_language_must_be_en_or_es():
         input_mode="system",
         created_at=NOW,
         language="es",
+        sentiment=None,
+        frustration=None,
     )
     with pytest.raises(ValidationError):
         Message(
@@ -139,17 +147,20 @@ def test_message_language_must_be_en_or_es():
             input_mode="system",
             created_at=NOW,
             language="fr",
+            sentiment=None,
+            frustration=None,
         )
 
 
 def test_session_reply_language_defaults_to_english_and_accepts_spanish():
     base = {
-        "schema_version": 1,
+        "schema_version": 2,
         "session_id": uuid4(),
         "revision": 0,
         "created_at": NOW,
         "updated_at": NOW,
         "status": "collecting",
+        "frustration_active": False,
         "slots": Slots(**NO_SLOTS),
         "messages": [],
         "pending_clarifications": {},

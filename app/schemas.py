@@ -22,12 +22,15 @@ from pydantic import (
     StrictInt,
     StrictStr,
     field_validator,
+    model_validator,
 )
 
 FieldName = Literal["order_number", "category", "description", "urgency"]
 Status = Literal["collecting", "awaiting_confirmation", "completed"]
 Language = Literal["en", "es"]
 DetectedLanguage = Literal["en", "es", "unsupported"]
+Sentiment = Literal["positive", "neutral", "negative", "uncertain"]
+Frustration = Literal["none", "present", "uncertain"]
 Intent = Literal[
     "provide_details",
     "correction",
@@ -45,7 +48,8 @@ MessageInputMode = Literal["text", "transcript", "system"]
 MessageRole = Literal["user", "assistant"]
 
 MAX_REQUEST_TEXT = 4000
-SESSION_SCHEMA_VERSION = 1
+LEGACY_SESSION_SCHEMA_VERSION = 1
+SESSION_SCHEMA_VERSION = 2
 
 
 def _canonical_uuid(value: object) -> UUID:
@@ -116,6 +120,8 @@ class Extraction(ContractModel):
     ambiguous_fields: list[FieldName]
     detected_language: DetectedLanguage
     requested_language: Language | None
+    sentiment: Sentiment
+    frustration: Frustration
 
     @field_validator("explicit_corrections", "ambiguous_fields")
     @classmethod
@@ -132,6 +138,7 @@ class ExtractionContext(ContractModel):
     current_message: StrictStr
     status: Status
     reply_language: Language = "en"
+    frustration_active: StrictBool
 
 
 class TurnRequest(ContractModel):
@@ -167,6 +174,17 @@ class Message(ContractModel):
     created_at: UtcTimestamp
     citations: list[Citation] = Field(default_factory=list)
     language: Language = "en"
+    sentiment: Sentiment | None
+    frustration: Frustration | None
+
+    @model_validator(mode="after")
+    def _labels_only_on_customer_text(self) -> "Message":
+        if self.role == "assistant" or self.input_mode == "system":
+            if self.sentiment is not None or self.frustration is not None:
+                raise ValueError(
+                    "assistant and system messages must not carry emotion labels"
+                )
+        return self
 
 
 class MessageView(Message):
@@ -185,6 +203,7 @@ class SessionView(ContractModel):
     revision: NonNegativeInt
     status: Status
     reply_language: Language = "en"
+    frustration_active: StrictBool
     slots: Slots
     messages: list[MessageView]
     pending_clarifications: dict[FieldName, Clarification]
@@ -197,6 +216,7 @@ class TurnResponse(ContractModel):
     revision: NonNegativeInt
     status: Status
     reply_language: Language = "en"
+    frustration_active: StrictBool
     reply: NonBlankText
     message_id: CanonicalUUID
     slots: Slots
@@ -225,6 +245,7 @@ class Session(ContractModel):
     updated_at: UtcTimestamp
     status: Status
     reply_language: Language = "en"
+    frustration_active: StrictBool
     slots: Slots
     messages: list[Message]
     pending_clarifications: dict[FieldName, Clarification]
@@ -237,7 +258,7 @@ class Session(ContractModel):
 
     @field_validator("schema_version")
     @classmethod
-    def _schema_version_one(cls, value: int) -> int:
+    def _supported_schema_version(cls, value: int) -> int:
         if value != SESSION_SCHEMA_VERSION:
             raise ValueError("unsupported session schema_version")
         return value

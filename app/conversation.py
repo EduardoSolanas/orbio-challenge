@@ -38,6 +38,7 @@ from app.schemas import (
     MessageView,
     ReplayRecord,
     Session,
+    SESSION_SCHEMA_VERSION,
     SessionView,
     Slots,
     TurnRequest,
@@ -131,6 +132,7 @@ def _view(session: Session, speech_languages: frozenset[str]) -> SessionView:
         revision=session.revision,
         status=session.status,
         reply_language=session.reply_language,
+        frustration_active=session.frustration_active,
         slots=session.slots,
         messages=[
             MessageView(
@@ -168,6 +170,7 @@ def _extraction_context(session: Session, current_message: str) -> ExtractionCon
         recent_messages=recent,
         current_message=current_message,
         status=session.status,
+        frustration_active=session.frustration_active,
     )
 
 
@@ -238,15 +241,18 @@ class ConversationEngine:
             created_at=now,
             citations=[],
             language="en",
+            sentiment=None,
+            frustration=None,
         )
         session = Session(
-            schema_version=1,
+            schema_version=SESSION_SCHEMA_VERSION,
             session_id=session_id,
             revision=0,
             created_at=now,
             updated_at=now,
             status="collecting",
             reply_language="en",
+            frustration_active=False,
             slots=Slots(
                 order_number=None,
                 category=None,
@@ -380,6 +386,8 @@ class ConversationEngine:
                 created_at=now,
                 citations=[],
                 language=session.reply_language,
+                sentiment=None,
+                frustration=None,
             )
             assistant_message = Message(
                 id=uuid4(),
@@ -389,12 +397,15 @@ class ConversationEngine:
                 created_at=now,
                 citations=[],
                 language=session.reply_language,
+                sentiment=None,
+                frustration=None,
             )
             response = TurnResponse(
                 session_id=session.session_id,
                 revision=new_revision,
                 status="completed",
                 reply_language=session.reply_language,
+                frustration_active=session.frustration_active,
                 reply=reply,
                 message_id=assistant_message.id,
                 slots=session.slots,
@@ -592,6 +603,8 @@ class ConversationEngine:
             created_at=now,
             citations=[],
             language=user_language,
+            sentiment=extraction.sentiment,
+            frustration=extraction.frustration,
         )
         assistant_message = Message(
             id=uuid4(),
@@ -601,12 +614,15 @@ class ConversationEngine:
             created_at=now,
             citations=list(plan.citations),
             language=plan.language,
+            sentiment=None,
+            frustration=None,
         )
         response = TurnResponse(
             session_id=session.session_id,
             revision=new_revision,
             status=plan.status,
             reply_language=plan.language,
+            frustration_active=session.frustration_active,
             reply=plan.reply,
             message_id=assistant_message.id,
             slots=outcome.slots,

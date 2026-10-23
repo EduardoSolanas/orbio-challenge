@@ -58,7 +58,7 @@ async def test_saved_json_is_utf8_indented_and_does_not_escape_non_ascii(tmp_pat
 
     raw = (tmp_path / f"{SESSION_ID}.json").read_bytes()
     text = raw.decode("utf-8")
-    assert text.startswith('{\n  "schema_version": 1,')
+    assert text.startswith('{\n  "schema_version": 2,')
     assert "Café — naïve problem" in text
     assert "\\u00e9" not in text
     assert json.loads(text)["session_id"] == str(SESSION_ID)
@@ -92,7 +92,7 @@ async def test_load_future_schema_version_raises_storage_corrupt(tmp_path):
     payload = json.loads(
         make_session(session_id=SESSION_ID).model_dump_json()
     )
-    payload["schema_version"] = 2
+    payload["schema_version"] = 3
     (tmp_path / f"{SESSION_ID}.json").write_text(
         json.dumps(payload), encoding="utf-8"
     )

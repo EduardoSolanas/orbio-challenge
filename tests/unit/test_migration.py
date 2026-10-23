@@ -142,6 +142,38 @@ def test_complete_version_two_document_is_returned_unchanged():
     assert migrate_session_document(original) == original
 
 
+@pytest.mark.parametrize(
+    "name", ["v1-completed.json", "v2-pre-extension.json"], ids=["v1", "v2"]
+)
+def test_migration_leaves_non_dict_entries_for_validation(name):
+    document = load_fixture(name)
+    document["messages"] = ["not-a-message", *document["messages"]]
+    document["requests"] = ["not-a-record", *document["requests"]]
+
+    migrated = migrate_session_document(document)
+
+    assert migrated["messages"][0] == "not-a-message"
+    assert migrated["requests"][0] == "not-a-record"
+    assert migrated["messages"][1]["sentiment"] is None
+    assert migrated["messages"][1]["frustration"] is None
+    assert migrated["requests"][1]["response"]["frustration_active"] is False
+
+
+@pytest.mark.parametrize(
+    "name", ["v1-completed.json", "v2-pre-extension.json"], ids=["v1", "v2"]
+)
+async def test_load_rejects_non_dict_message_entries_as_corruption(tmp_path, name):
+    document = load_fixture(name)
+    document["messages"] = ["not-a-message", *document["messages"]]
+    write_document(tmp_path, document)
+    repository = JsonSessionRepository(tmp_path)
+
+    with pytest.raises(AppError) as excinfo:
+        await repository.load(document["session_id"])
+
+    assert excinfo.value.code == "storage_corrupt"
+
+
 def test_complete_version_two_document_keeps_its_stored_labels():
     migrated = migrate_session_document(load_fixture("v2-active-frustration-es.json"))
 

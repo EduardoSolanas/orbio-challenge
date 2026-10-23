@@ -203,6 +203,8 @@ def main() -> int:
                         ),
                         explicit_corrections=[],
                         ambiguous_fields=[],
+                        sentiment="neutral",
+                        frustration="none",
                     ),
                 )
                 turn = client.post(

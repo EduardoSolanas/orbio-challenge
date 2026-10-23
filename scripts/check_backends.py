@@ -312,6 +312,7 @@ async def run_checks(
             recent_messages=[],
             current_message=EXTRACTION_MESSAGE,
             status="collecting",
+            frustration_active=False,
         )
         extraction_result: Extraction = await provider.extract(context)
         candidates = extraction_result.candidates

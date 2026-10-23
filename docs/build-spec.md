@@ -38,9 +38,9 @@ R9 wording is ambiguous about the depth of voice support. This plan conservative
 
 Opening: “I can help record an issue for Northstar Shop. What is your order number and what happened? Please do not share payment details.”
 
-The user may answer fields in any order, supply several at once, correct earlier answers, or ask what the bot can do. The bot asks only for missing or invalid information, normally one question per reply. It may acknowledge frustration without implementing a separate sentiment model. It explains it records an intake and cannot verify order existence or perform business actions.
+The user may answer fields in any order, supply several at once, correct earlier answers, or ask what the bot can do. The bot asks only for missing or invalid information, normally one question per reply. Structured frustration detection is now required by user-added scope; use the existing extraction call and FEAT-01 in implementation-contract.md. It explains it records an intake and cannot verify order existence or perform business actions.
 
-When all fields are valid, display a structured review and ask the customer to confirm or correct it. Saving a confirmed intake returns a local reference and summary. “Submitted” means saved locally, never sent to a real queue. No account, email address, name, address, authentication flow, real order integration, external ticket creation, or multilingual behavior is required.
+When all fields are valid, display a structured review and ask the customer to confirm or correct it. Saving a confirmed intake returns a local reference and summary. “Submitted” means saved locally, never sent to a real queue. No account, email address, name, address, authentication flow, real order integration, external ticket creation, is required. English/Spanish support is now required by user-added FEAT-02 in implementation-contract.md.
 
 ## 3. Architecture and module boundaries
 
@@ -84,16 +84,18 @@ Service profiles are independently configurable for extraction (LLM), grounded a
 
 Normalization examples: “not urgent” → low; “normal priority” → normal; “urgent” → high; conflicting expressions → clarification. A model proposal is not proof that validation passed. The order format is fictional and does not establish that an order exists. Explain the format when rejected.
 
-Session JSON version 1 has these required keys:
+Session JSON version 2 has these required keys:
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "session_id": "server-generated-uuid",
   "revision": 0,
   "created_at": "UTC ISO-8601 timestamp",
   "updated_at": "UTC ISO-8601 timestamp",
   "status": "collecting",
+  "reply_language": "en",
+  "frustration_active": false,
   "slots": {
     "order_number": null,
     "category": null,
@@ -111,7 +113,7 @@ Session JSON version 1 has these required keys:
 }
 ```
 
-Each message contains `id`, `role` (`user` or `assistant`), `text`, `input_mode` (`text`, `transcript`, or `system`), and `created_at`. Do not store system prompts as transcript messages. `confirmation` is null until completion, then `{ "confirmed_at": timestamp, "review_revision": integer }`. `requests` retains request ID, input digest, and serialized response for committed turn deduplication. Store validated data, not raw model responses, credentials, hidden reasoning, or audio bytes.
+Each message contains `id`, `role` (`user` or `assistant`), `text`, `input_mode` (`text`, `transcript`, or `system`), `created_at`, `language`, and nullable `sentiment`/`frustration` labels. Customer text/transcript messages carry the extraction labels; assistant and system messages carry `null`. Legacy version-1 documents are migrated in memory on read (`reply_language` and message `language` default to `en`, labels to `null`, `frustration_active` to `false`) and rewritten as version 2 only by a later successful atomic mutation. Do not store system prompts as transcript messages. `confirmation` is null until completion, then `{ "confirmed_at": timestamp, "review_revision": integer }`. `requests` retains request ID, input digest, and serialized response for committed turn deduplication. Store validated data, not raw model responses, credentials, hidden reasoning, or audio bytes.
 
 `summary` is null while collecting; at review and completion it is a deterministic, human-readable rendering of all four fields. This meets the summary requirement without an additional model call or invented outcome. Render customer text as plain text, including in summaries.
 

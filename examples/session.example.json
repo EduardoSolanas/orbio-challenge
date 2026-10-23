@@ -1,11 +1,12 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "session_id": "3f7c1c1e-0f0a-4a4e-9a5e-2b1d0f6c8a11",
   "revision": 3,
   "created_at": "2026-10-22T12:00:00Z",
   "updated_at": "2026-10-22T12:02:30Z",
   "status": "completed",
   "reply_language": "en",
+  "frustration_active": false,
   "slots": {
     "order_number": "NS-000123",
     "category": "damaged_item",
@@ -20,7 +21,9 @@
       "input_mode": "system",
       "created_at": "2026-10-22T12:00:00Z",
       "citations": [],
-      "language": "en"
+      "language": "en",
+      "sentiment": null,
+      "frustration": null
     },
     {
       "id": "0d1e2f3a-4b5c-4d6e-8f90-1a2b3c4d5e6f",
@@ -29,7 +32,9 @@
       "input_mode": "text",
       "created_at": "2026-10-22T12:00:40Z",
       "citations": [],
-      "language": "en"
+      "language": "en",
+      "sentiment": "negative",
+      "frustration": "none"
     },
     {
       "id": "1e2f3a4b-5c6d-4e7f-9a8b-2c3d4e5f6a7b",
@@ -38,7 +43,9 @@
       "input_mode": "text",
       "created_at": "2026-10-22T12:00:40Z",
       "citations": [],
-      "language": "en"
+      "language": "en",
+      "sentiment": null,
+      "frustration": null
     },
     {
       "id": "2f3a4b5c-6d7e-4f80-9b1c-3d4e5f6a7b8c",
@@ -47,7 +54,9 @@
       "input_mode": "text",
       "created_at": "2026-10-22T12:01:20Z",
       "citations": [],
-      "language": "en"
+      "language": "en",
+      "sentiment": "neutral",
+      "frustration": "none"
     },
     {
       "id": "3a4b5c6d-7e8f-4a91-8c2d-4e5f6a7b8c9d",
@@ -63,7 +72,9 @@
           "kb_version": "2026-10-22"
         }
       ],
-      "language": "en"
+      "language": "en",
+      "sentiment": null,
+      "frustration": null
     },
     {
       "id": "4b5c6d7e-8f90-4b12-9d3e-5f6a7b8c9d0e",
@@ -72,7 +83,9 @@
       "input_mode": "system",
       "created_at": "2026-10-22T12:02:30Z",
       "citations": [],
-      "language": "en"
+      "language": "en",
+      "sentiment": null,
+      "frustration": null
     },
     {
       "id": "5c6d7e8f-9012-4c23-8e4f-6a7b8c9d0e1f",
@@ -81,7 +94,9 @@
       "input_mode": "system",
       "created_at": "2026-10-22T12:02:30Z",
       "citations": [],
-      "language": "en"
+      "language": "en",
+      "sentiment": null,
+      "frustration": null
     }
   ],
   "pending_clarifications": {},
@@ -112,7 +127,8 @@
         "pending_clarifications": {},
         "pending_review_revision": 1,
         "summary": "Order: NS-000123\nCategory: damaged_item\nProblem: The item in order NS-000123 arrived with a cracked casing and will not switch on.\nUrgency: high",
-        "citations": []
+        "citations": [],
+        "frustration_active": false
       }
     },
     {
@@ -140,7 +156,8 @@
             "excerpt": "An unused item in its original packaging can be requested for return within 30 calendar days of delivery. Refund eligibility requires a support review; this demo cannot approve or issue a refund.",
             "kb_version": "2026-10-22"
           }
-        ]
+        ],
+        "frustration_active": false
       }
     },
     {
@@ -161,7 +178,8 @@
         "pending_clarifications": {},
         "pending_review_revision": null,
         "summary": "Order: NS-000123\nCategory: damaged_item\nProblem: The item in order NS-000123 arrived with a cracked casing and will not switch on.\nUrgency: high",
-        "citations": []
+        "citations": [],
+        "frustration_active": false
       }
     }
   ]

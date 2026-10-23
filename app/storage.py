@@ -8,6 +8,7 @@ atomic replacements so a failed save leaves the previous bytes intact.
 from __future__ import annotations
 
 import asyncio
+import copy
 import json
 import os
 import tempfile
@@ -20,10 +21,69 @@ from uuid import UUID
 from pydantic import ValidationError
 
 from app.errors import app_error
-from app.schemas import Session
+from app.schemas import LEGACY_SESSION_SCHEMA_VERSION, SESSION_SCHEMA_VERSION, Session
 
 SESSION_FILE_SUFFIX = ".json"
 LOCK_ACQUISITION_TIMEOUT_SECONDS = 2.0
+
+
+def migrate_session_document(document: dict) -> dict:
+    """Return a version-2 copy of a stored session document.
+
+    Version-1 documents gain the additive version-2 fields; version-2 documents
+    written before the emotion extension gain only the newly introduced fields.
+    Existing IDs, revisions, slots, transcripts, citations, confirmation data and
+    replay records are preserved verbatim, and historical messages are never
+    classified: legacy labels default to ``null`` and ``frustration_active`` to
+    ``false``. The input document is never mutated.
+    """
+
+    version = document.get("schema_version")
+    if isinstance(version, bool) or not isinstance(version, int):
+        raise ValueError("unsupported session schema_version")
+    if version == SESSION_SCHEMA_VERSION:
+        return _fill_emotion_metadata(copy.deepcopy(document))
+    if version == LEGACY_SESSION_SCHEMA_VERSION:
+        return _upgrade_legacy_document(copy.deepcopy(document))
+    raise ValueError("unsupported session schema_version")
+
+
+def _upgrade_legacy_document(document: dict) -> dict:
+    document["schema_version"] = SESSION_SCHEMA_VERSION
+    document.setdefault("reply_language", "en")
+    document.setdefault("frustration_active", False)
+    messages = document.get("messages")
+    if isinstance(messages, list):
+        for message in messages:
+            if isinstance(message, dict):
+                message.setdefault("language", "en")
+                message.setdefault("sentiment", None)
+                message.setdefault("frustration", None)
+    requests = document.get("requests")
+    if isinstance(requests, list):
+        for record in requests:
+            response = record.get("response") if isinstance(record, dict) else None
+            if isinstance(response, dict):
+                response.setdefault("reply_language", "en")
+                response.setdefault("frustration_active", False)
+    return document
+
+
+def _fill_emotion_metadata(document: dict) -> dict:
+    document.setdefault("frustration_active", False)
+    messages = document.get("messages")
+    if isinstance(messages, list):
+        for message in messages:
+            if isinstance(message, dict):
+                message.setdefault("sentiment", None)
+                message.setdefault("frustration", None)
+    requests = document.get("requests")
+    if isinstance(requests, list):
+        for record in requests:
+            response = record.get("response") if isinstance(record, dict) else None
+            if isinstance(response, dict):
+                response.setdefault("frustration_active", False)
+    return document
 
 
 class JsonSessionRepository:
@@ -67,8 +127,11 @@ class JsonSessionRepository:
         except OSError:
             raise app_error("storage_unavailable") from None
         try:
-            return Session.model_validate_json(raw)
-        except (ValidationError, ValueError):
+            document = json.loads(raw)
+            if not isinstance(document, dict):
+                raise ValueError("session document must be a JSON object")
+            return Session.model_validate(migrate_session_document(document))
+        except (ValidationError, ValueError, TypeError, AttributeError, KeyError):
             raise app_error("storage_corrupt") from None
 
     async def save(self, session: Session) -> None:

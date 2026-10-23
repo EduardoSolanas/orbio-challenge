@@ -70,6 +70,8 @@ def message_payload():
         "input_mode": "text",
         "created_at": CREATED_AT,
         "citations": [],
+        "sentiment": None,
+        "frustration": None,
     }
 
 
@@ -83,6 +85,7 @@ def session_view_payload():
         "pending_clarifications": {},
         "pending_review_revision": None,
         "summary": None,
+        "frustration_active": False,
     }
 
 
@@ -98,6 +101,7 @@ def turn_response_payload():
         "pending_review_revision": None,
         "summary": None,
         "citations": [],
+        "frustration_active": False,
     }
 
 
@@ -131,6 +135,8 @@ def model_payloads():
             "ambiguous_fields": [],
         "detected_language": "en",
         "requested_language": None,
+        "sentiment": "neutral",
+        "frustration": "none",
         },
         ExtractionContext: {
             "slots": slots_payload(),
@@ -138,6 +144,7 @@ def model_payloads():
             "recent_messages": [],
             "current_message": "My order arrived broken.",
             "status": "collecting",
+            "frustration_active": False,
         },
         TurnRequest: {
             "request_id": REQUEST_ID,
@@ -157,12 +164,13 @@ def model_payloads():
         Confirmation: {"confirmed_at": CREATED_AT, "review_revision": 1},
         ReplayRecord: replay_record_payload(),
         Session: {
-            "schema_version": 1,
+            "schema_version": 2,
             "session_id": SESSION_ID,
             "revision": 0,
             "created_at": CREATED_AT,
             "updated_at": CREATED_AT,
             "status": "collecting",
+            "frustration_active": False,
             "slots": slots_payload(),
             "messages": [],
             "pending_clarifications": {},
@@ -220,7 +228,7 @@ def test_slots_require_all_four_keys(missing_key):
 
 @pytest.mark.parametrize(
     "missing_key",
-    ["intent", "has_question", "candidates", "explicit_corrections", "ambiguous_fields"],
+    ["intent", "has_question", "candidates", "explicit_corrections", "ambiguous_fields", "sentiment", "frustration"],
 )
 def test_extraction_requires_every_contract_key(missing_key):
     payload = MODELS[Extraction].copy()
@@ -239,6 +247,7 @@ def test_extraction_requires_every_contract_key(missing_key):
         "created_at",
         "updated_at",
         "status",
+        "frustration_active",
         "slots",
         "messages",
         "pending_clarifications",
@@ -562,14 +571,14 @@ def test_ambiguous_fields_must_be_unique():
         )
 
 
-@pytest.mark.parametrize("value", [2, 0, True, "1"], ids=str)
-def test_session_schema_version_must_be_exactly_one(value):
+@pytest.mark.parametrize("value", [1, 3, 0, True, "2"], ids=str)
+def test_session_schema_version_must_be_exactly_two(value):
     with pytest.raises(ValidationError):
         Session.model_validate({**MODELS[Session], "schema_version": value})
 
 
-def test_session_schema_version_one_is_accepted():
-    assert Session.model_validate(MODELS[Session]).schema_version == 1
+def test_session_schema_version_two_is_accepted():
+    assert Session.model_validate(MODELS[Session]).schema_version == 2
 
 
 def test_message_created_at_serializes_with_trailing_z():

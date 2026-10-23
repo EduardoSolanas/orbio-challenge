@@ -132,7 +132,7 @@ async def case_it06_01(settings, provider, session_dir):
         # The whole document decodes as one valid Session: no half-written JSON.
         document = json.loads(raw.decode("utf-8"))
         session = Session.model_validate_json(raw)
-        assert session.schema_version == 1
+        assert session.schema_version == 2
         assert raw == json.dumps(
             session.model_dump(mode="json"), ensure_ascii=False, indent=2
         ).encode("utf-8")
@@ -398,7 +398,7 @@ async def case_it06_06(settings, provider, session_dir):
         session_id = await start_session(client)
         target = session_path(session_dir, session_id)
         document = json.loads(target.read_bytes().decode("utf-8"))
-        document["schema_version"] = 2
+        document["schema_version"] = 3
         future = json.dumps(document, ensure_ascii=False, indent=2).encode("utf-8")
         target.write_bytes(future)
 
@@ -425,7 +425,7 @@ async def case_it06_06(settings, provider, session_dir):
         )
         # No downgrade and no overwrite of the future-version document.
         assert target.read_bytes() == future
-        assert json.loads(future.decode("utf-8"))["schema_version"] == 2
+        assert json.loads(future.decode("utf-8"))["schema_version"] == 3
         assert session_files(session_dir) == [target]
         assert_no_temp_files(session_dir)
         assert provider.calls == []

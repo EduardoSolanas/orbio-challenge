@@ -41,6 +41,8 @@ EXTRACTION_PAYLOAD = {
     "ambiguous_fields": [],
     "detected_language": "en",
     "requested_language": None,
+    "sentiment": "neutral",
+    "frustration": "none",
 }
 RETURN_ANSWER_PAYLOAD = {
     "answerable": True,

@@ -37,6 +37,8 @@ def make_extraction(
     ambiguous_fields: Iterable[str] = (),
     detected_language: str = "en",
     requested_language: str | None = None,
+    sentiment: str = "neutral",
+    frustration: str = "none",
 ) -> Extraction:
     """Build a strict extraction object for scripting the fake provider."""
 
@@ -48,6 +50,8 @@ def make_extraction(
         ambiguous_fields=list(ambiguous_fields),
         detected_language=detected_language,
         requested_language=requested_language,
+        sentiment=sentiment,
+        frustration=frustration,
     )
 
 

@@ -347,6 +347,8 @@ def llm_question():
             "ambiguous_fields": [],
         "detected_language": "en",
         "requested_language": None,
+        "sentiment": "neutral",
+        "frustration": "none",
         }
     )
 

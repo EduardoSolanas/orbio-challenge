@@ -67,6 +67,8 @@ EXTRACTION_PAYLOAD = {
     "ambiguous_fields": [],
 "detected_language": "en",
 "requested_language": None,
+"sentiment": "neutral",
+"frustration": "none",
 }
 
 ANSWER_PAYLOAD = {
@@ -92,6 +94,7 @@ def extraction_context(text: str = "My order NS-000123 arrived broken.") -> Extr
         recent_messages=[],
         current_message=text,
         status="collecting",
+        frustration_active=False,
     )
 
 

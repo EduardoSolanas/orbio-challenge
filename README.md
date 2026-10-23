@@ -190,12 +190,14 @@ cannot be edited or confirmed again; a stale or missing review token is rejected
 ## Example session JSON
 
 `examples/session.example.json` is a sanitized, hand-authored example that
-validates against the stored `Session` schema (`schema_version` 1). It contains a
+validates against the stored `Session` schema (`schema_version` 2). It contains a
 greeting, one intake turn, one policy question with a `faq-returns` citation
 snapshot, the explicit confirmation, the completed summary, the local receipt and
 the three replay records. It was authored from the contract templates and models,
 not captured from a live provider run; the policy answer is illustrative generated
-text. Key excerpts:
+text. Stored customer messages carry the extraction `sentiment`/`frustration`
+labels; assistant and system messages carry `null`, and `frustration_active` is
+`false`. Key excerpts:
 
 ```json
 {
@@ -211,7 +213,7 @@ text. Key excerpts:
   "messages": [
     {
       "role": "assistant",
-      "text": "An unused item in its original packaging can be requested for return within 30 calendar days of delivery. Refund eligibility requires a support review.\n\nPlease confirm the reviewed details or tell me what to change.",
+      "text": "An unused item in its original packaging can be requested for return within 30 calendar days of delivery. Refund eligibility requires a support review.",
       "citations": [
         {
           "source_id": "faq-returns",
@@ -349,8 +351,11 @@ The time is build/tool wall-clock, not a productivity benchmark.
 
 ## Deferred bonuses and potential improvements
 
-Explicitly deferred: sentiment detection, multilingual support, cross-session
-memory with identity/consent, streaming/duplex voice, and database-backed
+New required work, not claimed implemented: frustration detection and English/Spanish
+support, plus verification of session memory (implementation-contract.md FEAT-01,
+FEAT-02 and VERIFY-01).
+
+Still deferred: cross-session memory with identity/consent, streaming/duplex voice, and database-backed
 multi-worker operation. Also out of scope: real order integration, ticket-queue
 delivery, embeddings/vector retrieval, and a production auth/deployment story.
 Potential improvements after core delivery: authenticated session ownership,

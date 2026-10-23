@@ -412,6 +412,7 @@ def test_serialize_context_is_json_with_unicode_preserved() -> None:
         recent_messages=[RecentMessage(role="user", text="café")],
         current_message="café — broke",
         status="collecting",
+        frustration_active=False,
     )
     serialized = serialize_context(context)
     assert serialized == json.dumps(context.model_dump(mode="json"), ensure_ascii=False)

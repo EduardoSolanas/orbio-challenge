@@ -29,6 +29,7 @@ SESSION_VIEW_KEYS = {
     "revision",
     "status",
     "reply_language",
+    "frustration_active",
     "slots",
     "messages",
     "pending_clarifications",
@@ -41,6 +42,7 @@ TURN_RESPONSE_KEYS = {
     "revision",
     "status",
     "reply_language",
+    "frustration_active",
     "reply",
     "message_id",
     "speech_available",
@@ -59,6 +61,8 @@ MESSAGE_VIEW_KEYS = {
     "created_at",
     "citations",
     "language",
+    "sentiment",
+    "frustration",
     "speech_available",
 }
 
