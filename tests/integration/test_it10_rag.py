@@ -1,4 +1,4 @@
-"""IT10-01..IT10-14: mandatory RAG - grounded answers, citations, abstention, rollback.
+"""IT10-01..IT10-16: mandatory RAG - grounded answers, citations, abstention, rollback.
 
 Every case runs the real app factory, real lifespan, real `/api/sessions/{id}/turns`
 route, real engine and the real lexical retriever over the bundled knowledge base

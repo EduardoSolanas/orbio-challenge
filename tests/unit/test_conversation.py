@@ -2454,6 +2454,33 @@ async def test_social_with_facts_falls_through_to_normal_intake(tmp_path):
     provider.assert_exhausted()
 
 
+async def test_social_on_a_complete_session_without_review_has_no_follow_up(tmp_path):
+    repository = JsonSessionRepository(tmp_path)
+    sid = uuid4()
+    await repository.save(
+        make_session(
+            session_id=sid,
+            revision=1,
+            status="collecting",
+            slots=FULL_SLOTS,
+            collection_turn_count=1,
+        )
+    )
+    engine = ConversationEngine(
+        repository,
+        FakeProvider([("extract", social_extraction())]),
+        FakeKnowledgeBase(),
+    )
+
+    response = await engine.turn(sid, turn_request("Hello", revision=1))
+
+    assert response.reply == SOCIAL_ACKNOWLEDGMENT
+    assert response.status == "collecting"
+    assert response.pending_review_revision is None
+    assert response.summary is None
+    assert response.slots == FULL_SLOTS
+
+
 @pytest.mark.parametrize(
     "text",
     ["Hello, how long does delivery take?", "Thank you, how long does delivery take?"],
