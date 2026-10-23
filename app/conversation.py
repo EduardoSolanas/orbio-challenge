@@ -305,10 +305,11 @@ class ConversationEngine:
                 raise _revision_conflict(session.revision)
             if session.status == "completed":
                 raise app_error("session_completed")
-            if (
-                session.pending_review_revision is None
-                or command.review_revision != session.pending_review_revision
-            ):
+            if session.pending_review_revision is None:
+                # No review exists (incomplete, rejected or issue-blocked intake):
+                # nothing to confirm and nothing that could be stale (IC §7, §13.2 IT04-18/19).
+                raise app_error("review_not_ready")
+            if command.review_revision != session.pending_review_revision:
                 raise app_error("stale_review")
             if not _current_review_valid(session):
                 raise app_error("review_not_ready")
@@ -589,9 +590,15 @@ def _is_pure_question(extraction: Extraction) -> bool:
 
 
 def _current_review_valid(session: Session) -> bool:
+    """Whether the stored review token still refers to the latest review.
+
+    Unrelated questions and capability replies preserve the token while the
+    revision advances (BS §5.7, IC §13.3 J08), so staleness is decided by the
+    token itself, never by `pending_review_revision == revision`.
+    """
+
     return (
         session.pending_review_revision is not None
-        and session.pending_review_revision == session.revision
         and session.status == "awaiting_confirmation"
         and not session.review_rejected
         and not session.pending_clarifications

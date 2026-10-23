@@ -666,6 +666,30 @@ async def test_confirmation_with_ineligible_review_is_review_not_ready(tmp_path)
     provider.assert_exhausted()
 
 
+async def test_confirmation_without_a_review_token_is_review_not_ready(tmp_path):
+    """No token means no review exists, so the confirm is not ready, not stale."""
+
+    repository = JsonSessionRepository(tmp_path)
+    sid = uuid4()
+    session = make_session(
+        session_id=sid,
+        revision=1,
+        status="collecting",
+        slots=make_slots(order_number="NS-000123"),
+    )
+    await repository.save(session)
+    provider = FakeProvider()
+    engine = ConversationEngine(repository, provider, FakeKnowledgeBase())
+
+    with pytest.raises(AppError) as excinfo:
+        await engine.confirm(sid, confirm_request(revision=1, review_revision=0))
+
+    assert excinfo.value.code == "review_not_ready"
+    assert excinfo.value.status == 409
+    assert await repository.load(sid) == session
+    provider.assert_exhausted()
+
+
 async def test_confirmation_reused_request_id_with_changed_body_is_conflict(
     tmp_path,
 ):
@@ -790,6 +814,302 @@ async def test_pure_question_at_valid_review_preserves_summary_and_token(
     assert stored.collection_turn_count == 2
     assert stored.pending_review_revision == 1
     assert stored.summary == SUMMARY
+    provider.assert_exhausted()
+
+
+# --- A preserved review token stays current across unrelated turns ----------
+# BS §5.7 / IC §13.3 J08: unrelated questions preserve the token but advance the
+# revision, so staleness is decided by the token, never by `revision`.
+
+QUESTION = "Can I return it?"
+RETURN_RECORD = make_record()
+RETURN_ANSWER = KnowledgeAnswer(
+    answerable=True,
+    answer="You can request a return within 30 calendar days.",
+    cited_ids=["faq-returns"],
+)
+
+
+async def reviewed_session_after_a_pure_question(tmp_path):
+    """FULL review at revision 1, then a pure policy question at revision 2."""
+
+    engine, repository, provider = build_engine(
+        tmp_path,
+        script=[
+            ("extract", FULL_EXTRACTION),
+            ("extract", make_extraction(intent="question", has_question=True)),
+            ("answer_knowledge", RETURN_ANSWER),
+        ],
+        kb_answers={QUESTION: [RETURN_RECORD]},
+    )
+    created = await engine.create_session()
+    sid = created.session_id
+    await engine.turn(sid, turn_request())
+    question = await engine.turn(sid, turn_request(QUESTION, revision=1))
+    assert question.revision == 2
+    assert question.status == "awaiting_confirmation"
+    assert question.pending_review_revision == 1
+    return engine, repository, provider, sid
+
+
+async def test_dedicated_confirm_after_a_pure_question_at_review_completes(tmp_path):
+    engine, repository, provider, sid = await reviewed_session_after_a_pure_question(
+        tmp_path
+    )
+
+    response = await engine.confirm(
+        sid, confirm_request(revision=2, review_revision=1)
+    )
+
+    assert response.status == "completed"
+    assert response.revision == 3
+    assert response.reply == (
+        f"Saved locally as {sid}. No request has been sent to a real support team."
+    )
+    assert response.slots == FULL_SLOTS
+    assert response.summary == SUMMARY
+    assert response.pending_review_revision is None
+    stored = await repository.load(sid)
+    assert stored.status == "completed"
+    assert stored.revision == 3
+    assert stored.collection_turn_count == 2
+    assert stored.summary == SUMMARY
+    assert stored.confirmation.review_revision == 1
+    provider.assert_exhausted()
+
+
+async def test_natural_confirmation_after_a_pure_question_at_review_completes(
+    tmp_path,
+):
+    engine, repository, provider = build_engine(
+        tmp_path,
+        script=[
+            ("extract", FULL_EXTRACTION),
+            ("extract", make_extraction(intent="question", has_question=True)),
+            ("answer_knowledge", RETURN_ANSWER),
+            ("extract", confirm_equal()),
+        ],
+        kb_answers={QUESTION: [RETURN_RECORD]},
+    )
+    created = await engine.create_session()
+    sid = created.session_id
+    await engine.turn(sid, turn_request())
+    await engine.turn(sid, turn_request(QUESTION, revision=1))
+
+    response = await engine.turn(sid, turn_request("Yes, that is right", revision=2))
+
+    assert response.status == "completed"
+    assert response.revision == 3
+    assert response.reply == (
+        f"Saved locally as {sid}. No request has been sent to a real support team."
+    )
+    assert response.slots == FULL_SLOTS
+    assert response.summary == SUMMARY
+    assert response.pending_review_revision is None
+    stored = await repository.load(sid)
+    assert stored.status == "completed"
+    assert stored.revision == 3
+    assert stored.collection_turn_count == 2
+    assert stored.confirmation.review_revision == 1
+    provider.assert_exhausted()
+
+
+async def test_dedicated_confirm_after_an_unrelated_reply_at_review_completes(
+    tmp_path,
+):
+    engine, repository, provider = build_engine(
+        tmp_path,
+        script=[
+            ("extract", FULL_EXTRACTION),
+            ("extract", make_extraction(intent="unrelated")),
+        ],
+    )
+    created = await engine.create_session()
+    sid = created.session_id
+    await engine.turn(sid, turn_request())
+    unrelated = await engine.turn(sid, turn_request("Nice weather", revision=1))
+    assert unrelated.revision == 2
+    assert unrelated.status == "awaiting_confirmation"
+    assert unrelated.pending_review_revision == 1
+
+    response = await engine.confirm(
+        sid, confirm_request(revision=2, review_revision=1)
+    )
+
+    assert response.status == "completed"
+    assert response.revision == 3
+    assert response.summary == SUMMARY
+    stored = await repository.load(sid)
+    assert stored.status == "completed"
+    assert stored.confirmation.review_revision == 1
+    provider.assert_exhausted()
+
+
+async def test_dedicated_confirm_after_a_pure_question_with_a_wrong_token_is_stale(
+    tmp_path,
+):
+    engine, repository, provider, sid = await reviewed_session_after_a_pure_question(
+        tmp_path
+    )
+
+    with pytest.raises(AppError) as excinfo:
+        await engine.confirm(sid, confirm_request(revision=2, review_revision=0))
+
+    assert excinfo.value.code == "stale_review"
+    assert excinfo.value.status == 409
+    stored = await repository.load(sid)
+    assert stored.status == "awaiting_confirmation"
+    assert stored.revision == 2
+    assert stored.pending_review_revision == 1
+    provider.assert_exhausted()
+
+
+async def test_confirm_with_a_preserved_token_but_incomplete_slots_is_not_ready(
+    tmp_path,
+):
+    repository = JsonSessionRepository(tmp_path)
+    sid = uuid4()
+    await repository.save(
+        make_session(
+            session_id=sid,
+            revision=2,
+            status="awaiting_confirmation",
+            slots=make_slots(order_number="NS-000123"),
+            pending_review_revision=1,
+            summary=SUMMARY,
+        )
+    )
+    provider = FakeProvider()
+    engine = ConversationEngine(repository, provider, FakeKnowledgeBase())
+
+    with pytest.raises(AppError) as excinfo:
+        await engine.confirm(sid, confirm_request(revision=2, review_revision=1))
+
+    assert excinfo.value.code == "review_not_ready"
+    assert excinfo.value.status == 409
+    stored = await repository.load(sid)
+    assert stored.status == "awaiting_confirmation"
+    assert stored.revision == 2
+    provider.assert_exhausted()
+
+
+async def test_confirm_with_a_preserved_token_but_a_pending_issue_is_not_ready(
+    tmp_path,
+):
+    repository = JsonSessionRepository(tmp_path)
+    sid = uuid4()
+    await repository.save(
+        make_session(
+            session_id=sid,
+            revision=2,
+            status="awaiting_confirmation",
+            slots=FULL_SLOTS,
+            pending_clarifications={
+                "urgency": {
+                    "code": "ambiguous",
+                    "candidate": None,
+                    "question": "Please clarify your urgency.",
+                }
+            },
+            pending_review_revision=1,
+            summary=SUMMARY,
+        )
+    )
+    provider = FakeProvider()
+    engine = ConversationEngine(repository, provider, FakeKnowledgeBase())
+
+    with pytest.raises(AppError) as excinfo:
+        await engine.confirm(sid, confirm_request(revision=2, review_revision=1))
+
+    assert excinfo.value.code == "review_not_ready"
+    stored = await repository.load(sid)
+    assert stored.status == "awaiting_confirmation"
+    provider.assert_exhausted()
+
+
+async def test_confirm_with_a_preserved_token_outside_a_review_is_not_ready(
+    tmp_path,
+):
+    repository = JsonSessionRepository(tmp_path)
+    sid = uuid4()
+    await repository.save(
+        make_session(
+            session_id=sid,
+            revision=2,
+            status="collecting",
+            slots=FULL_SLOTS,
+            pending_review_revision=1,
+            summary=SUMMARY,
+        )
+    )
+    provider = FakeProvider()
+    engine = ConversationEngine(repository, provider, FakeKnowledgeBase())
+
+    with pytest.raises(AppError) as excinfo:
+        await engine.confirm(sid, confirm_request(revision=2, review_revision=1))
+
+    assert excinfo.value.code == "review_not_ready"
+    stored = await repository.load(sid)
+    assert stored.status == "collecting"
+    provider.assert_exhausted()
+
+
+async def test_turn_limit_allows_a_pure_confirmation_of_a_preserved_review(
+    tmp_path,
+):
+    repository = JsonSessionRepository(tmp_path)
+    sid = uuid4()
+    await repository.save(
+        make_session(
+            session_id=sid,
+            revision=2,
+            status="awaiting_confirmation",
+            slots=FULL_SLOTS,
+            pending_review_revision=1,
+            summary=SUMMARY,
+            collection_turn_count=50,
+        )
+    )
+    provider = FakeProvider([("extract", confirm_equal())])
+    engine = ConversationEngine(repository, provider, FakeKnowledgeBase())
+
+    response = await engine.turn(sid, turn_request("Yes", revision=2))
+
+    assert response.status == "completed"
+    assert response.revision == 3
+    stored = await repository.load(sid)
+    assert stored.collection_turn_count == 50
+    assert stored.confirmation.review_revision == 1
+    provider.assert_exhausted()
+
+
+async def test_turn_limit_rejects_a_question_at_a_preserved_review(tmp_path):
+    repository = JsonSessionRepository(tmp_path)
+    sid = uuid4()
+    await repository.save(
+        make_session(
+            session_id=sid,
+            revision=2,
+            status="awaiting_confirmation",
+            slots=FULL_SLOTS,
+            pending_review_revision=1,
+            summary=SUMMARY,
+            collection_turn_count=50,
+        )
+    )
+    provider = FakeProvider(
+        [("extract", make_extraction(intent="question", has_question=True))]
+    )
+    engine = ConversationEngine(repository, provider, FakeKnowledgeBase())
+
+    with pytest.raises(AppError) as excinfo:
+        await engine.turn(sid, turn_request(QUESTION, revision=2))
+
+    assert excinfo.value.code == "turn_limit"
+    stored = await repository.load(sid)
+    assert stored.status == "awaiting_confirmation"
+    assert stored.revision == 2
+    assert stored.pending_review_revision == 1
     provider.assert_exhausted()
 
 
