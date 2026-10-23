@@ -31,7 +31,6 @@ from app.prompts import (
     ABSTENTION,
     KNOWLEDGE_PROMPT,
     POLICY_QUESTION_SUFFIX,
-    REVIEW_POLICY_FOLLOWUP,
     SOCIAL_ACKNOWLEDGMENT,
 )
 from app.providers import REPAIR_LINE, OpenAICompatibleProvider
@@ -48,7 +47,6 @@ from tests.integration.test_it02_intake import (
     FULL_SUMMARY,
     HIGH_TEXT,
     MISSING_CATEGORY,
-    MISSING_ORDER,
     PART_TEXT,
     REVIEW_SUFFIX,
     category_extraction,
@@ -172,7 +170,7 @@ async def case_it10_01(settings, provider, session_dir):
             answer=grounded(RETURN_ANSWER_TEXT, ["faq-returns"]),
         )
 
-        assert response["reply"] == f"{RETURN_ANSWER_TEXT}\n\n{MISSING_ORDER}"
+        assert response["reply"] == RETURN_ANSWER_TEXT
         assert response["citations"] == [seed_citation("faq-returns")]
         assert response["revision"] == 1
         assert response["status"] == "collecting"
@@ -215,7 +213,7 @@ async def case_it10_02(settings, provider, session_dir):
         )
 
         # No retrieved record: deterministic abstention, no generation call.
-        assert response["reply"] == f"{ABSTENTION}\n\n{MISSING_ORDER}"
+        assert response["reply"] == ABSTENTION
         assert response["citations"] == []
         assert response["revision"] == 1
         assert response["status"] == "collecting"
@@ -245,7 +243,7 @@ async def case_it10_03(settings, provider, session_dir):
             answer=unanswerable(),
         )
 
-        assert response["reply"] == f"{ABSTENTION}\n\n{MISSING_ORDER}"
+        assert response["reply"] == ABSTENTION
         assert response["citations"] == []
         assert response["revision"] == 1
         assert "internationally" not in response["reply"].lower()
@@ -278,7 +276,7 @@ async def case_it10_04(settings, provider, session_dir):
             answer=grounded(TWO_SOURCE_ANSWER_TEXT, ["faq-returns", "faq-damaged"]),
         )
 
-        assert response["reply"] == f"{TWO_SOURCE_ANSWER_TEXT}\n\n{MISSING_ORDER}"
+        assert response["reply"] == TWO_SOURCE_ANSWER_TEXT
         assert [citation["source_id"] for citation in response["citations"]] == [
             "faq-returns",
             "faq-damaged",
@@ -535,7 +533,7 @@ async def case_it10_10(settings, provider, session_dir):
             answer=grounded(RETURN_ANSWER_TEXT, ["faq-returns"]),
         )
 
-        assert response["reply"] == f"{RETURN_ANSWER_TEXT}\n\n{REVIEW_POLICY_FOLLOWUP}"
+        assert response["reply"] == RETURN_ANSWER_TEXT
         assert response["citations"] == [seed_citation("faq-returns")]
         assert response["revision"] == before["revision"] + 1
         assert response["status"] == "awaiting_confirmation"
@@ -589,7 +587,7 @@ async def case_it10_13(settings, provider, session_dir):
 
         assert response.status_code == 200, response.text
         body = response.json()
-        assert body["reply"] == f"{ABSTENTION}\n\n{MISSING_ORDER}"
+        assert body["reply"] == ABSTENTION
         assert body["citations"] == []
         assert body["revision"] == 1
         assert body["status"] == "collecting"
@@ -766,7 +764,7 @@ async def case_it10_15(settings, provider, session_dir):
             answer=grounded(DELIVERY_ANSWER_TEXT, ["faq-delivery"]),
         )
 
-        assert response["reply"] == f"{DELIVERY_ANSWER_TEXT}\n\n{MISSING_ORDER}"
+        assert response["reply"] == DELIVERY_ANSWER_TEXT
         assert SOCIAL_ACKNOWLEDGMENT not in response["reply"]
         assert ABSTENTION not in response["reply"]
         assert response["citations"] == [seed_citation("faq-delivery")]
@@ -799,7 +797,7 @@ async def case_it10_16(settings, provider, session_dir):
 
         assert response.status_code == 200, response.text
         body = response.json()
-        assert body["reply"] == f"{SOCIAL_ACKNOWLEDGMENT}\n\n{MISSING_ORDER}"
+        assert body["reply"] == SOCIAL_ACKNOWLEDGMENT
         assert ABSTENTION not in body["reply"]
         assert body["citations"] == []
         assert body["revision"] == 1

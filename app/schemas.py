@@ -27,7 +27,15 @@ from pydantic import (
 FieldName = Literal["order_number", "category", "description", "urgency"]
 Status = Literal["collecting", "awaiting_confirmation", "completed"]
 Intent = Literal[
-    "provide_details", "correction", "confirm", "reject", "question", "unrelated", "social"
+    "provide_details",
+    "correction",
+    "confirm",
+    "reject",
+    "question",
+    "unrelated",
+    "social",
+    "start_intake",
+    "capability",
 ]
 ClarificationCode = Literal["invalid", "ambiguous", "conflict"]
 RequestInputMode = Literal["text", "transcript"]

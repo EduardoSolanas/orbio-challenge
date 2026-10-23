@@ -211,7 +211,7 @@ text. Key excerpts:
   "messages": [
     {
       "role": "assistant",
-      "text": "An unused item in its original packaging can be requested for return within 30 calendar days of delivery. Refund eligibility requires a support review.\n\nPlease confirm the reviewed details or tell me what to change.",
+      "text": "An unused item in its original packaging can be requested for return within 30 calendar days of delivery. Refund eligibility requires a support review.",
       "citations": [
         {
           "source_id": "faq-returns",

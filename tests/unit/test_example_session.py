@@ -88,9 +88,7 @@ def test_example_session_transcript_covers_intake_policy_question_and_confirmati
     policy_answer = session.messages[4]
     assert "30 calendar days" in policy_answer.text
     assert "support review" in policy_answer.text
-    assert policy_answer.text.endswith(
-        "Please confirm the reviewed details or tell me what to change."
-    )
+    assert "What is your order number" not in policy_answer.text
     assert session.messages[5].text == "Confirm reviewed intake"
     assert session.messages[6].text == RECEIPT_TEMPLATE.format(
         session_id=session.session_id

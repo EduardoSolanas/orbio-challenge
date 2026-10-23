@@ -19,12 +19,14 @@ from app.errors import AppError, app_error
 from app.prompts import (
     ABSTENTION,
     CAPABILITY,
+    CAPABILITY_REPLY,
     GREETING,
     MISSING_QUESTION_BY_FIELD,
+    NO_REVIEW_TO_REJECT,
+    NOTHING_TO_CONFIRM,
     POLICY_QUESTION_SUFFIX,
     RECEIPT_TEMPLATE,
     REJECT_PROMPT,
-    REVIEW_POLICY_FOLLOWUP,
     SOCIAL_ACKNOWLEDGMENT,
     build_review_reply,
     build_summary,
@@ -384,7 +386,10 @@ class ConversationEngine:
             session, extraction, outcome
         )
         current_review_valid = _current_review_valid(session)
+        has_active_review = session.pending_review_revision is not None
         pure_social = _is_pure_social(extraction)
+        pure_capability = _is_pure_capability(extraction)
+        pure_unrelated = _is_pure_unrelated(extraction)
         pure_question = _is_pure_question(extraction)
         pure_confirmation = _is_pure_confirmation(
             session,
@@ -400,61 +405,52 @@ class ConversationEngine:
         status = session.status
         citations: tuple[Citation, ...] = ()
         completed = False
+        intake_directed = False
 
         if extraction.intent == "reject":
-            reply = REJECT_PROMPT
-            status = "collecting"
-            summary = None
-            review_revision = None
+            intake_directed = True
+            if has_active_review or session.review_rejected:
+                reply = REJECT_PROMPT
+                status = "collecting"
+                summary = None
+                review_revision = None
+            else:
+                reply = NO_REVIEW_TO_REJECT
         elif pure_social:
-            follow_up = _question_follow_up(
-                session, review_rejected, current_review_valid
-            )
-            reply = (
-                SOCIAL_ACKNOWLEDGMENT
-                if follow_up is None
-                else f"{SOCIAL_ACKNOWLEDGMENT}\n\n{follow_up}"
-            )
-            status = session.status
-            summary = session.summary
-            review_revision = session.pending_review_revision
+            reply = SOCIAL_ACKNOWLEDGMENT
+        elif pure_capability:
+            reply = CAPABILITY_REPLY
         elif pure_question:
-            answer_text, citations = await self._answer_policy_question(
-                command.text
-            )
-            follow_up = _question_follow_up(
-                session, review_rejected, current_review_valid
-            )
-            reply = (
-                answer_text
-                if follow_up is None
-                else f"{answer_text}\n\n{follow_up}"
-            )
-            status = session.status
-            summary = session.summary
-            review_revision = session.pending_review_revision
+            reply, citations = await self._answer_policy_question(command.text)
         elif pure_confirmation:
             reply = RECEIPT_TEMPLATE.format(session_id=session.session_id)
             status = "completed"
             summary = session.summary
             review_revision = None
             completed = True
+        elif (
+            extraction.intent == "confirm"
+            and not has_active_review
+            and not session.review_rejected
+            and not recovered_this_turn
+        ):
+            reply = NOTHING_TO_CONFIRM
+        elif pure_unrelated:
+            reply = CAPABILITY
         elif pending:
             reply = _first_issue(pending).question
             status = "collecting"
             summary = None
             review_revision = None
+            intake_directed = True
         elif review_rejected:
             reply = REJECT_PROMPT
             status = "collecting"
             summary = None
             review_revision = None
-        elif extraction.intent == "unrelated" and not _has_facts(extraction):
-            reply = CAPABILITY
-            status = session.status
-            summary = session.summary
-            review_revision = session.pending_review_revision
+            intake_directed = True
         elif _slots_complete(outcome.slots):
+            intake_directed = True
             if outcome.accepted_fields or recovered_this_turn:
                 reply = build_review_reply(outcome.slots)
                 status = "awaiting_confirmation"
@@ -475,8 +471,9 @@ class ConversationEngine:
             status = "collecting"
             summary = None
             review_revision = None
+            intake_directed = True
 
-        if extraction.has_question and not pure_question and not pure_social:
+        if extraction.has_question and intake_directed:
             reply = f"{reply} {POLICY_QUESTION_SUFFIX}"
 
         return TurnPlan(
@@ -599,10 +596,18 @@ def _is_pure_social(extraction: Extraction) -> bool:
     return extraction.intent == "social" and not _has_facts(extraction)
 
 
+def _is_pure_capability(extraction: Extraction) -> bool:
+    return extraction.intent == "capability" and not _has_facts(extraction)
+
+
+def _is_pure_unrelated(extraction: Extraction) -> bool:
+    return extraction.intent == "unrelated" and not _has_facts(extraction)
+
+
 def _is_pure_question(extraction: Extraction) -> bool:
     return (
         extraction.has_question
-        and extraction.intent in ("question", "unrelated")
+        and extraction.intent == "question"
         and not _has_facts(extraction)
     )
 
@@ -637,7 +642,7 @@ def _apply_transitions(
     review_rejected = was_rejected
     recovered_this_turn = False
     if extraction.intent == "reject":
-        review_rejected = True
+        review_rejected = was_rejected or session.pending_review_revision is not None
     elif was_rejected and (
         (accepted_explicit_correction and not extraction.has_question)
         or unambiguous_reaffirmation
@@ -696,19 +701,6 @@ def _is_pure_confirmation(
         ):
             return False
     return True
-
-
-def _question_follow_up(
-    session: Session, review_rejected: bool, current_review_valid: bool
-) -> str | None:
-    if current_review_valid:
-        return REVIEW_POLICY_FOLLOWUP
-    issue = _first_issue(session.pending_clarifications)
-    if issue is not None:
-        return issue.question
-    if review_rejected:
-        return REJECT_PROMPT
-    return _first_missing(session.slots)
 
 
 def _validate_knowledge_answer(
