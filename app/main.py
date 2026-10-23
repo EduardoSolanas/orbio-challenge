@@ -273,12 +273,13 @@ def create_app(
         session_dir = Path(active_settings.session_dir)
         try:
             session_dir.mkdir(parents=True, exist_ok=True)
-        except OSError:
-            raise RuntimeError(STORAGE_UNAVAILABLE_MESSAGE) from None
-        repository = JsonSessionRepository(session_dir)
-        try:
+            repository = JsonSessionRepository(session_dir)
             await repository.check_writable()
-        except AppError:
+        except (OSError, AppError):
+            # Resources already constructed for this lifespan (an injected
+            # provider) are closed before the startup failure surfaces.
+            if provider is not None:
+                await provider.close()
             raise RuntimeError(STORAGE_UNAVAILABLE_MESSAGE) from None
 
         active_provider = provider
@@ -334,7 +335,9 @@ def create_app(
             "request_id=%s exception=%s", request_id, type(exc).__name__
         )
         return JSONResponse(
-            _error_payload(app_error("internal_error"), request_id), status_code=500
+            _error_payload(app_error("internal_error"), request_id),
+            status_code=500,
+            headers={"x-request-id": request_id},
         )
 
     @app.get("/", include_in_schema=False)
