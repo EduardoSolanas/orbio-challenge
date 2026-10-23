@@ -21,7 +21,8 @@ import pytest
 from app.config import Settings
 from app.main import create_app
 from tests.integration.support_api import running_client
-from tests.support.fakes import make_wav
+from tests.integration.test_it08_transcription import snapshot
+from tests.support.fakes import make_streaming_wav, make_wav
 
 TTS_LIMIT = 5 * 1024 * 1024
 CHUNK_SECONDS = 0.1
@@ -282,3 +283,69 @@ async def test_more_than_twenty_chunks_is_rejected_before_any_provider_call(serv
     assert response.json()["error"]["code"] == "provider_configuration"
     assert response.json()["error"]["retryable"] is False
     assert server.speech_requests == []
+
+
+# Groq Orpheus streaming WAV regression --------------------------------------
+
+STREAMING_RATE = 24000
+STREAMING_FRAMES = 2400
+
+
+async def test_groq_streaming_wav_chunks_are_accepted_and_assembled(server, tmp_path):
+    server.speech_body = make_streaming_wav(rate=STREAMING_RATE, frames=STREAMING_FRAMES)
+    sessions = tmp_path / "sessions"
+    settings = build_settings(sessions, server)
+    app = create_app(settings=settings)
+
+    async with running_client(app) as client:
+        session_id = await create_session(client)
+        reply = await save_reply(client, session_id)
+        text = reply["reply"]
+        assert len(text) > 200
+        before = snapshot(sessions, session_id)
+
+        response = await client.post(
+            f"/api/sessions/{session_id}/speech", json={"message_id": reply["message_id"]}
+        )
+
+        assert snapshot(sessions, session_id) == before
+
+    expected_chunks = (len(text) + 199) // 200
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "audio/wav"
+    assert response.headers["cache-control"] == "no-store"
+    assert len(server.speech_requests) == expected_chunks
+    assert all(request["response_format"] == "wav" for request in server.speech_requests)
+
+    channels, width, rate, frames = wav_frames(response.content)
+    assert (channels, width, rate) == (1, 2, STREAMING_RATE)
+    assert len(frames) == STREAMING_FRAMES * 2 * expected_chunks
+    assert 0 < len(response.content) <= TTS_LIMIT
+
+
+async def test_streaming_wav_with_an_incomplete_frame_is_a_clear_invalid_response(
+    server, tmp_path
+):
+    server.speech_body = make_streaming_wav(frames=CHUNK_FRAMES) + b"\x00"
+    sessions = tmp_path / "sessions"
+    settings = build_settings(sessions, server)
+    app = create_app(settings=settings)
+
+    async with running_client(app) as client:
+        session_id = await create_session(client)
+        greeting_id = (await client.get(f"/api/sessions/{session_id}")).json()["messages"][0]["id"]
+        before = snapshot(sessions, session_id)
+
+        response = await client.post(
+            f"/api/sessions/{session_id}/speech", json={"message_id": greeting_id}
+        )
+
+        assert snapshot(sessions, session_id) == before
+
+    assert response.status_code == 502
+    assert response.json()["error"] == {
+        "code": "invalid_provider_response",
+        "message": "The AI service returned an unusable response. Please retry.",
+        "retryable": True,
+    }
+    assert len(server.speech_requests) == 1

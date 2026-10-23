@@ -495,7 +495,7 @@ Boundary assignment: IT01–IT11 use real app routes/lifespan/engine/repository 
 
 | Case ID | Boundary / fixture stimulus | Required observable result |
 |---|---|---|
-| IT09-01 | Saved assistant message to actual MP3/PCM WAV wire fixture | 200 configured audio/mpeg or audio/wav with no-store; only exact saved text reaches TTS; no JSON delta. |
+| IT09-01 | Saved assistant message to actual MP3/PCM WAV wire fixture, including a Groq Orpheus streaming WAV (`0xFFFFFFFF` RIFF/data sizes) | 200 configured audio/mpeg or audio/wav with no-store; only exact saved text reaches TTS; no JSON delta. |
 | IT09-02 | Absent message UUID | 404 message_not_found; TTS0. |
 | IT09-03 | Existing user-message UUID | 404 message_not_found; cannot synthesize customer messages. |
 | IT09-04 | TTS2xx with text/JSON Content-Type | 502 invalid_provider_response; one attempt; no state change. |
@@ -652,9 +652,12 @@ retain IT09-01 through IT09-09 and J01–J10 rather than adding redundant journe
 - IT09-01: finite MP3 and WAV responses with real matching MIME; WAV text lengths
   1, 199, 200, 201, 4000 at a 200-character limit; exactly 1,1,1,2,20 ordered calls;
   Unicode/whitespace preserved, same model/voice, decoded frames join in order.
+  Include a Groq Orpheus streaming WAV fixture (`0xFFFFFFFF` RIFF and data sizes)
+  and assert the received bytes are the frame payload.
 - IT09-04 (provider-response validation variants): wrong MIME for configured
-  format, malformed/truncated/empty/compressed WAV, channel/rate/width changes
-  between chunks; safe invalid_provider_response, no partial output or mutation.
+  format, malformed/truncated/empty/compressed WAV, incomplete streaming frames,
+  channel/rate/width changes between chunks; safe invalid_provider_response, no
+  partial output or mutation.
 - IT09-06/07: aggregate raw bytes and assembled bytes at 5 MiB and +1, including
   multi-chunk output; compressed responses rejected before retaining more data.
 - IT09-08/09: cancellation, timeout or provider error on later chunk discards

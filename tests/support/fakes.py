@@ -73,6 +73,53 @@ def make_wav(
     return buffer.getvalue()
 
 
+STREAMING_SIZE = 0xFFFFFFFF
+
+
+def make_streaming_wav(
+    *,
+    rate: int = 24000,
+    channels: int = 1,
+    width: int = 2,
+    frames: int = 1600,
+    riff_size: int | None = None,
+    data_size: int | None = None,
+    with_list: bool = True,
+    bits: int | None = None,
+) -> bytes:
+    """PCM WAV in Groq's streaming form: unspecified RIFF/data sizes.
+
+    ``riff_size``/``data_size`` default to ``0xFFFFFFFF`` (unspecified); pass an
+    integer to emit a finite size. A ``LIST``/``INFO`` chunk mirrors the real
+    Groq Orpheus header when ``with_list`` is true. ``bits`` overrides the
+    sample-width-derived bit count for unsupported-metadata cases.
+    """
+
+    payload = b"\x00" * frames * channels * width
+    fmt = struct.pack(
+        "<HHLLHH",
+        1,
+        channels,
+        rate,
+        rate * channels * width,
+        channels * width,
+        width * 8 if bits is None else bits,
+    )
+    chunks = b"fmt " + struct.pack("<L", len(fmt)) + fmt
+    if with_list:
+        info = b"INFOISFT" + struct.pack("<L", 12) + b"Lavf61.7.100"
+        chunks += b"LIST" + struct.pack("<L", len(info)) + info
+    chunks += b"data" + struct.pack(
+        "<L", STREAMING_SIZE if data_size is None else data_size
+    ) + payload
+    return (
+        b"RIFF"
+        + struct.pack("<L", STREAMING_SIZE if riff_size is None else riff_size)
+        + b"WAVE"
+        + chunks
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Barrier for held provider calls
 # --------------------------------------------------------------------------- #

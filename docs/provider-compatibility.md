@@ -77,10 +77,15 @@ not satisfy WAV profiles until implementation and tests pass.
 - WAV: accept `audio/wav`, `audio/x-wav` or `audio/wave`, ignoring case and
   parameters; return `audio/wav`. Require a complete decodable RIFF/WAVE file
   containing uncompressed PCM, one or two channels, 16-bit samples and a sample
-  rate from 8000 through 48000 Hz. Reject empty PCM, truncated frames, malformed
-  chunks, compressed WAV and incompatible metadata. Use standard-library `wave`
-  with bounded buffers; do not apply input-recording silence/duration checks to
-  generated speech. Never relabel WAV bytes as MP3 or concatenate WAV headers.
+  rate from 8000 through 48000 Hz. Streaming WAVs whose RIFF and/or data chunk
+  size is `0xFFFFFFFF` (Groq Orpheus) are accepted: an unspecified data size
+  means the bytes actually received are the PCM payload. Finite sizes remain
+  authoritative, so a declared size larger than the buffer is truncation.
+  Reject empty PCM, payloads not aligned to whole frames, truncated frames,
+  malformed chunks, compressed WAV and incompatible metadata. Parse RIFF chunks
+  directly under bounded buffers; use standard-library `wave` for the assembled
+  output. Do not apply input-recording silence/duration checks to generated
+  speech. Never relabel WAV bytes as MP3 or concatenate WAV headers.
 
 For WAV synthesis, validate the saved nonempty text at length <=4000 before any
 provider request. Partition by Python Unicode code points into consecutive slices
