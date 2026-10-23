@@ -1,0 +1,216 @@
+name: quality
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-integration:
+    name: unit-integration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: pip check
+        run: python -m pip check
+
+      - name: Prepare report directory
+        run: mkdir -p reports
+
+      - name: Unit and integration coverage
+        run: |
+          python -m pytest tests/unit tests/integration \
+            --cov=app --cov-branch --cov-context=test \
+            --cov-report=json:reports/coverage.json \
+            --cov-report=term-missing \
+            --cov-report=xml:reports/coverage.xml \
+            --junitxml=reports/unit-integration.xml
+
+      - name: Coverage gate (aggregate >= 95%)
+        run: |
+          python - <<'PY'
+          import json
+          import sys
+
+          with open("reports/coverage.json", encoding="utf-8") as handle:
+              totals = json.load(handle)["totals"]
+          percent = float(totals["percent_covered"])
+          print(f"aggregate coverage: {percent:.2f}%")
+          sys.exit(0 if percent >= 95.0 else 1)
+          PY
+
+      - name: Automatic CI must not opt into live provider calls
+        run: |
+          if [ -n "${RUN_LIVE_TESTS:-}" ]; then
+            echo "RUN_LIVE_TESTS must not be set in automatic CI" >&2
+            exit 1
+          fi
+
+      - name: Live suite collects and skips without opt-in
+        run: |
+          if [ -d tests/live ]; then
+            python -m pytest tests/live -m live -q
+          else
+            echo "tests/live is not present; automatic CI runs no live checks"
+          fi
+
+      - name: Upload unit-integration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-integration
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            reports/coverage.json
+            reports/coverage.xml
+            reports/unit-integration.xml
+            reports/logs/
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: pip check
+        run: python -m pip check
+
+      - name: Install pinned Chromium
+        run: python -m playwright install --with-deps chromium
+
+      - name: Prepare report directory
+        run: mkdir -p reports
+
+      - name: Ten complete browser journeys (no retries)
+        run: |
+          python -m pytest tests/e2e \
+            --browser chromium \
+            --tracing retain-on-failure \
+            --screenshot only-on-failure \
+            --video retain-on-failure \
+            --output reports/playwright \
+            --junitxml=reports/e2e.xml
+
+      - name: Journey inventory gate (no skipped or missing journeys)
+        run: |
+          python scripts/check_e2e_inventory.py \
+            --spec docs/implementation-contract.md \
+            --manifest tests/e2e/cases.json \
+            --collection reports/e2e-collection.json \
+            --results reports/e2e-results.json
+
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            reports/e2e.xml
+            reports/e2e-collection.json
+            reports/e2e-results.json
+            reports/playwright/
+            reports/logs/
+
+  mutation:
+    name: mutation
+    needs: unit-integration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Prepare report directory
+        run: mkdir -p reports
+
+      - name: Run full mutation framework
+        shell: bash
+        run: |
+          set -o pipefail
+          mutmut run --max-children 2 2>&1 | tee reports/mutation-run.txt
+
+      - name: Mutation report gate
+        if: always()
+        run: |
+          mutmut results > reports/mutation-results.txt
+          python scripts/check_mutation_report.py \
+            --results reports/mutation-results.txt \
+            --run-log reports/mutation-run.txt \
+            --review reports/mutation-review.json
+
+      - name: Upload mutation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            reports/mutation-run.txt
+            reports/mutation-results.txt
+            reports/mutation-review.json
+            reports/mutation-summary.json
+            reports/logs/
+
+  image-build:
+    name: image-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build runtime image without secrets
+        run: docker build -f docs/deployment/Dockerfile -t northstar-test .
+
+      - name: Boot image as non-root and run health/session smoke
+        run: |
+          docker run --rm --entrypoint python \
+            -v "$PWD/tests:/checks:ro" \
+            northstar-test /checks/support/image_smoke.py
