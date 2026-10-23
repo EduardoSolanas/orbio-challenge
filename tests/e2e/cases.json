@@ -1,0 +1,213 @@
+{
+  "source_revision": "19adb80dd37859f5331ba24ad4356f629d76d4bd",
+  "spec": "docs/implementation-contract.md#13.3",
+  "cases": [
+    {
+      "id": "J01",
+      "title": "Complete an intake, reload completed view, New intake",
+      "nodeid": "tests/e2e/test_j01_intake.py::test_j01_intake[chromium-J01]",
+      "requirement_ids": [
+        "R1",
+        "R2",
+        "R3",
+        "R5",
+        "R6",
+        "R7",
+        "AT1",
+        "AT9",
+        "IC-13.3-J01"
+      ],
+      "checkpoints": [
+        "J01.fresh-greeting",
+        "J01.part-asks-category",
+        "J01.category-asks-urgency",
+        "J01.review-four-slots",
+        "J01.confirmed-local-receipt",
+        "J01.reload-completed-read-only",
+        "J01.new-intake-isolated"
+      ]
+    },
+    {
+      "id": "J02",
+      "title": "Correct and recover a rejected review",
+      "nodeid": "tests/e2e/test_j02_correction_recovery.py::test_j02_correction_recovery[chromium-J02]",
+      "requirement_ids": [
+        "R3",
+        "R4",
+        "AT3",
+        "AT4",
+        "AT15",
+        "IC-5",
+        "IC-13.3-J02"
+      ],
+      "checkpoints": [
+        "J02.invalid-order-keeps-problem",
+        "J02.order-corrected",
+        "J02.review-reached",
+        "J02.conflict-hides-confirm",
+        "J02.retain-old-restores-review",
+        "J02.reject-clears-token",
+        "J02.recovery-needs-later-confirm",
+        "J02.later-confirm-saves-low"
+      ]
+    },
+    {
+      "id": "J03",
+      "title": "Resume across refresh and server restart",
+      "nodeid": "tests/e2e/test_j03_resume_restart.py::test_j03_resume_restart[chromium-J03]",
+      "requirement_ids": [
+        "R5",
+        "R6",
+        "AT9",
+        "IC-9",
+        "IC-13.3-J03"
+      ],
+      "checkpoints": [
+        "J03.partial-created",
+        "J03.retry-visible-no-replacement",
+        "J03.retry-restores-context",
+        "J03.restart-preserves-history",
+        "J03.finish-after-restart"
+      ]
+    },
+    {
+      "id": "J04",
+      "title": "Recover one failed text request",
+      "nodeid": "tests/e2e/test_j04_failed_retry.py::test_j04_failed_retry[chromium-J04]",
+      "requirement_ids": [
+        "R4",
+        "AT6",
+        "AT10",
+        "IC-9",
+        "IC-13.3-J04"
+      ],
+      "checkpoints": [
+        "J04.pending-locks-one-request",
+        "J04.failure-keeps-draft",
+        "J04.retry-identical-request",
+        "J04.confirm-single-success"
+      ]
+    },
+    {
+      "id": "J05",
+      "title": "Resolve stale state from two tabs",
+      "nodeid": "tests/e2e/test_j05_two_tabs.py::test_j05_two_tabs[chromium-J05]",
+      "requirement_ids": [
+        "R5",
+        "AT3",
+        "AT11",
+        "IC-9",
+        "IC-13.3-J05"
+      ],
+      "checkpoints": [
+        "J05.two-tabs-share-review",
+        "J05.tab-a-commits-change",
+        "J05.stale-conflict-refresh",
+        "J05.explicit-send-new-id",
+        "J05.tab-b-resolves-and-confirms",
+        "J05.single-confirmation-consistent"
+      ]
+    },
+    {
+      "id": "J06",
+      "title": "Use voice successfully (recording, upload, playback)",
+      "nodeid": "tests/e2e/test_j06_voice_success.py::test_j06_voice_success[chromium-J06]",
+      "requirement_ids": [
+        "R9",
+        "AT12",
+        "AT14",
+        "IC-7",
+        "IC-9",
+        "IC-13.3-J06"
+      ],
+      "checkpoints": [
+        "J06.microphone-denied-alert",
+        "J06.recording-take-fills-draft",
+        "J06.upload-fills-draft-no-commit",
+        "J06.edited-transcript-persisted",
+        "J06.saved-reply-plays-mp3",
+        "J06.confirm-after-voice"
+      ]
+    },
+    {
+      "id": "J07",
+      "title": "Continue when speech fails",
+      "nodeid": "tests/e2e/test_j07_voice_failure.py::test_j07_voice_failure[chromium-J07]",
+      "requirement_ids": [
+        "R4",
+        "R9",
+        "AT13",
+        "AT14",
+        "IC-13.3-J07"
+      ],
+      "checkpoints": [
+        "J07.stt-outage-safe-error",
+        "J07.typed-text-mode-review",
+        "J07.tts-outage-text-intact",
+        "J07.single-receipt-after-failures"
+      ]
+    },
+    {
+      "id": "J08",
+      "title": "Ask policy questions during intake",
+      "nodeid": "tests/e2e/test_j08_rag_questions.py::test_j08_rag_questions[chromium-J08]",
+      "requirement_ids": [
+        "R13",
+        "AT17",
+        "AT18",
+        "AT19",
+        "RAG-5",
+        "RAG-6",
+        "IC-13.3-J08"
+      ],
+      "checkpoints": [
+        "J08.partial-intake",
+        "J08.return-answer-cited-sources",
+        "J08.payment-abstention-no-sources",
+        "J08.intake-finished-review",
+        "J08.review-question-preserves-token",
+        "J08.confirm-prior-token",
+        "J08.reload-restores-sources"
+      ]
+    },
+    {
+      "id": "J09",
+      "title": "Keyboard and mobile with safe content",
+      "nodeid": "tests/e2e/test_j09_keyboard_mobile.py::test_j09_keyboard_mobile[chromium-J09]",
+      "requirement_ids": [
+        "R13",
+        "AT16",
+        "RAG-6",
+        "IC-9",
+        "IC-13.3-J09"
+      ],
+      "checkpoints": [
+        "J09.mobile-named-controls",
+        "J09.customer-markup-escaped",
+        "J09.answer-and-sources-escaped-keyboard",
+        "J09.play-reachable-by-keyboard",
+        "J09.confirm-by-keyboard-no-overflow"
+      ]
+    },
+    {
+      "id": "J10",
+      "title": "Ignore stale voice results",
+      "nodeid": "tests/e2e/test_j10_stale_voice.py::test_j10_stale_voice[chromium-J10]",
+      "requirement_ids": [
+        "R9",
+        "AT12",
+        "AT14",
+        "IC-9",
+        "IC-13.3-J10"
+      ],
+      "checkpoints": [
+        "J10.stt-held-new-intake-available",
+        "J10.old-stt-ignored",
+        "J10.saved-replies-a-b",
+        "J10.only-latest-tts-owns-audio",
+        "J10.send-usable-during-playback",
+        "J10.pagehide-pauses-and-revokes"
+      ]
+    }
+  ]
+}
