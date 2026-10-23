@@ -325,17 +325,14 @@ class ConversationEngine:
                     )
                     reply_language = _reply_language(session, extraction)
                     if extraction.detected_language == "unsupported":
-                        next_active, acknowledge = session.frustration_active, False
-                    else:
-                        next_active, acknowledge = transition_frustration(
-                            session.frustration_active, extraction.frustration
-                        )
-                    if extraction.detected_language == "unsupported":
                         if at_limit:
                             raise app_error("turn_limit")
                         outcome = _unchanged_outcome(session)
                         plan = _unsupported_plan(session, extraction, reply_language)
                     else:
+                        next_active, acknowledge = transition_frustration(
+                            session.frustration_active, extraction.frustration
+                        )
                         outcome = merge_extraction(
                             session.slots,
                             session.pending_clarifications,

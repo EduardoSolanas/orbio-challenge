@@ -418,6 +418,31 @@ async def test_frustrated_policy_question_prefixes_only_the_cited_answer(tmp_pat
     provider.assert_exhausted()
 
 
+async def test_spanish_policy_question_suffix_uses_the_turn_language(tmp_path):
+    extraction = make_extraction(
+        detected_language="es",
+        has_question=True,
+        candidates={"order_number": "NS-000123"},
+        sentiment="neutral",
+        frustration="none",
+    )
+    engine, _, provider = build_engine(tmp_path, script=[("extract", extraction)])
+    created = await engine.create_session()
+
+    response = await engine.turn(
+        created.session_id,
+        turn_request("Mi pedido NS-000123. ¿Cuánto tarda la entrega?", revision=0),
+    )
+
+    assert response.reply_language == "es"
+    assert response.reply == (
+        f"{text('missing_category', 'es')} "
+        f"{text('policy_question_suffix', 'es')}"
+    )
+    assert text("policy_question_suffix", "en") not in response.reply
+    provider.assert_exhausted()
+
+
 async def test_social_turn_with_none_resets_an_active_episode_without_acknowledgment(tmp_path):
     script = [
         (
