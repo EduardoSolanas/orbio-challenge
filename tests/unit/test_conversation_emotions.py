@@ -93,6 +93,32 @@ async def test_turn_persists_customer_labels_and_null_assistant_labels(tmp_path)
     provider.assert_exhausted()
 
 
+async def test_transcript_turns_persist_customer_labels_too(tmp_path):
+    extraction = make_extraction(
+        candidates={"description": "My order arrived broken"},
+        sentiment="negative",
+        frustration="present",
+    )
+    engine, repository, provider = build_engine(tmp_path, script=[("extract", extraction)])
+    created = await engine.create_session()
+
+    await engine.turn(
+        created.session_id,
+        TurnRequest(
+            request_id=uuid4(),
+            expected_revision=0,
+            text="My order arrived broken and I am frustrated.",
+            input_mode="transcript",
+        ),
+    )
+
+    stored = await repository.load(created.session_id)
+    assert stored.messages[-2].input_mode == "transcript"
+    assert stored.messages[-2].sentiment == "negative"
+    assert stored.messages[-2].frustration == "present"
+    provider.assert_exhausted()
+
+
 async def test_extraction_context_carries_the_committed_flag_and_recent_history(tmp_path):
     extraction = make_extraction(sentiment="neutral", frustration="none")
     engine, repository, provider = build_engine(tmp_path, script=[("extract", extraction)])
