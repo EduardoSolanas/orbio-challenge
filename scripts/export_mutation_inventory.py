@@ -21,10 +21,10 @@ from typing import Any
 from check_mutation_inventory import (
     MODULES,
     coverage_entry,
-    current_source_revision,
     discover_module,
     load_coverage,
 )
+from evidence_revision import gated_input_revision
 
 NESTED_REASON = "nested function is outside mutmut's top-level mutation scope"
 NO_MUTANTS_REASON = "mutmut generated no mutants for this function"
@@ -72,11 +72,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--source-revision",
         default=None,
-        help="source revision to record (defaults to git HEAD)",
+        help="source revision to record (defaults to the gated-inputs revision)",
     )
     args = parser.parse_args(argv)
 
-    revision = args.source_revision or current_source_revision()
+    revision = args.source_revision or gated_input_revision()
     if not revision:
         print(
             "ERROR: exporter: no source revision (pass --source-revision or run in a git checkout)",

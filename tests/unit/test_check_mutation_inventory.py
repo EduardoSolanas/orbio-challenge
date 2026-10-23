@@ -11,6 +11,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -629,3 +630,95 @@ def test_exporter_rejects_missing_source_module(tmp_path: Path) -> None:
         ]
     )
     assert code != 0
+
+
+# --- commit-safe revision policy (ORB-22) ---------------------------------
+
+
+def git(root: Path, *args: str) -> str:
+    completed = subprocess.run(
+        ["git", "-C", str(root), *args], check=True, capture_output=True, text=True
+    )
+    return completed.stdout.strip()
+
+
+def init_repo(root: Path) -> None:
+    git(root, "init", "--quiet")
+    git(root, "config", "user.email", "evidence@example.test")
+    git(root, "config", "user.name", "Evidence Test")
+    git(root, "config", "commit.gpgsign", "false")
+
+
+def commit_all(root: Path, message: str) -> str:
+    git(root, "add", "--all")
+    git(root, "commit", "--quiet", "--message", message)
+    return git(root, "rev-parse", "HEAD")
+
+
+def write_repo_inputs(root: Path) -> None:
+    """Create one file under every gated input path."""
+    write_sources(root, SOURCES)
+    (root / "tests").mkdir(exist_ok=True)
+    (root / "tests" / "test_unit.py").write_text("def test_x():\n    assert True\n", encoding="utf-8")
+    (root / "scripts").mkdir(exist_ok=True)
+    (root / "scripts" / "gate.py").write_text("GATE = 1\n", encoding="utf-8")
+
+
+def test_inventory_at_inputs_revision_passes_after_reports_only_commit(tmp_path: Path) -> None:
+    init_repo(tmp_path)
+    write_repo_inputs(tmp_path)
+    inputs_revision = commit_all(tmp_path, "code at inputs revision")
+    data = default_inventory()
+    data["source_revision"] = inputs_revision
+    paths = write_evidence(
+        tmp_path, inventory_data=data, review_data=review(data, revision=inputs_revision)
+    )
+    commit_all(tmp_path, "store evidence")
+    assert run_checker(paths) == 0
+
+
+def test_commit_touching_app_after_inventory_fails(tmp_path: Path) -> None:
+    init_repo(tmp_path)
+    write_repo_inputs(tmp_path)
+    inputs_revision = commit_all(tmp_path, "code at inputs revision")
+    data = default_inventory()
+    data["source_revision"] = inputs_revision
+    paths = write_evidence(
+        tmp_path, inventory_data=data, review_data=review(data, revision=inputs_revision)
+    )
+    commit_all(tmp_path, "store evidence")
+    (tmp_path / "app" / "audio.py").write_text(
+        "def transcribe(chunk):\n    return chunk.decode('utf-8')\n", encoding="utf-8"
+    )
+    commit_all(tmp_path, "later app change")
+    assert run_checker(paths) != 0
+
+
+def test_commit_touching_tests_after_inventory_fails(tmp_path: Path) -> None:
+    init_repo(tmp_path)
+    write_repo_inputs(tmp_path)
+    inputs_revision = commit_all(tmp_path, "code at inputs revision")
+    data = default_inventory()
+    data["source_revision"] = inputs_revision
+    paths = write_evidence(
+        tmp_path, inventory_data=data, review_data=review(data, revision=inputs_revision)
+    )
+    commit_all(tmp_path, "store evidence")
+    (tmp_path / "tests" / "test_unit.py").write_text(
+        "def test_x():\n    assert 1\n", encoding="utf-8"
+    )
+    commit_all(tmp_path, "later test change")
+    assert run_checker(paths) != 0
+
+
+def test_disagreeing_inventory_and_review_revisions_fail(tmp_path: Path) -> None:
+    init_repo(tmp_path)
+    write_repo_inputs(tmp_path)
+    inputs_revision = commit_all(tmp_path, "code at inputs revision")
+    data = default_inventory()
+    data["source_revision"] = inputs_revision
+    paths = write_evidence(
+        tmp_path, inventory_data=data, review_data=review(data, revision="0" * 40)
+    )
+    commit_all(tmp_path, "store evidence")
+    assert run_checker(paths) != 0

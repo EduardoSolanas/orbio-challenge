@@ -20,6 +20,8 @@ from importlib import metadata
 from pathlib import Path
 from typing import Any
 
+from evidence_revision import gated_input_revision
+
 STATUSES = {
     "killed",
     "survived",
@@ -51,42 +53,6 @@ RUN_SUMMARY = re.compile(
 )
 RESULT_LINE = re.compile(r"^\s*(\S+):\s*(.+?)\s*$")
 SUMMARY_PATH = Path("reports/mutation-summary.json")
-
-
-def current_source_revision(root: Path = Path(".")) -> str | None:
-    """Resolve git HEAD without subprocess. Returns None outside a git checkout."""
-    git_dir = root / ".git"
-    if git_dir.is_file():
-        try:
-            pointer = git_dir.read_text(encoding="utf-8").strip()
-        except OSError:
-            return None
-        if not pointer.startswith("gitdir:"):
-            return None
-        git_dir = (root / pointer.split(":", 1)[1].strip()).resolve()
-    if not git_dir.is_dir():
-        return None
-    try:
-        head = (git_dir / "HEAD").read_text(encoding="utf-8").strip()
-    except OSError:
-        return None
-    if head.startswith("ref: "):
-        ref = head[len("ref: ") :].strip()
-        try:
-            return (git_dir / ref).read_text(encoding="utf-8").strip()
-        except OSError:
-            packed = git_dir / "packed-refs"
-            try:
-                for line in packed.read_text(encoding="utf-8").splitlines():
-                    if line.startswith("#"):
-                        continue
-                    sha, _, name = line.partition(" ")
-                    if name.strip() == ref:
-                        return sha.strip()
-            except OSError:
-                return None
-            return None
-    return head or None
 
 
 def parse_run_log(text: str) -> dict[str, int] | None:
@@ -343,10 +309,11 @@ def main(argv: list[str] | None = None) -> int:
         if mutant_id not in {entry[0] for entry in entries}:
             errors.append(f"review: approval for mutant {mutant_id} not present in results")
 
-    head = current_source_revision()
-    if review_revision and head and review_revision != head:
+    expected_revision = gated_input_revision()
+    if review_revision and expected_revision and review_revision != expected_revision:
         errors.append(
-            f"review: stale source revision {review_revision!r} != HEAD {head!r}"
+            f"review: stale source revision {review_revision!r} != gated inputs "
+            f"revision {expected_revision!r}"
         )
     if not review_revision:
         errors.append("review: source_revision is required for a mutation gate")
@@ -359,7 +326,7 @@ def main(argv: list[str] | None = None) -> int:
         "run_log": str(run_log_path),
         "results": str(results_path),
         "review": str(review_path),
-        "source_revision": review_revision or head,
+        "source_revision": review_revision or expected_revision,
         "generated": run_counts["generated"],
         "executed": run_counts["executed"],
         "killed": run_counts["killed"],

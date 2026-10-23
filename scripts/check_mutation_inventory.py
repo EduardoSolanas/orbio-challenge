@@ -21,6 +21,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from evidence_revision import gated_input_revision
+
 MODULES = (
     "conversation",
     "validation",
@@ -57,42 +59,6 @@ class FunctionInfo:
     mangled_key: str | None
     body_lines: frozenset[int]
     source_sha256: str
-
-
-def current_source_revision(root: Path = Path(".")) -> str | None:
-    """Resolve git HEAD without subprocess. Returns None outside a git checkout."""
-    git_dir = root / ".git"
-    if git_dir.is_file():
-        try:
-            pointer = git_dir.read_text(encoding="utf-8").strip()
-        except OSError:
-            return None
-        if not pointer.startswith("gitdir:"):
-            return None
-        git_dir = (root / pointer.split(":", 1)[1].strip()).resolve()
-    if not git_dir.is_dir():
-        return None
-    try:
-        head = (git_dir / "HEAD").read_text(encoding="utf-8").strip()
-    except OSError:
-        return None
-    if head.startswith("ref: "):
-        ref = head[len("ref: ") :].strip()
-        try:
-            return (git_dir / ref).read_text(encoding="utf-8").strip()
-        except OSError:
-            packed = git_dir / "packed-refs"
-            try:
-                for line in packed.read_text(encoding="utf-8").splitlines():
-                    if line.startswith("#"):
-                        continue
-                    sha, _, name = line.partition(" ")
-                    if name.strip() == ref:
-                        return sha.strip()
-            except OSError:
-                return None
-            return None
-    return head or None
 
 
 def load_json(path: Path, label: str, errors: list[str]) -> Any:
@@ -378,9 +344,12 @@ def main(argv: list[str] | None = None) -> int:
         validate_review(review_data, revision, errors) if review_data is not None else {}
     )
 
-    head = current_source_revision()
-    if revision and head and revision != head:
-        errors.append(f"inventory: stale source revision {revision!r} != HEAD {head!r}")
+    expected_revision = gated_input_revision()
+    if revision and expected_revision and revision != expected_revision:
+        errors.append(
+            f"inventory: stale source revision {revision!r} != gated inputs "
+            f"revision {expected_revision!r}"
+        )
 
     seen: set[str] = set()
     seen_mutants: set[str] = set()

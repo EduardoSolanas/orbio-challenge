@@ -11,9 +11,13 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
+import sys
 from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
+
+from evidence_revision import gated_input_revision  # noqa: E402
 
 E2E_PREFIX = "tests/e2e/"
 COLLECTION_FILE = "e2e-collection.json"
@@ -36,18 +40,8 @@ def _is_e2e(nodeid: str) -> bool:
 
 
 def source_revision(root: Path) -> str:
-    try:
-        completed = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            cwd=root,
-            capture_output=True,
-            text=True,
-            timeout=10,
-            check=True,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return ""
-    return completed.stdout.strip()
+    """Stamp the gated-inputs revision so stored evidence stays valid after its own commit."""
+    return gated_input_revision(root) or ""
 
 
 def browser_name(config: Any) -> str:

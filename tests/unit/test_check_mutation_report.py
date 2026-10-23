@@ -9,6 +9,7 @@ installed pinned framework, mutmut 3.8.0:
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -285,3 +286,106 @@ def test_help_exits_zero() -> None:
     with pytest.raises(SystemExit) as excinfo:
         check_mutation_report.main(["--help"])
     assert excinfo.value.code == 0
+
+
+# --- commit-safe revision policy (ORB-22) ---------------------------------
+
+
+def git(root: Path, *args: str) -> str:
+    completed = subprocess.run(
+        ["git", "-C", str(root), *args], check=True, capture_output=True, text=True
+    )
+    return completed.stdout.strip()
+
+
+def init_repo(root: Path) -> None:
+    git(root, "init", "--quiet")
+    git(root, "config", "user.email", "evidence@example.test")
+    git(root, "config", "user.name", "Evidence Test")
+    git(root, "config", "commit.gpgsign", "false")
+
+
+def commit_all(root: Path, message: str) -> str:
+    git(root, "add", "--all")
+    git(root, "commit", "--quiet", "--message", message)
+    return git(root, "rev-parse", "HEAD")
+
+
+def write_repo_inputs(root: Path) -> None:
+    """Create one file under every gated input path."""
+    (root / "app").mkdir(exist_ok=True)
+    (root / "app" / "config.py").write_text("class Settings:\n    pass\n", encoding="utf-8")
+    (root / "tests").mkdir(exist_ok=True)
+    (root / "tests" / "test_unit.py").write_text("def test_x():\n    assert True\n", encoding="utf-8")
+    (root / "scripts").mkdir(exist_ok=True)
+    (root / "scripts" / "gate.py").write_text("GATE = 1\n", encoding="utf-8")
+    (root / "pyproject.toml").write_text(
+        '[tool.mutmut]\nsource_paths = ["app/"]\n', encoding="utf-8"
+    )
+
+
+def test_review_at_inputs_revision_passes_after_reports_only_commit(tmp_path: Path) -> None:
+    init_repo(tmp_path)
+    write_repo_inputs(tmp_path)
+    inputs_revision = commit_all(tmp_path, "code at inputs revision")
+    paths = write_evidence(
+        tmp_path,
+        run_text=run_log(),
+        results_text="",
+        review_data=review(revision=inputs_revision),
+    )
+    commit_all(tmp_path, "store evidence")
+    assert run(tmp_path, paths) == 0
+
+
+def test_commit_touching_app_after_review_fails(tmp_path: Path) -> None:
+    init_repo(tmp_path)
+    write_repo_inputs(tmp_path)
+    inputs_revision = commit_all(tmp_path, "code at inputs revision")
+    paths = write_evidence(
+        tmp_path,
+        run_text=run_log(),
+        results_text="",
+        review_data=review(revision=inputs_revision),
+    )
+    commit_all(tmp_path, "store evidence")
+    (tmp_path / "app" / "config.py").write_text(
+        "class Settings:\n    value = 2\n", encoding="utf-8"
+    )
+    commit_all(tmp_path, "later app change")
+    assert run(tmp_path, paths) != 0
+
+
+def test_commit_touching_tests_after_review_fails(tmp_path: Path) -> None:
+    init_repo(tmp_path)
+    write_repo_inputs(tmp_path)
+    inputs_revision = commit_all(tmp_path, "code at inputs revision")
+    paths = write_evidence(
+        tmp_path,
+        run_text=run_log(),
+        results_text="",
+        review_data=review(revision=inputs_revision),
+    )
+    commit_all(tmp_path, "store evidence")
+    (tmp_path / "tests" / "test_unit.py").write_text(
+        "def test_x():\n    assert 1\n", encoding="utf-8"
+    )
+    commit_all(tmp_path, "later test change")
+    assert run(tmp_path, paths) != 0
+
+
+def test_review_revision_from_an_older_commit_fails(tmp_path: Path) -> None:
+    init_repo(tmp_path)
+    write_repo_inputs(tmp_path)
+    stale_revision = commit_all(tmp_path, "code at inputs revision")
+    (tmp_path / "app" / "config.py").write_text(
+        "class Settings:\n    value = 3\n", encoding="utf-8"
+    )
+    commit_all(tmp_path, "later app change")
+    paths = write_evidence(
+        tmp_path,
+        run_text=run_log(),
+        results_text="",
+        review_data=review(revision=stale_revision),
+    )
+    assert run(tmp_path, paths) != 0

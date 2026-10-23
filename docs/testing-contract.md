@@ -130,6 +130,8 @@ python scripts/check_mutation_report.py --results reports/mutation-results.txt -
 
 The real workflow must capture `mutmut run` to `reports/mutation-run.txt` while preserving exit status; the unredirected line above illustrates the tool command only. For CI use `mutmut run --max-children 2 2>&1 | tee reports/mutation-run.txt` under `bash` with pipefail. Create reports directory before all report-writing commands. Mutation review file starts with an empty approvals list, never implicit approval of survivors. `scripts/check_mutation_report.py` also writes mutation-summary.json with counts. Its exact flags above are mandatory. Unit/integration run excludes E2E so mutmut never launches browsers. E2E runs separately against the real server fixture.
 
+Evidence revision policy (commit-safe, shared by all three evidence checkers): an evidence file's `source_revision` is the last commit that touched a gated input — `app`, `tests`, `scripts`, `pyproject.toml`, `docs/implementation-contract.md`, `docs/testing-contract.md` — computed by `scripts/evidence_revision.py`. The E2E manifest `tests/e2e/cases.json` is itself evidence and is excluded from that set, otherwise the commit that stamps it would move the expected revision. Every evidence file must agree on that revision: regenerated evidence still passes after the commit that stores it, while any later commit touching a gated input makes it stale and fails the gate. Outside a git checkout the checkers keep their previous behaviour.
+
 CI on push and pull_request, Ubuntu 24.04, Python 3.11:
 
 1. **unit-integration:** install pinned dev dependencies, pip check, run coverage/JUnit command; fail on failed tests or aggregate measured coverage <95%.

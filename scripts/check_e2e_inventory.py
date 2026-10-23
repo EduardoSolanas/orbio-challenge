@@ -18,6 +18,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from evidence_revision import gated_input_revision
+
 JOURNEY_IDS = tuple(f"J{i:02d}" for i in range(1, 11))
 SPEC_JOURNEY_ROW = re.compile(r"^\|\s*(J\d{2})\s*\|", re.MULTILINE)
 FORBIDDEN_OUTCOMES = {
@@ -31,42 +33,6 @@ FORBIDDEN_OUTCOMES = {
     "not run",
 }
 FORBIDDEN_MARKERS = ("skip", "skipif", "xfail")
-
-
-def current_source_revision(root: Path = Path(".")) -> str | None:
-    """Resolve git HEAD without subprocess. Returns None outside a git checkout."""
-    git_dir = root / ".git"
-    if git_dir.is_file():
-        try:
-            pointer = git_dir.read_text(encoding="utf-8").strip()
-        except OSError:
-            return None
-        if not pointer.startswith("gitdir:"):
-            return None
-        git_dir = (root / pointer.split(":", 1)[1].strip()).resolve()
-    if not git_dir.is_dir():
-        return None
-    try:
-        head = (git_dir / "HEAD").read_text(encoding="utf-8").strip()
-    except OSError:
-        return None
-    if head.startswith("ref: "):
-        ref = head[len("ref: ") :].strip()
-        try:
-            return (git_dir / ref).read_text(encoding="utf-8").strip()
-        except OSError:
-            packed = git_dir / "packed-refs"
-            try:
-                for line in packed.read_text(encoding="utf-8").splitlines():
-                    if line.startswith("#"):
-                        continue
-                    sha, _, name = line.partition(" ")
-                    if name.strip() == ref:
-                        return sha.strip()
-            except OSError:
-                return None
-            return None
-    return head or None
 
 
 def load_json(path: Path, label: str, errors: list[str]) -> Any:
@@ -307,10 +273,11 @@ def main(argv: list[str] | None = None) -> int:
     populated = {name: value for name, value in revisions.items() if value}
     if len(set(populated.values())) > 1:
         errors.append(f"stale source revision across evidence: {revisions}")
-    head = current_source_revision()
-    if head and populated and set(populated.values()) != {head}:
+    expected_revision = gated_input_revision()
+    if expected_revision and populated and set(populated.values()) != {expected_revision}:
         errors.append(
-            f"stale source revision: evidence {sorted(set(populated.values()))} != HEAD {head}"
+            f"stale source revision: evidence {sorted(set(populated.values()))} "
+            f"!= gated inputs revision {expected_revision}"
         )
 
     if errors:
