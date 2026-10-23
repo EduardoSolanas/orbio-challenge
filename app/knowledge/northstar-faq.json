@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "version": "2026-10-22",
+  "records": [
+    {"id":"faq-delivery","title":"Delivery times","keywords":["delivery","shipping","ship","arrive","arrives"],"body":"Standard delivery takes 2 to 5 business days after dispatch. This demo cannot check the status of an individual order."},
+    {"id":"faq-damaged","title":"Damaged items","keywords":["damaged","broken","damage"],"body":"For a damaged item, keep the packaging and describe the damage when reporting the issue. A support review is required; this demo cannot approve a replacement or refund."},
+    {"id":"faq-returns","title":"Returns and refunds","keywords":["return","returns","refund","refunds"],"body":"An unused item in its original packaging can be requested for return within 30 calendar days of delivery. Refund eligibility requires a support review; this demo cannot approve or issue a refund."},
+    {"id":"faq-urgency","title":"Urgency levels","keywords":["urgency","priority","urgent"],"body":"Use low urgency when the issue can wait, normal for a routine issue, and high when prompt attention is needed. Urgency does not guarantee a response time in this demo."}
+  ]
+}
