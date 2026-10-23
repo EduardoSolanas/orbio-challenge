@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Northstar support intake</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1 class="app__title">Northstar support intake</h1>
+
+    <div id="transcript" class="transcript" role="log" aria-live="polite" aria-relevant="additions"></div>
+
+    <section id="review" class="review" role="region" aria-label="Review details" hidden></section>
+
+    <div id="alert" class="alert" role="alert" hidden></div>
+
+    <div class="composer">
+      <label class="composer__label" for="message">Message</label>
+      <textarea id="message" class="composer__message" name="message" rows="4" aria-label="Message"></textarea>
+      <p id="transcribe-help" class="composer__help" hidden>Send or clear your current draft before transcribing.</p>
+
+      <div class="composer__actions">
+        <button type="button" id="send" class="btn">Send</button>
+        <button type="button" id="retry" class="btn" hidden>Retry</button>
+        <button type="button" id="confirm" class="btn" hidden>Confirm details</button>
+        <button type="button" id="new-intake" class="btn">New intake</button>
+      </div>
+
+      <div class="voice">
+        <button type="button" id="start-recording" class="btn">Start recording</button>
+        <button type="button" id="stop-recording" class="btn" hidden>Stop recording</button>
+        <button type="button" id="transcribe" class="btn">Transcribe audio</button>
+        <label class="voice__file" for="wav-recording">WAV recording</label>
+        <input id="wav-recording" type="file" accept="audio/wav,.wav,audio/wave" aria-label="WAV recording">
+      </div>
+
+      <div class="playback">
+        <audio id="reply-audio" data-testid="reply-audio" controls></audio>
+        <p class="playback__disclosure">Voice is AI-generated</p>
+      </div>
+    </div>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

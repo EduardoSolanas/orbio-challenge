@@ -1,0 +1,256 @@
+:root {
+  --ink: #1a1f24;
+  --paper: #f7f4ef;
+  --accent: #0b6e4f;
+  --accent-ink: #ffffff;
+  --line: #c9c2b8;
+  --alert: #7a1f1f;
+  --alert-bg: #f8e8e6;
+  --focus: #0b5fff;
+  --radius: 6px;
+  --space: 0.75rem;
+  --max: 40rem;
+  font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(160deg, #ebe6dc 0%, var(--paper) 45%, #e4eef0 100%);
+  color: var(--ink);
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  width: 100%;
+  max-width: 100vw;
+}
+
+.app {
+  width: min(100%, var(--max));
+  margin: 0 auto;
+  padding: var(--space);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space);
+}
+
+.app__title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.transcript {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--space);
+  min-height: 12rem;
+  max-height: 55vh;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.msg {
+  margin: 0 0 0.85rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.msg__role {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5a635c;
+  margin-bottom: 0.2rem;
+}
+
+.msg__text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.msg__play {
+  margin-top: 0.4rem;
+}
+
+.sources {
+  margin-top: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.55rem;
+  background: #fbfaf7;
+}
+
+.sources details {
+  margin: 0.25rem 0;
+}
+
+.sources summary {
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.sources summary:focus-visible,
+.btn:focus-visible,
+.composer__message:focus-visible,
+.voice__file:focus-visible,
+#wav-recording:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(11, 95, 255, 0.25);
+}
+
+.sources__body {
+  margin: 0.35rem 0 0.15rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.sources__version {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+.review {
+  background: #eef7f2;
+  border: 1px solid #9fc5b3;
+  border-radius: var(--radius);
+  padding: var(--space);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.alert {
+  background: var(--alert-bg);
+  color: var(--alert);
+  border: 1px solid #e0b4ae;
+  border-radius: var(--radius);
+  padding: 0.65rem 0.75rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.alert[hidden],
+.review[hidden],
+.btn[hidden],
+.composer__help[hidden],
+#stop-recording[hidden] {
+  display: none !important;
+}
+
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.composer__label {
+  font-weight: 600;
+}
+
+.composer__message {
+  width: 100%;
+  resize: vertical;
+  min-height: 5rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font: inherit;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.composer__help {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #5a635c;
+}
+
+.composer__actions,
+.voice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-radius: var(--radius);
+  padding: 0.45rem 0.8rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.voice__file {
+  display: inline-block;
+  padding: 0.45rem 0.7rem;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  cursor: pointer;
+}
+
+#wav-recording {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.playback {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.playback audio {
+  max-width: 100%;
+}
+
+.playback__disclosure {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #5a635c;
+}
+
+@media (max-width: 420px) {
+  .app {
+    padding: 0.55rem;
+  }
+
+  .btn {
+    padding: 0.4rem 0.65rem;
+  }
+}
