@@ -1,6 +1,6 @@
 # Strict TDD and quality contract
 
-User requirements added 22 October 2026: unit tests, integration tests, Playwright end-to-end tests, strict TDD, and **framework-generated mutation testing**. All are mandatory. This document specifies future implementation checks, not tests already run on the application.
+User requirements added 22 October 2026: unit tests, integration tests, Playwright end-to-end tests, strict TDD, and **framework-generated mutation testing**. All are mandatory. This document defines required checks; README.md and reports/ record observed runs and remaining gaps.
 
 ## 1. Non-negotiable workflow
 

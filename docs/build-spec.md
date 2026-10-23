@@ -1,6 +1,6 @@
 # Conversational support agent: implementation specification
 
-Status: proposed implementation contract; no application has been built.
+Status: implementation specification. Application and test code are present; README.md records observed delivery gates and remaining limits.
 
 **Builder entry point:** read implementation-contract.md for component/state rules, provider-compatibility.md for per-role HTTP settings, rag-contract.md for retrieval/grounding and testing-contract.md for mandatory strict TDD/unit/integration/Playwright/mutmut gates. No application behavior or quality gate is implemented by these documents.
 Source: Core Engineer Case.pdf, pages 1–3. Prepared 22 October 2026.
@@ -9,7 +9,7 @@ Source: Core Engineer Case.pdf, pages 1–3. Prepared 22 October 2026.
 
 Build a small Python application for **Northstar Shop**, a fictional online retailer. Its agent interviews a customer about an order problem, validates the answers, asks for confirmation, and saves a structured support intake with a summary. It must never claim to have issued a refund, changed an order, or contacted a real support team.
 
-The user's request is to prepare detailed specifications and have an independent verifier challenge them. The PDF supplies assignment requirements; it does not authorize deployment, external messages, account creation, or implementation in this task.
+The PDF supplies assignment requirements; user-added requirements extend it. Deployment, external messages and account creation require applicable user authorization.
 
 Requirement labels below distinguish **R** (explicit assignment requirement), **D** (proposed design decision), and **O** (optional extension). Architecture, business rules, API shapes, deadlines, and numeric limits in this document are design decisions unless marked R.
 
@@ -239,7 +239,7 @@ RAG is now mandatory under [rag-contract.md](rag-contract.md), with requirement 
 
 See [startup.md](startup.md) for prerequisites, configuration, Compose and local-development commands, runtime dependencies, and startup acceptance checks. See [architecture.html](architecture.html) for the interactive component and request-flow diagram.
 
-Deploy the core as one Compose `app` service with exactly one Uvicorn worker, host loopback port 8000, and a named `sessions` volume mounted at `/data`. The app binds `0.0.0.0` inside the container; Compose restricts the published host port to `127.0.0.1`. FastAPI serves the static UI and API together. External extraction, transcription and speech are provider capabilities, not local containers. Deployment templates live in `docs/deployment/`; they require the future `app/`, pinned `requirements.txt`, and `requirements-dev.txt` before build/test commands can succeed.
+Deploy the core as one Compose `app` service with exactly one Uvicorn worker, host loopback port 8000, and a named `sessions` volume mounted at `/data`. The app binds `0.0.0.0` inside the container; Compose restricts the published host port to `127.0.0.1`. FastAPI serves the static UI and API together. External extraction, transcription and speech are provider capabilities, not local containers. Deployment templates live in `docs/deployment/`; they build the checkout's `app/` with pinned `requirements.txt`; host tests use `requirements-dev.txt`.
 
 The configuration contract adds `AI_PROVIDER=openai_compatible`, complete per-role BASE_URL/MODEL/AUTH_MODE/API_KEY profiles, text OUTPUT_MODE, TTS_VOICE, SESSION_DIR and PROVIDER_MAX_CONCURRENCY. Startup must validate required configuration and writable storage without making a paid request. `/health` checks process/storage availability and cannot certify provider access. Non-root container operation, persistent restart/resume, and live text/voice smoke checks are delivery gates. The builder/verifier roles are development supervision, not runtime services.
 
@@ -248,7 +248,7 @@ The configuration contract adds `AI_PROVIDER=openai_compatible`, complete per-ro
 
 [implementation-contract.md](implementation-contract.md) specifies component interfaces and model-service integration, exact file and method boundaries, app lifespan assembly, types, normalization aliases, prompt text, deterministic replies, transaction sequences, voice processing, errors, locking, durability and browser selectors. [testing-contract.md](testing-contract.md) specifies strict test-first evidence, unit/integration/E2E cases, real-server fixtures, httpx HTTP transport mocks, Playwright tooling, mutmut configuration and independent survivor review, CI commands and completion gates.
 
-The stored Session schema additionally includes `collection_turn_count` (initial 0) and `review_rejected` (initial false). Their transition semantics are in the implementation contract. These are part of schema version 1 because no application data has been created yet.
+The stored Session schema additionally includes `collection_turn_count` (initial 0) and `review_rejected` (initial false). Their transition semantics are in the implementation contract. These are part of schema version 1 as defined by the current storage contract.
 
 
 ## 15. Mandatory RAG

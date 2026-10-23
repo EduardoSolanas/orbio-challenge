@@ -1,6 +1,6 @@
 # Startup and deployment contract
 
-Status: proposed setup for the future application. The repository currently contains specifications, an architecture page, and deployment templates. `app/` and `requirements.txt` have not been implemented; the container cannot be built successfully yet.
+The application and deployment files are present. See [README.md](../README.md#setup-and-exact-commands) for operational commands and recorded verification limits. All commands below run from the repository root; paths are relative to that root.
 
 Read [implementation-contract.md](implementation-contract.md) for exact wiring/model/API choices and [testing-contract.md](testing-contract.md) for strict TDD, unit/integration/Playwright/mutmut gates. All listed quality gates are mandatory.
 
@@ -16,66 +16,47 @@ There are no service-to-service startup dependencies, so no `depends_on` is need
 
 ## Prerequisites
 
-- Docker Engine with Compose v2, or Docker Desktop configured for Linux containers. On Windows, ensure Docker Desktop's supported WSL 2 or Hyper-V backend is working.
+- Docker with Compose v2 running and able to build the application image.
 - Internet access for image/package downloads and provider API calls.
 - Running compatible model servers for all required roles, with valid model/voice IDs and role-specific credentials only where authentication is enabled. Hosted services may additionally require account access/billing.
 - A free local port 8000, browser, and short fictional PCM WAV recording for the voice smoke test.
-- Implemented `app/main.py` exporting `app`, static files included in the image, and pinned `requirements.txt` before using the templates.
+- Application source and pinned dependencies from this checkout; build context must include `app/` and `requirements.txt`.
 
-Proposed Python runtime dependencies: `fastapi`, `uvicorn`, `pydantic`, `python-multipart` for uploads, and httpx for generic compatible-service transport. All pinned development dependencies in testing-contract.md are required, including pytest-asyncio, pytest-playwright, Playwright and Linux/WSL mutmut. Pin versions tested together during implementation; Docker base image should be pinned to a tested digest before reproducible delivery.
+Python runtime dependencies (pins are in requirements.txt): `fastapi`, `uvicorn`, `pydantic`, `python-multipart` for uploads, and httpx for generic compatible-service transport. All pinned development dependencies in testing-contract.md are required, including pytest-asyncio, pytest-playwright, Playwright and Linux/WSL mutmut. Pin versions tested together during implementation; Docker base image should be pinned to a tested digest before reproducible delivery.
 
 ## Configuration
 
-Use docs/deployment/.env.example and provider-compatibility.md as the exact settings contract. Each service prefix LLM_, RAG_, STT_, TTS_ has BASE_URL, MODEL, AUTH_MODE and API_KEY. Text roles have OUTPUT_MODE and TTS has VOICE. Blank RAG settings inherit the complete LLM profile; a separately configured RAG profile inherits no secrets. SESSION_DIR and PROVIDER_MAX_CONCURRENCY retain their original meanings.
+Use .env.example and provider-compatibility.md as the exact settings contract. Each service prefix LLM_, RAG_, STT_, TTS_ has BASE_URL, MODEL, AUTH_MODE and API_KEY. Text roles have OUTPUT_MODE and TTS has VOICE. Blank RAG settings inherit the complete LLM profile; a separately configured RAG profile inherits no secrets. SESSION_DIR and PROVIDER_MAX_CONCURRENCY retain their original meanings.
 
-The example host.docker.internal addresses are illustrative servers on the Docker host; they are not started by Compose. On Linux Docker Engine add `extra_hosts: ["host.docker.internal:host-gateway"]` to the app service when using those host addresses. On Docker Desktop use the documented host alias. Same-network model servers use service DNS; external servers use actual HTTPS API prefixes. Operator must supply valid served model names and supported voice. The compatibility smoke in provider-compatibility.md is required before claiming a backend works. Local app startup only validates settings, writable storage and bundled KB.
+The example host.docker.internal addresses are illustrative servers on the Docker host; they are not started by Compose. The root Compose file supplies `host.docker.internal:host-gateway`; host model servers must accept connections from Docker. Same-network model servers use service DNS; external servers use actual HTTPS API prefixes. Operator must supply valid served model names and supported voice. The compatibility smoke in provider-compatibility.md is required before claiming a backend works. Local app startup only validates settings, writable storage and bundled KB.
 
-## Compose startup: PowerShell from repository root
+## Compose startup from repository root
 
-Run these after the application exists:
+Duplicate `.env.example` as `.env` using your editor or file manager, then
+edit the local file with real model IDs, voice, endpoints and any required keys.
+Do not overwrite an existing local configuration. `.env` is excluded from
+Git and image build context; `env_file` injects values at container creation.
 
-```powershell
-docker --version
-docker compose version
-Copy-Item docs/deployment/.env.example docs/deployment/.env
-# Edit docs/deployment/.env locally with provider/model settings.
-docker compose -f docs/deployment/compose.yaml up --build -d --wait --wait-timeout 120
-Invoke-RestMethod http://localhost:8000/health
+```text
+docker compose config --quiet
+docker compose up --build -d --wait --wait-timeout 120
+docker compose ps
+docker compose logs --tail 100 app
 ```
 
-Open `http://localhost:8000`. Copy the example only on first setup so an existing `.env` is not overwritten. `env_file` passes variables into the container; Compose's automatic interpolation `.env` behavior alone does not do this. The build context is repository root; relative paths in the Compose file resolve from its directory. Only host loopback is published, although Uvicorn must listen on `0.0.0.0` inside the container.
+Open http://127.0.0.1:8000 and http://127.0.0.1:8000/health in your browser.
+The root Compose file builds from the repository root. Compose paths are relative
+to that file, so `.env` is also in the root. After editing configuration,
+repeat `docker compose up --build -d --wait --wait-timeout 120` to recreate the app.
 
-```powershell
-# Status and sanitized logs
-docker compose -f docs/deployment/compose.yaml ps
-docker compose -f docs/deployment/compose.yaml logs --tail 100 app
-# Stop and remove the container; keep saved sessions
-docker compose -f docs/deployment/compose.yaml down
-# Apply code or configuration changes by rebuilding/recreating
-docker compose -f docs/deployment/compose.yaml up --build -d --wait --wait-timeout 120
-
+```text
+docker compose restart app
+docker compose down
 ```
 
-Run unit/integration tests with `python -m pytest tests/unit tests/integration -q` in the local/CI development environment with its mandatory dependencies installed, injected test profiles and temporary directories. For E2E, use the separate browser-enabled environment and Playwright installation/commands in testing-contract.md. Do not run an entire mounted /checks tree inside the runtime Compose service, inherit live .env credentials or mount the live session volume for testing. Do not scale app or set multiple workers: JSON locks and idempotency are process-local.
-
-The named volume survives ordinary `down`. Destructive data removal must be a separate, explicit user action; do not include it in normal stop or reset instructions. Volume retention is not backup. Docker logs must omit transcript and credential content.
-
-## Local development alternative: PowerShell
-
-Python 3.11+ installed locally; Docker is optional on this path:
-
-```powershell
-python -m venv .venv
-& ./.venv/Scripts/python.exe -m pip install -r requirements-dev.txt
-$env:AI_PROVIDER = 'openai_compatible'
-# Set the complete LLM/RAG/STT/TTS profiles in this shell.
-$env:SESSION_DIR = './data/sessions'
-& ./.venv/Scripts/python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-# In a second shell, from repository root:
-& ./.venv/Scripts/python.exe -m pytest tests/unit tests/integration -q
-```
-
-Local Uvicorn does not automatically load `docs/deployment/.env`; this path uses process environment variables. `--reload` is development-only. Container and local data directories are separate; switching paths does not automatically migrate sessions.
+Ordinary `down` retains the named session volume. Do not add `--volumes` unless
+you intend to delete stored sessions. Run exactly one worker; JSON locks and
+idempotency are process-local. Volume retention is not backup.
 
 ## Startup acceptance gate
 
@@ -87,7 +68,7 @@ Local Uvicorn does not automatically load `docs/deployment/.env`; this path uses
 6. Invalid profile/auth settings or unwritable storage produces an actionable sanitized error. Provider outage preserves committed state; TTS failure leaves text usable.
 7. Mocked tests pass without live credentials and without touching saved demo data.
 
-Provider calls, image build, and application execution have not been verified in this specification-only task.
+For observed image, application and provider gate results, consult README.md and reports/. Do not infer successful execution from this contract.
 
 ## References
 

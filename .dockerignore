@@ -8,3 +8,6 @@ data
 tmp
 docs
 tests
+
+.env.local
+**/.env.local

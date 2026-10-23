@@ -45,53 +45,91 @@ use httpx transport doubles and the E2E provider fake, not a real service.
 
 ## Setup and exact commands
 
-Prerequisites: Python 3.11 on Linux (the tested reference environment), the pinned
-dependencies, and running compatible model servers for all four roles.
+All commands run from the **repository root**, containing `compose.yaml` and
+`README.md`. You only need Docker with Compose v2 running; Compose builds and
+runs Python and the application dependencies inside the container.
 
-```bash
-python -m venv .venv
-.venv/bin/python -m pip install -r requirements-dev.txt
-.venv/bin/python -m pip check
+### 1. Edit the local configuration
+
+Create `.env` in the root by duplicating `.env.example` with your editor or
+file manager. Keep your actual settings in `.env`; commit only `.env.example`.
+Edit it before starting the app. Both Git and the Docker build context ignore
+`.env`; Compose passes its values into the running container using
+`env_file`, so credentials are not baked into image layers.
+
+| Setting | Default / what to edit |
+|---|---|
+| `AI_PROVIDER` | `openai_compatible` |
+| `LLM_BASE_URL` | `http://host.docker.internal:8001/v1` |
+| `STT_BASE_URL` | `http://host.docker.internal:8002/v1` |
+| `TTS_BASE_URL` | `http://host.docker.internal:8003/v1` |
+| `LLM_MODEL`, `STT_MODEL`, `TTS_MODEL`, `TTS_VOICE` | Replace example values with actual served IDs |
+| Each role's `AUTH_MODE` / `API_KEY` | Defaults to `none` / empty; use `bearer` and its key if required |
+| `LLM_OUTPUT_MODE` | `json_schema`; change to `json_object` or `prompt_json` if required by your backend |
+| All `RAG_*` values | Blank inherits the complete LLM profile; set a complete profile for a separate answer server |
+| `PROVIDER_MAX_CONCURRENCY` | `4` |
+
+Model servers are provisioned separately: Compose does not download weights or
+start LLM/STT/TTS servers. The default URLs reach servers on the Docker host;
+Compose configures the host gateway alias. Those servers must listen on an
+interface reachable from Docker. For externally hosted services, replace URLs
+with their actual HTTP(S) API prefixes. `127.0.0.1` inside the app container refers
+to the app container, not your model server.
+
+Networking is also configured in `.env`: `APP_PUBLISH_HOST` and
+`APP_PUBLISH_PORT` control the host binding; `APP_BIND_HOST` and `APP_PORT`
+control Uvicorn inside the container; `APP_HEALTH_URL` controls the internal
+readiness request. Its default references `${APP_PORT}` so a port change stays
+in sync. `MODEL_HOST_ALIAS` and `MODEL_HOST_GATEWAY` configure the provider-host
+mapping. Example browser URLs below use the defaults; adjust them if you change
+the published port. Keep the published host on loopback for this local demo.
+
+Compose automatically reads the root `.env` for variable substitution and uses
+the same file to populate the container environment; no extra flags are required.
+
+### 2. Build and start
+
+```text
+docker compose config --quiet
+docker compose up --build -d --wait --wait-timeout 120
 ```
 
-Configuration is read from the process environment (no dotenv load; missing or
-invalid settings fail startup with `configuration_invalid: Check required provider
-and model settings.`). Set at least:
+Open **http://127.0.0.1:8000**. The readiness endpoint is
+http://127.0.0.1:8000/health. Readiness checks the app and storage, not live model
+compatibility. Invalid configuration fails startup with
+`configuration_invalid: Check required provider and model settings.`
 
-```bash
-export AI_PROVIDER=openai_compatible
-export LLM_BASE_URL=http://127.0.0.1:8001/v1
-export LLM_MODEL=<served-model-id>
-export LLM_AUTH_MODE=none          # or bearer with LLM_API_KEY
-export LLM_API_KEY=
-export LLM_OUTPUT_MODE=json_schema
-# RAG_* is optional: leave every RAG_* variable unset to inherit the LLM profile.
-export STT_BASE_URL=http://127.0.0.1:8002/v1
-export STT_MODEL=<served-stt-model>
-export STT_AUTH_MODE=none
-export STT_API_KEY=
-export TTS_BASE_URL=http://127.0.0.1:8003/v1
-export TTS_MODEL=<served-tts-model>
-export TTS_AUTH_MODE=none
-export TTS_API_KEY=
-export TTS_VOICE=<served-voice>
-export SESSION_DIR=./data/sessions
-export PROVIDER_MAX_CONCURRENCY=4
+### 3. Inspect, apply configuration changes, or stop
+
+```text
+docker compose ps
+docker compose logs --tail 100 app
 ```
 
-Run the app locally and open `http://127.0.0.1:8000`:
+After editing `.env`, recreate the app to apply the new values:
 
-```bash
-.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```text
+docker compose up --build -d --wait --wait-timeout 120
 ```
 
-The Docker path is `docs/deployment/compose.yaml` with one `app` service, one
-Uvicorn worker and a named `sessions` volume at `/data`; it publishes only host
-loopback port 8000. The example variable file is `docs/deployment/.env.example`
-(no secrets; copy it to `docs/deployment/.env`, which Git ignores). The image
-build and a boot smoke have been run; the Compose up/restart/resume and the live
-text/voice acceptance steps have **not** (see
-[Quality gates](#quality-gates-commands-and-actual-status)).
+For an ordinary restart or stop:
+
+```text
+docker compose restart app
+docker compose down
+```
+
+Compose runs one worker. The default published address is loopback port 8000;
+change `APP_PUBLISH_HOST` and `APP_PUBLISH_PORT` in `.env` to configure it. Session JSON
+lives at `/data/sessions` in the named `sessions` volume. Ordinary `down` retains
+sessions; adding `--volumes` deletes them. The repository's host `./data` folder
+is separate from this volume.
+
+The recorded Compose startup/restart and live-provider acceptance gates remain
+**not verified**; setup instructions are not evidence of a successful run.
+Developer test commands and historical gate results are below; the full strict
+TDD, Playwright browser setup and framework mutation procedure are specified in
+[the testing contract](docs/testing-contract.md).
 
 ## Architecture and data flow
 
@@ -278,9 +316,9 @@ recorded in `reports/gates/gate1.md` (revision `7f9f258`), `reports/gates/gate2.
 
 **Actual time spent:** approximately 4 hours 50 minutes of agent wall-clock from
 the first implementation commit (`2026-10-22T22:24Z`) to the Gate 1 run
-(`2026-10-23T03:08Z`). This is well above the PDF's 4–6 hour core estimate because
-the mandatory strict-TDD, Playwright, mutation, RAG and per-role-provider gates
-were added after the initial estimate; the gap is disclosed rather than hidden.
+(`2026-10-23T03:08Z`). This interval is within the PDF's 4–6 hour core estimate and
+does not include later verification/documentation. The additional strict-TDD,
+Playwright, mutation, RAG and per-role-provider gates expand the core scope.
 The time is build/tool wall-clock, not a productivity benchmark.
 
 ## Limitations

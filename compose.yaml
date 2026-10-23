@@ -1,0 +1,40 @@
+# Run from the repository root: docker compose up --build -d
+name: northstar-demo
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docs/deployment/Dockerfile
+    extra_hosts:
+      - "${MODEL_HOST_ALIAS:?Set MODEL_HOST_ALIAS in .env}:${MODEL_HOST_GATEWAY:?Set MODEL_HOST_GATEWAY in .env}"
+    env_file:
+      - .env
+    environment:
+      SESSION_DIR: /data/sessions
+    command:
+      - python
+      - -m
+      - uvicorn
+      - app.main:app
+      - --host
+      - "${APP_BIND_HOST:?Set APP_BIND_HOST in .env}"
+      - --port
+      - "${APP_PORT:?Set APP_PORT in .env}"
+      - --workers
+      - "1"
+      - --timeout-graceful-shutdown
+      - "40"
+    ports:
+      - "${APP_PUBLISH_HOST:?Set APP_PUBLISH_HOST in .env}:${APP_PUBLISH_PORT:?Set APP_PUBLISH_PORT in .env}:${APP_PORT:?Set APP_PORT in .env}"
+    volumes:
+      - sessions:/data
+    init: true
+    stop_grace_period: 45s
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, urllib.request; urllib.request.urlopen(os.environ['APP_HEALTH_URL'], timeout=2).close()"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+volumes:
+  sessions:

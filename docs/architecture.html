@@ -131,26 +131,26 @@ mutmut results</code></pre><p>The full contract defines report capture, concrete
 </svg>
 </div>
 <p id="flow-caption" class="flow-caption">Arrows show dependencies and request calls; responses return along the same links. Select a component for its responsibility and dependencies.</p>
-<div class="detail" aria-live="polite"><div><span id="detail-tag" class="tag">Runtime boundary</span><h3 id="detail-title">One deployable service</h3></div><p id="detail-body">The boxes inside the dashed boundary are Python modules in one container. AI roles can use one shared server or independently configured local/remote servers. Only the application container is managed by this Compose template.</p></div>
+<div class="detail" aria-live="polite"><div><span id="detail-tag" class="tag">Runtime boundary</span><h3 id="detail-title">One deployable service</h3></div><p id="detail-body">The boxes inside the dashed boundary are Python modules in one container. AI roles can use one shared server or independently configured local/remote servers. Only the application container is managed by this Root Compose configuration.</p></div>
 </section>
 <section id="startup-panel" class="hidden" aria-label="Startup instructions">
 <div class="notice"><strong>Build contract, not a running application.</strong> The deployment templates are present. The Python source, pinned dependencies and live provider configuration still need to be implemented before these commands can succeed.</div>
 <div class="grid section">
 <article class="card"><span class="badge">01 / Prerequisites</span><h2>What you need</h2><ul><li>Docker Desktop or Docker Engine + Compose v2; Linux containers.</li><li>Running compatible servers for text, STT and TTS; per-role credentials only where required.</li><li>Internet connection and free local port 8000.</li><li>Browser and a short fictional PCM WAV recording.</li><li>Implemented Python source and pinned requirements.</li></ul><p class="subtle">Windows: Docker Desktop needs a supported WSL 2 or Hyper-V backend. Host Python is only needed for the local development route.</p></article>
-<article class="card"><span class="badge">02 / Configure once</span><h2>Keep configuration on the server</h2><pre><code>Copy-Item docs/deployment/.env.example `
-  docs/deployment/.env</code></pre><p>Configure independent LLM/RAG/STT/TTS URLs, served model IDs and auth. RAG may inherit the full extraction profile. Use no-auth only for a server configured to accept it. Example addresses do not start model servers.</p><p>Compose injects <code>SESSION_DIR=/data/sessions</code>. The key is never included in the browser bundle, image or Git.</p></article>
+<article class="card"><span class="badge">02 / Configure once</span><h2>Keep configuration on the server</h2><pre><code>Duplicate .env.example as .env
+Edit .env with your editor</code></pre><p>Configure independent LLM/RAG/STT/TTS URLs, served model IDs and auth. RAG may inherit the full extraction profile. Use no-auth only for a server configured to accept it. Example addresses do not start model servers.</p><p>Compose injects <code>SESSION_DIR=/data/sessions</code>. The key is never included in the browser bundle, image or Git.</p></article>
 </div>
-<article class="card section"><span class="badge">03 / Run from repository root · PowerShell</span><h2>Build, start, check</h2><pre><code>docker compose -f docs/deployment/compose.yaml up --build -d --wait --wait-timeout 120
-Invoke-RestMethod http://localhost:8000/health
+<article class="card section"><span class="badge">03 / Run from repository root</span><h2>Build, start, check</h2><pre><code>docker compose up --build -d --wait --wait-timeout 120
+# Open http://127.0.0.1:8000/health in your browser
 
 # Open http://localhost:8000
 
 # Status / logs
-docker compose -f docs/deployment/compose.yaml ps
-docker compose -f docs/deployment/compose.yaml logs --tail 100 app
+docker compose ps
+docker compose logs --tail 100 app
 
 # Stop; saved sessions stay in the named volume
-docker compose -f docs/deployment/compose.yaml down</code></pre><p><code>/health</code> checks the app and storage; it makes no paid model calls. Verify provider access with a separate live interview and voice smoke test.</p><p><a href="deployment/compose.yaml">Compose template</a> · <a href="deployment/Dockerfile">Dockerfile template</a> · <a href="deployment/.env.example">Configuration example</a> · <a href="startup.md">Complete startup contract</a></p></article>
+docker compose down</code></pre><p><code>/health</code> checks the app and storage; it makes no paid model calls. Verify provider access with a separate live interview and voice smoke test.</p><p><a href="../compose.yaml">Root Compose configuration</a> · <a href="deployment/Dockerfile">Dockerfile template</a> · <a href="../.env.example">Configuration example</a> · <a href="startup.md">Complete startup contract</a></p></article>
 <div class="grid section"><article class="card"><h3>Local development alternative</h3><pre><code>python -m venv .venv
 &amp; ./.venv/Scripts/python.exe -m pip install -r requirements-dev.txt
 # Privately set provider/key/model environment variables.
@@ -184,7 +184,7 @@ $env:SESSION_DIR = './data/sessions'
     validation: ['schemas.py + validation.py', 'Schemas + validation', 'Validates extraction shape and business fields. The model proposes facts; Python accepts or rejects them. Missing values remain null; ambiguous corrections block confirmation. No external service dependency.'],
     storage: ['app/storage.py', 'Session repository', 'Loads JSON context, serializes each session with a lock, checks revisions and request IDs, then atomically commits the whole turn. Exposes extraction context through orchestration; the repository itself does not call the model. Depends on a writable volume.'],
     adapters: ['app/providers.py', 'Provider adapters', 'Separate extraction, transcription and synthesis methods behind independent configured HTTP profiles. Apply timeouts, bounded retries and a concurrency limit. Calls the external APIs; has no authority to confirm an intake or execute a business action.'],
-    config: ['Server environment', 'Environment configuration', 'Compose reads docs/deployment/.env into the container. Startup validates the server-side key/model settings, storage path and limits. No live paid request during boot. Never send these values to the browser.'],
+    config: ['Server environment', 'Environment configuration', 'Compose reads .env into the container. Startup validates the server-side key/model settings, storage path and limits. No live paid request during boot. Never send these values to the browser.'],
     volume: ['Docker named volume', 'Durable session JSON', 'Mounted at /data; session documents live at /data/sessions. Keeps transcript, slots, pending issues, summary and request records across restarts. Atomic replacement prevents partial-file success. Separate from temporary audio and logs.'],
     llm: ['Configured HTTP(S) service', 'Structured extraction', 'Receives accepted slots, persisted clarifications, bounded recent context and the latest message. Returns candidate facts and intent. Python validates the result and decides every state change.'],
     stt: ['Configured HTTP(S) service', 'Speech to text', 'Receives a validated PCM WAV upload. Returns a draft for customer review; the transcription endpoint does not save a conversation turn. Sending the edited draft enters the normal text path.'],

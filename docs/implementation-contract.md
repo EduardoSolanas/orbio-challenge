@@ -1,6 +1,6 @@
 # Implementation contract: read this first
 
-Revision 4, 22 October 2026. This specifies future code; it is not a report that the application or tests exist.
+Revision 4, 22 October 2026. This defines required application behavior; it is not evidence that runtime or test gates have passed.
 
 ## 1. Authority and fixed decisions
 
