@@ -19,7 +19,6 @@ from uuid import uuid4
 
 import pytest
 
-from app.prompts import CAPABILITY
 from app.schemas import KnowledgeAnswer
 from tests.integration.support_api import ScriptedProvider, make_extraction, read_session
 from tests.integration.test_it02_intake import (
@@ -42,6 +41,9 @@ NO_TEXT = "No."
 CHANGE_TEXT = "Actually make the urgency low."
 RETURN_Q_TEXT = "Can I return an unused item?"
 POLICY_QUESTION_SUFFIX = "Please ask your policy question in a separate message."
+REVIEW_POLICY_FOLLOWUP = (
+    "Please confirm the reviewed details or tell me what to change."
+)
 RETURN_ANSWER_TEXT = (
     "You can request a return within 30 calendar days of delivery for an unused item in "
     "its original packaging. Refund eligibility requires support review."
@@ -565,7 +567,7 @@ async def case_it04_05(client, provider, session_dir):
         summary=FULL_SUMMARY,
         token=1,
     )
-    assert payload["reply"] == RETURN_ANSWER_TEXT
+    assert payload["reply"] == f"{RETURN_ANSWER_TEXT}\n\n{REVIEW_POLICY_FOLLOWUP}"
     assert [citation["source_id"] for citation in payload["citations"]] == ["faq-returns"]
     assert payload["citations"][0]["title"]
     assert payload["citations"][0]["excerpt"]
@@ -896,7 +898,7 @@ async def case_it04_13(client, provider, session_dir):
         summary=None,
         token=None,
     )
-    assert payload["reply"] == CAPABILITY
+    assert payload["reply"] == REJECT_PROMPT
     disk = assert_turn_commit(
         session_dir=session_dir,
         session_id=session_id,
@@ -937,7 +939,7 @@ async def case_it04_14(client, provider, session_dir):
         summary=None,
         token=None,
     )
-    assert payload["reply"] == RETURN_ANSWER_TEXT
+    assert payload["reply"] == f"{RETURN_ANSWER_TEXT}\n\n{REJECT_PROMPT}"
     assert [citation["source_id"] for citation in payload["citations"]] == ["faq-returns"]
     disk = assert_turn_commit(
         session_dir=session_dir,

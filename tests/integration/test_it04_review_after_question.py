@@ -39,6 +39,9 @@ RETURN_ANSWER_TEXT = (
     "its original packaging. Refund eligibility requires support review."
 )
 REVIEW_SUFFIX_TEXT = "Please confirm these details or tell me what to change."
+REVIEW_POLICY_FOLLOW_UP = (
+    "Please confirm the reviewed details or tell me what to change."
+)
 CONFIRM_USER_TEXT = "Confirm reviewed intake"
 STALE_REVIEW_MESSAGE = "The review changed. Review the latest details before confirming."
 RETURN_CITATION = {
@@ -123,7 +126,7 @@ async def ask_at_review(client, provider: ScriptedProvider, session_id: str) -> 
     assert payload["summary"] == FULL_SUMMARY
     assert payload["slots"] == FULL_SLOTS
     assert payload["pending_clarifications"] == {}
-    assert payload["reply"] == RETURN_ANSWER_TEXT
+    assert payload["reply"] == f"{RETURN_ANSWER_TEXT}\n\n{REVIEW_POLICY_FOLLOW_UP}"
     assert payload["citations"] == [RETURN_CITATION]
     return payload
 

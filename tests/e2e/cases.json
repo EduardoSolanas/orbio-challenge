@@ -1,5 +1,5 @@
 {
-  "source_revision": "6e7a7c9e9a392157a326b52cefdf57631151d66a",
+  "source_revision": "d4a3a6f5671cc3b795a759089beb16a8be528830",
   "spec": "docs/implementation-contract.md#13.3",
   "cases": [
     {
@@ -19,7 +19,8 @@
       ],
       "checkpoints": [
         "J01.fresh-greeting",
-        "J01.part-asks-category",
+        "J01.social-acknowledgment-no-intake-prompt",
+        "J01.mixed-greeting-facts-start-intake",
         "J01.category-asks-urgency",
         "J01.review-four-slots",
         "J01.confirmed-local-receipt",
@@ -64,9 +65,11 @@
       ],
       "checkpoints": [
         "J03.partial-created",
+        "J03.capability-and-unrelated-do-not-start-intake",
         "J03.retry-visible-no-replacement",
         "J03.retry-restores-context",
         "J03.restart-preserves-history",
+        "J03.explicit-resume-pending-clarification",
         "J03.finish-after-restart"
       ]
     },

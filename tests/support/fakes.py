@@ -342,8 +342,10 @@ class E2EProvider:
             {"audio": audio, "audio_bytes": len(audio)},
         )
 
-    async def synthesize(self, text: str) -> SynthesizedAudio:
-        return await self._call("synthesize", text, {"text": text})
+    async def synthesize(self, text: str, language: str = "en") -> SynthesizedAudio:
+        return await self._call(
+            "synthesize", text, {"text": text, "language": language}
+        )
 
     async def close(self) -> None:
         self.close_count += 1
@@ -356,6 +358,7 @@ class E2EProvider:
 STT_TEXT = "Order NS-000123 arrived broken and this is urgent"
 
 PART = "My order NS-000123 arrived broken."
+MIXED_PART = "Hello, my order NS-000123 arrived broken."
 CATEGORY = "It is a damaged item."
 HIGH = "High urgency."
 FULL = "My order NS-000123 arrived broken. It is a damaged item and high urgency."
@@ -363,7 +366,13 @@ CHANGE = "Actually make the urgency low."
 NO = "No."
 YES = "Yes."
 RETURN_Q = "Can I return an unused item?"
+GREETING_RETURN_Q = "Hello, can I return an unused item?"
 PAYMENT_Q = "Which payment methods are accepted?"
+DELIVERY_Q = "Hello, how long does delivery take?"
+CAPABILITY_Q = "What can you help me with?"
+UNRELATED = "Tell me a joke."
+THANKS = "Thanks."
+RESUME = "Continue my issue."
 
 BAD_ORDER = "My order NS-12345 arrived broken."
 FIX_ORDER = "The order number is NS-000123."
@@ -422,6 +431,8 @@ def extraction(
     urgency: str | None = None,
     explicit_corrections: Iterable[str] = (),
     ambiguous_fields: Iterable[str] = (),
+    detected_language: str = "en",
+    requested_language: str | None = None,
 ) -> Extraction:
     return Extraction(
         intent=intent,
@@ -434,6 +445,8 @@ def extraction(
         ),
         explicit_corrections=list(explicit_corrections),
         ambiguous_fields=list(ambiguous_fields),
+        detected_language=detected_language,
+        requested_language=requested_language,
     )
 
 
@@ -474,6 +487,18 @@ def x_yes() -> Extraction:
 
 def x_question() -> Extraction:
     return extraction(intent="question", has_question=True)
+
+
+def x_social() -> Extraction:
+    return extraction(intent="social")
+
+
+def x_capability(has_question: bool = True) -> Extraction:
+    return extraction(intent="capability", has_question=has_question)
+
+
+def x_start_intake() -> Extraction:
+    return extraction(intent="start_intake")
 
 
 def x_unrelated() -> Extraction:

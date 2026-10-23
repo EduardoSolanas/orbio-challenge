@@ -14,7 +14,7 @@ from tests.support.fakes import (
     ASK_CATEGORY,
     ASK_URGENCY,
     CATEGORY,
-    CONFIRM_PROMPT_AT_REVIEW,
+    GREETING_RETURN_Q,
     HIGH,
     PART,
     PAYMENT_Q,
@@ -23,7 +23,6 @@ from tests.support.fakes import (
     RETURN_Q,
     return_answer,
     summary_text,
-    with_followup,
     x_category,
     x_high,
     x_part,
@@ -60,8 +59,8 @@ def assert_sources_open(region) -> None:
 @pytest.mark.parametrize("case_id", [pytest.param("J08", id="J08")])
 def test_j08_rag_questions(case_id, ui, server, provider):
     provider.script_extract(PART, x_part())
-    provider.script_extract(RETURN_Q, x_question())
-    provider.script_answer(RETURN_Q, return_answer())
+    provider.script_extract(GREETING_RETURN_Q, x_question())
+    provider.script_answer(GREETING_RETURN_Q, return_answer())
     provider.script_extract(PAYMENT_Q, x_question())
     provider.script_extract(CATEGORY, x_category())
     provider.script_extract(HIGH, x_high())
@@ -77,31 +76,30 @@ def test_j08_rag_questions(case_id, ui, server, provider):
     assert partial["revision"] == 1
     ui.cp("J08.partial-intake")
 
-    # RETURN_Q: real retrieval -> grounded answer -> exact faq-returns snapshot.
-    assert ui.send(RETURN_Q).status == 200
+    # A greeting plus policy question follows the policy route, not social or intake.
+    assert ui.send(GREETING_RETURN_Q).status == 200
     expect(ui.log).to_contain_text(RETURN_ANSWER_TEXT)
-    expect(ui.log).to_contain_text(ASK_CATEGORY)
     sources = ui.log.get_by_role("region", name="Sources")
     expect(sources).to_have_count(1)
     assert_sources_open(sources.first)
     saved = ui.disk(sid)
     reply = ui.last_assistant(sid)
-    assert reply["text"] == with_followup(RETURN_ANSWER_TEXT, ASK_CATEGORY)
+    assert reply["text"] == RETURN_ANSWER_TEXT
     assert reply["citations"] == [SNAPSHOT]
     assert saved["revision"] == 2 and saved["collection_turn_count"] == 2
     assert saved["slots"] == partial["slots"] and saved["pending_review_revision"] is None
     answer_call = provider.calls("answer_knowledge")[0]["context"]
-    assert answer_call["question"] == RETURN_Q and answer_call["kb_version"] == KB_VERSION
+    assert answer_call["question"] == GREETING_RETURN_Q and answer_call["kb_version"] == KB_VERSION
     assert answer_call["sources"] == [RETURNS]
     ui.cp("J08.return-answer-cited-sources")
 
-    # PAYMENT_Q: no retrieval match -> deterministic abstention, no generation, no Sources.
+    # PAYMENT_Q: deterministic safe abstention only; no missing-field prompt or generation.
     assert ui.send(PAYMENT_Q).status == 200
     expect(ui.log).to_contain_text(ABSTENTION)
     expect(sources).to_have_count(1)
     saved = ui.disk(sid)
     reply = ui.last_assistant(sid)
-    assert reply["text"] == with_followup(ABSTENTION, ASK_CATEGORY)
+    assert reply["text"] == ABSTENTION
     assert reply["citations"] == []
     assert saved["revision"] == 3 and saved["slots"] == partial["slots"]
     assert len(provider.calls("answer_knowledge")) == 1
@@ -120,13 +118,12 @@ def test_j08_rag_questions(case_id, ui, server, provider):
     # RETURN_Q at a valid review: revision advances, token/summary/slots preserved.
     review_slots = saved["slots"]
     assert ui.send(RETURN_Q).status == 200
-    expect(ui.log).to_contain_text(CONFIRM_PROMPT_AT_REVIEW)
     expect(sources).to_have_count(2)
     expect(ui.review).to_be_visible()
     expect(ui.enabled_button("Confirm details")).to_have_count(1)
     saved = ui.disk(sid)
     reply = ui.last_assistant(sid)
-    assert reply["text"] == with_followup(RETURN_ANSWER_TEXT, CONFIRM_PROMPT_AT_REVIEW)
+    assert reply["text"] == RETURN_ANSWER_TEXT
     assert reply["citations"] == [SNAPSHOT]
     assert saved["revision"] == 6 and saved["status"] == "awaiting_confirmation"
     assert saved["pending_review_revision"] == 5 and saved["summary"] == SUMMARY
