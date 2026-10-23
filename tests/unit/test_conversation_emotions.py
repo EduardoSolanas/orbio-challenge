@@ -12,7 +12,7 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 from app.conversation import ConversationEngine
-from app.prompts import GREETING
+from app.prompts import GREETING, MISSING_URGENCY
 from app.schemas import ConfirmRequest, TurnRequest
 from app.storage import JsonSessionRepository
 from tests.support.unit_fakes import (
@@ -200,4 +200,66 @@ async def test_legacy_session_labels_stay_null_and_the_next_turn_writes_version_
     assert stored.messages[-2].sentiment == "negative"
     assert stored.messages[-2].frustration == "present"
     assert stored.messages[-1].sentiment is None
+    provider.assert_exhausted()
+
+
+async def test_frustration_present_never_supplies_an_urgency_value(tmp_path):
+    extraction = make_extraction(
+        candidates={
+            "order_number": "NS-000123",
+            "category": "damaged_item",
+            "description": "My item is broken.",
+        },
+        sentiment="negative",
+        frustration="present",
+    )
+    engine, repository, provider = build_engine(tmp_path, script=[("extract", extraction)])
+    created = await engine.create_session()
+
+    response = await engine.turn(
+        created.session_id,
+        turn_request("I have asked three times. This is really frustrating.", revision=0),
+    )
+
+    stored = await repository.load(created.session_id)
+    assert response.slots.urgency is None
+    assert stored.slots.urgency is None
+    assert response.reply == MISSING_URGENCY
+    assert stored.messages[-2].frustration == "present"
+    provider.assert_exhausted()
+
+
+async def test_second_turn_classifies_with_the_committed_conversation_context(tmp_path):
+    first = make_extraction(
+        candidates={"description": "My item is broken."},
+        sentiment="negative",
+        frustration="none",
+    )
+    second = make_extraction(
+        intent="unrelated", sentiment="negative", frustration="present"
+    )
+    engine, _, provider = build_engine(
+        tmp_path, script=[("extract", first), ("extract", second)]
+    )
+    created = await engine.create_session()
+
+    first_response = await engine.turn(
+        created.session_id, turn_request("My item is broken.", revision=0)
+    )
+    await engine.turn(
+        created.session_id,
+        turn_request("I have asked three times. This is really frustrating.", revision=1),
+    )
+
+    context = provider.calls[1][1]
+    assert [message.text for message in context.recent_messages] == [
+        GREETING,
+        "My item is broken.",
+        first_response.reply,
+    ]
+    assert (
+        context.current_message
+        == "I have asked three times. This is really frustrating."
+    )
+    assert context.frustration_active is False
     provider.assert_exhausted()
