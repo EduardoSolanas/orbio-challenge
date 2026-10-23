@@ -372,8 +372,8 @@ KEEP_OLD = "Keep the old one, NS-000123."
 USE_NEW = "Use NS-000999 instead."
 
 GREETING = (
-    "I can help record an issue for Northstar Shop. What is your order number and what "
-    "happened? Please do not share payment details."
+    "Hello! I can answer Northstar Shop policy questions or help record an order "
+    "issue. How can I help? Please do not share payment details."
 )
 ASK_CATEGORY = (
     "Is this about delivery, a damaged item, a wrong item, a return/refund, or something else?"
