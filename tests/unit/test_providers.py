@@ -251,7 +251,8 @@ async def test_synthesize_uses_only_the_tts_role_and_its_model():
 
     audio = await provider.synthesize("Saved locally.")
 
-    assert audio == b"ID3-mp3-bytes"
+    assert audio.data == b"ID3-mp3-bytes"
+    assert audio.media_type == "audio/mpeg"
     request = recorders["tts"].requests[0]
     assert str(request.url) == "http://tts.test/v1/audio/speech"
     assert json.loads(request.content)["model"] == "tts-model"
@@ -921,7 +922,10 @@ def audio_responder(body: bytes, headers: dict[str, str] | None = None, status: 
 async def test_synthesize_sends_the_exact_speech_request():
     provider, recorders = build_provider({"tts": audio_responder(b"ID3-mp3")})
 
-    assert await provider.synthesize("Saved locally as x.") == b"ID3-mp3"
+    result = await provider.synthesize("Saved locally as x.")
+
+    assert result.data == b"ID3-mp3"
+    assert result.media_type == "audio/mpeg"
 
     request = recorders["tts"].requests[0]
     assert request.headers["content-type"] == "application/json"
@@ -939,7 +943,7 @@ async def test_synthesize_sends_the_exact_speech_request():
 async def test_accepted_mp3_content_types(content_type: str):
     provider, _ = build_provider({"tts": audio_responder(b"mp3", {"content-type": content_type})})
 
-    assert await provider.synthesize("hello") == b"mp3"
+    assert (await provider.synthesize("hello")).data == b"mp3"
 
 
 @pytest.mark.parametrize(
@@ -972,7 +976,7 @@ async def test_mp3_five_mib_boundary(size: int):
     provider, recorders = build_provider({"tts": audio_responder(b"m" * size)})
 
     if size == 5 * 1024 * 1024:
-        assert len(await provider.synthesize("hello")) == size
+        assert len((await provider.synthesize("hello")).data) == size
         assert len(recorders["tts"].requests) == 1
     else:
         with pytest.raises(AppError) as caught:
@@ -1018,7 +1022,7 @@ async def test_mp3_streamed_chunks_are_joined_after_a_bounded_read():
 
     provider, _ = build_provider({"tts": responder})
 
-    assert await provider.synthesize("hello") == b"ID3-part2-part3"
+    assert (await provider.synthesize("hello")).data == b"ID3-part2-part3"
     assert stream.closed is True
 
 
@@ -1140,7 +1144,7 @@ async def test_cancellation_releases_the_permit_and_closes_the_response():
         await task
 
     assert stream.closed is True
-    assert await provider.synthesize("hello") == b"mp3"
+    assert (await provider.synthesize("hello")).data == b"mp3"
     await provider.close()
 
 
@@ -1491,7 +1495,7 @@ async def test_tts_one_second_remaining_still_runs_the_attempt():
         {"tts": audio_responder(b"mp3")}, clock=SequenceClock([1000.0, 1019.0])
     )
 
-    assert await provider.synthesize("hello") == b"mp3"
+    assert (await provider.synthesize("hello")).data == b"mp3"
     assert len(recorders["tts"].requests) == 1
 
 

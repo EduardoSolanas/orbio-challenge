@@ -17,6 +17,11 @@ from app.errors import CONFIGURATION_INVALID_MESSAGE
 
 DEFAULT_LLM_OUTPUT_MODE = "json_schema"
 DEFAULT_PROVIDER_MAX_CONCURRENCY = 4
+DEFAULT_TTS_AUDIO_FORMAT = "mp3"
+DEFAULT_TTS_MAX_INPUT_CHARS = 4000
+MIN_TTS_MAX_INPUT_CHARS = 1
+MAX_TTS_MAX_INPUT_CHARS = 4000
+AUDIO_FORMATS = ("mp3", "wav")
 OPENAI_COMPATIBLE = "openai_compatible"
 AUTH_MODES = ("none", "bearer")
 OUTPUT_MODES = ("json_schema", "json_object", "prompt_json")
@@ -98,6 +103,27 @@ def _concurrency(raw: str) -> int:
     return value
 
 
+def _audio_format(value: str) -> str:
+    """Exactly ``mp3`` or ``wav``; empty keeps the MP3 default (PC §3)."""
+
+    if value == "":
+        return DEFAULT_TTS_AUDIO_FORMAT
+    if value not in AUDIO_FORMATS:
+        _fail()
+    return value
+
+
+def _tts_max_input_chars(raw: str) -> int:
+    if raw == "":
+        return DEFAULT_TTS_MAX_INPUT_CHARS
+    if not raw.isdigit():
+        _fail()
+    value = int(raw)
+    if not MIN_TTS_MAX_INPUT_CHARS <= value <= MAX_TTS_MAX_INPUT_CHARS:
+        _fail()
+    return value
+
+
 @dataclass(frozen=True)
 class ServiceProfile:
     base_url: str
@@ -114,6 +140,8 @@ class TextProfile(ServiceProfile):
 @dataclass(frozen=True)
 class SpeechProfile(ServiceProfile):
     voice: str
+    audio_format: str = DEFAULT_TTS_AUDIO_FORMAT
+    max_input_chars: int = DEFAULT_TTS_MAX_INPUT_CHARS
 
 
 @dataclass(frozen=True)
@@ -173,12 +201,19 @@ class Settings:
         )
         _auth(stt.auth_mode, stt.api_key)
 
+        audio_format = _audio_format(env.get("TTS_AUDIO_FORMAT", ""))
+        max_input_chars = _tts_max_input_chars(env.get("TTS_MAX_INPUT_CHARS", ""))
+        if audio_format == "mp3" and max_input_chars != MAX_TTS_MAX_INPUT_CHARS:
+            _fail()
+
         tts = SpeechProfile(
             base_url=_base_url(env.get("TTS_BASE_URL", "")),
             model=_model(env.get("TTS_MODEL", "")),
             auth_mode=env.get("TTS_AUTH_MODE", ""),
             api_key=_api_key(env.get("TTS_API_KEY", "")),
             voice=_required(env.get("TTS_VOICE", "")),
+            audio_format=audio_format,
+            max_input_chars=max_input_chars,
         )
         _auth(tts.auth_mode, tts.api_key)
 

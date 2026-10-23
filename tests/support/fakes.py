@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 from app.errors import app_error
+from app.providers import SynthesizedAudio
 from app.schemas import Extraction, KnowledgeAnswer, Slots
 
 FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
@@ -118,6 +119,7 @@ class Step:
     result: Any = None
     fail: str | None = None
     hold: Gate | None = None
+    media_type: str = "audio/mpeg"
 
 
 class E2EProvider:
@@ -178,10 +180,13 @@ class E2EProvider:
         text: str,
         audio: bytes | None = None,
         *,
+        media_type: str = "audio/mpeg",
         fail: str | None = None,
         hold: Gate | None = None,
     ) -> Step:
-        return self._script(Step("synthesize", text, audio, fail, hold))
+        return self._script(
+            Step("synthesize", text, audio, fail, hold, media_type)
+        )
 
     def discard_script(self) -> None:
         with self._lock:
@@ -258,8 +263,10 @@ class E2EProvider:
             if step.fail is not None:
                 raise app_error(step.fail)
             result = step.result
-            if method == "synthesize" and result is None:
-                result = reply_mp3_bytes()
+            if method == "synthesize":
+                result = SynthesizedAudio(
+                    reply_mp3_bytes() if result is None else result, step.media_type
+                )
         except BaseException as exc:
             outcome = f"failed:{getattr(exc, 'code', type(exc).__name__)}"
             with self._changed:
@@ -288,7 +295,7 @@ class E2EProvider:
             {"audio": audio, "audio_bytes": len(audio)},
         )
 
-    async def synthesize(self, text: str) -> bytes:
+    async def synthesize(self, text: str) -> SynthesizedAudio:
         return await self._call("synthesize", text, {"text": text})
 
     async def close(self) -> None:

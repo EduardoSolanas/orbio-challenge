@@ -13,13 +13,20 @@ import asyncio
 import json
 import random
 import time
+import wave
 from dataclasses import dataclass
-from typing import Awaitable, Callable, Mapping, Protocol, TypeVar
+from io import BytesIO
+from typing import Awaitable, Callable, Literal, Mapping, Protocol, Sequence, TypeVar
 
 import httpx
 from pydantic import BaseModel, ValidationError
 
-from app.config import DEFAULT_PROVIDER_MAX_CONCURRENCY, ServiceProfile, TextProfile
+from app.config import (
+    DEFAULT_PROVIDER_MAX_CONCURRENCY,
+    ServiceProfile,
+    SpeechProfile,
+    TextProfile,
+)
 from app.errors import AppError, app_error
 from app.prompts import (
     EXTRACTION_SYSTEM_PROMPT,
@@ -47,6 +54,13 @@ KNOWLEDGE_SCHEMA_NAME = "knowledge_answer"
 
 SUCCESS_JSON_LIMIT = 1024 * 1024
 TTS_LIMIT = 5 * 1024 * 1024
+TTS_MAX_CHUNKS = 20
+MP3_MEDIA_TYPES = ("audio/mpeg", "audio/mp3")
+WAV_MEDIA_TYPES = ("audio/wav", "audio/x-wav", "audio/wave")
+WAV_MIN_RATE = 8000
+WAV_MAX_RATE = 48000
+WAV_MAX_CHANNELS = 2
+WAV_SAMPLE_WIDTH = 2
 
 JITTER_MIN = 0.25
 JITTER_MAX = 0.5
@@ -77,6 +91,14 @@ class Budget:
     total_deadline: float
 
 
+@dataclass(frozen=True)
+class SynthesizedAudio:
+    """Validated speech bytes with the media type the browser must play."""
+
+    data: bytes
+    media_type: Literal["audio/mpeg", "audio/wav"]
+
+
 TEXT_BUDGET = Budget(2, TEXT_ATTEMPT_TIMEOUT, TEXT_TOTAL_DEADLINE)
 STT_BUDGET = Budget(2, STT_ATTEMPT_TIMEOUT, STT_TOTAL_DEADLINE)
 TTS_BUDGET = Budget(1, TTS_ATTEMPT_TIMEOUT, TTS_TOTAL_DEADLINE)
@@ -89,7 +111,7 @@ class AIProvider(Protocol):
 
     async def transcribe(self, audio: bytes) -> str: ...
 
-    async def synthesize(self, text: str) -> bytes: ...
+    async def synthesize(self, text: str) -> SynthesizedAudio: ...
 
     async def close(self) -> None: ...
 
@@ -274,6 +296,59 @@ async def _read_bounded(response: httpx.Response, limit: int) -> bytes:
     return b"".join(chunks)
 
 
+def split_tts_text(text: str, limit: int) -> list[str]:
+    """Partition ``text`` into consecutive slices of at most ``limit`` code points."""
+
+    return [text[index : index + limit] for index in range(0, len(text), limit)]
+
+
+def decode_pcm_wav(data: bytes) -> tuple[int, int, int, bytes]:
+    """Decode one provider WAV chunk into ``(channels, sample width, rate, frames)``.
+
+    Raises ``ValueError`` unless the payload is a complete uncompressed PCM WAV
+    within the accepted channel, sample-width and sample-rate window.
+    """
+
+    try:
+        with wave.open(BytesIO(data)) as reader:
+            channels = reader.getnchannels()
+            width = reader.getsampwidth()
+            rate = reader.getframerate()
+            frame_count = reader.getnframes()
+            frames = reader.readframes(frame_count)
+    except (EOFError, wave.Error):
+        raise ValueError("not a decodable PCM WAV") from None
+    if not 1 <= channels <= WAV_MAX_CHANNELS or width != WAV_SAMPLE_WIDTH:
+        raise ValueError("unsupported WAV geometry")
+    if not WAV_MIN_RATE <= rate <= WAV_MAX_RATE:
+        raise ValueError("unsupported WAV sample rate")
+    if frame_count <= 0 or len(frames) != frame_count * channels * WAV_SAMPLE_WIDTH:
+        raise ValueError("empty or truncated WAV frames")
+    return channels, width, rate, frames
+
+
+def assemble_wav(parts: Sequence[tuple[int, int, int, bytes]]) -> bytes:
+    """Join PCM chunks under one new RIFF/WAVE header, preserving frame order."""
+
+    if not parts:
+        raise ValueError("no WAV chunks to assemble")
+    channels, width, rate = parts[0][0], parts[0][1], parts[0][2]
+    frames = bytearray()
+    for part_channels, part_width, part_rate, payload in parts:
+        if (part_channels, part_width, part_rate) != (channels, width, rate):
+            raise ValueError("mismatched WAV geometry between chunks")
+        frames += payload
+    if len(frames) > TTS_LIMIT:
+        raise ValueError("assembled WAV exceeds the response cap")
+    buffer = BytesIO()
+    with wave.open(buffer, "wb") as writer:
+        writer.setnchannels(channels)
+        writer.setsampwidth(width)
+        writer.setframerate(rate)
+        writer.writeframes(bytes(frames))
+    return buffer.getvalue()
+
+
 class OpenAICompatibleProvider:
     """Four independent role clients behind one bounded AIProvider surface."""
 
@@ -379,28 +454,60 @@ class OpenAICompatibleProvider:
         finally:
             self._release()
 
-    async def synthesize(self, text: str) -> bytes:
+    async def synthesize(self, text: str) -> SynthesizedAudio:
         self._acquire()
         try:
             profile = self._profiles["tts"]
-            payload = {
-                "model": profile.model,
-                "voice": profile.voice,
-                "input": text,
-                "response_format": "mp3",
-            }
+            chunks = split_tts_text(text, profile.max_input_chars)
+            if not chunks:
+                raise app_error("invalid_provider_response")
+            if len(chunks) > TTS_MAX_CHUNKS or (
+                profile.audio_format == "mp3" and len(chunks) > 1
+            ):
+                raise app_error("provider_configuration")
             deadline = self._clock() + TTS_BUDGET.total_deadline
-            remaining = deadline - self._clock()
-            if remaining <= 0:
-                raise app_error("provider_timeout")
             url = _join(profile.base_url, SPEECH_SUFFIX)
-            return await self._speech_request(url, payload, remaining)
+            if profile.audio_format == "mp3":
+                audio = await self._speech_request(
+                    url, profile, chunks[0], deadline, TTS_LIMIT
+                )
+                return SynthesizedAudio(audio, "audio/mpeg")
+            raw_total = 0
+            parts: list[tuple[int, int, int, bytes]] = []
+            for chunk in chunks:
+                raw = await self._speech_request(
+                    url, profile, chunk, deadline, TTS_LIMIT - raw_total
+                )
+                raw_total += len(raw)
+                try:
+                    parts.append(decode_pcm_wav(raw))
+                except ValueError:
+                    raise app_error("invalid_provider_response") from None
+            try:
+                return SynthesizedAudio(assemble_wav(parts), "audio/wav")
+            except ValueError:
+                raise app_error("invalid_provider_response") from None
         finally:
             self._release()
 
     async def _speech_request(
-        self, url: str, payload: dict[str, object], remaining: float
+        self,
+        url: str,
+        profile: SpeechProfile,
+        text: str,
+        deadline: float,
+        limit: int,
     ) -> bytes:
+        payload = {
+            "model": profile.model,
+            "voice": profile.voice,
+            "input": text,
+            "response_format": profile.audio_format,
+        }
+        allowed = WAV_MEDIA_TYPES if profile.audio_format == "wav" else MP3_MEDIA_TYPES
+        remaining = deadline - self._clock()
+        if remaining <= 0:
+            raise app_error("provider_timeout")
         try:
             async with asyncio.timeout(min(TTS_BUDGET.attempt_timeout, remaining)):
                 async with self._clients["tts"].stream(
@@ -410,9 +517,9 @@ class OpenAICompatibleProvider:
                         raise _status_error(response.status_code)
                     try:
                         _reject_encoded(response)
-                        if _media_type(response) not in ("audio/mpeg", "audio/mp3"):
+                        if _media_type(response) not in allowed:
                             raise _InvalidContent
-                        audio = await _read_bounded(response, TTS_LIMIT)
+                        audio = await _read_bounded(response, limit)
                     except _InvalidContent:
                         raise app_error("invalid_provider_response") from None
                     if not audio:

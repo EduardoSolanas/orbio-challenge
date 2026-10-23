@@ -25,8 +25,10 @@ import json
 import subprocess
 import sys
 import time
+import wave
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from io import BytesIO
 from pathlib import Path
 from typing import Awaitable, Callable, Mapping
 from urllib.parse import urlsplit
@@ -165,6 +167,27 @@ def mp3_decodable(data: bytes) -> bool:
             return True
         offset += 1
     return False
+
+
+def wav_decodable(data: bytes) -> bool:
+    """True when ``data`` is a complete PCM WAV in the accepted speech window."""
+
+    try:
+        with wave.open(BytesIO(data)) as reader:
+            channels = reader.getnchannels()
+            width = reader.getsampwidth()
+            rate = reader.getframerate()
+            frame_count = reader.getnframes()
+            frames = reader.readframes(frame_count)
+    except (EOFError, wave.Error):
+        return False
+    return (
+        1 <= channels <= 2
+        and width == 2
+        and 8000 <= rate <= 48000
+        and frame_count > 0
+        and len(frames) == frame_count * channels * 2
+    )
 
 
 def _utc_text(moment: datetime) -> str:
@@ -334,10 +357,11 @@ async def run_checks(
             raise CheckFailure("fixture_mismatch")
 
     async def synthesis() -> None:
-        audio = await provider.synthesize(TTS_TEXT)
-        if not isinstance(audio, bytes) or not 0 < len(audio) <= MAX_TTS_BYTES:
+        result = await provider.synthesize(TTS_TEXT)
+        if not 0 < len(result.data) <= MAX_TTS_BYTES:
             raise CheckFailure("fixture_mismatch")
-        if not mp3_decodable(audio):
+        decodable = mp3_decodable(result.data) if result.media_type == "audio/mpeg" else wav_decodable(result.data)
+        if not decodable:
             raise CheckFailure("undecodable_audio")
 
     try:

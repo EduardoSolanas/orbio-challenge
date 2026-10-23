@@ -417,8 +417,8 @@ def create_app(
             raise app_error("invalid_provider_response")
         audio = await request.app.state.provider.synthesize(text)
         return Response(
-            content=audio,
-            media_type="audio/mpeg",
+            content=audio.data,
+            media_type=audio.media_type,
             headers={"Cache-Control": "no-store"},
         )
 

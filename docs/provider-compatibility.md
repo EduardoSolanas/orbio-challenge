@@ -11,7 +11,7 @@ Current transport/configuration contract, 22 October 2026. RAG, text extraction,
 | `STT_` | File transcription | AIProvider.transcribe |
 | `TTS_` | Speech synthesis | AIProvider.synthesize |
 
-Each role has its own **BASE_URL, MODEL, AUTH_MODE and API_KEY**. Text roles additionally have OUTPUT_MODE. TTS additionally has VOICE. All roles can point to one compatible server, four different servers, or any combination. Open-source local servers and external compatible services are both supported by this contract. The application itself still has one container and worker; model-server provisioning, model weights, licences and hardware belong to the operator and are not silently installed by app startup.
+Each role has its own **BASE_URL, MODEL, AUTH_MODE and API_KEY**. Text roles additionally have OUTPUT_MODE. TTS additionally has VOICE, AUDIO_FORMAT and MAX_INPUT_CHARS. All roles can point to one compatible server, four different servers, or any combination. Open-source local servers and external compatible services are both supported by this contract. The application itself still has one container and worker; model-server provisioning, model weights, licences and hardware belong to the operator and are not silently installed by app startup.
 
 Support means meeting the wire contracts below and passing per-role compatibility checks, not that every service branded “OpenAI-compatible” implements every endpoint. A text-only server can handle extraction/RAG while separate servers handle audio. All four roles must be configured for a complete assignment demo. No missing audio endpoint silently becomes a fake or disabled feature.
 
@@ -35,7 +35,7 @@ Build URLs as `base_url.rstrip('/') + endpoint_suffix`; never add a second `/v1`
 |---|---|---|---|
 | LLM/RAG | POST `/chat/completions` | JSON below | choices[0].message.content containing one JSON object |
 | STT | POST `/audio/transcriptions` | multipart file=(upload.wav, validated bytes, audio/wav), model, response_format=json | JSON object with nonempty `text` string |
-| TTS | POST `/audio/speech` | JSON `{model, voice, input, response_format:"mp3"}` | Nonempty MP3 bytes, bounded to 5 MiB while streaming |
+| TTS | POST `/audio/speech` | JSON `{model, voice, input, response_format:TTS_AUDIO_FORMAT}` | Valid MP3 or PCM WAV according to configuration; aggregate output bounded to 5 MiB |
 
 No Responses API, tool calling, streaming chat, embeddings or model-list endpoint is required. Model listing is not a reliable capability test. Extra response metadata may be ignored, but required content must validate locally. 3xx is a nonretryable configuration error, never follow redirects with credentials. HTTP 400/401/403/404/405/415/422 indicates a profile/capability/configuration error, not permission to switch server; 429/5xx/connection failures retain bounded retry behavior. Successful HTTP with invalid content maps invalid_provider_response. Unsupported response format/mode is a clear nonretryable provider_configuration error. Sanitized messages from implementation-contract still apply.
 
@@ -53,13 +53,79 @@ Parse first choice only; require finish_reason=`stop`, non-null string message.c
 
 STT keeps exact validated PCM WAV upload behavior and editable draft. Send no browser transcription or server-specific extras. Require JSON-compatible response; ignore extra fields but reject nonstring/empty/overlength text under existing error rules. File and multipart handles close on every exit.
 
-TTS uses `async with client.stream("POST", url, json=payload)` and raw chunks processed in at most65536-byte pieces with no unexpected Content-Encoding; enforce the existing 5 MiB cap before retaining another chunk, validate nonempty result and Content-Type audio/mpeg or audio/mp3 (case-insensitive, ignoring parameters), return application audio/mpeg/no-store. Reject JSON/text or other audio formats for this baseline. A service that only emits WAV is not MP3-compatible until a separately specified transcoder/adapter is added. Do not relabel incompatible bytes. Tests and browser playback verify finite decodable MP3 data.
+### TTS format and bounded synthesis contract
+
+This section defines required changes; current MP3-only application behavior does
+not satisfy WAV profiles until implementation and tests pass.
+
+- `TTS_AUDIO_FORMAT`: exactly `mp3` (default for existing profiles) or `wav`.
+  Reject unknown/case-mismatched values at offline startup. Send the configured
+  value as `response_format`; never detect the provider by hostname/model ID or
+  silently fall back between formats.
+- `TTS_MAX_INPUT_CHARS`: integer from 1 through 4000, default 4000. This is the
+  per-request provider limit, not permission to truncate an assistant reply.
+  MP3 profiles require 4000 in this revision: MP3 chunk merging is not supported.
+  WAV profiles support smaller limits using the exact chunking procedure below.
+- `SynthesizedAudio` is an immutable typed result with `data: bytes` and
+  `media_type: Literal["audio/mpeg", "audio/wav"]`. Change
+  `AIProvider.synthesize(text)` and every production/fake implementation to return
+  this type. The HTTP route returns the validated result's bytes and media type,
+  with `Cache-Control: no-store`. No client may supply the format or text to speak;
+  only the saved assistant message is eligible.
+- MP3: accept provider Content-Type `audio/mpeg` or `audio/mp3`, ignoring case and
+  parameters; return `audio/mpeg`. Keep the existing finite-decodable MP3 checks.
+- WAV: accept `audio/wav`, `audio/x-wav` or `audio/wave`, ignoring case and
+  parameters; return `audio/wav`. Require a complete decodable RIFF/WAVE file
+  containing uncompressed PCM, one or two channels, 16-bit samples and a sample
+  rate from 8000 through 48000 Hz. Reject empty PCM, truncated frames, malformed
+  chunks, compressed WAV and incompatible metadata. Use standard-library `wave`
+  with bounded buffers; do not apply input-recording silence/duration checks to
+  generated speech. Never relabel WAV bytes as MP3 or concatenate WAV headers.
+
+For WAV synthesis, validate the saved nonempty text at length <=4000 before any
+provider request. Partition by Python Unicode code points into consecutive slices
+`text[i:i + TTS_MAX_INPUT_CHARS]` for `i` starting at zero. Preserve every character,
+including whitespace: joining chunks must equal the original saved text exactly.
+Reject more than 20 chunks before the first provider call; do not silently shorten
+text. Send chunks sequentially in order, each with the same model/voice/format.
+There is exactly one HTTP attempt per chunk, no retry and no parallel fan-out.
+This replaces the former one-HTTP-request assumption only for chunked WAV.
+
+Acquire one provider concurrency permit for the entire synthesis, retain the
+existing single TTS operation deadline across all chunks/read/assembly/cleanup,
+and release on every exit. Never reset the deadline for each chunk. Use
+`client.stream`, raw response reads in pieces of at most 65536 bytes,
+`Accept-Encoding: identity`, no unexpected Content-Encoding, and status-first
+error mapping. Enforce both aggregate raw provider response bytes and the final
+assembled file <=5 MiB; check before retaining each chunk or writing output.
+Each WAV must have identical channel count, sample width and rate. Decode PCM,
+append frame data in order and emit one new valid WAV header for the combined
+frames. One chunk uses the same validation/assembly path. Any chunk failure,
+metadata mismatch, deadline, cancellation or cap breach discards all partial
+output and returns the existing safe error; no partial successful audio response,
+audio persistence, transcript/credential logging or session mutation is allowed.
+
+Browser playback must use the actual response Content-Type for its Blob and play
+finite MP3 and WAV through the existing audio element. Retain generation/token
+checks, object-URL cleanup and text-only recovery after playback/provider errors.
+No autoplay, runtime transcoder, ffmpeg dependency or provider-specific UI is added.
+
+Named Groq Orpheus deployment profile (operator must verify current access):
+`TTS_BASE_URL=https://api.groq.com/openai/v1`,
+`TTS_MODEL=canopylabs/orpheus-v1-english`, `TTS_VOICE=troy`,
+`TTS_AUTH_MODE=bearer`, `TTS_AUDIO_FORMAT=wav`, `TTS_MAX_INPUT_CHARS=200`.
+Supply a private key in ignored `.env`. A 201-character reply requires two calls;
+a 4000-character reply requires 20. Free-tier limits may prevent timely completion;
+429 fails safely without hiding the failure or increasing budgets. This profile
+is configuration, not a claim of successful live playback.
+Source: [Groq Orpheus format and input limits](https://console.groq.com/docs/text-to-speech/orpheus).
+
 
 ## 4. Engine and deployment wiring
 
 Resolve ServiceProfiles → construct OpenAICompatibleProvider(profiles) → validate/load local KB → construct existing engine(repository, provider, knowledge_base). Provider selects the right profile solely from the invoked method, never from customer content or a browser-provided URL. Extraction uses LLM; grounded generation uses RAG; local lexical retrieval does not call an embedding server. Separate RAG model is optional configuration, but RAG behavior is mandatory.
 
-Expose no backend secrets/URLs through public health. `/health` checks process, storage and loaded KB only. Shared extraction+RAG outer deadline remains 25 seconds even if they use different hosts. Per-operation retry counts, max four attempts per RAG turn, audio budgets, single-process session locking and atomic persistence do not change. TTS failures never roll back a saved text reply. `close()` closes all four clients (including inherited-RAG profile's distinct client).
+Expose no backend secrets/URLs through public health. `/health` checks process, storage and loaded KB only. Shared extraction+RAG outer deadline remains 25 seconds even if they use different hosts. Per-operation retry counts, max four attempts per RAG turn, audio operation deadlines (with WAV request counts defined above), single-process session locking and atomic persistence do not change. TTS failures never roll back a saved text reply. `close()` closes all four clients (including inherited-RAG profile's distinct client).
 
 The Compose template runs the application only, not arbitrary GPU services. App-to-model traffic uses configured addresses. A localhost URL **inside the container** refers to that container, not the host. For models on the Docker host, use host.docker.internal with Docker Desktop, or add the explicit Compose host-gateway mapping documented in startup.md. For models in the same Docker network use their service DNS name; remotely hosted services use their actual HTTPS API prefix. No hardcoded host substitution. Server model IDs and deployment URLs are required operator inputs; documentation examples are not claims that those servers are running.
 

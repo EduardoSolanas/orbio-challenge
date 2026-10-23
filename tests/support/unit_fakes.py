@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from typing import Iterable
 from uuid import UUID, uuid4
 
+from app.providers import SynthesizedAudio
 from app.schemas import (
     Extraction,
     KnowledgeAnswer,
@@ -143,7 +144,7 @@ class FakeProvider:
     async def transcribe(self, audio: bytes) -> str:
         raise AssertionError("unexpected provider call: transcribe")
 
-    async def synthesize(self, text: str) -> bytes:
+    async def synthesize(self, text: str) -> SynthesizedAudio:
         raise AssertionError("unexpected provider call: synthesize")
 
     async def close(self) -> None:

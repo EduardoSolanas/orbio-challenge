@@ -32,7 +32,7 @@ to four independently configurable roles:
 | `LLM_` | Structured extraction and intent | `BASE_URL`, `MODEL`, `AUTH_MODE`, `API_KEY`, `OUTPUT_MODE` |
 | `RAG_` | Grounded policy answers | same as LLM; if **all** RAG values are blank the whole LLM profile is inherited atomically |
 | `STT_` | WAV transcription | `BASE_URL`, `MODEL`, `AUTH_MODE`, `API_KEY` |
-| `TTS_` | Reply speech | `BASE_URL`, `MODEL`, `AUTH_MODE`, `API_KEY`, `VOICE` |
+| `TTS_` | Reply speech | `BASE_URL`, `MODEL`, `AUTH_MODE`, `API_KEY`, `VOICE`, `AUDIO_FORMAT`, `MAX_INPUT_CHARS` |
 
 Rationale: generic HTTP against Chat Completions/audio endpoints keeps the app
 independent of a single hosted vendor, allows local `auth=none` servers and lets
@@ -64,6 +64,8 @@ Edit it before starting the app. Both Git and the Docker build context ignore
 | `STT_BASE_URL` | `http://host.docker.internal:8002/v1` |
 | `TTS_BASE_URL` | `http://host.docker.internal:8003/v1` |
 | `LLM_MODEL`, `STT_MODEL`, `TTS_MODEL`, `TTS_VOICE` | Replace example values with actual served IDs |
+| `TTS_AUDIO_FORMAT` | `mp3` (default) or `wav`; Groq Orpheus needs `wav` |
+| `TTS_MAX_INPUT_CHARS` | Per-request provider limit, default `4000`; Groq Orpheus needs `200` (WAV replies are chunked, up to 20 chunks) |
 | Each role's `AUTH_MODE` / `API_KEY` | Defaults to `none` / empty; use `bearer` and its key if required |
 | `LLM_OUTPUT_MODE` | `json_schema`; change to `json_object` or `prompt_json` if required by your backend |
 | All `RAG_*` values | Blank inherits the complete LLM profile; set a complete profile for a separate answer server |
@@ -238,8 +240,11 @@ the only order number is the fictional `NS-000123`.
    the customer presses send. The committed transcript goes through the same turn
    validation as typed text.
 4. `POST /api/sessions/{id}/speech` with an existing assistant `message_id` returns
-   MP3 bytes with `Cache-Control: no-store`; audio is never persisted. TTS is
-   opt-in per reply and a failure leaves the text reply and saved state intact.
+   the configured audio (`audio/mpeg` for MP3, `audio/wav` for PCM WAV) with
+   `Cache-Control: no-store`; audio is never persisted. Long replies are split at
+   `TTS_MAX_INPUT_CHARS` for WAV profiles and the decoded chunks are assembled
+   under one WAV header. TTS is opt-in per reply and a failure leaves the text
+   reply and saved state intact.
 
 ## RAG corpus and citation display
 
@@ -335,7 +340,8 @@ The time is build/tool wall-clock, not a productivity benchmark.
   multilingual or large-corpus claim. Valid citations do not prove entailment: a
   generated answer can still be semantically wrong.
 - Voice: server accepts PCM WAV only (no MP3/WebM upload), no streaming,
-  interruption or telephony. Reply audio is MP3-only from the TTS role.
+  interruption or telephony. Reply audio follows `TTS_AUDIO_FORMAT`: MP3
+  (`audio/mpeg`) or validated/assembled PCM WAV (`audio/wav`) from the TTS role.
 - The operator must verify provider retention policy before using real customer
   data; this demo does not implement redaction beyond excluding transcripts and
   order numbers from logs.

@@ -768,7 +768,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Accept: "audio/mpeg",
+            Accept: "audio/wav, audio/mpeg",
           },
           body: JSON.stringify({ message_id: messageId }),
         },

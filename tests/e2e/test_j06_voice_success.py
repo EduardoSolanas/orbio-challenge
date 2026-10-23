@@ -146,12 +146,40 @@ def test_j06_voice_success(case_id, ui, server, provider, tmp_path):
     assert server.session_bytes(sid) == before_play
     ui.cp("J06.saved-reply-plays-mp3")
 
+    # Second checkpoint: the same saved reply played from a PCM WAV response.
+    wav_reply = make_wav(seconds=0.5, peak=1200)
+    provider.script_synthesize(reply["text"], wav_reply, media_type="audio/wav")
+    with ui.page.expect_response(lambda r: r.url.endswith("/speech")) as pending:
+        ui.play_button(reply["id"]).click()
+    assert pending.value.status == 200
+    speech = ui.speech_posts()
+    assert len(speech) == 2 and body_of(speech[1]) == {"message_id": reply["id"]}
+    assert speech[1]["response_headers"]["content-type"] == "audio/wav"
+    assert speech[1]["response_headers"]["cache-control"] == "no-store"
+    assert speech[1]["response_bytes"] == len(wav_reply)
+    expect(ui.audio).to_have_attribute("src", re.compile(r"^blob:"))
+    src_wav = ui.audio.get_attribute("src")
+    ui.page.wait_for_function(
+        "(url) => { const a = document.querySelector('[data-testid=\"reply-audio\"]');"
+        " return a.currentSrc === url && a.currentTime > 0 && a.duration > 0; }",
+        arg=src_wav,
+    )
+    spy = ui.spy()
+    assert [c["type"] for c in spy["created"]] == ["audio/mpeg", "audio/wav"]
+    assert spy["created"][1]["size"] == len(wav_reply)
+    assert spy["created"][1]["url"] == src_wav
+    assert spy["created"][0]["url"] in spy["revoked"], "MP3 object URL replaced by WAV"
+    assert server.session_bytes(sid) == before_play
+    ui.cp("J06.saved-reply-plays-wav")
+
     # Confirmation still succeeds after voice input and playback.
     assert ui.confirm().status == 200
     expect(ui.log).to_contain_text(RECEIPT_TEMPLATE.format(session_id=sid))
     saved = ui.disk(sid)
     assert saved["status"] == "completed" and saved["revision"] == 2
     assert saved["confirmation"]["review_revision"] == 1
-    assert provider.methods() == ["transcribe", "transcribe", "extract", "synthesize"]
+    assert provider.methods() == [
+        "transcribe", "transcribe", "extract", "synthesize", "synthesize",
+    ]  # fmt: skip
     provider.assert_consumed()
     ui.cp("J06.confirm-after-voice")

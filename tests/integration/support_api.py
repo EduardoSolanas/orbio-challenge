@@ -17,6 +17,7 @@ from uuid import UUID
 from httpx import ASGITransport, AsyncClient
 
 from app.config import Settings
+from app.providers import SynthesizedAudio
 from app.schemas import Extraction, KnowledgeAnswer, Slots
 
 NO_SLOTS: dict[str, str | None] = {
@@ -91,7 +92,7 @@ class ScriptedProvider:
         self.extractions: deque[Extraction] = deque()
         self.answers: deque[KnowledgeAnswer] = deque()
         self.transcriptions: deque[str] = deque()
-        self.speech: deque[bytes] = deque()
+        self.speech: deque[SynthesizedAudio] = deque()
         self.calls: list[tuple[str, Any]] = []
         self.close_count = 0
 
@@ -104,8 +105,8 @@ class ScriptedProvider:
     def script_transcription(self, text: str) -> None:
         self.transcriptions.append(text)
 
-    def script_speech(self, audio: bytes) -> None:
-        self.speech.append(audio)
+    def script_speech(self, audio: bytes, media_type: str = "audio/mpeg") -> None:
+        self.speech.append(SynthesizedAudio(audio, media_type))
 
     def methods(self) -> list[str]:
         return [name for name, _ in self.calls]
@@ -128,7 +129,7 @@ class ScriptedProvider:
             raise AssertionError("unexpected transcribe() call")
         return self.transcriptions.popleft()
 
-    async def synthesize(self, text: str) -> bytes:
+    async def synthesize(self, text: str) -> SynthesizedAudio:
         self.calls.append(("synthesize", text))
         if not self.speech:
             raise AssertionError("unexpected synthesize() call")

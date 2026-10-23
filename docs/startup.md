@@ -26,7 +26,7 @@ Python runtime dependencies (pins are in requirements.txt): `fastapi`, `uvicorn`
 
 ## Configuration
 
-Use .env.example and provider-compatibility.md as the exact settings contract. Each service prefix LLM_, RAG_, STT_, TTS_ has BASE_URL, MODEL, AUTH_MODE and API_KEY. Text roles have OUTPUT_MODE and TTS has VOICE. Blank RAG settings inherit the complete LLM profile; a separately configured RAG profile inherits no secrets. SESSION_DIR and PROVIDER_MAX_CONCURRENCY retain their original meanings.
+Use .env.example and provider-compatibility.md as the exact settings contract. Each service prefix LLM_, RAG_, STT_, TTS_ has BASE_URL, MODEL, AUTH_MODE and API_KEY. Text roles have OUTPUT_MODE and TTS has VOICE, AUDIO_FORMAT and MAX_INPUT_CHARS. Groq Orpheus requires AUDIO_FORMAT=wav and MAX_INPUT_CHARS=200; its implementation contract includes bounded WAV assembly. Blank RAG settings inherit the complete LLM profile; a separately configured RAG profile inherits no secrets. SESSION_DIR and PROVIDER_MAX_CONCURRENCY retain their original meanings.
 
 The example host.docker.internal addresses are illustrative servers on the Docker host; they are not started by Compose. The root Compose file supplies `host.docker.internal:host-gateway`; host model servers must accept connections from Docker. Same-network model servers use service DNS; external servers use actual HTTPS API prefixes. Operator must supply valid served model names and supported voice. The compatibility smoke in provider-compatibility.md is required before claiming a backend works. Local app startup only validates settings, writable storage and bundled KB.
 

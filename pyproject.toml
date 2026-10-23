@@ -26,5 +26,5 @@ show_missing = true
 source_paths = ["app/"]
 do_not_mutate = ["app/__init__.py", "app/main.py", "app/schemas.py", "app/prompts.py", "app/errors.py"]
 pytest_add_cli_args_test_selection = ["tests/unit", "tests/integration"]
-also_copy = ["tests/", "pyproject.toml"]
+also_copy = ["tests/", "scripts/", "examples/", "README.md", "pyproject.toml"]
 mutate_only_covered_lines = false

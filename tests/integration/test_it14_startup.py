@@ -152,6 +152,28 @@ async def case_it14_04(session_dir, monkeypatch):
     await expect_configuration_failure(values, monkeypatch)
 
 
+# IT14-11..IT14-13: TTS format/cap variants (PC §3) ---------------------------
+
+
+async def case_it14_11(session_dir, monkeypatch):
+    values = none_auth_env(session_dir, TTS_AUDIO_FORMAT="WAV")
+    await expect_configuration_failure(values, monkeypatch)
+
+
+async def case_it14_12(session_dir, monkeypatch):
+    values = none_auth_env(
+        session_dir, TTS_AUDIO_FORMAT="mp3", TTS_MAX_INPUT_CHARS="200"
+    )
+    await expect_configuration_failure(values, monkeypatch)
+
+
+async def case_it14_13(session_dir, monkeypatch):
+    values = none_auth_env(
+        session_dir, TTS_AUDIO_FORMAT="wav", TTS_MAX_INPUT_CHARS="4001"
+    )
+    await expect_configuration_failure(values, monkeypatch)
+
+
 # IT14-05: unwritable session storage ----------------------------------------
 
 
@@ -414,6 +436,9 @@ CASES = {
     "IT14-02": case_it14_02,
     "IT14-03": case_it14_03,
     "IT14-04": case_it14_04,
+    "IT14-11": case_it14_11,
+    "IT14-12": case_it14_12,
+    "IT14-13": case_it14_13,
     "IT14-05": case_it14_05,
     "IT14-06": case_it14_06,
     "IT14-07": case_it14_07,
