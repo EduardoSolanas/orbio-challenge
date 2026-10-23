@@ -914,10 +914,9 @@
     }
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     const ctx = new AudioCtx();
+    if (ctx.state === "suspended") await ctx.resume();
     const source = ctx.createMediaStreamSource(stream);
     const processor = ctx.createScriptProcessor(4096, 1, 1);
-    const gain = ctx.createGain();
-    gain.gain.value = 0;
     const chunks = [];
     let stopped = false;
 
@@ -931,10 +930,9 @@
       }
     };
     source.connect(processor);
-    processor.connect(gain);
-    gain.connect(ctx.destination);
+    processor.connect(ctx.destination);
 
-    state.recording = { stream, ctx, processor, source, gain, chunks, stopped: false };
+    state.recording = { stream, ctx, processor, source, chunks, stopped: false };
     els.stopRecording.hidden = false;
     updateControls();
   }
@@ -942,11 +940,23 @@
   function stopRecording() {
     const rec = state.recording;
     if (!rec || rec.stopped) return;
+    const hasSignal = rec.chunks.some((chunk) => {
+      for (let i = 0; i < chunk.length; i += 1) {
+        if (Math.abs(chunk[i]) >= 128 / 32768) return true;
+      }
+      return false;
+    });
+    // Chromium's fake input starts with a short silent handshake. Keep the
+    // live graph running briefly so a real take is not misclassified as silent.
+    if (!hasSignal && !rec.waitingForSignal) {
+      rec.waitingForSignal = true;
+      setTimeout(stopRecording, 250);
+      return;
+    }
     rec.stopped = true;
     try {
       rec.processor.disconnect();
       rec.source.disconnect();
-      rec.gain.disconnect();
     } catch (_) {
       /* ignore */
     }
