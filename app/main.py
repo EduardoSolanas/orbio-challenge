@@ -43,11 +43,15 @@ from app.schemas import (
     CanonicalUUID,
     ConfirmRequest,
     ContractModel,
+    OrderVerificationRequest,
+    OrderVerificationResponse,
     SessionView,
     TurnRequest,
     TurnResponse,
 )
 from app.storage import JsonSessionRepository
+from app.order_client import OrderApiClient
+from app.verification import VerificationRegistry
 
 logger = logging.getLogger("app.main")
 
@@ -292,6 +296,8 @@ def create_app(
     provider=None,
     knowledge_path: Path | None = None,
     locales_dir: Path | None = None,
+    verification_registry: VerificationRegistry | None = None,
+    order_api_client: OrderApiClient | None = None,
 ) -> FastAPI:
     """Build the app; dependencies are assembled on lifespan start (IC §3)."""
 
@@ -341,23 +347,45 @@ def create_app(
         if active_settings.tts_es is not None:
             speech_languages = speech_languages | {"es"}
 
+        verification = (
+            verification_registry
+            if verification_registry is not None
+            else VerificationRegistry()
+        )
+        customer_data = (
+            order_api_client
+            if order_api_client is not None
+            else OrderApiClient(
+                active_settings.order_api_base_url,
+                timeout_seconds=active_settings.order_api_timeout_seconds,
+            )
+        )
+
         app.state.settings = active_settings
         app.state.locales = locales
         app.state.repository = repository
         app.state.provider = active_provider
         app.state.knowledge_base = knowledge_base
         app.state.speech_languages = speech_languages
+        app.state.verification = verification
+        app.state.customer_data = customer_data
         app.state.engine = ConversationEngine(
-            repository, active_provider, knowledge_base, speech_languages=speech_languages
+            repository,
+            active_provider,
+            knowledge_base,
+            speech_languages=speech_languages,
+            customer_data=customer_data,
+            verification=verification,
         )
         app.state.ready = True
         try:
             yield
         finally:
             app.state.ready = False
+            await customer_data.aclose()
             await active_provider.close()
 
-    app = FastAPI(title="Northstar support intake", lifespan=lifespan)
+    app = FastAPI(title="Northstar Energy Customer Support", lifespan=lifespan)
     app.add_middleware(JsonBodyGuardMiddleware)
     app.add_middleware(CorrelationIdMiddleware)
     app.mount("/static", StaticFiles(directory=STATIC_DIR, check_dir=False), name="static")
@@ -455,6 +483,17 @@ def create_app(
             session_uuid, command
         )
         return JSONResponse(_turn_payload(response, request.app.state.speech_languages))
+
+    @app.post("/api/sessions/{session_id}/order-verification")
+    async def order_verification(session_id: str, request: Request):
+        session_uuid = _canonical_uuid(session_id)
+        command: OrderVerificationRequest = _parse(
+            OrderVerificationRequest, _json_body(await request.body())
+        )
+        response: OrderVerificationResponse = await request.app.state.engine.verify_order(
+            session_uuid, command
+        )
+        return JSONResponse(response.model_dump(mode="json"))
 
     @app.post("/api/transcriptions")
     async def transcriptions(request: Request):

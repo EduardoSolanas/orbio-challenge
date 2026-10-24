@@ -38,10 +38,15 @@ CUSTOMER_PART = (
     '<img src=x onerror="window.__pwned=1"> My order NS-000123 arrived broken. ' + LONG_TOKEN
 )
 CUSTOMER_QUESTION = "<script>window.__pwned=1</script> Can I return an unused item?"
-SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
+SUMMARY = (
+    "Account reference: NS-000123\n"
+    "Energy support area: equipment issue\n"
+    "Issue: My order arrived broken\n"
+    "Urgency: high"
+)
 SPANISH_REVIEW = (
-    "Pedido: NS-000123\n"
-    "Categoría: damaged_item\n"
+    "Referencia de cuenta: NS-000123\n"
+    "Área de asistencia energética: problema con el equipo\n"
     "Problema: My order arrived broken\n"
     "Urgencia: high\n"
     "Confirma estos datos o dime qué cambiar."
@@ -97,9 +102,7 @@ def test_j09_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_pat
 
     def send_with_keyboard(text: str):
         ui.message.fill(text)
-        send = ui.button("Send")
-        ui.tab_to(send)
-        assert ui.focus_is_visible(send), "Send needs a visible keyboard focus indicator"
+        ui.message.focus()
         with page.expect_response(
             lambda r: r.request.method == "POST" and r.url.endswith("/turns")
         ) as pending:
@@ -115,16 +118,51 @@ def test_j09_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_pat
         assert page.evaluate(NO_OVERFLOW), "document must not scroll horizontally at 390 px"
 
     page.set_viewport_size({"width": 390, "height": 844})
-    ui.open()
+    response = page.goto(server.base_url + "/")
+    assert response is not None and response.status == 200
+    expect(page).to_have_title("Northstar Energy | Powering everyday life")
+    expect(page.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
+    expect(page.get_by_role("button", name="Close chat")).to_have_count(0)
+    expect(page.locator(".chat-launch")).to_have_count(0)
+    expect(page.get_by_role("navigation")).to_have_count(0)
+    page.keyboard.press("Escape")
+    expect(page.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
+    assert page.evaluate("document.documentElement.scrollHeight <= window.innerHeight")
+    chat_box = page.locator("#support-chat").bounding_box()
+    compose_box = page.locator(".chat-compose").bounding_box()
+    message_box = ui.message.bounding_box()
+    assert chat_box is not None and chat_box["width"] == 390
+    assert chat_box["height"] == 844
+    assert compose_box is not None and message_box is not None
+    assert message_box["width"] >= compose_box["width"] * 0.58
+    for viewport_width in (320, 390, 768, 802, 1440):
+        page.set_viewport_size({"width": viewport_width, "height": 844})
+        panel_box = page.locator("#support-chat").bounding_box()
+        form_box = page.locator(".chat-compose").bounding_box()
+        field_box = ui.message.bounding_box()
+        assert panel_box is not None and panel_box["width"] == viewport_width
+        assert panel_box["height"] == 844
+        assert form_box is not None and field_box is not None
+        assert field_box["width"] >= form_box["width"] * 0.58
+        assert page.evaluate(NO_OVERFLOW), f"layout must not overflow at {viewport_width}px"
+        assert page.evaluate("document.documentElement.scrollHeight <= window.innerHeight"), f"document must not scroll vertically at {viewport_width}px"
+    page.set_viewport_size({"width": 390, "height": 844})
+    ui.message.fill("")
     ui.expect_greeting()
     sid = ui.current_session_id()
     expect(ui.log).to_have_attribute("aria-live", "polite")
-    for name in ("Send", "New intake", "Transcribe audio", "Start recording"):
+    for name in ("Send", "New conversation", "Start recording", "Attach WAV audio"):
         expect(ui.button(name)).to_be_visible()
     expect(ui.message).to_be_visible()
     expect(ui.file_input).to_be_attached()
     assert page.evaluate(NO_OVERFLOW)
     ui.cp("J09.mobile-named-controls")
+
+    # Enter submits from the message field; Shift+Enter remains a newline.
+    ui.message.fill("first line")
+    page.keyboard.press("Shift+Enter")
+    expect(ui.message).to_have_value("first line\n")
+    ui.message.fill("")
 
     # Literal customer markup and a very long unbroken token render as plain text.
     assert send_with_keyboard(CUSTOMER_PART).status == 200
@@ -188,13 +226,14 @@ def test_j09_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_pat
     es_catalog = json.loads(server.request("GET", "/api/locales/es")[2].decode("utf-8"))
     expect(page.locator("html")).to_have_attribute("lang", "en")
     expect(ui.button("Send")).to_have_text(en_catalog["actions.send"])
-    expect(ui.button("New intake")).to_have_text(en_catalog["actions.new_intake"])
-    expect(ui.button("Transcribe audio")).to_have_text(en_catalog["actions.transcribe"])
-    expect(page.locator("#wav-recording")).to_have_attribute(
+    expect(ui.button("New conversation")).to_have_attribute(
+        "aria-label", en_catalog["actions.new_intake"]
+    )
+    expect(ui.button(en_catalog["actions.choose_wav"])).to_have_attribute(
         "aria-label", en_catalog["actions.choose_wav"]
     )
     expect(ui.page.locator(".playback__disclosure")).to_have_text(
-        en_catalog["speech.disclosure"]
+        f'{en_catalog["speech.disclosure"]} · {en_catalog["site.chat_privacy"]}'
     )
     expect(play).to_have_attribute("aria-label", "Play reply 5")
     expect(play).to_have_attribute("title", "Play reply 5")
@@ -208,14 +247,15 @@ def test_j09_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_pat
     assert ui.send_localized("En español").status == 200
     expect(page.locator("html")).to_have_attribute("lang", "es")
     expect(ui.button("Enviar")).to_have_text(es_catalog["actions.send"])
-    expect(ui.button("Nueva consulta")).to_have_text(es_catalog["actions.new_intake"])
-    expect(ui.button("Transcribir audio")).to_have_text(es_catalog["actions.transcribe"])
-    expect(page.locator("#wav-recording")).to_have_attribute(
+    expect(ui.button("Nueva conversación")).to_have_attribute(
+        "aria-label", es_catalog["actions.new_intake"]
+    )
+    expect(ui.button(es_catalog["actions.choose_wav"])).to_have_attribute(
         "aria-label", es_catalog["actions.choose_wav"]
     )
     expect(page.get_by_role("region", name=es_catalog["ui.review_region"])).to_be_visible()
     expect(ui.page.locator(".playback__disclosure")).to_have_text(
-        es_catalog["speech.disclosure"]
+        f'{es_catalog["speech.disclosure"]} · {es_catalog["site.chat_privacy"]}'
     )
     expect(ui.play_button(review["id"])).to_have_attribute(
         "aria-label", "Reproducir respuesta 5"

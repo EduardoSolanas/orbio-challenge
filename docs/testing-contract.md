@@ -45,11 +45,15 @@ E2E provider fake is a separate test-only implementation in `tests/support/fakes
 
 ## 4. Integration/E2E coverage authority
 
-The actual test specifications are in **implementation-contract.md section13**: 185 individually identified integration cases across groups IT01–IT14 and ten complete Playwright journeys J01–J10. They replace the earlier100-browser-case matrix. Unit-test design is the implementing model's responsibility while doing strict TDD; unit/coverage/mutmut gates remain mandatory. Do not recreate100 fullbrowser flows and relabel them integration.
+The actual test specifications are in **implementation-contract.md section13**: 185 individually identified integration cases across groups IT01–IT14 and ten complete Playwright journeys J01–J10. AUTH-01 adds eleven supplemental integration cases AUTH-I01–AUTH-I11; This layer adds seven supplemental integration cases OA-I01–OA-I07 for the private Order API boundary. These extend the inventory and do not replace or renumber IT01–IT14. Extend J01 for the mock order-verification flow, including Order API outage and recovery; do not add another full-browser journey. They replace the earlier100-browser-case matrix. Unit-test design for AUTH-01 and is the implementing model's responsibility while doing strict TDD; unit/coverage/mutmut gates remain mandatory. Do not recreate100 fullbrowser flows and relabel them integration.
 
 Use section13 for exact fixture seams, scripted inputs, journey actions/assertions, backend-vs-browser boundaries and required evidence. Integration tests execute real Python API/engine/retrieval/storage with controlled external HTTP; Playwright journeys execute the real UI/server path and assert browser-specific draft/media/retry/rendering behavior. Invalid field combinations, state permutations, message-limit edges, codecs, retrieval/ranking/citation failures and protocol/auth/deadline boundaries belong primarily to integration or model-designed units.
 
-The E2E manifest/evidence checker must read journey IDs J01–J10 from implementation-contract.md section13; no gate requires the retired100 IDs. Keep all185 concrete ITxx-yy IDs collected/executed and mapped separately in the integration requirement mapping. Do not silently skip a journey or backend branch.
+The E2E manifest/evidence checker must read journey IDs J01–J10 from implementation-contract.md section13; no gate requires the retired100 IDs. Keep all185 concrete ITxx-yy IDs plus AUTH-I01–AUTH-I11 and OA-I01–OA-I07 collected/executed and mapped separately in the integration requirement mapping. Do not silently skip a journey or backend branch.
+
+The gateway-to-Order-API boundary is real-boundary coverage: integration must serve the shipped `app.order_api` app with real Uvicorn on a loopback port and drive it through `OrderApiClient`; stopping and restarting that server must prove the fixed safe outage errors and recovery. Unit tests may use a protocol-faithful `httpx.MockTransport` only for the client's transport/status mapping; an in-process Order API replacement is not accepted as integration coverage. The gateway origin must be proven not to expose `/internal/v1/...`, and Compose must publish no host port for `order-api`.
+
+The separate LLM semantic-judge suite is not a substitute for the ten J01–J10 journeys. It must contain 23 judge-asserted browser checks: seven baseline routing cases (greeting, thanks, social-prefaced facts, social-prefaced policy question, capability, unsupported question and memory-aware explicit resume after an issue, FAQ detour and page refresh), ten FAQ interruptions (partial issue intake, after category/before urgency, pending review, rejected review, pending verification, wrong verification code, verified/before protected lookup, after protected order result, partial intake after reload, and unsupported FAQ during verification), and six frustration-to-handoff cases (during issue intake, during a supported FAQ, during pending verification, at review, on an unrelated/off-topic turn, and in Spanish). Every FAQ case asserts deterministic response, citation/abstention, relevant UI state and `order_verification_required`; each handoff case asserts the fixed localized demo-only transfer disclosure, terminal `handed_off` status, preserved existing slots, locked composer and no RAG/order lookup. The resume judge case additionally verifies the original session ID, persisted transcript/slots/revision across refresh, and that the resumed model context includes prior issue and FAQ turns. The LLM judge assesses the visible final response only. Keep the rubric/prompt version in artifacts and do not count these as extra J journeys.
 
 ## 5. E2E server fixture lifecycle
 
@@ -174,38 +178,60 @@ Required guard regressions under unit/integration: preparse JSON body64KiB/+1 (w
 The inventory checker must validate each claimed test_nodeid against coverage contexts on executable body lines (pytest-cov contexts ending |run); a hand-authored mapping or aggregate line hit alone is insufficient. Retain context-bearing coverage JSON as evidence.
 
 
-## 13. Real provider HTTP integration layer (ORB-52)
+## 13. Real provider HTTP integration layer
 
-Unit tests and the existing IT08/IT12/IT13 cases double the provider transport with `httpx.MockTransport`. ORB-52 adds the layer between those and browser E2E: the shipped `OpenAICompatibleProvider` with its real `httpx.AsyncClient` talks over a real TCP socket to `tests/integration/support_provider_http.py::LocalProviderServer`, a threaded loopback HTTP service with per-path scripted responses. No provider object is injected into `create_app`; the lifespan builds the adapter from settings, so routes, schemas, engine, JSON repository, retriever, adapter and HTTP client all run as shipped. The harness is test-only; there is no production fake-provider mode.
+Unit tests and the existing IT08/IT12/IT13 cases double the provider transport with `httpx.MockTransport`. This layer adds the layer between those and browser E2E: the shipped `OpenAICompatibleProvider` with its real `httpx.AsyncClient` talks over a real TCP socket to `tests/integration/support_provider_http.py::LocalProviderServer`, a threaded loopback HTTP service with per-path scripted responses. No provider object is injected into `create_app`; the lifespan builds the adapter from settings, so routes, schemas, engine, JSON repository, retriever, adapter and HTTP client all run as shipped. The harness is test-only; there is no production fake-provider mode.
 
 The server records each request path, headers and raw body, and each response status/headers/outcome, including bytes written and client abort (`broken pipe`) on a chunked stream. Tests therefore assert exact wire requests, retry/repair counts, bounded response consumption and the absence of detached provider work after a timeout.
 
 | Boundary | Case |
 |----------|------|
-| Exact extraction/RAG requests, parsed results, per-role bearer auth, `Accept-Encoding: identity` | `test_orb52_provider_http.py::test_extraction_and_answer_requests_cross_the_real_socket_exactly`, `::test_role_tokens_never_cross_the_wire` |
-| `json_schema`, `json_object`, `prompt_json` payloads at the socket | `::test_all_three_output_modes_are_transported_on_the_wire` and `test_orb52_rag_http.py::test_output_mode_drives_a_real_turn_end_to_end` |
+| Exact extraction/RAG requests, parsed results, per-role bearer auth, `Accept-Encoding: identity` | `test_provider_http.py::test_extraction_and_answer_requests_cross_the_real_socket_exactly`, `::test_role_tokens_never_cross_the_wire` |
+| `json_schema`, `json_object`, `prompt_json` payloads at the socket | `::test_all_three_output_modes_are_transported_on_the_wire` and `test_rag_http.py::test_output_mode_drives_a_real_turn_end_to_end` |
 | Redirect not followed (302, one request, no target hit) | `::test_redirect_is_not_followed` |
 | 1 MiB raw success cap: exact limit accepted; 8 MiB chunked body aborted mid-stream and retried | `::test_success_body_exactly_at_the_limit_is_accepted`, `::test_oversized_chunked_success_is_bounded_and_retried` |
 | Compressed success rejected without decompression | `::test_gzip_encoded_success_is_rejected_without_decompression` |
 | Truncated (`finish_reason=length`) response repaired once | `::test_truncated_success_is_invalid_and_repaired_once` |
 | 503 retried then `provider_unavailable`; 400 not retried | `::test_provider_503_is_retried_then_unavailable`, `::test_provider_400_is_not_retried_and_maps_to_configuration` |
-| Read timeout bounded, both attempts abandoned at the socket | `::test_read_timeout_is_bounded_and_leaves_no_detached_work` |
+| Read timeout is bounded, exactly two scripted attempts occur, and no late result changes application state | `::test_read_timeout_is_bounded_and_leaves_no_detached_work` |
 | Connection refused maps to `provider_unavailable` | `::test_connection_refused_maps_to_unavailable` |
-| Shared extraction+generation deadline, 504, no partial write, answer request aborted | `test_orb52_rag_http.py::test_it10_12_shared_deadline_cuts_generation_without_detached_work` |
+| Shared extraction+generation deadline, 504, no partial write, and no late application request/state commit | `test_rag_http.py::test_it10_12_shared_deadline_cuts_generation_without_detached_work` |
 | Multi-turn RAG: slots/citations/revision after refresh-equivalent reload, old accepted fact outside the latest 12 messages | `::test_multi_turn_rag_keeps_state_and_old_facts_outside_the_window` |
 | Rollback after reload leaves persisted bytes untouched, same revision accepts a later turn | `::test_rollback_after_reload_leaves_the_persisted_session_untouched` |
 | Two application instances and sessions isolated (separate servers, directories, revisions, citations) | `::test_two_app_instances_and_sessions_are_isolated` |
 | Speech over real HTTP: exact synthesis request, saved-message-only, arbitrary text/unknown/user message rejected with no provider call and no session write | `::test_speech_synthesizes_only_a_saved_message_over_real_http`, `::test_speech_rejects_unsaved_or_arbitrary_input_without_provider_call` |
 
-IT10 matrix coverage: `test_it10_rag.py` keeps IT10-01..IT10-16 at the scripted-AIProvider and `httpx.MockTransport` layers; `test_orb52_rag_http.py` re-proves the transport-dependent rows over the real socket (01 grounded answer, 02 no-match/no generation, 03 retrieved-but-unanswerable, 04 two ordered sources, 05 unknown citation, 06 duplicate citation, 07 unretrieved KB citation, 08 false-with-text, 11 outage rollback, 12 shared deadline). Rows 09, 10, 13, 14, 15 and 16 remain covered by their existing `test_it10_rag.py` cases; the module docstring records the exact mapping.
+IT10 matrix coverage: `test_it10_rag.py` keeps IT10-01..IT10-16 at the scripted-AIProvider and `httpx.MockTransport` layers; `test_rag_http.py` re-proves the transport-dependent rows over the real socket (01 grounded answer, 02 no-match/no generation, 03 retrieved-but-unanswerable, 04 two ordered sources, 05 unknown citation, 06 duplicate citation, 07 unretrieved KB citation, 08 false-with-text, 11 outage rollback, 12 shared deadline). Rows 09, 10, 13, 14, 15 and 16 remain covered by their existing `test_it10_rag.py` cases; the module docstring records the exact mapping.
 
 Timeout cases shorten the real adapter budget (`TEXT_BUDGET`/`ROLE_BUDGETS`) and the engine deadline before construction so wall-clock stays bounded; retry, repair, validation and commit/rollback logic are unchanged. Commands:
 
 ```bash
-.venv/bin/python -m pytest tests/integration/test_orb52_provider_http.py tests/integration/test_orb52_rag_http.py -q
+.venv/bin/python -m pytest tests/integration/test_provider_http.py tests/integration/test_rag_http.py -q
 .venv/bin/python -m pytest tests/unit tests/integration -q
 ```
 
-No Playwright case is added or changed by ORB-52.
+No Playwright case is added or changed by this change.
 
-Existing suites remain authoritative for boundaries this layer does not re-prove: route and request/response schema validation (IT01–IT05), session storage locking, atomic replacement, migration and restart persistence (IT06, IT13, IT14, IT16), transcription transport (IT08), and speech transport variants (IT09, IT09b). ORB-52 adds the missing real-socket provider layer rather than duplicating those cases.
+Existing suites remain authoritative for boundaries this layer does not re-prove: route and request/response schema validation (IT01–IT05), session storage locking, atomic replacement, migration and restart persistence (IT06, IT13, IT14, IT16), transcription transport (IT08), and speech transport variants (IT09, IT09b). This layer adds the missing real-socket provider layer rather than duplicating those cases.
+
+
+## 14. Private Order API boundary
+
+The gateway owns no catalog, demo code or credential rule. Verification and lookup cross a real HTTP boundary to the shipped `app.order_api:app` served by Uvicorn on a loopback port (`tests/integration/support_order_api.py::LocalOrderApiServer`); the same server can be stopped and restarted on the same origin to prove outage and recovery. `OrderApiClient` transport/status mapping is also pinned in `tests/unit/test_order_api.py` with a protocol-faithful `httpx.MockTransport`; an in-process Order API replacement is not accepted for integration coverage.
+
+| Order API case | Test nodeids |
+|---|---|
+| OA-I01 fixture and allowlisted record | `tests/unit/test_order_api.py::test_fixture_record_is_exact_and_allowlisted`, `::test_unknown_order_returns_not_found_without_record_data`; over the real socket `tests/integration/test_auth01_order_verification.py::test_normalized_postcode_and_demo_code_grant_one_allowlisted_lookup`, `::test_missing_fixture_record_clears_the_grant_and_fails_generically` |
+| OA-I02 health and private surface | `tests/unit/test_order_api.py::test_health_is_private_and_minimal`, `::test_client_has_no_public_gateway_routes` |
+| OA-I03 gateway browser surface and no host port | `tests/integration/test_auth01_order_verification.py::test_gateway_origin_does_not_expose_the_private_order_api`, `tests/unit/test_compose_order_api.py::test_order_api_publishes_no_host_port_and_is_only_exposed_internally`, `::test_gateway_waits_for_a_healthy_order_api_and_calls_it_by_service_dns` |
+| OA-I04 verification while the Order API is down | `tests/integration/test_auth01_order_verification.py::test_order_api_outage_during_verification_is_safe_and_recovers` |
+| OA-I05 lookup while the Order API is down | `::test_order_api_outage_during_lookup_preserves_the_grant_and_recovers` |
+| OA-I06 restart on the same origin recovers without a gateway restart | the `LocalOrderApiServer.restart()` phase of both OA-I04/I05 tests |
+| OA-I07 slow, malformed and 5xx replies | `::test_unusable_order_api_replies_map_to_fixed_safe_errors` (`OA-I07-timeout`, `OA-I07-malformed`, `OA-I07-5xx` ids) against a real loopback Uvicorn service |
+
+J01 carries the browser journey extension; the outage/recovery checkpoints are `J01.order-api-outage-safe-error` and `J01.demo-code-success-enables-composer`, alongside the failed-verification checkpoint `J01.wrong-code-localized-error` and the successful lookup checkpoints `J01.verified-allowlisted-order-summary` and `J01.verified-order-review`.
+
+```bash
+.venv/bin/python -m pytest tests/integration/test_auth01_order_verification.py tests/unit/test_order_api.py tests/unit/test_compose_order_api.py -q
+.venv/bin/python scripts/test.py e2e
+```

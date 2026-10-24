@@ -149,6 +149,14 @@ FIELD_LABEL_KEYS: dict[FieldName, str] = {
     "urgency": "intake.field_urgency",
 }
 
+CATEGORY_LABEL_KEYS: dict[str, str] = {
+    "delivery": "category.supply_issue",
+    "damaged_item": "category.equipment_issue",
+    "wrong_item": "category.meter_reading",
+    "return_refund": "category.billing",
+    "other": "category.other_energy_issue",
+}
+
 
 def text(key: str, language: str = DEFAULT_LANGUAGE) -> str:
     """Return the reviewed copy for ``key`` in ``language``."""
@@ -202,6 +210,10 @@ def build_summary(slots: Slots, language: str = DEFAULT_LANGUAGE) -> str:
     values = {field: getattr(slots, field) for field in MISSING_QUESTION_KEYS}
     if any(value is None for value in values.values()):
         raise ValueError("summary requires all four fields")
+    category_key = CATEGORY_LABEL_KEYS.get(str(values["category"]))
+    if category_key is None:
+        raise ValueError("summary requires a canonical support category")
+    values["category"] = text(category_key, language)
     return render("summary", language, values)
 
 

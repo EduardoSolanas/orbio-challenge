@@ -63,6 +63,9 @@ def load_config(root: Path | None = None) -> DockerE2EConfig:
         )
 
     judge_values = _dotenv(root / "tests/e2e/.env.judge")
+    judge_values.update(
+        {key: value for key, value in os.environ.items() if key.startswith("E2E_JUDGE_")}
+    )
     required = (
         "E2E_JUDGE_BASE_URL",
         "E2E_JUDGE_MODEL",
@@ -143,7 +146,6 @@ def semantic_judge(config: JudgeConfig, user_turn: str, response: str, context: 
         ],
         "temperature": config.temperature,
         "max_tokens": config.max_tokens,
-        "response_format": {"type": "json_object"},
     }
     headers = {"Content-Type": "application/json"}
     if config.api_key and config.api_key != "no-key-required":

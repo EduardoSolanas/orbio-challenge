@@ -102,7 +102,8 @@ def test_spanish_copy_keeps_utf8_special_characters():
     spanish = CATALOG.mapping("es")
     assert "¡Hola!" in spanish["greeting"]
     assert "¿" in spanish["intake.order_number"]
-    assert "número" in spanish["intake.field_order_number"]
+    assert "referencia" in spanish["intake.field_order_number"]
+    assert "energía" in spanish["intake.field_order_number"]
 
 
 def test_unknown_key_and_unknown_language_raise_key_error():
@@ -347,10 +348,10 @@ def test_order_question_hint_is_localized_with_the_requested_language():
     from app.localization import missing_question
 
     assert missing_question("order_number", "en") == (
-        "What is your order number? Use NS- followed by six digits, for example NS-123456."
+        "What is your energy account reference? Use NS- followed by six digits, for example NS-123456."
     )
     assert missing_question("order_number", "es") == (
-        "¿Cuál es tu número de pedido? Usa NS- seguido de seis dígitos, por ejemplo NS-123456."
+        "¿Cuál es tu referencia de cuenta de energía? Usa NS- seguido de seis dígitos, por ejemplo NS-123456."
     )
     assert missing_question("urgency", "es") == "¿Qué urgencia tiene: baja, normal o alta?"
 

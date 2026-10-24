@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import subprocess
 import sys
 import time
@@ -398,7 +399,15 @@ def main(argv: list[str] | None = None) -> int:
     checked_at = datetime.now(timezone.utc)
     revision = source_revision()
     try:
-        settings = Settings.from_env()
+        # Only the four model roles are exercised; storage and Order API values
+        # are required by Settings but unused here, so they default.
+        settings = Settings.from_env(
+            {
+                "SESSION_DIR": "data/sessions",
+                "ORDER_API_BASE_URL": "http://127.0.0.1:8001",
+                **os.environ,
+            }
+        )
     except RuntimeError:
         _write_report(
             args.report,

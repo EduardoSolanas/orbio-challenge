@@ -1,10 +1,10 @@
 {
-  "source_revision": "4729f80c63585f835d438ae93c712cbc9594a7e7",
+  "source_revision": "e2b8aa806d477ea2ca8044706a37991a53480572",
   "spec": "docs/implementation-contract.md#13.3",
   "cases": [
     {
       "id": "J01",
-      "title": "Complete an intake, reload completed view, New intake",
+      "title": "Report an order problem, reload completed view, start a new conversation",
       "nodeid": "tests/e2e/test_j01_intake.py::test_j01_intake[chromium-J01]",
       "requirement_ids": [
         "R1",
@@ -25,7 +25,16 @@
         "J01.review-four-slots",
         "J01.confirmed-local-receipt",
         "J01.reload-completed-read-only",
-        "J01.new-intake-isolated"
+        "J01.new-intake-isolated",
+        "J01.issue-reported-without-verification",
+        "J01.verification-form-demo-notice",
+        "J01.wrong-code-localized-error",
+        "J01.order-api-outage-safe-error",
+        "J01.demo-code-success-enables-composer",
+        "J01.verified-allowlisted-order-summary",
+        "J01.verified-order-still-collects-issue-fields",
+        "J01.verified-order-review",
+        "J01.verified-order-confirmed"
       ]
     },
     {
@@ -125,6 +134,8 @@
       ],
       "checkpoints": [
         "J06.microphone-denied-alert",
+        "J06.new-intake-stops-recording",
+        "J06.stop-auto-transcribes-and-locks-controls",
         "J06.recording-take-fills-draft",
         "J06.upload-fills-draft-no-commit",
         "J06.edited-transcript-persisted",
@@ -175,7 +186,7 @@
     },
     {
       "id": "J09",
-      "title": "Keyboard and mobile with safe content",
+      "title": "Always-open chat, keyboard and mobile with safe content",
       "nodeid": "tests/e2e/test_j09_keyboard_mobile.py::test_j09_keyboard_mobile[chromium-J09]",
       "requirement_ids": [
         "R13",
@@ -204,8 +215,9 @@
         "IC-13.3-J10"
       ],
       "checkpoints": [
-        "J10.stt-held-new-intake-available",
-        "J10.old-stt-ignored",
+        "J10.stt-locks-chat-controls",
+        "J10.auto-stt-fills-editable-draft",
+        "J10.new-intake-after-stt-unlock",
         "J10.saved-replies-a-b",
         "J10.only-latest-tts-owns-audio",
         "J10.send-usable-during-playback",

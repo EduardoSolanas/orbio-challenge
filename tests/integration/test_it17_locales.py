@@ -76,7 +76,7 @@ async def test_index_embeds_the_english_catalog_without_duplicating_literals(cli
     assert json.loads(match.group(1)) == shipped("en")
     # Static labels are keyed, not hard-coded English duplicates.
     assert ">Send<" not in html
-    assert ">New intake<" not in html
+    assert ">New conversation<" not in html
     assert 'data-i18n="actions.send"' in html
 
 
@@ -186,6 +186,6 @@ async def test_greeting_is_available_in_both_languages(client):
     english = (await client.get("/api/locales/en")).json()
     spanish = (await client.get("/api/locales/es")).json()
 
-    assert english["greeting"].startswith("Hello!")
+    assert english["greeting"].startswith("Hi,")
     assert spanish["greeting"].startswith("¡Hola!")
     assert english["greeting"] != spanish["greeting"]

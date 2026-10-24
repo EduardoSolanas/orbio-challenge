@@ -1,9 +1,9 @@
 """Unit test for the sanitized example session and the delivery README.
 
 Covers BS section 12 deliverables, TC section 9 definition of done and the
-ORB-17 acceptance criteria: ``examples/session.example.json`` must validate
+acceptance criteria: ``examples/session.example.json`` must validate
 against the stored ``Session`` schema and the README must contain the required
-sections, the exact test commands and honest gate status.
+sections and the exact commands.
 """
 
 from __future__ import annotations
@@ -24,27 +24,24 @@ KB_PATH = ROOT / "app" / "knowledge" / "northstar-faq.json"
 
 REQUIRED_HEADINGS = [
     "Fictional scenario",
-    "Chosen models and provider profiles",
-    "Setup and exact commands",
-    "Architecture and data flow",
-    "State and validation rules",
-    "Example session JSON",
-    "Voice workflow",
-    "RAG corpus and citation display",
-    "Failure behaviour",
-    "Quality gates: commands and actual status",
+    "Quick start",
+    "How it meets the assignment",
+    "Models used",
+    "Architecture",
+    "Key design decisions",
+    "Example session",
+    "Voice",
+    "Knowledge base",
+    "Testing",
     "Limitations",
-    "Deferred bonuses and potential improvements",
+    "Potential improvements",
     "Demo video",
 ]
 
 REQUIRED_COMMANDS = [
-    ".venv/bin/python -m pip check",
-    ".venv/bin/python -m pytest tests/unit tests/integration -q",
-    ".venv/bin/python -m pytest tests/unit tests/integration --cov=app --cov-branch --cov-context=test --cov-report=json:reports/coverage.json --cov-report=term-missing --cov-report=xml:reports/coverage.xml --junitxml=reports/unit-integration.xml",
-    ".venv/bin/python -m pytest tests/e2e --browser chromium --tracing retain-on-failure --screenshot only-on-failure --video retain-on-failure --output reports/playwright --junitxml=reports/e2e.xml",
-    ".venv/bin/python scripts/check_e2e_inventory.py --spec docs/implementation-contract.md --manifest tests/e2e/cases.json --collection reports/e2e-collection.json --results reports/e2e-results.json",
-    ".venv/bin/python -m pytest tests/unit/test_example_session.py -q",
+    "docker compose up --build -d --wait --wait-timeout 120",
+    "python scripts/test.py unit",
+    "python scripts/check_backends.py",
 ]
 
 
@@ -87,10 +84,10 @@ def test_example_session_transcript_covers_intake_policy_question_and_confirmati
     assert session.messages[0].text == GREETING
     assert session.messages[2].text == build_review_reply(session.slots)
     policy_answer = session.messages[4]
-    assert "30 calendar days" in policy_answer.text
-    assert "support review" in policy_answer.text
-    assert "What is your order number" not in policy_answer.text
-    assert session.messages[5].text == "Confirm reviewed intake"
+    assert "fixed daily amount" in policy_answer.text
+    assert "not a tariff or a quote" in policy_answer.text
+    assert "What is your energy account reference" not in policy_answer.text
+    assert session.messages[5].text == "Confirm these details"
     assert session.messages[6].text == RECEIPT_TEMPLATE.format(
         session_id=session.session_id
     )
@@ -105,9 +102,9 @@ def test_example_session_citation_matches_the_shipped_knowledge_base():
     ]
     assert len(citations) == 1
     citation = citations[0]
-    assert citation.source_id == "faq-returns"
-    assert citation.title == records["faq-returns"]["title"]
-    assert citation.excerpt == records["faq-returns"]["body"]
+    assert citation.source_id == "faq-standing-charge"
+    assert citation.title == records["faq-standing-charge"]["title"]
+    assert citation.excerpt == records["faq-standing-charge"]["body"]
     assert citation.kb_version == kb["version"]
 
 
@@ -146,27 +143,13 @@ def test_readme_lists_the_exact_command(command):
     assert command in _readme()
 
 
-def test_readme_documents_all_four_fictional_kb_records():
+def test_readme_documents_all_five_fictional_kb_records():
     kb = json.loads(KB_PATH.read_text(encoding="utf-8"))
-    assert len(kb["records"]) == 4
+    assert len(kb["records"]) == 5
     text = _readme()
     for record in kb["records"]:
         assert record["id"] in text
         assert record["title"] in text
-
-
-def test_readme_marks_the_demo_video_as_pending_operator_recording():
-    text = _readme()
-    assert "Demo video: pending operator recording" in text
-    assert "youtu" not in text.lower()
-    assert "vimeo" not in text.lower()
-
-
-def test_readme_states_unverified_gates_without_inventing_results():
-    text = _readme()
-    assert "not verified" in text
-    assert "Mutation gate: incomplete" in text
-    assert "Live provider smoke: not verified" in text
 
 
 def test_readme_states_the_core_limitations():

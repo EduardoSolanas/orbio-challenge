@@ -26,7 +26,7 @@ from pydantic import (
 )
 
 FieldName = Literal["order_number", "category", "description", "urgency"]
-Status = Literal["collecting", "awaiting_confirmation", "completed"]
+Status = Literal["collecting", "awaiting_confirmation", "completed", "handed_off"]
 Language = Literal["en", "es"]
 DetectedLanguage = Literal["en", "es", "unsupported"]
 Sentiment = Literal["positive", "neutral", "negative", "uncertain"]
@@ -37,8 +37,10 @@ Intent = Literal[
     "confirm",
     "reject",
     "question",
+    "order_lookup",
     "unrelated",
     "social",
+    "gratitude",
     "start_intake",
     "capability",
 ]
@@ -112,6 +114,25 @@ class RecentMessage(ContractModel):
     text: StrictStr
 
 
+class ToolRequest(ContractModel):
+    """The single typed model tool proposal allowed by AUTH-01.
+
+    The arguments object is exact and empty: the server supplies the verified
+    order number from its session-bound registry, so the model can never choose
+    an order, URL, field selection or executable instruction.
+    """
+
+    name: Literal["lookup_verified_order"]
+    arguments: dict[str, StrictStr]
+
+    @field_validator("arguments")
+    @classmethod
+    def _arguments_are_empty(cls, value: dict[str, str]) -> dict[str, str]:
+        if value:
+            raise ValueError("lookup_verified_order takes no arguments")
+        return value
+
+
 class Extraction(ContractModel):
     intent: Intent
     has_question: StrictBool
@@ -122,6 +143,7 @@ class Extraction(ContractModel):
     requested_language: Language | None
     sentiment: Sentiment
     frustration: Frustration
+    tool_request: ToolRequest | None = None
 
     @field_validator("explicit_corrections", "ambiguous_fields")
     @classmethod
@@ -140,6 +162,8 @@ class ExtractionContext(ContractModel):
     intake_started: StrictBool
     reply_language: Language = "en"
     frustration_active: StrictBool
+    order_verified: StrictBool = False
+    verified_order_number: StrictStr | None = None
 
 
 class TurnRequest(ContractModel):
@@ -158,6 +182,18 @@ class ConfirmRequest(ContractModel):
     request_id: CanonicalUUID
     expected_revision: NonNegativeInt
     review_revision: NonNegativeInt
+
+
+class OrderVerificationRequest(ContractModel):
+    """Dedicated verification body; credentials never enter a TurnRequest."""
+
+    delivery_postcode: Annotated[StrictStr, Field(max_length=64)]
+    verification_code: Annotated[StrictStr, Field(max_length=64)]
+
+
+class OrderVerificationResponse(ContractModel):
+    verified: StrictBool
+    error: Literal["verification_failed"] | None
 
 
 class Citation(ContractModel):
@@ -225,6 +261,7 @@ class TurnResponse(ContractModel):
     pending_review_revision: NonNegativeInt | None
     summary: StrictStr | None
     citations: list[Citation] = Field(default_factory=list)
+    order_verification_required: StrictBool = False
 
 
 class Confirmation(ContractModel):

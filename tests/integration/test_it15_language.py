@@ -17,8 +17,9 @@ import pytest
 from httpx import AsyncClient
 
 from app.config import Settings
-from app.localization import build_review_reply, text
+from app.localization import build_review_reply, build_summary, text
 from app.main import create_app
+from app.schemas import Slots
 from tests.integration.support_api import (
     ScriptedProvider,
     build_settings,
@@ -29,18 +30,13 @@ from tests.integration.support_api import (
 from tests.integration.test_it02_intake import FULL_SLOTS, FULL_SUMMARY, start_session, turn_body
 
 SPANISH_TEXT = "Mi pedido NS-000123 llegó dañado, urgencia alta"
-SPANISH_SUMMARY = (
-    "Pedido: NS-000123\n"
-    "Categoría: damaged_item\n"
-    "Problema: Mi pedido llegó dañado\n"
-    "Urgencia: high"
-)
 SPANISH_SLOTS = {
     "order_number": "NS-000123",
     "category": "damaged_item",
     "description": "Mi pedido llegó dañado",
     "urgency": "high",
 }
+SPANISH_SUMMARY = build_summary(Slots(**SPANISH_SLOTS), "es")
 SPANISH_EXTRACTION = make_extraction(
     detected_language="es",
     candidates={

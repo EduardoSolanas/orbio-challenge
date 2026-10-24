@@ -306,6 +306,7 @@ def test_status_literal_rejects_unknown_values():
         "question",
         "unrelated",
         "social",
+        "gratitude",
         "start_intake",
         "capability",
     ],

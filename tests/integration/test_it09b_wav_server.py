@@ -159,6 +159,7 @@ def build_settings(session_dir: Path, server: LocalProviderServer, **overrides: 
         "TTS_MAX_INPUT_CHARS": "200",
         "SESSION_DIR": str(session_dir),
         "PROVIDER_MAX_CONCURRENCY": "4",
+        "ORDER_API_BASE_URL": "http://order-api.test",
     }
     values.update(overrides)
     return Settings.from_env(values)
@@ -273,7 +274,7 @@ async def test_provider_rejection_maps_to_a_clear_nonretryable_configuration_err
 
 
 async def test_more_than_twenty_chunks_is_rejected_before_any_provider_call(server, tmp_path):
-    settings = build_settings(tmp_path / "sessions", server, TTS_MAX_INPUT_CHARS="5")
+    settings = build_settings(tmp_path / "sessions", server, TTS_MAX_INPUT_CHARS="2")
     app = create_app(settings=settings)
 
     async with running_client(app) as client:

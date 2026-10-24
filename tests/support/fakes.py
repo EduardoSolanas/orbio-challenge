@@ -28,7 +28,7 @@ from typing import Any, Callable, Iterable
 
 from app.errors import app_error
 from app.providers import SynthesizedAudio
-from app.schemas import Extraction, KnowledgeAnswer, Slots
+from app.schemas import Extraction, KnowledgeAnswer, Slots, ToolRequest
 
 FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
 REPLY_MP3_PATH = FIXTURES_DIR / "reply.mp3"
@@ -366,7 +366,7 @@ CHANGE = "Actually make the urgency low."
 NO = "No."
 YES = "Yes."
 RETURN_Q = "Can I return an unused item?"
-GREETING_RETURN_Q = "Hello, can I return an unused item?"
+GREETING_STANDING_CHARGE_Q = "Hello, what does a standing charge cover on my energy bill?"
 PAYMENT_Q = "Which payment methods are accepted?"
 DELIVERY_Q = "Hello, how long does delivery take?"
 CAPABILITY_Q = "What can you help me with?"
@@ -374,27 +374,43 @@ UNRELATED = "Tell me a joke."
 THANKS = "Thanks."
 RESUME = "Continue my issue."
 
+ORDER_STATUS_Q = "What is the status of my energy account?"
+ORDER_NUMBER_TEXT = "My energy account reference is NS-000123."
+AUTH_ORDER_NUMBER_PROMPT = (
+    "Please provide the order number you want to check, for example NS-123456."
+)
+AUTH_VERIFICATION_PROMPT = (
+    "Enter the service postcode and demo verification code for this energy account."
+)
+AUTH_DEMO_CODE_NOTICE = (
+    "Email delivery is simulated. No email is sent. Demo code: 246810."
+)
+AUTH_VERIFICATION_FAILED = (
+    "We couldn't verify those details. Check the postcode and code and try again."
+)
+AUTH_VERIFIED = "Energy account verified for this demo."
+AUTH_ORDER_RESULT = (
+    "I found the Northstar Energy account NS-000123 for Casey: Electricity and gas supply. Account status: Active."
+)
+
 BAD_ORDER = "My order NS-12345 arrived broken."
 FIX_ORDER = "The order number is NS-000123."
 CONFLICT_ORDER = "Actually the order is NS-000999."
 KEEP_OLD = "Keep the old one, NS-000123."
 USE_NEW = "Use NS-000999 instead."
 
-GREETING = (
-    "Hello! I can answer Northstar Shop policy questions or help record an order "
-    "issue. How can I help? Please do not share payment details."
-)
+GREETING = "Hi, welcome to Northstar Energy. How can I help you today?"
 ASK_CATEGORY = (
-    "Is this about delivery, a damaged item, a wrong item, a return/refund, or something else?"
+    "Which area do you need help with: a bill, a supply issue, a meter reading, moving home, or something else?"
 )
 ASK_URGENCY = "How urgent is this: low, normal, or high?"
-INVALID_ORDER = "Please use NS- followed by exactly six digits, for example NS-123456."
+INVALID_ORDER = "Use NS- followed by exactly six digits for your energy account reference, for example NS-123456."
 WHAT_TO_CHANGE = "What would you like to change?"
 REVIEW_FOOTER = "Please confirm these details or tell me what to change."
 CONFIRM_PROMPT_AT_REVIEW = "Please confirm the reviewed details or tell me what to change."
 ABSTENTION = (
-    "I do not have that information in the Northstar Shop knowledge base. "
-    "I can still record your issue for review."
+    "I do not have that information in Northstar Energy's help guides. "
+    "I can still help with your energy question or service issue."
 )
 RECEIPT_TEMPLATE = (
     "Saved locally as {session_id}. No request has been sent to a real support team."
@@ -403,14 +419,32 @@ RETURN_ANSWER_TEXT = (
     "You can request a return within 30 calendar days of delivery for an unused item in "
     "its original packaging. Refund eligibility requires support review."
 )
+STANDING_CHARGE_ANSWER_TEXT = (
+    "A standing charge is a fixed daily amount that helps cover the cost of supplying "
+    "electricity or gas to your property. It is charged for each day your account is "
+    "connected, even when you use little or no energy. This explanation is illustrative "
+    "and is not a tariff or a quote."
+)
 
 
 def conflict_question(old: str, candidate: str, label: str) -> str:
+    if label == "order number":
+        label = "energy account reference"
     return f"You previously gave {old}. Should I keep that or use {candidate} for {label}?"
 
 
 def summary_text(order: str, category: str, description: str, urgency: str) -> str:
-    return f"Order: {order}\nCategory: {category}\nProblem: {description}\nUrgency: {urgency}"
+    category_label = {
+        "delivery": "supply issue",
+        "damaged_item": "equipment issue",
+        "wrong_item": "meter reading issue",
+        "return_refund": "billing issue",
+        "other": "other energy issue",
+    }[category]
+    return (
+        f"Account reference: {order}\nEnergy support area: {category_label}\n"
+        f"Issue: {description}\nUrgency: {urgency}"
+    )
 
 
 def review_reply(summary: str) -> str:
@@ -435,6 +469,7 @@ def extraction(
     requested_language: str | None = None,
     sentiment: str = "neutral",
     frustration: str = "none",
+    tool_request: ToolRequest | None = None,
 ) -> Extraction:
     return Extraction(
         intent=intent,
@@ -451,6 +486,7 @@ def extraction(
         requested_language=requested_language,
         sentiment=sentiment,
         frustration=frustration,
+        tool_request=tool_request,
     )
 
 
@@ -497,6 +533,10 @@ def x_social() -> Extraction:
     return extraction(intent="social")
 
 
+def x_gratitude() -> Extraction:
+    return extraction(intent="gratitude", sentiment="positive")
+
+
 def x_capability(has_question: bool = True) -> Extraction:
     return extraction(intent="capability", has_question=has_question)
 
@@ -509,7 +549,29 @@ def x_unrelated() -> Extraction:
     return extraction(intent="unrelated")
 
 
+def x_order_lookup(
+    order_number: str | None = None, *, tool: bool = False, language: str = "en"
+) -> Extraction:
+    return extraction(
+        intent="order_lookup",
+        has_question=True,
+        order_number=order_number,
+        detected_language=language,
+        tool_request=(
+            ToolRequest(name="lookup_verified_order", arguments={}) if tool else None
+        ),
+    )
+
+
 def return_answer() -> KnowledgeAnswer:
     return KnowledgeAnswer(
         answerable=True, answer=RETURN_ANSWER_TEXT, cited_ids=["faq-returns"]
+    )
+
+
+def standing_charge_answer() -> KnowledgeAnswer:
+    return KnowledgeAnswer(
+        answerable=True,
+        answer=STANDING_CHARGE_ANSWER_TEXT,
+        cited_ids=["faq-standing-charge"],
     )

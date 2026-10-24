@@ -1,4 +1,4 @@
-"""ORB-43: authoritative extraction memory beyond the 12-message window.
+"""authoritative extraction memory beyond the 12-message window.
 
 Unit coverage for the exact ExtractionContext built from a committed session and
 for the detached copies handed to the provider. Only the AI service boundary and
@@ -42,7 +42,7 @@ RETURN_BODY = "An unused item can be requested for return within 30 calendar day
 PENDING_CATEGORY = Clarification(
     code="ambiguous",
     candidate="other",
-    question="Please clarify your problem category.",
+    question="Please clarify your energy support area.",
 )
 
 
@@ -105,7 +105,7 @@ def test_context_carries_the_authoritative_session_state():
         messages=history(13),
         pending_clarifications={"category": PENDING_CATEGORY},
         pending_review_revision=3,
-        summary="Order: NS-000123",
+        summary="Account reference: NS-000123",
     )
 
     context = build_extraction_context(session, "hola")
@@ -138,7 +138,7 @@ def test_context_marks_a_fresh_session_as_not_started():
         {"pending_clarifications": {"category": PENDING_CATEGORY}},
         {"review_rejected": True},
         {"pending_review_revision": 2},
-        {"summary": "Order: NS-000123"},
+        {"summary": "Account reference: NS-000123"},
         {"status": "completed"},
     ],
     ids=[

@@ -14,6 +14,7 @@ from tests.e2e.conftest import DENY_MICROPHONE_JS, body_of
 from tests.support.fakes import (
     RECEIPT_TEMPLATE,
     STT_TEXT,
+    Gate,
     make_wav,
     reply_mp3_bytes,
     review_reply,
@@ -55,13 +56,19 @@ def test_j06_voice_success(case_id, ui, server, provider, tmp_path):
     wav_path = tmp_path / "valid-16k-mono.wav"
     wav_path.write_bytes(wav)
     mp3 = reply_mp3_bytes()
-    provider.script_transcribe(None, STT_TEXT)  # Chromium fake-device recording take
+    recording_gate = Gate("recording STT")
+    provider.script_transcribe(None, STT_TEXT, hold=recording_gate)  # Chromium fake-device take
     provider.script_transcribe(hashlib.sha256(wav).hexdigest(), STT_TEXT)  # valid WAV upload
     provider.script_extract(EDITED, x_full("NS-000456"))
     provider.script_synthesize(review_reply(SUMMARY))
 
     ui.open()
     ui.expect_greeting()
+    assert ui.audio.get_attribute("controls") is None, "reply audio must use the inline speaker, not browser-native controls"
+    expect(ui.audio).to_be_hidden()
+    assert ui.page.locator("#message-form #start-recording").count() == 1, "recording belongs beside the message input"
+    assert ui.page.locator("#message-form #stop-recording").count() == 1, "stop belongs beside the message input"
+    expect(ui.button("Start recording").locator("svg[aria-hidden='true']")).to_have_count(1)
     sid = ui.current_session_id()
     baseline = server.session_bytes(sid)
     transcript_before = ui.transcript_text()
@@ -73,18 +80,40 @@ def test_j06_voice_success(case_id, ui, server, provider, tmp_path):
     denied.get_by_role("button", name="Start recording", exact=True).click()
     ui.expect_alert(re.compile(r"\S"), denied)
     expect(denied.get_by_role("textbox", name="Message")).to_be_editable()
-    expect(denied.get_by_label("WAV recording")).to_be_enabled()
+    expect(denied.get_by_role("button", name="Attach WAV audio")).to_be_enabled()
     denied.close()
     assert provider.methods() == [] and server.session_bytes(sid) == baseline
     ui.cp("J06.microphone-denied-alert")
+
+    # Starting a new intake during a take releases the microphone without STT.
+    ui.button("Start recording").click()
+    expect(ui.button("Stop recording")).to_be_visible()
+    expect(ui.button("Stop recording").locator("svg[aria-hidden='true']")).to_have_count(1)
+    with ui.page.expect_response(
+        lambda r: r.request.method == "POST" and r.url.endswith("/api/sessions")
+    ) as pending:
+        ui.button("New conversation").click()
+    assert pending.value.status == 201
+    expect(ui.button("Stop recording")).to_be_hidden()
+    sid = ui.current_session_id()
+    baseline = server.session_bytes(sid)
+    transcript_before = ui.transcript_text()
+    ui.cp("J06.new-intake-stops-recording")
 
     # Start/Stop recording on Chromium's fake media device -> accepted PCM WAV -> draft.
     ui.button("Start recording").click()
     expect(ui.button("Stop recording")).to_be_visible()
     ui.page.wait_for_function("window.__spy.contexts.some(c => c.currentTime > 0.5)")
-    ui.button("Stop recording").click()
     with ui.page.expect_response(lambda r: r.url.endswith("/api/transcriptions")) as pending:
-        ui.button("Transcribe audio").click()
+        ui.button("Stop recording").click()
+        recording_gate.wait_entered(timeout=2)
+        expect(ui.message).to_have_js_property("readOnly", True)
+        assert ui.page.locator("#support-chat button").evaluate_all(
+            "buttons => buttons.length > 0 && buttons.every(button => button.disabled)"
+        )
+        assert len(provider.calls("transcribe")) == 1
+        ui.cp("J06.stop-auto-transcribes-and-locks-controls")
+        recording_gate.release()
     assert pending.value.status == 200
     expect(ui.message).to_have_value(STT_TEXT)
     take = provider.calls("transcribe")[0]
@@ -95,9 +124,8 @@ def test_j06_voice_success(case_id, ui, server, provider, tmp_path):
     ui.cp("J06.recording-take-fills-draft")
 
     # Upload a valid finite WAV and transcribe: draft only, nothing committed.
-    ui.upload(wav_path)
     with ui.page.expect_response(lambda r: r.url.endswith("/api/transcriptions")) as pending:
-        ui.button("Transcribe audio").click()
+        ui.upload(wav_path)
     assert pending.value.status == 200
     expect(ui.message).to_have_value(STT_TEXT)
     upload = ui.transcription_posts()[-1]
@@ -193,19 +221,3 @@ def test_j06_voice_success(case_id, ui, server, provider, tmp_path):
     ]  # fmt: skip
     provider.assert_consumed()
     ui.cp("J06.confirm-after-voice")
-
-
-@pytest.mark.parametrize("case_id", [pytest.param("ORB-30-new-intake", id="ORB-30-new-intake")])
-def test_new_intake_stops_recording(ui, case_id):
-    """Changing sessions while recording releases the capture before creating the next one."""
-    ui.open()
-    old_sid = ui.current_session_id()
-    ui.button("Start recording").click()
-    expect(ui.button("Stop recording")).to_be_visible()
-    with ui.page.expect_response(
-        lambda r: r.request.method == "POST" and r.url.endswith("/api/sessions")
-    ) as pending:
-        ui.button("New intake").click()
-    assert pending.value.status == 201
-    expect(ui.button("Stop recording")).to_be_hidden()
-    assert ui.current_session_id() != old_sid

@@ -29,6 +29,10 @@
     storage_unavailable: "errors.storage_unavailable",
     storage_corrupt: "errors.storage_corrupt",
     provider_timeout: "errors.provider_timeout",
+    too_many_verification_attempts: "errors.too_many_verification_attempts",
+    order_api_unavailable: "errors.order_api_unavailable",
+    order_api_timeout: "errors.order_api_timeout",
+    invalid_order_api_response: "errors.invalid_order_api_response",
     internal_error: "errors.internal_error",
   });
 
@@ -154,6 +158,12 @@
       element.setAttribute(
         "aria-label",
         t(target, element.getAttribute("data-i18n-aria-label"))
+      );
+    }
+    for (const element of documentRef.querySelectorAll("[data-i18n-placeholder]")) {
+      element.setAttribute(
+        "placeholder",
+        t(target, element.getAttribute("data-i18n-placeholder"))
       );
     }
     return target;

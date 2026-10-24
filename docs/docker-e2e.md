@@ -4,7 +4,7 @@ The fake-provider journeys and the real deployment gate are separate suites. The
 
 ## Setup
 
-1. Deploy an isolated, disposable Orbio stack; do not point this at production. The compose `sessions` volume is test data and should be removed after the run (`docker compose down -v`).
+1. Deploy an isolated, disposable Northstar stack; do not point this at production. The compose `sessions` volume is test data and should be removed after the run (`docker compose down -v`).
 2. Copy `tests/e2e/.env.docker.example` to `tests/e2e/.env.docker` and set `E2E_DOCKER_BASE_URL` to the application origin.
 3. Copy `tests/e2e/.env.judge.example` to `tests/e2e/.env.judge`; set the exact judge model and all required numeric/prompt settings. If the judge requires authentication, set `E2E_JUDGE_API_KEY` in the process environment; never commit it to the file.
 4. Run:
@@ -17,13 +17,13 @@ The command probes `/health` and the judge `/models` endpoint before launching C
 
 `--with-deterministic` labels and runs the existing fake-provider suite separately (`-m browser_e2e`). The Docker suite is expected to fail early when either local configuration or either deployed service is unavailable; it must not skip or fall back to a fake provider.
 
-## Test-layer matrix (ORB-53)
+## Test-layer matrix
 
 | Layer | Suite | Provider boundary | Proves |
 |---|---|---|---|
 | Unit | `tests/unit` | Doubles only | Pure domain rules |
 | Integration (real application boundaries) | `tests/integration` | Real FastAPI routes/engine/storage, controlled HTTP doubles | Wiring and error mapping |
-| Browser workflow E2E (controlled provider) | J01–J10 + ORB27, marker `browser_e2e`, `scripts/run_browser_e2e.py` | Controlled provider fake, local Uvicorn fixture | Real browser workflow: JavaScript, HTTP, storage, keyboard, mobile, media, retry, timeout, stale-state |
+| Browser workflow E2E (controlled provider) | J01–J10 + confirmation retry, marker `browser_e2e`, `scripts/run_browser_e2e.py` | Controlled provider fake, local Uvicorn fixture | Real browser workflow: JavaScript, HTTP, storage, keyboard, mobile, media, retry, timeout, stale-state |
 | Real Docker E2E (real provider) | `tests/e2e/test_docker_e2e.py`, marker `docker_e2e`, `scripts/run_docker_e2e.py` | Real deployed UI/API and real provider; no `tests.support.fakes` import | Shipped UI/API path against the real deployment |
 | LLM semantic judge | `intent_judge` marker + per-node Docker judge artifacts | Judge config only (`tests/e2e/.env.judge`), kept separate from the application provider config (`LLM_*`/`STT_*`/`TTS_*`) | Relevance/grounding of responses; deterministic assertions stay authoritative |
 

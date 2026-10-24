@@ -19,12 +19,15 @@ DEFAULT_LLM_OUTPUT_MODE = "json_schema"
 DEFAULT_PROVIDER_MAX_CONCURRENCY = 4
 DEFAULT_TTS_AUDIO_FORMAT = "mp3"
 DEFAULT_TTS_MAX_INPUT_CHARS = 4000
+DEFAULT_ORDER_API_TIMEOUT_SECONDS = 5.0
+MAX_ORDER_API_TIMEOUT_SECONDS = 60.0
 MIN_TTS_MAX_INPUT_CHARS = 1
 MAX_TTS_MAX_INPUT_CHARS = 4000
 AUDIO_FORMATS = ("mp3", "wav")
 OPENAI_COMPATIBLE = "openai_compatible"
 AUTH_MODES = ("none", "bearer")
 OUTPUT_MODES = ("json_schema", "json_object", "prompt_json")
+REASONING_EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
 MAX_MODEL_LENGTH = 200
 MAX_API_KEY_LENGTH = 4096
 RAG_FIELDS = ("BASE_URL", "MODEL", "AUTH_MODE", "API_KEY", "OUTPUT_MODE")
@@ -100,6 +103,14 @@ def _output_mode(value: str) -> str:
     return value
 
 
+def _reasoning_effort(value: str) -> str | None:
+    if value == "":
+        return None
+    if value not in REASONING_EFFORTS:
+        _fail()
+    return value
+
+
 def _concurrency(raw: str) -> int:
     text = raw.strip()
     if not text:
@@ -129,6 +140,21 @@ def _tts_max_input_chars(raw: str) -> int:
         _fail()
     value = int(raw)
     if not MIN_TTS_MAX_INPUT_CHARS <= value <= MAX_TTS_MAX_INPUT_CHARS:
+        _fail()
+    return value
+
+
+def _order_api_timeout(raw: str) -> float:
+    """Positive seconds up to the bounded maximum; empty keeps the 5 s default."""
+
+    text = raw.strip()
+    if text == "":
+        return DEFAULT_ORDER_API_TIMEOUT_SECONDS
+    try:
+        value = float(text)
+    except ValueError:
+        _fail()
+    if not 0 < value <= MAX_ORDER_API_TIMEOUT_SECONDS:
         _fail()
     return value
 
@@ -175,6 +201,7 @@ class ServiceProfile:
 @dataclass(frozen=True)
 class TextProfile(ServiceProfile):
     output_mode: str
+    reasoning_effort: str | None = None
 
 
 @dataclass(frozen=True)
@@ -193,6 +220,8 @@ class Settings:
     tts: SpeechProfile
     session_dir: Path
     provider_max_concurrency: int
+    order_api_base_url: str
+    order_api_timeout_seconds: float
     tts_es: SpeechProfile | None = None
 
     @classmethod
@@ -213,6 +242,7 @@ class Settings:
                 if raw_llm_output_mode == ""
                 else _output_mode(raw_llm_output_mode)
             ),
+            reasoning_effort=_reasoning_effort(env.get("LLM_REASONING_EFFORT", "")),
         )
         _auth(llm.auth_mode, llm.api_key)
 
@@ -223,6 +253,9 @@ class Settings:
                 auth_mode=env.get("RAG_AUTH_MODE", ""),
                 api_key=_api_key(env.get("RAG_API_KEY", "")),
                 output_mode=_output_mode(env.get("RAG_OUTPUT_MODE", "")),
+                reasoning_effort=_reasoning_effort(
+                    env.get("RAG_REASONING_EFFORT", "")
+                ),
             )
             _auth(rag.auth_mode, rag.api_key)
         else:
@@ -232,6 +265,10 @@ class Settings:
                 auth_mode=llm.auth_mode,
                 api_key=llm.api_key,
                 output_mode=llm.output_mode,
+                reasoning_effort=(
+                    _reasoning_effort(env.get("RAG_REASONING_EFFORT", ""))
+                    or llm.reasoning_effort
+                ),
             )
 
         stt = ServiceProfile(
@@ -267,6 +304,10 @@ class Settings:
             session_dir=Path(_required(env.get("SESSION_DIR", ""))),
             provider_max_concurrency=_concurrency(
                 env.get("PROVIDER_MAX_CONCURRENCY", "")
+            ),
+            order_api_base_url=_base_url(env.get("ORDER_API_BASE_URL", "")),
+            order_api_timeout_seconds=_order_api_timeout(
+                env.get("ORDER_API_TIMEOUT_SECONDS", "")
             ),
             tts_es=_tts_es(env),
         )

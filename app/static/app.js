@@ -31,6 +31,13 @@
     log: document.getElementById("transcript"),
     review: document.getElementById("review"),
     alert: document.getElementById("alert"),
+    verification: document.getElementById("order-verification"),
+    verificationNotice: document.getElementById("verification-notice"),
+    verificationError: document.getElementById("verification-error"),
+    verificationStatus: document.getElementById("verification-status"),
+    postcode: document.getElementById("delivery-postcode"),
+    code: document.getElementById("verification-code"),
+    verify: document.getElementById("verify-order"),
     message: document.getElementById("message"),
     send: document.getElementById("send"),
     retry: document.getElementById("retry"),
@@ -38,10 +45,11 @@
     newIntake: document.getElementById("new-intake"),
     startRecording: document.getElementById("start-recording"),
     stopRecording: document.getElementById("stop-recording"),
-    transcribe: document.getElementById("transcribe"),
     wav: document.getElementById("wav-recording"),
+    wavAttach: document.getElementById("wav-attach"),
     audio: document.getElementById("reply-audio"),
     help: document.getElementById("transcribe-help"),
+    chatPanel: document.getElementById("support-chat"),
   };
 
   const state = {
@@ -53,6 +61,8 @@
     pendingReviewRevision: null,
     pendingClarifications: {},
     messages: [],
+    pendingTurnMessage: null,
+    turnPending: false,
     inputMode: "text",
     generation: 0,
     playbackToken: 0,
@@ -67,8 +77,14 @@
     charLimitAlert: false,
     audioBlob: null,
     recording: null,
+    recordingPending: false,
     speechPending: null,
+    orderVerificationRequired: false,
+    verificationPending: false,
   };
+  const transcriptionGate = new window.OrbioRecording.AsyncGate();
+  const sttDisabledControls = new WeakMap();
+  const encodeWav = window.OrbioRecording.encodeWav;
 
   function isCanonicalUuid(value) {
     return (
@@ -118,10 +134,41 @@
     els.alert.hidden = true;
   }
 
+  function setVerificationError(message) {
+    clearChildren(els.verificationError);
+    els.verificationError.appendChild(textNode(message));
+    els.verificationError.hidden = false;
+  }
+
+  function clearVerificationError() {
+    clearChildren(els.verificationError);
+    els.verificationError.hidden = true;
+  }
+
+  function clearVerificationStatus() {
+    clearChildren(els.verificationStatus);
+    els.verificationStatus.hidden = true;
+  }
+
+  function resetVerificationForm() {
+    els.postcode.value = "";
+    els.code.value = "";
+    clearVerificationError();
+    clearVerificationStatus();
+  }
+
+  function renderVerification() {
+    els.verification.hidden = !state.orderVerificationRequired;
+    els.verify.disabled =
+      state.verificationPending ||
+      !els.postcode.value.trim() ||
+      !els.code.value.trim();
+  }
+
   function setRetry(kind, payload) {
     state.retryKind = kind;
     state.retryPayload = payload || null;
-    els.retry.hidden = !kind;
+    els.retry.hidden = !kind || kind === "turn";
   }
 
   function clearRetry() {
@@ -169,20 +216,34 @@
   }
 
   function updateControls() {
-    const completed = state.status === "completed";
+    if (!state.sttPending) {
+      els.chatPanel.querySelectorAll("button, input, textarea").forEach((control) => {
+        if (!sttDisabledControls.has(control)) return;
+        control.disabled = sttDisabledControls.get(control);
+        sttDisabledControls.delete(control);
+      });
+    }
+    const completed = state.status === "completed" || state.status === "handed_off";
+    const verificationBlocked = state.orderVerificationRequired;
     const mutating =
       state.pending ||
       state.createPending ||
       state.sttPending ||
+      state.recordingPending ||
+      !!state.recording ||
       state.resumePending ||
-      state.resumeFailed;
+      state.resumeFailed ||
+      state.verificationPending;
     const readonly =
       completed ||
       state.pending ||
       state.createPending ||
       state.sttPending ||
+      state.recordingPending ||
+      !!state.recording ||
       state.resumePending ||
-      state.resumeFailed;
+      state.resumeFailed ||
+      state.verificationPending;
 
     els.message.readOnly = readonly;
     if (completed) {
@@ -198,40 +259,53 @@
       draftValue().trim().length > 0;
 
     els.send.disabled = !sendOk;
-    els.confirm.hidden = !canConfirm() || completed;
+    els.confirm.hidden = !canConfirm() || completed || verificationBlocked;
     els.confirm.disabled =
-      !canConfirm() || mutating || completed;
+      !canConfirm() || mutating || completed || verificationBlocked;
 
-    const transcribeBlocked =
-      draftNonempty() || mutating || completed || !state.audioBlob;
-    els.transcribe.disabled =
-      draftNonempty() ||
-      state.pending ||
-      state.createPending ||
-      state.sttPending ||
-      completed ||
-      !state.audioBlob;
-
-    els.help.hidden = !draftNonempty() || completed;
+    els.help.hidden = !state.sttPending;
+    els.help.textContent = ui("ui.transcribing");
 
     els.newIntake.disabled =
-      (state.pending ||
-        state.createPending ||
-        state.resumePending ||
-        state.resumeFailed) &&
-      !state.sttPending;
+      state.sttPending ||
+      state.pending ||
+      state.createPending ||
+      state.resumePending ||
+      state.resumeFailed ||
+      state.verificationPending;
 
     els.startRecording.disabled =
-      !!state.recording || mutating || completed;
+      !!state.recording ||
+      state.recordingPending ||
+      draftNonempty() ||
+      mutating ||
+      completed ||
+      verificationBlocked;
     els.stopRecording.hidden = !state.recording;
-    els.stopRecording.disabled = !state.recording;
-    els.wav.disabled = mutating || completed;
+    els.stopRecording.disabled = !state.recording || state.sttPending;
+    els.wav.disabled = draftNonempty() || mutating || completed || verificationBlocked;
+    els.wavAttach.disabled = els.wav.disabled;
+    els.retry.disabled = state.sttPending;
 
     if (overLimit && !state.charLimitAlert) {
       state.charLimitAlert = true;
       showAlert(ui("ui.char_limit"));
     } else if (!overLimit && state.charLimitAlert) {
       clearAlert();
+    }
+
+    renderVerification();
+    if (state.sttPending) {
+      els.chatPanel.setAttribute("aria-busy", "true");
+      els.chatPanel.querySelectorAll("button, input, textarea").forEach((control) => {
+        if (!sttDisabledControls.has(control)) {
+          sttDisabledControls.set(control, control.disabled);
+        }
+        control.disabled = true;
+      });
+    } else {
+      els.chatPanel.removeAttribute("aria-busy");
+      updateSpeechButtons();
     }
   }
 
@@ -353,6 +427,26 @@
       if (msg.role === "assistant" && msg.id) playbackNumber += 1;
       els.log.appendChild(renderMessage(msg, playbackNumber));
     }
+    if (state.pendingTurnMessage) {
+      els.log.appendChild(renderMessage(state.pendingTurnMessage, playbackNumber));
+    }
+    if (state.turnPending) {
+      const indicator = document.createElement("div");
+      indicator.className = "msg msg--assistant msg--thinking";
+      indicator.setAttribute("role", "status");
+      indicator.setAttribute("aria-label", ui("ui.thinking"));
+      const label = document.createElement("span");
+      label.className = "sr-only";
+      label.appendChild(textNode(ui("ui.thinking")));
+      indicator.appendChild(label);
+      const dots = document.createElement("span");
+      dots.className = "msg__thinking-dots";
+      dots.setAttribute("aria-hidden", "true");
+      for (let i = 0; i < 3; i += 1) dots.appendChild(document.createElement("span"));
+      indicator.appendChild(dots);
+      els.log.appendChild(indicator);
+    }
+    els.log.scrollTop = els.log.scrollHeight;
   }
 
   async function applySessionView(view, { publishId = true, generation = null } = {}) {
@@ -368,6 +462,8 @@
     state.summary = view.summary;
     state.pendingReviewRevision = view.pending_review_revision;
     state.pendingClarifications = view.pending_clarifications || {};
+    state.orderVerificationRequired = false;
+    resetVerificationForm();
     state.messages = (view.messages || []).map((m) => ({
       id: m.id,
       role: m.role,
@@ -392,6 +488,14 @@
     state.summary = response.summary;
     state.pendingReviewRevision = response.pending_review_revision;
     state.pendingClarifications = response.pending_clarifications || {};
+    const verificationWasRequired = state.orderVerificationRequired;
+    state.orderVerificationRequired = !!response.order_verification_required;
+    if (state.orderVerificationRequired && !verificationWasRequired) {
+      resetVerificationForm();
+      els.postcode.focus();
+    } else if (!state.orderVerificationRequired) {
+      clearVerificationError();
+    }
     if (userText != null) {
       state.messages.push({
         role: "user",
@@ -688,6 +792,9 @@
     state.sttPending = false;
     state.audioBlob = null;
     state.inputMode = "text";
+    state.orderVerificationRequired = false;
+    state.verificationPending = false;
+    resetVerificationForm();
     els.message.value = "";
     if (els.wav) els.wav.value = "";
     clearAlert();
@@ -737,8 +844,20 @@
     if (!alreadyPending) {
       if (state.pending) return;
       state.pending = true;
-      updateControls();
     }
+    state.pendingTurnMessage = {
+      role: "user",
+      text: payload.text,
+      input_mode: payload.input_mode,
+      citations: [],
+    };
+    state.turnPending = true;
+    if (draftValue() === payload.text) {
+      els.message.value = "";
+      state.inputMode = "text";
+    }
+    renderTranscript();
+    updateControls();
     const gen = state.generation;
     clearAlert();
 
@@ -803,6 +922,8 @@
 
       const data = await response.json();
       if (gen !== state.generation) return;
+      state.pendingTurnMessage = null;
+      state.turnPending = false;
       await applyTurnResponse(data, payload.text, payload.input_mode, gen);
       els.message.value = "";
       state.inputMode = "text";
@@ -814,6 +935,8 @@
       if (gen !== state.generation) return;
       if (i18n.isLocaleError(e)) {
         showAlert(ui("errors.locale_unavailable"));
+        els.message.value = payload.text;
+        state.inputMode = payload.input_mode;
         setRetry("turn", payload);
         return;
       }
@@ -824,7 +947,10 @@
       setRetry("turn", payload);
     } finally {
       if (gen === state.generation) {
+        state.pendingTurnMessage = null;
+        state.turnPending = false;
         state.pending = false;
+        renderTranscript();
         updateControls();
       }
     }
@@ -1011,9 +1137,78 @@
     }
   }
 
+  async function onVerifyOrder() {
+    if (
+      !state.sessionId ||
+      !state.orderVerificationRequired ||
+      state.verificationPending
+    ) {
+      return;
+    }
+    const postcode = els.postcode.value;
+    const code = els.code.value;
+    if (!postcode.trim() || !code.trim()) return;
+    const gen = state.generation;
+    state.verificationPending = true;
+    clearVerificationError();
+    updateControls();
+    try {
+      const response = await fetchWithDeadline(
+        `/api/sessions/${state.sessionId}/order-verification`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            delivery_postcode: postcode,
+            verification_code: code,
+          }),
+        },
+        DEADLINE_TURN_MS
+      );
+      if (gen !== state.generation) return;
+      if (!response.ok) {
+        const err = await parseError(response);
+        if (gen === state.generation) setVerificationError(err.message);
+        return;
+      }
+      const data = await response.json();
+      if (gen !== state.generation) return;
+      if (data && data.verified === true) {
+        state.orderVerificationRequired = false;
+        els.postcode.value = "";
+        els.code.value = "";
+        clearVerificationError();
+        els.verificationStatus.textContent = ui("auth.verified");
+        els.verificationStatus.hidden = false;
+      } else {
+        // One localized message for a wrong code, postcode or unknown order.
+        setVerificationError(ui("auth.verification_failed"));
+        clearVerificationStatus();
+      }
+    } catch (e) {
+      if (gen !== state.generation) return;
+      if (i18n.isLocaleError(e)) {
+        setVerificationError(ui("errors.locale_unavailable"));
+        return;
+      }
+      const aborted = e && e.name === "AbortError";
+      setVerificationError(
+        aborted ? ui("errors.provider_timeout") : ui("errors.provider_unavailable")
+      );
+    } finally {
+      if (gen === state.generation) {
+        state.verificationPending = false;
+        updateControls();
+      }
+    }
+  }
+
   async function onTranscribe() {
-    if (els.transcribe.disabled || !state.audioBlob) return;
-    if (draftNonempty()) return;
+    if (state.sttPending || !state.audioBlob || draftNonempty()) return;
+    if (!transcriptionGate.tryAcquire()) return;
     const gen = state.generation;
     const controller = new AbortController();
     state.sttAbort = controller;
@@ -1039,7 +1234,10 @@
       if (gen !== state.generation) return;
       if (!response.ok) {
         const err = await parseError(response);
-        if (gen === state.generation) showAlert(err.message);
+        if (gen === state.generation) {
+          state.audioBlob = null;
+          showAlert(err.message);
+        }
         return;
       }
       const data = await response.json();
@@ -1052,12 +1250,14 @@
       clearAlert();
     } catch (e) {
       if (gen !== state.generation) return;
+      state.audioBlob = null;
       if (e && e.name === "AbortError") {
         showAlert(ui("errors.provider_timeout"));
         return;
       }
       showAlert(ui("errors.provider_unavailable"));
     } finally {
+      transcriptionGate.release();
       if (gen === state.generation) {
         state.sttPending = false;
         state.sttAbort = null;
@@ -1066,91 +1266,74 @@
     }
   }
 
-  function encodeWav(float32Samples, sampleRate) {
-    const numFrames = float32Samples.length;
-    const buffer = new ArrayBuffer(44 + numFrames * 2);
-    const view = new DataView(buffer);
-    const writeStr = (offset, str) => {
-      for (let i = 0; i < str.length; i += 1) {
-        view.setUint8(offset + i, str.charCodeAt(i));
-      }
-    };
-    writeStr(0, "RIFF");
-    view.setUint32(4, 36 + numFrames * 2, true);
-    writeStr(8, "WAVE");
-    writeStr(12, "fmt ");
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, 1, true);
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * 2, true);
-    view.setUint16(32, 2, true);
-    view.setUint16(34, 16, true);
-    writeStr(36, "data");
-    view.setUint32(40, numFrames * 2, true);
-    let offset = 44;
-    for (let i = 0; i < numFrames; i += 1) {
-      let s = Math.max(-1, Math.min(1, float32Samples[i]));
-      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-      offset += 2;
-    }
-    return new Blob([buffer], { type: "audio/wav" });
-  }
-
   async function startRecording() {
-    if (state.recording) return;
+    if (
+      state.recording ||
+      state.recordingPending ||
+      state.sttPending ||
+      draftNonempty()
+    ) return;
     clearAlert();
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       showAlert(ui("ui.mic_denied"));
       return;
     }
     const gen = state.generation;
-    let stream;
+    let stream = null;
+    let ctx = null;
+    state.recordingPending = true;
+    updateControls();
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // New intake or page exit may have happened while permission was pending.
+      if (gen !== state.generation) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      ctx = new AudioCtx();
+      if (ctx.state === "suspended") await ctx.resume();
+      if (gen !== state.generation) {
+        stream.getTracks().forEach((track) => track.stop());
+        try { ctx.close(); } catch (_) { /* ignore */ }
+        return;
+      }
+      const source = ctx.createMediaStreamSource(stream);
+      const processor = ctx.createScriptProcessor(4096, 1, 1);
+      const accumulator = new window.OrbioRecording.RecordingAccumulator(ctx.sampleRate);
+      const rec = {
+        stream,
+        ctx,
+        processor,
+        source,
+        accumulator,
+        chunks: accumulator.chunks,
+        stopped: false,
+        timers: new Set(),
+      };
+
+      processor.onaudioprocess = (event) => {
+        if (rec.stopped) return;
+        const input = event.inputBuffer.getChannelData(0);
+        if (!accumulator.append(input)) stopRecording({ force: true });
+      };
+      source.connect(processor);
+      processor.connect(ctx.destination);
+      rec.timers.add(setTimeout(() => stopRecording({ force: true }), MAX_RECORD_SECONDS * 1000));
+      state.recording = rec;
+      els.stopRecording.hidden = false;
     } catch (_) {
-      showAlert(ui("ui.mic_denied"));
-      return;
+      if (stream) stream.getTracks().forEach((track) => track.stop());
+      if (ctx) {
+        try { ctx.close(); } catch (_) { /* ignore */ }
+      }
+      if (gen === state.generation) showAlert(ui("ui.mic_denied"));
+    } finally {
+      if (gen === state.generation) {
+        state.recordingPending = false;
+        updateControls();
+      }
     }
-    // New intake or page exit may have happened while permission was pending.
-    if (gen !== state.generation) {
-      stream.getTracks().forEach((track) => track.stop());
-      return;
-    }
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    const ctx = new AudioCtx();
-    if (ctx.state === "suspended") await ctx.resume();
-    if (gen !== state.generation) {
-      stream.getTracks().forEach((track) => track.stop());
-      try { ctx.close(); } catch (_) { /* ignore */ }
-      return;
-    }
-    const source = ctx.createMediaStreamSource(stream);
-    const processor = ctx.createScriptProcessor(4096, 1, 1);
-    const accumulator = new window.OrbioRecording.RecordingAccumulator(ctx.sampleRate);
-    const rec = {
-      stream,
-      ctx,
-      processor,
-      source,
-      accumulator,
-      chunks: accumulator.chunks,
-      stopped: false,
-      timers: new Set(),
-    };
-
-    processor.onaudioprocess = (event) => {
-      if (rec.stopped) return;
-      const input = event.inputBuffer.getChannelData(0);
-      if (!accumulator.append(input)) stopRecording({ force: true });
-    };
-    source.connect(processor);
-    processor.connect(ctx.destination);
-    rec.timers.add(setTimeout(() => stopRecording({ force: true }), MAX_RECORD_SECONDS * 1000));
-
-    state.recording = rec;
-    els.stopRecording.hidden = false;
-    updateControls();
   }
 
   function stopRecording({ force = false } = {}) {
@@ -1199,12 +1382,15 @@
     }
     els.stopRecording.hidden = true;
     updateControls();
+    if (state.audioBlob) void onTranscribe();
   }
 
   function onWavSelected() {
     const file = els.wav.files && els.wav.files[0];
     state.audioBlob = file || null;
+    els.wav.value = "";
     updateControls();
+    if (state.audioBlob) void onTranscribe();
   }
 
   function onMessageInput() {
@@ -1243,16 +1429,27 @@
   els.newIntake.addEventListener("click", () => {
     startNewIntake();
   });
-  els.transcribe.addEventListener("click", () => {
-    onTranscribe();
-  });
   els.startRecording.addEventListener("click", () => {
     startRecording();
   });
   els.stopRecording.addEventListener("click", () => {
     stopRecording();
   });
+  els.wavAttach.addEventListener("click", () => {
+    if (!els.wavAttach.disabled) els.wav.click();
+  });
   els.wav.addEventListener("change", onWavSelected);
+  els.verify.addEventListener("click", () => {
+    onVerifyOrder();
+  });
+  els.postcode.addEventListener("input", updateControls);
+  els.code.addEventListener("input", updateControls);
+  els.message.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      onSend();
+    }
+  });
   els.message.addEventListener("input", onMessageInput);
   window.addEventListener("pagehide", onPageHide);
 

@@ -27,12 +27,12 @@ CHANGE_TEXT = "Actually make the urgency low."
 
 REVIEW_SUFFIX = "\nPlease confirm these details or tell me what to change."
 MISSING_ORDER = (
-    "What is your order number? Use NS- followed by six digits, for example NS-123456."
+    "What is your energy account reference? Use NS- followed by six digits, for example NS-123456."
 )
 MISSING_CATEGORY = (
-    "Is this about delivery, a damaged item, a wrong item, a return/refund, or something else?"
+    "Which area do you need help with: a bill, a supply issue, a meter reading, moving home, or something else?"
 )
-INVALID_ORDER = "Please use NS- followed by exactly six digits, for example NS-123456."
+INVALID_ORDER = "Use NS- followed by exactly six digits for your energy account reference, for example NS-123456."
 REJECT_PROMPT = "What would you like to change?"
 
 EMPTY_SLOTS = {
@@ -50,9 +50,9 @@ FULL_SLOTS = {
 }
 
 FULL_SUMMARY = (
-    "Order: NS-000123\n"
-    "Category: damaged_item\n"
-    "Problem: My order arrived broken\n"
+    "Account reference: NS-000123\n"
+    "Energy support area: equipment issue\n"
+    "Issue: My order arrived broken\n"
     "Urgency: high"
 )
 
@@ -504,10 +504,10 @@ async def case_it02_06(client, provider, session_dir):
         text=FULL_TEXT,
     )
 
-    text = "My order number is NS-654321."
+    text = "My energy account reference is NS-654321."
     conflict_question = (
         "You previously gave NS-000123. "
-        "Should I keep that or use NS-654321 for order number?"
+        "Should I keep that or use NS-654321 for energy account reference?"
     )
     request_id, response = await post_turn(
         client,
@@ -560,7 +560,7 @@ async def case_it02_07(client, provider, session_dir):
         client,
         provider,
         session_id,
-        text="My order number is NS-654321.",
+        text="My energy account reference is NS-654321.",
         revision=1,
         extraction=make_extraction(candidates={"order_number": "NS-654321"}),
     )
@@ -573,7 +573,7 @@ async def case_it02_07(client, provider, session_dir):
         before_disk=before,
         request_id=request_id,
         response=response,
-        text="My order number is NS-654321.",
+        text="My energy account reference is NS-654321.",
     )
 
     text = "Use NS-654321."
@@ -594,7 +594,7 @@ async def case_it02_07(client, provider, session_dir):
     assert response["status"] == "awaiting_confirmation"
     assert response["pending_review_revision"] == 3
     assert response["summary"] == FULL_SUMMARY.replace(
-        "Order: NS-000123", "Order: NS-654321"
+        "Account reference: NS-000123", "Account reference: NS-654321"
     )
     assert_normal_turn(
         session_dir=session_dir,
@@ -634,7 +634,7 @@ async def case_it02_08(client, provider, session_dir):
         client,
         provider,
         session_id,
-        text="My order number is NS-654321.",
+        text="My energy account reference is NS-654321.",
         revision=1,
         extraction=make_extraction(candidates={"order_number": "NS-654321"}),
     )
@@ -647,7 +647,7 @@ async def case_it02_08(client, provider, session_dir):
         before_disk=before,
         request_id=request_id,
         response=response,
-        text="My order number is NS-654321.",
+        text="My energy account reference is NS-654321.",
     )
 
     text = "Keep NS-000123."
@@ -740,7 +740,7 @@ async def case_it02_10(client, provider, session_dir):
         client,
         provider,
         session_id,
-        text="My order number is NS-12345.",
+        text="My energy account reference is NS-12345.",
         revision=0,
         extraction=make_extraction(candidates={"order_number": "NS-12345"}),
     )
@@ -753,7 +753,7 @@ async def case_it02_10(client, provider, session_dir):
         before_disk=before,
         request_id=request_id,
         response=response,
-        text="My order number is NS-12345.",
+        text="My energy account reference is NS-12345.",
     )
 
     text = "Thanks, that is all for now."

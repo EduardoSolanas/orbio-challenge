@@ -44,6 +44,9 @@ function fakeDocument(definitions) {
       if (selector === "[data-i18n-aria-label]") {
         return all.filter((el) => el.getAttribute("data-i18n-aria-label") !== null);
       }
+      if (selector === "[data-i18n-placeholder]") {
+        return all.filter((el) => el.getAttribute("data-i18n-placeholder") !== null);
+      }
       return [];
     },
   };
@@ -102,6 +105,22 @@ test("init fails loudly without a bootstrap catalog instead of showing raw keys"
   assert.equal(i18n.has("en"), false);
 });
 
+test("applyStaticLabels localizes placeholder attributes with the active locale", () => {
+  reset();
+  const doc = bootstrapDocument({
+    "bootstrap-locale": {},
+    composer: { "data-i18n-placeholder": "actions.send" },
+  });
+
+  i18n.init(doc);
+  i18n.applyStaticLabels("en", doc);
+  assert.equal(doc.getElementById("composer").getAttribute("placeholder"), "Send");
+
+  i18n.seed("es", es);
+  i18n.applyStaticLabels("es", doc);
+  assert.equal(doc.getElementById("composer").getAttribute("placeholder"), "Enviar");
+});
+
 test("t() interpolates named placeholders and rejects unknown keys or locales", () => {
   reset();
   i18n.seed("en", en);
@@ -148,6 +167,18 @@ test("translateError maps canonical error codes to localized keys", () => {
   assert.equal(
     i18n.translateError("provider_configuration", "es"),
     es["speech.unavailable"]
+  );
+  assert.equal(
+    i18n.translateError("order_api_unavailable", "en"),
+    en["errors.order_api_unavailable"]
+  );
+  assert.equal(
+    i18n.translateError("order_api_timeout", "es"),
+    es["errors.order_api_timeout"]
+  );
+  assert.equal(
+    i18n.translateError("invalid_order_api_response", "en"),
+    en["errors.invalid_order_api_response"]
   );
 });
 

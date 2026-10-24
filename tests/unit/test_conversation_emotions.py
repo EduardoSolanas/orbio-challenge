@@ -1,4 +1,4 @@
-"""Unit tests: emotion metadata through the conversation engine (ORB-40).
+"""Unit tests: emotion metadata through the conversation engine.
 
 The engine writes extraction labels on the committed customer message, null
 labels on assistant and system messages, and a strict ``frustration_active``
@@ -12,7 +12,7 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 from app.conversation import ConversationEngine
-from app.prompts import GREETING, MISSING_URGENCY
+from app.prompts import GREETING
 from app.schemas import ConfirmRequest, TurnRequest
 from app.storage import JsonSessionRepository
 from tests.support.unit_fakes import (
@@ -143,7 +143,7 @@ async def test_confirmation_messages_use_null_labels_and_preserve_the_flag(tmp_p
         status="awaiting_confirmation",
         slots=FULL_SLOTS,
         pending_review_revision=1,
-        summary="Order: NS-000123",
+        summary="Account reference: NS-000123",
         frustration_active=True,
     )
     engine, repository, provider = build_engine(tmp_path)
@@ -193,7 +193,8 @@ async def test_legacy_session_labels_stay_null_and_the_next_turn_writes_version_
     stored = await repository.load(UUID(document["session_id"]))
     saved = json.loads(path.read_text(encoding="utf-8"))
     assert response.revision == 1
-    assert response.reply.startswith("I understand this is frustrating.\n\n")
+    assert response.status == "handed_off"
+    assert response.reply == "I understand this has been frustrating. This demo simulates a transfer to a human support agent. No live agent is connected, and no real support request has been sent."
     assert saved["schema_version"] == 2
     assert saved["frustration_active"] is True
     assert stored.messages[0].sentiment is None
@@ -225,7 +226,8 @@ async def test_frustration_present_never_supplies_an_urgency_value(tmp_path):
     stored = await repository.load(created.session_id)
     assert response.slots.urgency is None
     assert stored.slots.urgency is None
-    assert response.reply == f"I understand this is frustrating.\n\n{MISSING_URGENCY}"
+    assert response.status == "handed_off"
+    assert response.reply == "I understand this has been frustrating. This demo simulates a transfer to a human support agent. No live agent is connected, and no real support request has been sent."
     assert response.frustration_active is True
     assert stored.frustration_active is True
     assert stored.messages[-2].frustration == "present"

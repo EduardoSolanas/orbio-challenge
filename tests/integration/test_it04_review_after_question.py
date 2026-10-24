@@ -40,7 +40,7 @@ RETURN_ANSWER_TEXT = (
     "its original packaging. Refund eligibility requires support review."
 )
 REVIEW_SUFFIX_TEXT = "Please confirm these details or tell me what to change."
-CONFIRM_USER_TEXT = "Confirm reviewed intake"
+CONFIRM_USER_TEXT = "Confirm these details"
 STALE_REVIEW_MESSAGE = "The review changed. Review the latest details before confirming."
 RETURN_CITATION = {
     "source_id": "faq-returns",

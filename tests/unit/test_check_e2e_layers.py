@@ -1,4 +1,4 @@
-"""Tests for scripts/check_e2e_layers.py (ORB-53).
+"""Tests for scripts/check_e2e_layers.py.
 
 Guards the controlled-provider vs real-Docker evidence separation:
 controlled reports must be labelled controlled, must never claim live

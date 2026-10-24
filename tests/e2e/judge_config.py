@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-PROMPT_VERSION = "orb-36-intent-judge-v1"
+PROMPT_VERSION = "intent-judge-v2"
 
 
 @dataclass(frozen=True)
@@ -54,7 +54,7 @@ def load_config(path: Path | None = None) -> JudgeConfig:
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise ValueError("E2E_JUDGE_BASE_URL must be an absolute http(s) URL")
     timeout = float(values.get("E2E_JUDGE_TIMEOUT_SECONDS", "30"))
-    max_tokens = int(values.get("E2E_JUDGE_MAX_TOKENS", "256"))
+    max_tokens = int(values.get("E2E_JUDGE_MAX_TOKENS", "1024"))
     temperature = float(values.get("E2E_JUDGE_TEMPERATURE", "0"))
     prompt_version = values.get("E2E_JUDGE_PROMPT_VERSION", PROMPT_VERSION)
     if timeout <= 0 or timeout > 120:
@@ -92,7 +92,8 @@ def judge(config: JudgeConfig, conversation: str, rule: str) -> dict[str, Any]:
     system = (
         "You are a strict intent-routing evaluator. Return only JSON with exactly these keys: "
         'pass (boolean), intent (string), reason (string), violations (array of strings). '
-        "Judge semantic response quality only; do not infer hidden state."
+        "Judge visible response quality only; do not infer hidden state or require the assistant to narrate it. "
+        "Deterministic assertions check state preservation separately."
     )
     user = json.dumps({"conversation": conversation, "expected_rule": rule}, ensure_ascii=False)
     payload = {
@@ -100,7 +101,6 @@ def judge(config: JudgeConfig, conversation: str, rule: str) -> dict[str, Any]:
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         "temperature": config.temperature,
         "max_tokens": config.max_tokens,
-        "response_format": {"type": "json_object"},
     }
     headers = {"Content-Type": "application/json"}
     if config.api_key and config.api_key != "no-key-required":

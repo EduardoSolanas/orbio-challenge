@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gate the controlled-provider vs real-Docker E2E evidence separation (ORB-53).
+"""Gate the controlled-provider vs real-Docker E2E evidence separation.
 
 Fails closed when:
 - a controlled-provider report is not labelled
@@ -9,7 +9,7 @@ Fails closed when:
   controlled-provider suite (qualified forms such as
   "full E2E (controlled-provider ...)" are allowed);
 - a scanned JSON evidence file carries a secret value;
-- --require-docker is passed (the ORB-51 real-Docker gate) without real-Docker
+- --require-docker is passed (the real-Docker gate) without real-Docker
   run-config and JUnit evidence, or with a run-config that does not declare
   environment_type=real-docker / provider_mode=real-provider.
 

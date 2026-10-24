@@ -18,6 +18,7 @@ REVISION_CONFLICT = "revision_conflict"
 REQUEST_ID_CONFLICT = "request_id_conflict"
 STALE_REVIEW = "stale_review"
 SESSION_COMPLETED = "session_completed"
+SESSION_HANDED_OFF = "session_handed_off"
 TURN_LIMIT = "turn_limit"
 REVIEW_NOT_READY = "review_not_ready"
 INPUT_TOO_LARGE = "input_too_large"
@@ -35,6 +36,10 @@ PROVIDER_CONFIGURATION = "provider_configuration"
 STORAGE_UNAVAILABLE = "storage_unavailable"
 STORAGE_CORRUPT = "storage_corrupt"
 PROVIDER_TIMEOUT = "provider_timeout"
+TOO_MANY_VERIFICATION_ATTEMPTS = "too_many_verification_attempts"
+ORDER_API_UNAVAILABLE = "order_api_unavailable"
+ORDER_API_TIMEOUT = "order_api_timeout"
+INVALID_ORDER_API_RESPONSE = "invalid_order_api_response"
 INTERNAL_ERROR = "internal_error"
 
 CONFIGURATION_INVALID_MESSAGE = (
@@ -85,6 +90,12 @@ ERRORS: dict[str, ErrorSpec] = {
         ErrorSpec(
             SESSION_COMPLETED,
             text("errors.session_completed", "en"),
+            409,
+            False,
+        ),
+        ErrorSpec(
+            SESSION_HANDED_OFF,
+            text("errors.session_handed_off", "en"),
             409,
             False,
         ),
@@ -170,6 +181,30 @@ ERRORS: dict[str, ErrorSpec] = {
             False,
         ),
         ErrorSpec(PROVIDER_TIMEOUT, text("errors.provider_timeout", "en"), 504, True),
+        ErrorSpec(
+            TOO_MANY_VERIFICATION_ATTEMPTS,
+            text("errors.too_many_verification_attempts", "en"),
+            429,
+            True,
+        ),
+        ErrorSpec(
+            ORDER_API_UNAVAILABLE,
+            text("errors.order_api_unavailable", "en"),
+            503,
+            True,
+        ),
+        ErrorSpec(
+            ORDER_API_TIMEOUT,
+            text("errors.order_api_timeout", "en"),
+            504,
+            True,
+        ),
+        ErrorSpec(
+            INVALID_ORDER_API_RESPONSE,
+            text("errors.invalid_order_api_response", "en"),
+            502,
+            True,
+        ),
         ErrorSpec(INTERNAL_ERROR, text("errors.internal_error", "en"), 500, False),
     )
 }

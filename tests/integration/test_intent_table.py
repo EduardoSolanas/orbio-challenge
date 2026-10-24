@@ -8,9 +8,9 @@ temporary directory. Only the external AI service is a deterministic ledger
 
 Rows already owned by IT02 (provide_details/correction), IT04 (reject/recovery/
 review token), IT05 (limits), IT07 (idempotency) and IT10 (supported/unsupported
-questions, mixed facts+question, question at review) are mapped in
-`reports/integration-matrix.d/ORB-33.json`; this module adds the HTTP-level
-regression coverage for every remaining table row and mixed-intent rule.
+questions, mixed facts+question, question at review) are covered by those
+modules; this module adds the HTTP-level regression coverage for every remaining
+table row and mixed-intent rule.
 """
 
 from __future__ import annotations
@@ -30,6 +30,7 @@ from app.prompts import (
     NOTHING_TO_CONFIRM,
     POLICY_QUESTION_SUFFIX,
     REJECT_PROMPT,
+    GRATITUDE_ACKNOWLEDGMENT,
     SOCIAL_ACKNOWLEDGMENT,
 )
 from app.schemas import KnowledgeAnswer
@@ -91,6 +92,10 @@ PART_SLOTS = {
 
 def social_extraction(has_question: bool = False):
     return make_extraction(intent="social", has_question=has_question)
+
+
+def gratitude_extraction():
+    return make_extraction(intent="gratitude", sentiment="positive")
 
 
 def capability_extraction(has_question: bool = False):
@@ -172,7 +177,7 @@ async def test_social_thanks_preserves_accepted_facts_and_pending_state(
     assert part["reply"] == MISSING_CATEGORY
     before = read_session(session_dir, session_id)
     calls_before = len(provider.calls)
-    provider.script_extraction(social_extraction())
+    provider.script_extraction(gratitude_extraction())
 
     request_id, response = await send_turn(
         client, session_id, text=SOCIAL_THANKS, revision=part["revision"]
@@ -181,7 +186,7 @@ async def test_social_thanks_preserves_accepted_facts_and_pending_state(
     assert response.status_code == 200, response.text
     payload = response.json()
     assert_ledger(provider, calls_before=calls_before, extracts=1, answers=0)
-    assert payload["reply"] == SOCIAL_ACKNOWLEDGMENT
+    assert payload["reply"] == GRATITUDE_ACKNOWLEDGMENT
     assert MISSING_CATEGORY not in payload["reply"]
     assert_no_policy_suffix(payload["reply"])
     assert_session_state(
@@ -249,7 +254,7 @@ async def test_social_while_rejected_preserves_rejection_without_the_reject_prom
     before = read_session(session_dir, session_id)
     assert before["review_rejected"] is True
     calls_before = len(provider.calls)
-    provider.script_extraction(social_extraction())
+    provider.script_extraction(gratitude_extraction())
 
     request_id, response = await send_turn(
         client, session_id, text=SOCIAL_THANKS, revision=2
@@ -258,7 +263,7 @@ async def test_social_while_rejected_preserves_rejection_without_the_reject_prom
     assert response.status_code == 200, response.text
     payload = response.json()
     assert_ledger(provider, calls_before=calls_before, extracts=1, answers=0)
-    assert payload["reply"] == SOCIAL_ACKNOWLEDGMENT
+    assert payload["reply"] == GRATITUDE_ACKNOWLEDGMENT
     assert payload["reply"] != REJECT_PROMPT
     assert_session_state(
         payload,
@@ -332,6 +337,7 @@ async def test_social_while_an_issue_is_pending_preserves_the_clarification(
     ("intent", "customer_text"),
     [
         ("social", SOCIAL_GREETING),
+        ("gratitude", SOCIAL_THANKS),
         ("capability", CAPABILITY_Q),
         ("unrelated", UNRELATED_TEXT),
         ("start_intake", START_TEXT),
@@ -965,7 +971,7 @@ async def test_completed_session_refuses_a_new_social_intent(
         response,
         status=409,
         code="session_completed",
-        message="This intake is complete. Start a new intake to make changes.",
+        message="This support conversation is complete. Start a new conversation if you need help with another issue.",
     )
     assert_ledger(provider, calls_before=calls_before, extracts=0, answers=0)
     assert raw_bytes(session_dir, session_id) == before_bytes

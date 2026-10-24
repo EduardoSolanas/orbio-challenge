@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Operator-invoked local evaluation of emotion classification (ORB-41, FEAT-01).
+"""Operator-invoked local evaluation of emotion classification (FEAT-01).
 
 This is never a startup hook and never runs in automatic CI. An operator runs it
 explicitly with the configured LLM environment exported. It sends one existing
@@ -38,7 +38,7 @@ from app.prompts import EMOTION_EVALUATION_CASES
 from app.providers import OpenAICompatibleProvider
 from app.schemas import ExtractionContext, RecentMessage, Slots
 
-DEFAULT_REPORT = REPO_ROOT / "reports" / "logs" / "ORB-41" / "emotion-evaluation.json"
+DEFAULT_REPORT = REPO_ROOT / "reports" / "emotion-evaluation.json"
 
 ROLES = ("llm", "rag", "stt", "tts")
 

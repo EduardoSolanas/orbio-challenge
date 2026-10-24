@@ -28,6 +28,7 @@ import uvicorn
 from playwright.sync_api import Locator, Page, Response, expect
 
 from app.config import Settings
+from app.order_api import create_order_api_app
 from app.errors import app_error
 from app.main import create_app
 from tests.e2e.hooks import (  # noqa: F401  (pytest registers these hook functions)
@@ -287,7 +288,7 @@ class ObservedApp:
 # --------------------------------------------------------------------------- #
 
 
-def build_settings(session_dir: Path) -> Settings:
+def build_settings(session_dir: Path, order_api_base_url: str) -> Settings:
     """Complete isolated auth=none environment; no developer configuration is read."""
 
     return Settings.from_env(
@@ -306,6 +307,7 @@ def build_settings(session_dir: Path) -> Settings:
             "TTS_VOICE": "e2e-voice",
             "SESSION_DIR": str(session_dir),
             "PROVIDER_MAX_CONCURRENCY": "4",
+            "ORDER_API_BASE_URL": order_api_base_url,
         }
     )
 
@@ -319,7 +321,11 @@ class AppServer:
         self.session_dir = session_dir
         self.provider = provider
         self.knowledge_path = knowledge_path
-        self.settings = build_settings(session_dir)
+        self.settings: Settings | None = None
+        self._order_server: uvicorn.Server | None = None
+        self._order_thread: threading.Thread | None = None
+        self._order_socket: socket.socket | None = None
+        self._order_port: int | None = None
         self.log = RequestLog()
         self.faults = Faults()
         self.port: int | None = None
@@ -337,12 +343,17 @@ class AppServer:
         return self._thread is not None and self._thread.is_alive()
 
     def start(self) -> None:
+        self.start_order_api()
+        self.settings = build_settings(
+            self.session_dir, f"http://127.0.0.1:{self._order_port}"
+        )
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(("127.0.0.1", self.port or 0))
         sock.listen(128)
         self.port = sock.getsockname()[1]
         self._socket = sock
+        assert self.settings is not None
         app = create_app(
             settings=self.settings, provider=self.provider, knowledge_path=self.knowledge_path
         )
@@ -382,6 +393,60 @@ class AppServer:
             time.sleep(0.05)
         raise AssertionError(f"/health did not answer 200 within {STARTUP_SECONDS}s")
 
+    def start_order_api(self) -> None:
+        """Start the real private Order API on a loopback socket, reusing its port."""
+
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(("127.0.0.1", self._order_port or 0))
+        sock.listen(128)
+        self._order_port = sock.getsockname()[1]
+        self._order_socket = sock
+        order_server = uvicorn.Server(
+            uvicorn.Config(
+                create_order_api_app(),
+                log_level="warning",
+                lifespan="on",
+                access_log=False,
+                timeout_graceful_shutdown=3,
+            )
+        )
+        self._order_server = order_server
+        self._order_thread = threading.Thread(
+            target=lambda: order_server.run(sockets=[sock]),
+            name=f"e2e-order-api-{self._order_port}",
+            daemon=True,
+        )
+        self._order_thread.start()
+        deadline = time.monotonic() + STARTUP_SECONDS
+        while time.monotonic() < deadline:
+            try:
+                conn = http.client.HTTPConnection("127.0.0.1", self._order_port, timeout=1)
+                try:
+                    conn.request("GET", "/health")
+                    if conn.getresponse().status == 200:
+                        return
+                finally:
+                    conn.close()
+            except OSError:
+                time.sleep(0.05)
+        raise AssertionError("Order API /health did not answer 200 during E2E startup")
+
+    def stop_order_api(self) -> None:
+        """Stop the real Order API while keeping its port for a same-origin restart."""
+
+        order_server, order_thread = self._order_server, self._order_thread
+        if order_server is not None and order_thread is not None:
+            order_server.should_exit = True
+            order_thread.join(SHUTDOWN_JOIN_SECONDS)
+            if order_thread.is_alive():
+                raise AssertionError(
+                    f"Order API thread still alive {SHUTDOWN_JOIN_SECONDS}s after should_exit"
+                )
+        if self._order_socket is not None:
+            self._order_socket.close()
+        self._order_server = self._order_thread = self._order_socket = None
+
     def stop(self) -> None:
         server, thread = self._server, self._thread
         if server is None or thread is None:
@@ -396,6 +461,7 @@ class AppServer:
         if self._socket is not None:
             self._socket.close()
         self._server = self._thread = self._socket = None
+        self.stop_order_api()
 
     def restart(self) -> None:
         """Stop and recreate the app on the same origin against the same SESSION_DIR."""
@@ -488,6 +554,7 @@ def server(server_factory: ServerFactory) -> AppServer:
 TURNS = r"/api/sessions/[^/]+/turns$"
 CONFIRMS = r"/api/sessions/[^/]+/confirm$"
 SPEECH = r"/api/sessions/[^/]+/speech$"
+ORDER_VERIFICATIONS = r"/api/sessions/[^/]+/order-verification$"
 SESSION_ITEM = r"/api/sessions/[^/]+$"
 TRANSCRIPTIONS = r"/api/transcriptions$"
 
@@ -536,6 +603,22 @@ class UI:
         return self.page.get_by_role("region", name="Review details")
 
     @property
+    def verification(self) -> Locator:
+        return self.page.get_by_role("region", name="Energy account verification")
+
+    @property
+    def verification_notice(self) -> Locator:
+        return self.page.locator("#verification-notice")
+
+    @property
+    def verification_error(self) -> Locator:
+        return self.page.locator("#verification-error")
+
+    @property
+    def verification_status(self) -> Locator:
+        return self.page.locator("#verification-status")
+
+    @property
     def alerts(self) -> Locator:
         return self.page.get_by_role("alert")
 
@@ -545,7 +628,7 @@ class UI:
 
     @property
     def file_input(self) -> Locator:
-        return self.page.get_by_label("WAV recording")
+        return self.page.locator("#wav-recording")
 
     def button(self, name: str, *, page: Page | None = None) -> Locator:
         return (page or self.page).get_by_role("button", name=name, exact=True)
@@ -573,7 +656,10 @@ class UI:
     # ---- navigation ---------------------------------------------------------
 
     def open(self, page: Page | None = None) -> Response | None:
-        return (page or self.page).goto(self.server.base_url + "/")
+        target = page or self.page
+        response = target.goto(self.server.base_url + "/")
+        expect(target.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
+        return response
 
     def stored_session_id(self, page: Page | None = None) -> str | None:
         return (page or self.page).evaluate("localStorage.getItem('northstar.session_id')")
@@ -615,11 +701,23 @@ class UI:
             self.button("Confirm details").click()
         return pending.value
 
+    def verify_order(self, postcode: str, code: str) -> Response:
+        """Submit the dedicated mock-verification form; credentials never enter chat."""
+
+        self.page.get_by_label("Service postcode").fill(postcode)
+        self.page.get_by_label("Verification code").fill(code)
+        with self.page.expect_response(
+            lambda r: r.request.method == "POST"
+            and r.url.endswith("/order-verification")
+        ) as pending:
+            self.button("Verify account").click()
+        return pending.value
+
     def new_intake(self) -> Response:
         with self.page.expect_response(
             lambda r: r.request.method == "POST" and r.url.endswith("/api/sessions")
         ) as pending:
-            self.button("New intake").click()
+            self.button("New conversation").click()
         return pending.value
 
     def upload(self, wav: Path) -> None:
@@ -672,6 +770,9 @@ class UI:
 
     def confirm_posts(self) -> list[dict[str, Any]]:
         return self.requests("POST", CONFIRMS)
+
+    def verification_posts(self) -> list[dict[str, Any]]:
+        return self.requests("POST", ORDER_VERIFICATIONS)
 
     def speech_posts(self) -> list[dict[str, Any]]:
         return self.requests("POST", SPEECH)

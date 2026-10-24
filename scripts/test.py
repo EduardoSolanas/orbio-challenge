@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Portable test command runner (ORB-54).
+"""Portable test command runner.
 
 One command interface for every test layer on Linux, macOS and Windows. It only
 uses the Python standard library: no Make, Bash, PowerShell or task-runner
@@ -79,7 +79,7 @@ LAYER_INFO: dict[str, LayerInfo] = {
         reports="reports/junit/integration.xml",
     ),
     "e2e": LayerInfo(
-        summary="Controlled-provider browser journeys (J01-J10 + ORB27, marker browser_e2e).",
+        summary="Controlled-provider browser journeys (J01–J10 + confirmation retry, marker browser_e2e).",
         proves="The shipped page in a real browser: JavaScript, HTTP, storage, keyboard, mobile, media, retry and stale-state behaviour, against a controlled provider fake.",
         does_not_prove="A live LLM/STT/TTS provider or a deployed Docker system; never call this 'full E2E'.",
         prerequisites="pytest-playwright and the Chromium browser (python -m playwright install chromium). No Docker, no provider credentials.",

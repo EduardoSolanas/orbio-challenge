@@ -19,6 +19,7 @@ from app.prompts import (
     CAPABILITY,
     CAPABILITY_REPLY,
     GREETING,
+    GRATITUDE_ACKNOWLEDGMENT,
     INVALID_CATEGORY,
     INVALID_DESCRIPTION,
     INVALID_ORDER,
@@ -66,6 +67,7 @@ def test_every_semantic_key_has_both_languages_and_no_blank_copy():
 def test_english_copy_is_the_single_source_for_the_existing_prompt_constants():
     assert text("greeting", "en") == GREETING
     assert text("social_acknowledgment", "en") == SOCIAL_ACKNOWLEDGMENT
+    assert text("gratitude_acknowledgment", "en") == GRATITUDE_ACKNOWLEDGMENT
     assert text("capability_reply", "en") == CAPABILITY_REPLY
     assert text("nothing_to_confirm", "en") == NOTHING_TO_CONFIRM
     assert text("no_review_to_reject", "en") == NO_REVIEW_TO_REJECT
@@ -86,6 +88,23 @@ def test_english_copy_is_the_single_source_for_the_existing_prompt_constants():
     assert text("intake.invalid_urgency", "en") == INVALID_URGENCY
 
 
+def test_welcome_greeting_is_short_and_welcoming_in_both_languages():
+    assert text("greeting", "en") == (
+        "Hi, welcome to Northstar Energy. How can I help you today?"
+    )
+    assert text("greeting", "es") == (
+        "¡Hola! Te damos la bienvenida a Northstar Energy. ¿En qué puedo ayudarte hoy?"
+    )
+
+
+def test_gratitude_acknowledgment_is_natural_in_both_languages():
+    assert text("gratitude_acknowledgment", "en") == GRATITUDE_ACKNOWLEDGMENT
+    assert GRATITUDE_ACKNOWLEDGMENT == (
+        "You're welcome! How else can I help with your energy service?"
+    )
+    assert text("gratitude_acknowledgment", "es").startswith("¡De nada!")
+
+
 def test_spanish_missing_and_invalid_questions_exist_for_every_field():
     for field in FIELD_ORDER:
         assert localization.missing_question(field, "es")
@@ -97,40 +116,45 @@ def test_spanish_missing_and_invalid_questions_exist_for_every_field():
 
 def test_field_labels_are_localized_for_every_field():
     assert [field_label(field, "es") for field in FIELD_ORDER] == [
-        "número de pedido",
-        "categoría del problema",
+        "referencia de cuenta de energía",
+        "área de asistencia energética",
         "descripción del problema",
         "urgencia",
     ]
     assert [field_label(field, "en") for field in FIELD_ORDER] == [
-        "order number",
-        "problem category",
+        "energy account reference",
+        "energy support area",
         "problem description",
         "urgency",
     ]
 
 
-def test_spanish_summary_localizes_framing_but_preserves_canonical_values():
+def test_spanish_summary_localizes_framing_and_category_label():
     summary = build_summary(SLOTS, "es")
 
     assert summary == (
-        "Pedido: NS-000123\n"
-        "Categoría: damaged_item\n"
+        "Referencia de cuenta: NS-000123\n"
+        "Área de asistencia energética: problema con el equipo\n"
         "Problema: My order arrived broken\n"
         "Urgencia: high"
     )
     assert "NS-000123" in summary
-    assert "damaged_item" in summary
+    assert "problema con el equipo" in summary
     assert "My order arrived broken" in summary
 
 
 def test_english_summary_is_unchanged():
     assert build_summary(SLOTS, "en") == (
-        "Order: NS-000123\n"
-        "Category: damaged_item\n"
-        "Problem: My order arrived broken\n"
+        "Account reference: NS-000123\n"
+        "Energy support area: equipment issue\n"
+        "Issue: My order arrived broken\n"
         "Urgency: high"
     )
+
+
+def test_summary_never_exposes_the_internal_category_code():
+    assert "damaged_item" not in build_summary(SLOTS, "en")
+    assert "damaged_item" not in build_summary(SLOTS, "es")
 
 
 def test_review_reply_appends_the_localized_confirmation_request():

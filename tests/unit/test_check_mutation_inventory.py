@@ -1,4 +1,4 @@
-"""Tests for scripts/check_mutation_inventory.py and scripts/export_mutation_inventory.py (ORB-15).
+"""Tests for scripts/check_mutation_inventory.py and scripts/export_mutation_inventory.py.
 
 Fixtures mirror the real evidence formats named by docs/testing-contract.md 10:
   * coverage.py JSON produced with ``show_contexts = true`` and ``--cov-context=test``
@@ -632,7 +632,7 @@ def test_exporter_rejects_missing_source_module(tmp_path: Path) -> None:
     assert code != 0
 
 
-# --- commit-safe revision policy (ORB-22) ---------------------------------
+# --- commit-safe revision policy ---------------------------------
 
 
 def git(root: Path, *args: str) -> str:

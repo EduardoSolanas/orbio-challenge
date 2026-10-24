@@ -182,6 +182,8 @@ def _text_payload(
         "temperature": 0,
         "max_tokens": max_tokens,
     }
+    if profile.reasoning_effort is not None:
+        payload["reasoning_effort"] = profile.reasoning_effort
     if mode == "json_schema":
         payload["response_format"] = {
             "type": "json_schema",

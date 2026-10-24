@@ -1,4 +1,4 @@
-"""Unit tests for the in-memory session schema migration (ORB-40).
+"""Unit tests for the in-memory session schema migration.
 
 Version-1 documents and pre-extension version-2 documents are migrated in
 memory only: loading never rewrites the file, and the migrated document is a

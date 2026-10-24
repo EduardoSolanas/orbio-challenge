@@ -42,13 +42,14 @@ def test_j07_voice_failure(case_id, ui, server, provider, tmp_path):
     transcript_before = ui.transcript_text()
 
     # One STT outage: safe error, no draft, no bubble, no commit.
-    ui.upload(wav_path)
     with ui.page.expect_response(lambda r: r.url.endswith("/api/transcriptions")) as pending:
-        ui.button("Transcribe audio").click()
+        ui.upload(wav_path)
     assert pending.value.status == 503
     ui.expect_alert(UNAVAILABLE)
     expect(ui.message).to_have_value("")
     expect(ui.message).to_be_editable()
+    expect(ui.button("Start recording")).to_be_enabled()
+    expect(ui.button("Attach WAV audio")).to_be_enabled()
     assert ui.transcript_text() == transcript_before
     assert server.session_bytes(sid) == baseline
     assert ui.turn_posts() == []

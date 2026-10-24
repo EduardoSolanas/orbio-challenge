@@ -533,6 +533,19 @@ async def test_json_schema_mode_sends_the_exact_extraction_request():
     }
 
 
+async def test_configured_reasoning_effort_is_forwarded_to_text_model():
+    profile = replace(LLM_PROFILE, reasoning_effort="none")
+    provider, recorders = build_provider(
+        {"llm": extraction_responder()},
+        profiles={"llm": profile, "rag": RAG_PROFILE, "stt": STT_PROFILE, "tts": TTS_PROFILE},
+    )
+
+    await provider.extract(extraction_context())
+
+    payload = json.loads(recorders["llm"].requests[0].content)
+    assert payload["reasoning_effort"] == "none"
+
+
 async def test_json_schema_mode_sends_the_exact_knowledge_request():
     def responder(request: httpx.Request, attempt: int) -> httpx.Response:
         return json_response(chat_envelope(json.dumps(ANSWER_PAYLOAD)))

@@ -305,7 +305,7 @@ def test_invalid_candidate_records_issue_without_overwriting_the_slot() -> None:
         "order_number": Clarification(
             code="invalid",
             candidate="12345",
-            question="Please use NS- followed by exactly six digits, for example NS-123456.",
+            question="Use NS- followed by exactly six digits for your energy account reference, for example NS-123456.",
         )
     }
     assert outcome.accepted_fields == frozenset()
@@ -324,7 +324,7 @@ def test_invalid_category_description_and_urgency_use_their_own_questions() -> N
         ),
     )
     assert outcome.pending_clarifications["category"].question == (
-        "Please choose delivery, damaged item, wrong item, return/refund, or other."
+        "Choose a bill, supply issue, meter reading, moving home, or other energy issue."
     )
     assert outcome.pending_clarifications["description"].question == (
         "Please describe the problem using 10 to 2000 characters, rather than only a category label."
@@ -349,7 +349,7 @@ def test_different_valid_value_records_a_conflict_and_keeps_the_old_value() -> N
             candidate="return_refund",
             question=(
                 "You previously gave delivery. Should I keep that or use "
-                "return_refund for problem category?"
+                "return_refund for energy support area?"
             ),
         )
     }
@@ -428,7 +428,7 @@ def test_ambiguous_flag_with_null_candidate_still_records_an_issue() -> None:
         "order_number": Clarification(
             code="ambiguous",
             candidate=None,
-            question="Please clarify your order number.",
+            question="Please clarify your energy account reference.",
         )
     }
 
@@ -713,9 +713,9 @@ def test_summary_uses_canonical_values_and_contract_format() -> None:
         "NS-000123", "damaged_item", "My order arrived broken", "high"
     )
     assert build_summary(slots) == (
-        "Order: NS-000123\n"
-        "Category: damaged_item\n"
-        "Problem: My order arrived broken\n"
+        "Account reference: NS-000123\n"
+        "Energy support area: equipment issue\n"
+        "Issue: My order arrived broken\n"
         "Urgency: high"
     )
 

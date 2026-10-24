@@ -8,7 +8,7 @@ with the provider ledger counted before and after (E = extract, A =
 answer_knowledge).
 
 Fixture strings are the literal IC §13.1 scripted inputs. The shared turn
-helpers live in `test_it02_intake.py` (ORB-07) so this card adds no support
+helpers live in `test_it02_intake.py` so this card adds no support
 module outside its owned files.
 """
 
@@ -51,13 +51,13 @@ RETURN_ANSWER_TEXT = (
     "You can request a return within 30 calendar days of delivery for an unused item in "
     "its original packaging. Refund eligibility requires support review."
 )
-CONFIRM_USER_TEXT = "Confirm reviewed intake"
+CONFIRM_USER_TEXT = "Confirm these details"
 STALE_REVIEW_MESSAGE = "The review changed. Review the latest details before confirming."
 REVIEW_NOT_READY_MESSAGE = "Resolve missing or unclear details before confirming."
 LOW_SUMMARY = (
-    "Order: NS-000123\n"
-    "Category: damaged_item\n"
-    "Problem: My order arrived broken\n"
+    "Account reference: NS-000123\n"
+    "Energy support area: equipment issue\n"
+    "Issue: My order arrived broken\n"
     "Urgency: low"
 )
 AMBIGUOUS_URGENCY = "Please clarify your urgency."

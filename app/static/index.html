@@ -1,52 +1,56 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5f7ee">
+  <meta name="description" content="Northstar Energy customer support chat.">
   <title data-i18n="title"></title>
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <main class="app">
-    <h1 id="app-title" class="app__title" data-i18n="title"></h1>
-
-    <div id="transcript" class="transcript" role="log" aria-live="polite" aria-relevant="additions"></div>
-
-    <section id="review" class="review" role="region" data-i18n-aria-label="ui.review_region" hidden></section>
-
+<main class="app-shell">
+  <section class="chat-panel open" id="support-chat" role="dialog" aria-modal="false" aria-label="Northstar Energy support chat" data-i18n-aria-label="site.chat_dialog">
+    <header class="chat-header">
+      <span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13.1 1.8 4.8 13h5.8l-.7 9.2L19.2 10h-6.1z"/></svg></span>
+      <div class="chat-header__identity"><strong>Northstar Energy</strong><small data-i18n="site.chat_status"></small></div>
+      <button type="button" id="new-intake" class="chat-reset" aria-label="New conversation" data-i18n-aria-label="actions.new_intake" title="New conversation">↻</button>
+    </header>
+    <div id="transcript" class="chat-log" role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversation" data-i18n-aria-label="site.chat_log"></div>
+    <section id="review" class="review" role="region" aria-label="Review details" data-i18n-aria-label="ui.review_region" hidden></section>
     <div id="alert" class="alert" role="alert" hidden></div>
-
-    <div class="composer">
-      <label id="message-label" class="composer__label" for="message" data-i18n="ui.message_label"></label>
-      <textarea id="message" class="composer__message" name="message" rows="4" data-i18n-aria-label="ui.message_label"></textarea>
-      <p id="transcribe-help" class="composer__help" data-i18n="ui.transcribe_help" hidden></p>
-
-      <div class="composer__actions">
-        <button type="button" id="send" class="btn" data-i18n="actions.send"></button>
-        <button type="button" id="retry" class="btn" data-i18n="actions.retry" hidden></button>
-        <button type="button" id="confirm" class="btn" data-i18n="actions.confirm" hidden></button>
-        <button type="button" id="new-intake" class="btn" data-i18n="actions.new_intake"></button>
-      </div>
-
-      <div class="voice">
-        <button type="button" id="start-recording" class="btn" data-i18n="actions.start_recording"></button>
-        <button type="button" id="stop-recording" class="btn" data-i18n="actions.stop_recording" hidden></button>
-        <button type="button" id="transcribe" class="btn" data-i18n="actions.transcribe"></button>
-        <label id="wav-label" class="voice__file" for="wav-recording" data-i18n="actions.choose_wav"></label>
-        <input id="wav-recording" type="file" accept="audio/wav,.wav,audio/wave" data-i18n-aria-label="actions.choose_wav">
-      </div>
-
-      <div class="playback">
-        <audio id="reply-audio" data-testid="reply-audio" controls></audio>
-        <p class="playback__disclosure" data-i18n="speech.disclosure"></p>
-      </div>
-    </div>
-  </main>
-  <script type="application/json" id="bootstrap-locale">__BOOTSTRAP_LOCALE__</script>
-  <script src="/static/i18n.js"></script>
-  <script src="/static/recording.js"></script>
-  <script src="/static/request.js"></script>
-  <script src="/static/confirmation_retry.js"></script>
-  <script src="/static/app.js"></script>
+    <section id="order-verification" class="verification" role="region" aria-label="Account verification" data-i18n-aria-label="auth.verification_region" aria-describedby="verification-notice" hidden>
+      <p id="verification-notice" class="verification__notice" data-i18n="auth.demo_code_notice"></p>
+      <label class="verification__label" for="delivery-postcode" data-i18n="auth.postcode_label"></label>
+      <input id="delivery-postcode" class="verification__input" name="delivery_postcode" type="text" autocomplete="postal-code" data-i18n-aria-label="auth.postcode_label">
+      <label class="verification__label" for="verification-code" data-i18n="auth.code_label"></label>
+      <input id="verification-code" class="verification__input" name="verification_code" type="text" inputmode="numeric" autocomplete="one-time-code" data-i18n-aria-label="auth.code_label">
+      <p id="verification-error" class="verification__error" role="alert" hidden></p>
+      <button type="button" id="verify-order" class="btn" data-i18n="auth.verify_action"></button>
+    </section>
+    <p id="verification-status" class="verification__status" role="status" hidden></p>
+    <form class="chat-compose" id="message-form">
+      <label for="message" class="sr-only" data-i18n="ui.message_label"></label>
+      <button type="button" id="wav-attach" class="chat-attach" aria-label="Attach WAV audio" data-i18n-aria-label="actions.choose_wav">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5 6.5 8.2 14.8a2.25 2.25 0 0 0 3.2 3.2l8.1-8.1a4 4 0 0 0-5.7-5.7L5.4 12.6a5.75 5.75 0 0 0 8.1 8.1l7-7-1.4-1.4-7 7a3.75 3.75 0 0 1-5.3-5.3l8.4-8.4a2 2 0 0 1 2.8 2.8l-8.1 8.1a.25.25 0 0 1-.4-.3l8.3-8.3z"/></svg>
+      </button>
+      <input id="wav-recording" type="file" accept="audio/wav,.wav,audio/wave" tabindex="-1" aria-hidden="true">
+      <button type="button" id="start-recording" class="chat-mic" aria-label="Start recording" data-i18n-aria-label="actions.start_recording"><span class="sr-only" data-i18n="actions.start_recording"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a1 1 0 1 1 2 0 7 7 0 0 1-6 6.93V21h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-3.07A7 7 0 0 1 5 11a1 1 0 1 1 2 0 5 5 0 0 0 10 0Z"/></svg></button>
+      <button type="button" id="stop-recording" class="chat-mic chat-mic--stop" aria-label="Stop recording" data-i18n-aria-label="actions.stop_recording" hidden><span class="sr-only" data-i18n="actions.stop_recording"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7z"/></svg></button>
+      <textarea id="message" name="message" rows="1" maxlength="4000" autocomplete="off" placeholder="Ask us about your energy…" data-i18n-placeholder="site.chat_placeholder" data-i18n-aria-label="ui.message_label"></textarea>
+      <button type="button" id="send" class="chat-submit" aria-label="Send" data-i18n-aria-label="actions.send"><span class="sr-only" data-i18n="actions.send"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+    </form>
+    <p id="transcribe-help" class="chat-hint" role="status" aria-live="polite" hidden></p>
+    <div class="chat-actions"><button type="button" id="retry" class="btn" data-i18n="actions.retry" hidden></button><button type="button" id="confirm" class="btn" data-i18n="actions.confirm" hidden></button></div>
+    <audio id="reply-audio" data-testid="reply-audio" aria-hidden="true"></audio>
+    <p class="chat-hint playback__disclosure"><span data-i18n="speech.disclosure"></span><span aria-hidden="true"> · </span><span data-i18n="site.chat_privacy"></span></p>
+  </section>
+</main>
+<script type="application/json" id="bootstrap-locale">__BOOTSTRAP_LOCALE__</script>
+<script src="/static/i18n.js"></script>
+<script src="/static/recording.js"></script>
+<script src="/static/request.js"></script>
+<script src="/static/confirmation_retry.js"></script>
+<script src="/static/app.js"></script>
 </body>
 </html>

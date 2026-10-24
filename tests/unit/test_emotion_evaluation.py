@@ -1,4 +1,4 @@
-"""Unit tests for the operator-invoked emotion evaluation script (ORB-41).
+"""Unit tests for the operator-invoked emotion evaluation script.
 
 The script is exercised against a fake provider: the only doubled dependency is
 the remote model boundary. Context construction, one-call-per-case accounting,
@@ -74,7 +74,7 @@ def test_build_context_uses_recent_committed_messages_and_the_active_flag():
         ("user", "I have asked three times. This is really frustrating."),
         (
             "assistant",
-            "I understand this is frustrating. Can you share the order number?",
+            "I understand this is frustrating. Can you share the energy account reference?",
         ),
     ]
     assert context.slots == EMPTY_SLOTS

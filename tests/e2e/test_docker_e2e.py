@@ -100,7 +100,16 @@ def test_docker_multi_turn_rag_preserves_state_and_citations(docker_page: Page, 
     assert first_text.strip()
     assert isinstance(first_citations, list) and first_citations
     assert first_body.get("slots") == fact_body.get("slots") or first_body.get("revision", 0) > fact_body.get("revision", -1)
-    _judge(docker_config, request, supported_one, first_text, "supported policy question; answer with grounded context")
+    first_context = json.dumps(
+        {"retrieved_citations": first_citations}, ensure_ascii=False
+    )
+    _judge(
+        docker_config,
+        request,
+        supported_one,
+        first_text,
+        f"Supported policy answer; evaluate grounding against these retrieved citations: {first_context}",
+    )
 
     _, second_body = _send(docker_page, supported_two)
     second_text = _assistant_text(second_body)
@@ -109,7 +118,20 @@ def test_docker_multi_turn_rag_preserves_state_and_citations(docker_page: Page, 
     assert isinstance(second_citations, list) and second_citations
     assert second_citations != first_citations or second_text != first_text
     assert second_body.get("revision", 0) > first_body.get("revision", -1)
-    _judge(docker_config, request, supported_two, second_text, f"follow-up policy question after: {first_text}")
+    second_context = json.dumps(
+        {
+            "previous_grounded_answer": first_text,
+            "retrieved_citations": second_citations,
+        },
+        ensure_ascii=False,
+    )
+    _judge(
+        docker_config,
+        request,
+        supported_two,
+        second_text,
+        f"Follow-up policy question; use the previous answer and these retrieved citations: {second_context}",
+    )
 
     docker_page.reload()
     expect(docker_page.locator("#transcript")).to_contain_text(first_text)

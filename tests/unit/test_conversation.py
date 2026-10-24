@@ -13,6 +13,7 @@ from app.prompts import (
     CAPABILITY,
     CAPABILITY_REPLY,
     GREETING,
+    GRATITUDE_ACKNOWLEDGMENT,
     INVALID_ORDER,
     MISSING_CATEGORY,
     MISSING_ORDER,
@@ -49,9 +50,9 @@ FULL_EXTRACTION = make_extraction(
     }
 )
 SUMMARY = (
-    "Order: NS-000123\n"
-    "Category: damaged_item\n"
-    "Problem: My order arrived broken\n"
+    "Account reference: NS-000123\n"
+    "Energy support area: equipment issue\n"
+    "Issue: My order arrived broken\n"
     "Urgency: high"
 )
 
@@ -456,7 +457,7 @@ async def test_reject_then_valid_correction_with_invalid_field_clears_flag_but_w
         repository, sid, third, revision=3, status="collecting",
         rejected=False, token=None, summary=None,
     )
-    assert third.reply == "Please choose delivery, damaged item, wrong item, return/refund, or other."
+    assert third.reply == "Choose a bill, supply issue, meter reading, moving home, or other energy issue."
     provider.assert_exhausted()
 
 
@@ -516,8 +517,8 @@ async def test_reject_then_pure_question_stays_rejected(tmp_path):
         rejected=True, token=None, summary=None,
     )
     assert third.reply == (
-        "I do not have that information in the Northstar Shop knowledge base. "
-        "I can still record your issue for review."
+        "I do not have that information in Northstar Energy's help guides. "
+        "I can still help with your energy question or service issue."
     )
     assert third.citations == []
     provider.assert_exhausted()
@@ -604,7 +605,7 @@ async def test_dedicated_confirmation_completes_with_receipt_and_no_provider_cal
     assert stored.confirmation is not None
     assert stored.confirmation.review_revision == 1
     assert [message.text for message in stored.messages[-2:]] == [
-        "Confirm reviewed intake",
+        "Confirm these details",
         response.reply,
     ]
     assert stored.messages[-2].role == "user"
@@ -1585,8 +1586,8 @@ async def test_unrelated_statement_without_facts_uses_capability_reply(tmp_path)
     assert response.pending_review_revision is None
     assert response.summary is None
     assert response.reply == (
-        "I can record an order issue and summarize it. I cannot verify orders, "
-        "issue refunds, or contact a support team."
+        "I can answer energy questions, look up a demo account after verification, "
+        "and help report a service issue. I cannot change a real account or contact an energy network."
     )
     stored = await repository.load(created.session_id)
     assert stored.collection_turn_count == 1
@@ -1610,8 +1611,8 @@ async def test_unrelated_statement_at_valid_review_preserves_summary_and_token(
     assert response.pending_review_revision == 1
     assert response.summary == SUMMARY
     assert response.reply == (
-        "I can record an order issue and summarize it. I cannot verify orders, "
-        "issue refunds, or contact a support team."
+        "I can answer energy questions, look up a demo account after verification, "
+        "and help report a service issue. I cannot change a real account or contact an energy network."
     )
     provider.assert_exhausted()
 
@@ -1716,8 +1717,8 @@ async def test_pure_question_on_a_complete_session_without_review_has_no_follow_
     )
 
     assert response.reply == (
-        "I do not have that information in the Northstar Shop knowledge base. "
-        "I can still record your issue for review."
+        "I do not have that information in Northstar Energy's help guides. "
+        "I can still help with your energy question or service issue."
     )
     assert response.status == "collecting"
 
@@ -1764,8 +1765,8 @@ async def test_pure_question_during_intake_has_no_follow_up(tmp_path):
     )
 
     assert response.reply == (
-        "I do not have that information in the Northstar Shop knowledge base. "
-        "I can still record your issue for review."
+        "I do not have that information in Northstar Energy's help guides. "
+        "I can still help with your energy question or service issue."
     )
     assert response.pending_clarifications["order_number"].code == "invalid"
     provider.assert_exhausted()
@@ -1785,7 +1786,7 @@ async def test_question_with_only_corrections_is_not_a_pure_question(tmp_path):
     response = await engine.turn(created.session_id, turn_request("Why urgent?"))
 
     assert response.reply == (
-        "What is your order number? Use NS- followed by six digits, for example NS-123456. "
+        "What is your energy account reference? Use NS- followed by six digits, for example NS-123456. "
         "Please ask your policy question in a separate message."
     )
     provider.assert_exhausted()
@@ -2330,9 +2331,8 @@ def start_intake_extraction(has_question: bool = False):
 
 
 async def test_pure_social_replies_with_the_exact_acknowledgment_only(tmp_path):
-    for text, has_question in (
+    for message, has_question in (
         ("Hello", False),
-        ("Thank you", False),
         ("Hello, how are you?", True),
         ("How is your day?", True),
     ):
@@ -2341,7 +2341,7 @@ async def test_pure_social_replies_with_the_exact_acknowledgment_only(tmp_path):
         )
         created = await engine.create_session()
 
-        response = await engine.turn(created.session_id, turn_request(text))
+        response = await engine.turn(created.session_id, turn_request(message))
 
         assert response.reply == SOCIAL_ACKNOWLEDGMENT
         assert ABSTENTION not in response.reply
@@ -2357,10 +2357,27 @@ async def test_pure_social_replies_with_the_exact_acknowledgment_only(tmp_path):
         stored = await repository.load(created.session_id)
         assert stored.revision == 1
         assert stored.collection_turn_count == 1
-        assert stored.messages[-2].text == text
+        assert stored.messages[-2].text == message
         assert stored.messages[-1].text == SOCIAL_ACKNOWLEDGMENT
         assert stored.messages[-1].citations == []
         provider.assert_exhausted()
+
+
+async def test_gratitude_gets_a_thank_you_reply_without_changing_intake(tmp_path):
+    engine, repository, provider = build_engine(
+        tmp_path, script=[("extract", make_extraction(intent="gratitude"))]
+    )
+    created = await engine.create_session()
+
+    response = await engine.turn(created.session_id, turn_request("Thanks."))
+
+    assert response.reply == GRATITUDE_ACKNOWLEDGMENT
+    assert response.citations == []
+    assert response.slots == make_slots()
+    assert response.status == "collecting"
+    assert [method for method, _ in provider.calls] == ["extract"]
+    stored = await repository.load(created.session_id)
+    assert stored.messages[-1].text == response.reply
 
 
 async def test_social_at_a_valid_review_preserves_the_review_without_a_reminder(

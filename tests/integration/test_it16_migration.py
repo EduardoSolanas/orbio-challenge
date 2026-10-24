@@ -179,7 +179,12 @@ async def test_successful_turn_after_migration_writes_a_version_two_document(
     payload = response.json()
     assert payload["revision"] == document["revision"] + 1
     assert payload["frustration_active"] is True
-    assert payload["reply"].startswith("I understand this is frustrating.\n\n")
+    assert payload["status"] == "handed_off"
+    assert payload["reply"] == (
+        "I understand this has been frustrating. This demo simulates a transfer "
+        "to a human support agent. No live agent is connected, and no real "
+        "support request has been sent."
+    )
     assert payload["reply_language"] == "en"
 
     saved = json.loads(path.read_text(encoding="utf-8"))

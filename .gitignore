@@ -17,3 +17,6 @@ reports/junit/
 tests/e2e/.env.docker
 tests/e2e/.env.judge
 reports/e2e-docker/
+reports/*
+!reports/mutation-review.json
+.idea/

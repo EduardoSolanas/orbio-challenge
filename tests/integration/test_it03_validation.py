@@ -27,11 +27,11 @@ from tests.integration.test_it02_intake import (
 )
 
 MISSING_ORDER = (
-    "What is your order number? Use NS- followed by six digits, for example NS-123456."
+    "What is your energy account reference? Use NS- followed by six digits, for example NS-123456."
 )
 MISSING_URGENCY = "How urgent is this: low, normal, or high?"
 INVALID_CATEGORY = (
-    "Please choose delivery, damaged item, wrong item, return/refund, or other."
+    "Choose a bill, supply issue, meter reading, moving home, or other energy issue."
 )
 INVALID_DESCRIPTION = (
     "Please describe the problem using 10 to 2000 characters, rather than only a category label."

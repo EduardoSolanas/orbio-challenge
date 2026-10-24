@@ -28,7 +28,7 @@ pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, ne
 CONFLICT_ALERT = "This session changed. Refresh before sending again."
 HIGH_SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
 FINAL_SUMMARY = summary_text("NS-000999", "damaged_item", "My order arrived broken", "low")
-CONFLICT = conflict_question("NS-000123", "NS-000999", "order number")
+CONFLICT = conflict_question("NS-000123", "NS-000999", "energy account reference")
 
 
 @pytest.mark.parametrize("case_id", [pytest.param("J05", id="J05")])
@@ -117,7 +117,7 @@ def test_j05_two_tabs(case_id, ui, server, provider):
 
     # B resolves the conflict explicitly and confirms the fresh review.
     assert ui.send(USE_NEW, page=page_b).status == 200
-    expect(review_b).to_contain_text("Order: NS-000999")
+    expect(review_b).to_contain_text("Account reference: NS-000999")
     saved = ui.disk(sid)
     assert saved["revision"] == 6 and saved["pending_review_revision"] == 6
     assert saved["pending_clarifications"] == {} and saved["summary"] == FINAL_SUMMARY
@@ -136,8 +136,9 @@ def test_j05_two_tabs(case_id, ui, server, provider):
     assert body_of(confirms[0])["expected_revision"] == 6
     assert body_of(confirms[0])["review_revision"] == 6
     page_a.reload()
+    expect(page_a.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
     expect(ui.log).to_contain_text(receipt)
-    expect(ui.log).to_contain_text("Order: NS-000999")
+    expect(ui.log).to_contain_text("Account reference: NS-000999")
     expect(ui.message).not_to_be_editable()
     expect(ui.enabled_button("Confirm details")).to_have_count(0)
     saved = ui.disk(sid)

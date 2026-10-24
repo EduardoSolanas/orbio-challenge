@@ -1,4 +1,4 @@
-"""Strict label, flag and migration-shape tests for emotion metadata (ORB-40).
+"""Strict label, flag and migration-shape tests for emotion metadata.
 
 The contract requires exact lowercase enums on Extraction, nullable stored
 labels on messages, and a strict boolean ``frustration_active`` on every stored

@@ -37,8 +37,14 @@ def test_j04_failed_retry(case_id, ui, server, provider):
     ui.button("Send").dblclick()
     gate.wait_entered()
     expect(ui.message).to_have_js_property("readOnly", True)
-    for name in ("Send", "Confirm details", "Transcribe audio", "New intake"):
+    expect(ui.message).to_have_value("")
+    expect(ui.log).to_contain_text(FULL)
+    thinking = ui.log.get_by_role("status", name="Northstar is thinking")
+    expect(thinking).to_be_visible()
+    expect(thinking.locator(".msg__thinking-dots")).to_be_visible()
+    for name in ("Send", "Confirm details", "New conversation"):
         expect(ui.enabled_button(name)).to_have_count(0)
+    expect(ui.file_input).to_be_disabled()
     posts = ui.turn_posts()
     assert len(posts) == 1 and posts[0]["done"] is False
     assert provider.methods() == ["extract"]
@@ -48,7 +54,8 @@ def test_j04_failed_retry(case_id, ui, server, provider):
     # Recoverable failure: draft retained, nothing committed, no fake success.
     gate.release()
     ui.expect_alert(UNAVAILABLE)
-    expect(ui.button("Retry")).to_be_visible()
+    expect(ui.button("Retry")).to_be_hidden()
+    expect(ui.log.get_by_role("status", name="Northstar is thinking")).to_have_count(0)
     expect(ui.message).to_have_value(FULL)
     expect(ui.message).to_be_editable()
     expect(ui.enabled_button("Send")).to_have_count(1)
@@ -61,16 +68,16 @@ def test_j04_failed_retry(case_id, ui, server, provider):
     assert saved["revision"] == 0 and saved["requests"] == [] and len(saved["messages"]) == 1
     ui.cp("J04.failure-keeps-draft")
 
-    # Retry sends the identical body and request ID, and succeeds once.
+    # Resending the restored draft creates a fresh request and succeeds once.
     with ui.page.expect_response(
         lambda r: r.request.method == "POST" and r.url.endswith("/turns")
     ) as pending:
-        ui.button("Retry").click()
+        ui.button("Send").click()
     assert pending.value.status == 200
     posts = ui.turn_posts()
     assert [p["status"] for p in posts] == [503, 200]
-    assert posts[0]["request_body"] == posts[1]["request_body"]
-    assert body_of(posts[0])["request_id"] == body_of(posts[1])["request_id"]
+    assert posts[0]["request_body"] != posts[1]["request_body"]
+    assert body_of(posts[0])["request_id"] != body_of(posts[1])["request_id"]
     assert body_of(posts[1])["text"] == FULL and body_of(posts[1])["expected_revision"] == 0
     expect(ui.review).to_be_visible()
     expect(ui.message).to_have_value("")

@@ -18,7 +18,7 @@ from httpx import ASGITransport, AsyncClient
 
 from app.config import Settings
 from app.providers import SynthesizedAudio
-from app.schemas import Extraction, KnowledgeAnswer, Slots
+from app.schemas import Extraction, KnowledgeAnswer, Slots, ToolRequest
 
 NO_SLOTS: dict[str, str | None] = {
     "order_number": None,
@@ -39,6 +39,7 @@ def make_extraction(
     requested_language: str | None = None,
     sentiment: str = "neutral",
     frustration: str = "none",
+    tool_request: ToolRequest | None = None,
 ) -> Extraction:
     """Build a strict extraction object for scripting the fake provider."""
 
@@ -52,6 +53,7 @@ def make_extraction(
         requested_language=requested_language,
         sentiment=sentiment,
         frustration=frustration,
+        tool_request=tool_request,
     )
 
 
@@ -70,7 +72,9 @@ def full_extraction() -> Extraction:
     )
 
 
-def build_settings(session_dir: Path, *, tts_es: bool = False) -> Settings:
+def build_settings(
+    session_dir: Path, *, tts_es: bool = False, order_api_base_url: str = "http://127.0.0.1:9"
+) -> Settings:
     """A complete isolated auth=none environment; no developer configuration is read."""
 
     environ = {
@@ -88,6 +92,7 @@ def build_settings(session_dir: Path, *, tts_es: bool = False) -> Settings:
         "TTS_VOICE": "test-voice",
         "SESSION_DIR": str(session_dir),
         "PROVIDER_MAX_CONCURRENCY": "4",
+        "ORDER_API_BASE_URL": order_api_base_url,
     }
     if tts_es:
         environ.update(

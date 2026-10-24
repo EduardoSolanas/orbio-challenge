@@ -51,6 +51,7 @@ TURN_RESPONSE_KEYS = {
     "pending_review_revision",
     "summary",
     "citations",
+    "order_verification_required",
 }
 
 MESSAGE_VIEW_KEYS = {

@@ -1,4 +1,4 @@
-"""Tests for scripts/check_e2e_inventory.py (ORB-15).
+"""Tests for scripts/check_e2e_inventory.py.
 
 Fixtures mirror the evidence files emitted by the pytest collection/results hooks
 described in docs/implementation-contract.md 13.4 and docs/testing-contract.md 8.
@@ -205,7 +205,7 @@ def test_help_exits_zero() -> None:
     assert excinfo.value.code == 0
 
 
-# --- commit-safe revision policy (ORB-22) ---------------------------------
+# --- commit-safe revision policy ---------------------------------
 # The policy is about commit ancestry, so the only faithful fixture is a real
 # temporary git repository with real commits.
 

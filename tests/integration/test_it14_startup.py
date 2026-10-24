@@ -226,7 +226,7 @@ async def case_it14_06(session_dir, monkeypatch):
             assert list(session_dir.iterdir()) == []
             knowledge_base = app.state.knowledge_base
             assert knowledge_base.version == "2026-10-22"
-            assert len(knowledge_base.records) == 4
+            assert len(knowledge_base.records) == 5
             assert app.state.provider._in_use == 0
 
     assert app.state.ready is False

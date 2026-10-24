@@ -1,4 +1,4 @@
-"""Tests for the pure helpers of tests/support/image_smoke.py (TC §8, ORB-16).
+"""Tests for the pure helpers of tests/support/image_smoke.py (TC §8).
 
 The container harness itself is exercised by the real ``docker run`` smoke; here
 the failure predicates that make it exit nonzero are pinned: root uid, a failing
@@ -43,7 +43,7 @@ def test_session_predicate_requires_201_and_session_id() -> None:
 
 
 def test_turn_predicate_requires_revision_and_nonblank_reply() -> None:
-    good = {"session_id": "abc", "revision": 1, "reply": "What is your order number?"}
+    good = {"session_id": "abc", "revision": 1, "reply": "What is your energy account reference?"}
     assert image_smoke.turn_ok(200, good) is True
     assert image_smoke.turn_ok(500, good) is False
     assert image_smoke.turn_ok(200, {**good, "revision": 0}) is False

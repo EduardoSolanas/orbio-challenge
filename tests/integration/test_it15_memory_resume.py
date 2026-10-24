@@ -1,14 +1,14 @@
-"""ORB-39: multi-turn memory and session resume.
+"""multi-turn memory and session resume.
 
 Integration coverage for the acceptance criteria, against the real app
 factory, lifespan, engine and JSON repository over an isolated temp
 SESSION_DIR; only the AI service boundary is scripted (IC §13.1).
 
-- ORB39-01: review state (transcript, token, summary, citations) survives a
+- resume-01: review state (transcript, token, summary, citations) survives a
   process restart via GET, and the preserved token still confirms.
-- ORB39-02: accepted facts survive once early messages fall outside the
+- resume-02: accepted facts survive once early messages fall outside the
   12-message extraction window.
-- ORB39-03: facts survive an FAQ detour followed by a correction.
+- resume-03: facts survive an FAQ detour followed by a correction.
 """
 
 from __future__ import annotations
@@ -83,10 +83,10 @@ async def post_turn(client, provider, session_id, *, text, revision, extraction,
     return request_id, response.json()
 
 
-# ORB39-01 ------------------------------------------------------------------
+# resume-01 ------------------------------------------------------------------
 
 
-async def test_orb39_01_review_state_resumes_across_restart(settings, provider, session_dir):
+async def test_resume_01_review_state_resumes_across_restart(settings, provider, session_dir):
     async with app_client(settings, provider) as first:
         session_id = await start_session(first)
         _, reviewed = await post_turn(
@@ -174,10 +174,10 @@ async def test_orb39_01_review_state_resumes_across_restart(settings, provider, 
         assert read_session(session_dir, session_id)["revision"] == 3
 
 
-# ORB39-02 ------------------------------------------------------------------
+# resume-02 ------------------------------------------------------------------
 
 
-async def test_orb39_02_facts_survive_beyond_twelve_message_window(
+async def test_resume_02_facts_survive_beyond_twelve_message_window(
     settings, provider, session_dir
 ):
     async with app_client(settings, provider) as client:
@@ -249,10 +249,10 @@ async def test_orb39_02_facts_survive_beyond_twelve_message_window(
         assert urgent["reply"] == FULL_SUMMARY + REVIEW_SUFFIX
 
 
-# ORB39-03 ------------------------------------------------------------------
+# resume-03 ------------------------------------------------------------------
 
 
-async def test_orb39_03_faq_detour_then_correction_keeps_sibling_facts(
+async def test_resume_03_faq_detour_then_correction_keeps_sibling_facts(
     settings, provider, session_dir
 ):
     async with app_client(settings, provider) as client:
@@ -283,9 +283,9 @@ async def test_orb39_03_faq_detour_then_correction_keeps_sibling_facts(
         assert corrected["pending_clarifications"] == {}
 
 
-# ORB43 ---------------------------------------------------------------------
+# context ---------------------------------------------------------------------
 #
-# ORB-43 acceptance: the extraction context carries the authoritative session
+# acceptance: the extraction context carries the authoritative session
 # state and exactly the latest 12 committed messages; persisted JSON proves the
 # stored state is never shortened or mutated by provider code.
 
@@ -293,7 +293,7 @@ AMBIGUOUS_TEXT = "My order NS-000123 has some problem."
 AMBIGUOUS_CATEGORY = {
     "code": "ambiguous",
     "candidate": "other",
-    "question": "Please clarify your problem category.",
+    "question": "Please clarify your energy support area.",
 }
 CORRECTION_TEXT = "Make the urgency high."
 
@@ -319,7 +319,7 @@ def last_extract_context(provider):
     )
 
 
-async def test_orb43_01_window_matches_persisted_history_and_keeps_the_old_order(
+async def test_context_01_window_matches_persisted_history_and_keeps_the_old_order(
     settings, provider, session_dir
 ):
     async with app_client(settings, provider) as client:
@@ -388,7 +388,7 @@ async def test_orb43_01_window_matches_persisted_history_and_keeps_the_old_order
         assert after["pending_clarifications"] == {}
 
 
-async def test_orb43_02_pending_ambiguity_survives_faq_detours(
+async def test_context_02_pending_ambiguity_survives_faq_detours(
     settings, provider, session_dir
 ):
     async with app_client(settings, provider) as client:
@@ -455,7 +455,7 @@ class MutatingScriptedProvider(ScriptedProvider):
         return await super().extract(context)
 
 
-async def test_orb43_03_provider_context_mutation_cannot_alter_stored_json(
+async def test_context_03_provider_context_mutation_cannot_alter_stored_json(
     settings, session_dir
 ):
     provider = MutatingScriptedProvider()
@@ -498,7 +498,7 @@ async def test_orb43_03_provider_context_mutation_cannot_alter_stored_json(
         ]
 
 
-async def test_orb43_04_rag_context_carries_only_its_question_sources_and_language(
+async def test_context_04_rag_context_carries_only_its_question_sources_and_language(
     settings, provider, session_dir
 ):
     async with app_client(settings, provider) as client:
@@ -567,7 +567,7 @@ class InjectingAnswerScriptedProvider(ScriptedProvider):
         return await super().answer_knowledge(context)
 
 
-async def test_orb43_05_injected_rag_source_cannot_become_a_citation(
+async def test_context_05_injected_rag_source_cannot_become_a_citation(
     settings, session_dir
 ):
     provider = InjectingAnswerScriptedProvider()
@@ -597,7 +597,7 @@ async def test_orb43_05_injected_rag_source_cannot_become_a_citation(
         assert disk["requests"][-1]["response"]["revision"] == partial["revision"]
 
 
-async def test_orb43_06_policy_and_social_detours_preserve_review_state(
+async def test_context_06_policy_and_social_detours_preserve_review_state(
     settings, provider, session_dir
 ):
     async with app_client(settings, provider) as client:

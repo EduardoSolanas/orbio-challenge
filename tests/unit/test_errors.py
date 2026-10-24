@@ -27,12 +27,17 @@ EXPECTED = {
         False,
     ),
     "session_completed": (
-        "This intake is complete. Start a new intake to make changes.",
+        "This support conversation is complete. Start a new conversation if you need help with another issue.",
+        409,
+        False,
+    ),
+    "session_handed_off": (
+        "This conversation has been handed off in the demo. Start a new conversation if you need more help.",
         409,
         False,
     ),
     "turn_limit": (
-        "This intake has reached its message limit. You can confirm an existing review or start a new intake.",
+        "This conversation has reached its message limit. You can confirm the current details or start a new conversation.",
         409,
         False,
     ),
@@ -80,6 +85,22 @@ EXPECTED = {
         False,
     ),
     "provider_timeout": ("The AI request timed out. Please retry.", 504, True),
+    "too_many_verification_attempts": (
+        "Too many verification attempts. Start a new conversation or restart the demo to try again.",
+        429,
+        True,
+    ),
+    "order_api_unavailable": (
+        "The order service is unavailable. Please retry.",
+        503,
+        True,
+    ),
+    "order_api_timeout": ("The order service timed out. Please retry.", 504, True),
+    "invalid_order_api_response": (
+        "The order service returned an unusable response. Please retry.",
+        502,
+        True,
+    ),
     "internal_error": ("An internal error occurred.", 500, False),
 }
 

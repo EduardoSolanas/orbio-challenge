@@ -162,6 +162,19 @@ def test_decode_pcm_wav_accepts_a_single_frame():
         (raw_wav(frames=0), "empty or truncated WAV frames"),
         (make_wav()[:-8], "empty or truncated WAV frames"),
     ],
+    ids=[
+        "empty",
+        "header-only",
+        "mp3",
+        "junk",
+        "three-channels",
+        "eight-bit",
+        "thirty-two-bit",
+        "rate-below-window",
+        "rate-above-window",
+        "no-frames",
+        "truncated-data",
+    ],
 )
 def test_decode_pcm_wav_reports_the_exact_rejection_reason(audio, message):
     with pytest.raises(ValueError) as caught:

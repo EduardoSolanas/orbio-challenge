@@ -112,8 +112,8 @@ def test_spanish_invalid_question_is_localized_in_the_merge_outcome():
     clarification = outcome.pending_clarifications["category"]
     assert clarification.code == "invalid"
     assert clarification.question == (
-        "Elige entrega, artículo dañado, artículo incorrecto, "
-        "devolución o reembolso, u otro."
+        "Elige factura, problema de suministro, lectura del contador, "
+        "mudanza u otro asunto de energía."
     )
     assert clarification.candidate == "paquete misterioso"
 
@@ -154,7 +154,7 @@ def test_merge_defaults_to_english_copy_when_no_language_is_given():
     )
 
     assert outcome.pending_clarifications["category"].question == (
-        "Please choose delivery, damaged item, wrong item, return/refund, or other."
+        "Choose a bill, supply issue, meter reading, moving home, or other energy issue."
     )
 
 

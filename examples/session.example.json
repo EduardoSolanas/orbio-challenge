@@ -10,14 +10,14 @@
   "slots": {
     "order_number": "NS-000123",
     "category": "damaged_item",
-    "description": "The item in order NS-000123 arrived with a cracked casing and will not switch on.",
+    "description": "My electricity meter casing is cracked and it will not switch on.",
     "urgency": "high"
   },
   "messages": [
     {
       "id": "b1e0f7a2-5c4d-4e6f-8a9b-0c1d2e3f4a5b",
       "role": "assistant",
-      "text": "Hello! I can answer Northstar Shop policy questions or help record an order issue. How can I help? Please do not share payment details.",
+      "text": "Hi, welcome to Northstar Energy. How can I help you today?",
       "input_mode": "system",
       "created_at": "2026-10-22T12:00:00Z",
       "citations": [],
@@ -28,7 +28,7 @@
     {
       "id": "0d1e2f3a-4b5c-4d6e-8f90-1a2b3c4d5e6f",
       "role": "user",
-      "text": "Hi, my order NS-000123 arrived broken. It is a damaged item and this is urgent.",
+      "text": "My electricity meter casing is cracked and it will not switch on. This is urgent.",
       "input_mode": "text",
       "created_at": "2026-10-22T12:00:40Z",
       "citations": [],
@@ -39,7 +39,7 @@
     {
       "id": "1e2f3a4b-5c6d-4e7f-9a8b-2c3d4e5f6a7b",
       "role": "assistant",
-      "text": "Order: NS-000123\nCategory: damaged_item\nProblem: The item in order NS-000123 arrived with a cracked casing and will not switch on.\nUrgency: high\nPlease confirm these details or tell me what to change.",
+      "text": "Account reference: NS-000123\nEnergy support area: equipment issue\nIssue: My electricity meter casing is cracked and it will not switch on.\nUrgency: high\nPlease confirm these details or tell me what to change.",
       "input_mode": "text",
       "created_at": "2026-10-22T12:00:40Z",
       "citations": [],
@@ -50,7 +50,7 @@
     {
       "id": "2f3a4b5c-6d7e-4f80-9b1c-3d4e5f6a7b8c",
       "role": "user",
-      "text": "Can I return an unused item?",
+      "text": "What does a standing charge on my energy bill cover?",
       "input_mode": "text",
       "created_at": "2026-10-22T12:01:20Z",
       "citations": [],
@@ -61,14 +61,14 @@
     {
       "id": "3a4b5c6d-7e8f-4a91-8c2d-4e5f6a7b8c9d",
       "role": "assistant",
-      "text": "An unused item in its original packaging can be requested for return within 30 calendar days of delivery. Refund eligibility requires a support review.",
+      "text": "A standing charge is a fixed daily amount that helps cover the cost of supplying electricity or gas to your property. It is charged for each day your account is connected, even when you use little or no energy. This explanation is illustrative and is not a tariff or a quote.",
       "input_mode": "text",
       "created_at": "2026-10-22T12:01:20Z",
       "citations": [
         {
-          "source_id": "faq-returns",
-          "title": "Returns and refunds",
-          "excerpt": "An unused item in its original packaging can be requested for return within 30 calendar days of delivery. Refund eligibility requires a support review; this demo cannot approve or issue a refund.",
+          "source_id": "faq-standing-charge",
+          "title": "Standing charges on an energy bill",
+          "excerpt": "A standing charge is a fixed daily amount that helps cover the cost of supplying electricity or gas to your property. It is charged for each day your account is connected, even when you use little or no energy. This explanation is illustrative and is not a tariff or a quote.",
           "kb_version": "2026-10-22"
         }
       ],
@@ -79,7 +79,7 @@
     {
       "id": "4b5c6d7e-8f90-4b12-9d3e-5f6a7b8c9d0e",
       "role": "user",
-      "text": "Confirm reviewed intake",
+      "text": "Confirm these details",
       "input_mode": "system",
       "created_at": "2026-10-22T12:02:30Z",
       "citations": [],
@@ -103,7 +103,7 @@
   "pending_review_revision": null,
   "review_rejected": false,
   "collection_turn_count": 2,
-  "summary": "Order: NS-000123\nCategory: damaged_item\nProblem: The item in order NS-000123 arrived with a cracked casing and will not switch on.\nUrgency: high",
+  "summary": "Account reference: NS-000123\nEnergy support area: equipment issue\nIssue: My electricity meter casing is cracked and it will not switch on.\nUrgency: high",
   "confirmation": {
     "confirmed_at": "2026-10-22T12:02:30Z",
     "review_revision": 1
@@ -116,17 +116,17 @@
         "session_id": "3f7c1c1e-0f0a-4a4e-9a5e-2b1d0f6c8a11",
         "revision": 1,
         "status": "awaiting_confirmation",
-        "reply": "Order: NS-000123\nCategory: damaged_item\nProblem: The item in order NS-000123 arrived with a cracked casing and will not switch on.\nUrgency: high\nPlease confirm these details or tell me what to change.",
+        "reply": "Account reference: NS-000123\nEnergy support area: equipment issue\nIssue: My electricity meter casing is cracked and it will not switch on.\nUrgency: high\nPlease confirm these details or tell me what to change.",
         "message_id": "1e2f3a4b-5c6d-4e7f-9a8b-2c3d4e5f6a7b",
         "slots": {
           "order_number": "NS-000123",
           "category": "damaged_item",
-          "description": "The item in order NS-000123 arrived with a cracked casing and will not switch on.",
+          "description": "My electricity meter casing is cracked and it will not switch on.",
           "urgency": "high"
         },
         "pending_clarifications": {},
         "pending_review_revision": 1,
-        "summary": "Order: NS-000123\nCategory: damaged_item\nProblem: The item in order NS-000123 arrived with a cracked casing and will not switch on.\nUrgency: high",
+        "summary": "Account reference: NS-000123\nEnergy support area: equipment issue\nIssue: My electricity meter casing is cracked and it will not switch on.\nUrgency: high",
         "citations": [],
         "frustration_active": false
       }
@@ -138,22 +138,22 @@
         "session_id": "3f7c1c1e-0f0a-4a4e-9a5e-2b1d0f6c8a11",
         "revision": 2,
         "status": "awaiting_confirmation",
-        "reply": "An unused item in its original packaging can be requested for return within 30 calendar days of delivery. Refund eligibility requires a support review.\n\nPlease confirm the reviewed details or tell me what to change.",
+        "reply": "A standing charge is a fixed daily amount that helps cover the cost of supplying electricity or gas to your property. It is charged for each day your account is connected, even when you use little or no energy. This explanation is illustrative and is not a tariff or a quote.\n\nPlease confirm the reviewed details or tell me what to change.",
         "message_id": "3a4b5c6d-7e8f-4a91-8c2d-4e5f6a7b8c9d",
         "slots": {
           "order_number": "NS-000123",
           "category": "damaged_item",
-          "description": "The item in order NS-000123 arrived with a cracked casing and will not switch on.",
+          "description": "My electricity meter casing is cracked and it will not switch on.",
           "urgency": "high"
         },
         "pending_clarifications": {},
         "pending_review_revision": 1,
-        "summary": "Order: NS-000123\nCategory: damaged_item\nProblem: The item in order NS-000123 arrived with a cracked casing and will not switch on.\nUrgency: high",
+        "summary": "Account reference: NS-000123\nEnergy support area: equipment issue\nIssue: My electricity meter casing is cracked and it will not switch on.\nUrgency: high",
         "citations": [
           {
-            "source_id": "faq-returns",
-            "title": "Returns and refunds",
-            "excerpt": "An unused item in its original packaging can be requested for return within 30 calendar days of delivery. Refund eligibility requires a support review; this demo cannot approve or issue a refund.",
+            "source_id": "faq-standing-charge",
+            "title": "Standing charges on an energy bill",
+            "excerpt": "A standing charge is a fixed daily amount that helps cover the cost of supplying electricity or gas to your property. It is charged for each day your account is connected, even when you use little or no energy. This explanation is illustrative and is not a tariff or a quote.",
             "kb_version": "2026-10-22"
           }
         ],
@@ -172,12 +172,12 @@
         "slots": {
           "order_number": "NS-000123",
           "category": "damaged_item",
-          "description": "The item in order NS-000123 arrived with a cracked casing and will not switch on.",
+          "description": "My electricity meter casing is cracked and it will not switch on.",
           "urgency": "high"
         },
         "pending_clarifications": {},
         "pending_review_revision": null,
-        "summary": "Order: NS-000123\nCategory: damaged_item\nProblem: The item in order NS-000123 arrived with a cracked casing and will not switch on.\nUrgency: high",
+        "summary": "Account reference: NS-000123\nEnergy support area: equipment issue\nIssue: My electricity meter casing is cracked and it will not switch on.\nUrgency: high",
         "citations": [],
         "frustration_active": false
       }

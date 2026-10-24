@@ -48,11 +48,22 @@ def test_load_reads_the_bundled_seed_kb_immutably() -> None:
         "faq-damaged",
         "faq-returns",
         "faq-urgency",
+        "faq-standing-charge",
     ]
     assert isinstance(kb.records, tuple)
     assert kb.records[0].keywords == ["delivery", "shipping", "ship", "arrive", "arrives"]
     with pytest.raises(ValidationError):
         kb.records[0].id = "faq-other"
+
+
+def test_bundled_kb_retrieves_energy_bill_guidance_for_supplier_site() -> None:
+    kb = load_knowledge(SEED_KB)
+
+    matches = kb.retrieve("What does a standing charge on my energy bill cover?")
+
+    assert matches
+    assert matches[0].id == "faq-standing-charge"
+    assert "standing charge" in matches[0].body.casefold()
 
 
 @pytest.mark.parametrize("name", VALID_FIXTURES)

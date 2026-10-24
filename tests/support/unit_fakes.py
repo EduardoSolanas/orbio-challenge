@@ -1,7 +1,7 @@
 """Test doubles and builders for the storage/engine unit slices.
 
 Only real external boundaries are doubled here: the AI provider (a remote
-service) and the knowledge base lookup (ORB-04 owns the real retriever). Every
+service) and the knowledge base lookup . Every
 call is scripted; an unexpected call raises so a turn cannot silently use a
 different provider operation.
 """

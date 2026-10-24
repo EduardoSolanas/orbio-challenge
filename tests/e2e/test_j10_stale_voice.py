@@ -53,25 +53,29 @@ def test_j10_stale_voice(case_id, ui, server, provider, tmp_path):
     old_sid = ui.current_session_id()
     old_bytes = server.session_bytes(old_sid)
 
-    # Start STT held by the barrier: Transcribe/Send locked, New intake still available.
-    ui.upload(wav_path)
-    ui.button("Transcribe audio").click()
-    stt_gate.wait_entered()
-    expect(ui.message).to_have_js_property("readOnly", True)
-    expect(ui.enabled_button("Transcribe audio")).to_have_count(0)
-    expect(ui.enabled_button("Send")).to_have_count(0)
-    expect(ui.enabled_button("New intake")).to_have_count(1)
-    assert len(ui.transcription_posts()) == 1 and ui.transcription_posts()[0]["done"] is False
-    ui.cp("J10.stt-held-new-intake-available")
+    # WAV attachment starts STT automatically. Lock every chat button until it ends.
+    with ui.page.expect_response(lambda r: r.url.endswith("/api/transcriptions")) as pending:
+        ui.upload(wav_path)
+        stt_gate.wait_entered(timeout=2)
+        expect(ui.message).to_have_js_property("readOnly", True)
+        assert ui.page.locator("#support-chat button").evaluate_all(
+            "buttons => buttons.length > 0 && buttons.every(button => button.disabled)"
+        )
+        assert len(ui.transcription_posts()) == 1 and ui.transcription_posts()[0]["done"] is False
+        ui.cp("J10.stt-locks-chat-controls")
+        stt_gate.release()
+    assert pending.value.status == 200
+    expect(ui.message).to_have_value(STT_TEXT)
+    expect(ui.message).to_be_editable()
+    provider.wait_finished("transcribe", 1)
+    assert server.session_bytes(old_sid) == old_bytes
+    ui.cp("J10.auto-stt-fills-editable-draft")
 
-    # New intake aborts the old request; its late success (the chosen deterministic
-    # outcome) is released afterwards and must not touch the new generation.
+    # A new intake becomes available once transcription releases its lock.
     assert ui.new_intake().status == 201
     wait_until(lambda: ui.stored_session_id() != old_sid, "new session id in localStorage")
     new_sid = ui.current_session_id()
     new_bytes = server.session_bytes(new_sid)
-    stt_gate.release()
-    provider.wait_finished("transcribe", 1)
     ui.page.evaluate(NEXT_TASK)
     expect(ui.message).to_have_value("")
     expect(ui.message).to_be_editable()
@@ -83,7 +87,7 @@ def test_j10_stale_voice(case_id, ui, server, provider, tmp_path):
     assert server.session_bytes(new_sid) == new_bytes
     assert ui.disk(new_sid)["revision"] == 0 and ui.turn_posts() == []
     assert [c["outcome"] for c in provider.calls("transcribe")] == ["ok"]
-    ui.cp("J10.old-stt-ignored")
+    ui.cp("J10.new-intake-after-stt-unlock")
 
     # New intake: two saved replies A and B.
     assert ui.send(PART).status == 200

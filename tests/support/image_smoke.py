@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Container image smoke harness (testing-contract §8 image-build, ORB-16).
+"""Container image smoke harness (testing-contract §8 image-build).
 
 Run inside the built image with ``tests/`` mounted read-only at ``/checks``:
 
@@ -96,6 +96,7 @@ def _settings(session_dir: Path) -> Any:
             "TTS_VOICE": "smoke-voice",
             "SESSION_DIR": str(session_dir),
             "PROVIDER_MAX_CONCURRENCY": "2",
+            "ORDER_API_BASE_URL": "http://order-api.test",
         }
     )
 

@@ -1,4 +1,4 @@
-"""Tests for scripts/check_backends.py (PC §5, ORB-16).
+"""Tests for scripts/check_backends.py (PC §5).
 
 The operator smoke is exercised against per-role ``httpx.MockTransport``
 handlers: no real host is contacted and no credential leaves the process. The
@@ -78,6 +78,7 @@ def build_settings(tmp_path: Path) -> Settings:
             "TTS_VOICE": "alloy",
             "SESSION_DIR": str(tmp_path),
             "PROVIDER_MAX_CONCURRENCY": "2",
+            "ORDER_API_BASE_URL": "http://order-api.test",
         }
     )
 

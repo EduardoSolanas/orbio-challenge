@@ -2,37 +2,56 @@
 
 from __future__ import annotations
 
+import json
 from uuid import UUID
 
 import pytest
 from playwright.sync_api import expect
 
-from tests.e2e.conftest import body_of, wait_until
+from app.localization import text
+from tests.e2e.conftest import body_of, response_of, wait_until
 from tests.support.fakes import (
     ASK_CATEGORY,
     ASK_URGENCY,
+    AUTH_DEMO_CODE_NOTICE,
+    AUTH_ORDER_RESULT,
+    AUTH_VERIFICATION_FAILED,
+    AUTH_VERIFICATION_PROMPT,
+    AUTH_VERIFIED,
     CATEGORY,
+    GREETING_STANDING_CHARGE_Q,
     GREETING,
     HIGH,
     MIXED_PART,
+    ORDER_STATUS_Q,
     RECEIPT_TEMPLATE,
     THANKS,
+    STANDING_CHARGE_ANSWER_TEXT,
+    standing_charge_answer,
     review_reply,
     summary_text,
     x_category,
+    x_gratitude,
     x_high,
+    x_order_lookup,
     x_part,
+    x_question,
     x_social,
 )
 
 pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
 
-SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
+SUMMARY = (
+    "Account reference: NS-000123\n"
+    "Energy support area: equipment issue\n"
+    "Issue: My order arrived broken\n"
+    "Urgency: high"
+)
 
 
 @pytest.mark.parametrize("case_id", [pytest.param("J01", id="J01")])
 def test_j01_intake(case_id, ui, server, provider):
-    provider.script_extract(THANKS, x_social())
+    provider.script_extract(THANKS, x_gratitude())
     provider.script_extract(MIXED_PART, x_part())
     provider.script_extract(CATEGORY, x_category())
     provider.script_extract(HIGH, x_high())
@@ -53,9 +72,9 @@ def test_j01_intake(case_id, ui, server, provider):
 
     # Social thanks resumes the same UX without retrieval or an intake prompt.
     assert ui.send(THANKS).status == 200
-    expect(ui.log).to_contain_text("Hello! How can I help with Northstar Shop?")
+    expect(ui.log).to_contain_text("You're welcome! How else can I help with your energy service?")
     expect(ui.log).not_to_contain_text(ASK_CATEGORY)
-    assert ui.last_assistant(sid)["text"] == "Hello! How can I help with Northstar Shop?"
+    assert ui.last_assistant(sid)["text"] == "You're welcome! How else can I help with your energy service?"
     assert ui.disk(sid)["slots"] == {
         "order_number": None,
         "category": None,
@@ -140,6 +159,7 @@ def test_j01_intake(case_id, ui, server, provider):
     completed_bytes = server.session_bytes(sid)
     gets_before = len(ui.session_gets())
     ui.page.reload()
+    expect(ui.page.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
     expect(ui.log).to_contain_text(receipt)
     expect(ui.message).not_to_be_editable()
     expect(ui.enabled_button("Send")).to_have_count(0)
@@ -168,5 +188,189 @@ def test_j01_intake(case_id, ui, server, provider):
     assert fresh["revision"] == 0 and fresh["status"] == "collecting"
     assert [m["text"] for m in fresh["messages"]] == [GREETING]
     assert len(ui.create_posts()) == 2
-    provider.assert_consumed()
     ui.cp("J01.new-intake-isolated")
+
+    # Report an issue first: volunteered issue details need no verification.
+    provider.script_extract(MIXED_PART, x_part())
+    assert ui.send(MIXED_PART).status == 200
+    expect(ui.log).to_contain_text(ASK_CATEGORY)
+    expect(ui.verification).to_be_hidden()
+    saved = ui.disk(new_sid)
+    assert saved["slots"] == {
+        "order_number": "NS-000123",
+        "category": None,
+        "description": "My order arrived broken",
+        "urgency": None,
+    }
+    assert saved["pending_review_revision"] is None
+    ui.cp("J01.issue-reported-without-verification")
+
+    # Protected order lookup: the intake order becomes pending and no data is
+    # returned until the demo credentials are verified.
+    provider.script_extract(ORDER_STATUS_Q, x_order_lookup())
+    assert ui.send(ORDER_STATUS_Q).status == 200
+    expect(ui.verification).to_be_visible()
+    expect(ui.verification_notice).to_have_text(AUTH_DEMO_CODE_NOTICE)
+    expect(ui.log).to_contain_text(AUTH_VERIFICATION_PROMPT)
+    expect(ui.log).not_to_contain_text(AUTH_ORDER_RESULT)
+    expect(ui.message).to_be_editable()
+    expect(ui.enabled_button("Send")).to_have_count(0)
+    assert AUTH_DEMO_CODE_NOTICE not in ui.transcript_text()
+    assert "SW1A" not in ui.transcript_text()
+    assert ui.disk(new_sid)["slots"]["order_number"] == "NS-000123"
+    ui.cp("J01.verification-form-demo-notice")
+
+    wrong = ui.verify_order("SW1A 1AA", "123456")
+    assert wrong.status == 200
+    assert json.loads(wrong.text()) == {
+        "verified": False,
+        "error": "verification_failed",
+    }
+    expect(ui.verification_error).to_be_visible()
+    expect(ui.verification_error).to_have_text(AUTH_VERIFICATION_FAILED)
+    expect(ui.verification).to_be_visible()
+    expect(ui.message).to_be_editable()
+    assert "123456" not in ui.last_assistant(new_sid)["text"]
+    assert "SW1A" not in ui.transcript_text()
+    ui.cp("J01.wrong-code-localized-error")
+
+    # A FAQ remains available while account verification is pending. Answering
+    # it must preserve the pending verification form and intake data.
+    provider.script_extract(GREETING_STANDING_CHARGE_Q, x_question())
+    provider.script_answer(
+        GREETING_STANDING_CHARGE_Q, standing_charge_answer()
+    )
+    assert ui.send(GREETING_STANDING_CHARGE_Q).status == 200
+    expect(ui.log).to_contain_text(STANDING_CHARGE_ANSWER_TEXT)
+    expect(ui.verification).to_be_visible()
+    expect(ui.message).to_be_editable()
+    assert response_of(ui.turn_posts()[-1])["order_verification_required"] is True
+    assert ui.last_assistant(new_sid)["citations"][0]["source_id"] == "faq-standing-charge"
+    assert ui.disk(new_sid)["slots"] == {
+        "order_number": "NS-000123",
+        "category": None,
+        "description": "My order arrived broken",
+        "urgency": None,
+    }
+    assert len(ui.verification_posts()) == 1
+
+    # the Order API is a separate private process. Stop it, submit valid
+    # credentials and assert the gateway returns the fixed safe error without
+    # changing the pending order; restart on the same origin and recover.
+    server.stop_order_api()
+    outage = ui.verify_order("SW1A 1AA", "246810")
+    assert outage.status == 503
+    expect(ui.verification_error).to_have_text(
+        text("errors.order_api_unavailable", "en")
+    )
+    expect(ui.verification).to_be_visible()
+    expect(ui.verification_status).to_be_hidden()
+    expect(ui.message).to_be_editable()
+    assert ui.disk(new_sid)["slots"]["order_number"] == "NS-000123"
+    assert len(ui.verification_posts()) == 2
+    ui.cp("J01.order-api-outage-safe-error")
+
+    server.start_order_api()
+    correct = ui.verify_order(" sw1a 1aa ", "246810")
+    assert correct.status == 200
+    assert json.loads(correct.text()) == {"verified": True, "error": None}
+    expect(ui.verification).to_be_hidden()
+    expect(ui.verification_status).to_contain_text(AUTH_VERIFIED)
+    expect(ui.message).to_be_editable()
+    assert len(ui.verification_posts()) == 3
+    ui.cp("J01.demo-code-success-enables-composer")
+
+    # FAQ is still a side path after verification and before the protected
+    # lookup; it must not consume or weaken the order-specific grant.
+    provider.script_extract(GREETING_STANDING_CHARGE_Q, x_question())
+    provider.script_answer(
+        GREETING_STANDING_CHARGE_Q, standing_charge_answer()
+    )
+    assert ui.send(GREETING_STANDING_CHARGE_Q).status == 200
+    expect(ui.log).to_contain_text(STANDING_CHARGE_ANSWER_TEXT)
+    expect(ui.verification).to_be_hidden()
+    assert ui.last_assistant(new_sid)["citations"][0]["source_id"] == "faq-standing-charge"
+    assert response_of(ui.turn_posts()[-1])["order_verification_required"] is False
+    assert ui.disk(new_sid)["slots"]["order_number"] == "NS-000123"
+
+    provider.script_extract(
+        ORDER_STATUS_Q, x_order_lookup(order_number="NS-000123", tool=True)
+    )
+    assert ui.send(ORDER_STATUS_Q).status == 200
+    expect(ui.log).to_contain_text(AUTH_ORDER_RESULT)
+    assert ui.last_assistant(new_sid)["text"] == AUTH_ORDER_RESULT
+    assert ui.disk(new_sid)["slots"]["order_number"] == "NS-000123"
+    ui.cp("J01.verified-allowlisted-order-summary")
+
+    # A FAQ after the protected result returns to the still-pending issue step.
+    provider.script_extract(GREETING_STANDING_CHARGE_Q, x_question())
+    provider.script_answer(
+        GREETING_STANDING_CHARGE_Q, standing_charge_answer()
+    )
+    assert ui.send(GREETING_STANDING_CHARGE_Q).status == 200
+    expect(ui.log).to_contain_text(STANDING_CHARGE_ANSWER_TEXT)
+    assert ui.last_assistant(new_sid)["citations"][0]["source_id"] == "faq-standing-charge"
+    assert ui.disk(new_sid)["slots"] == {
+        "order_number": "NS-000123",
+        "category": None,
+        "description": "My order arrived broken",
+        "urgency": None,
+    }
+
+    # The verified order never skips the normal issue interview.
+    provider.script_extract(CATEGORY, x_category())
+    assert ui.send(CATEGORY).status == 200
+    expect(ui.log).to_contain_text(ASK_URGENCY)
+    expect(ui.verification).to_be_hidden()
+    expect(ui.review).to_be_hidden()
+    saved = ui.disk(new_sid)
+    assert saved["slots"] == {
+        "order_number": "NS-000123",
+        "category": "damaged_item",
+        "description": "My order arrived broken",
+        "urgency": None,
+    }
+    assert saved["pending_review_revision"] is None
+    serialized = json.dumps(saved)
+    for secret in (
+        "SW1A",
+        '"123456"',
+        "246810",
+        '"delivery_postcode"',
+        '"verification_code"',
+    ):
+        assert secret not in serialized
+    ui.cp("J01.verified-order-still-collects-issue-fields")
+
+    provider.script_extract(HIGH, x_high())
+    assert ui.send(HIGH).status == 200
+    expect(ui.review).to_be_visible()
+    expect(ui.log).to_contain_text(review_reply(summary_text(
+        "NS-000123", "damaged_item", "My order arrived broken", "high"
+    )))
+    assert ui.disk(new_sid)["pending_review_revision"] == 8
+    ui.cp("J01.verified-order-review")
+
+    assert ui.confirm().status == 200
+    new_receipt = RECEIPT_TEMPLATE.format(session_id=new_sid)
+    expect(ui.log).to_contain_text(new_receipt)
+    completed = ui.disk(new_sid)
+    assert completed["status"] == "completed"
+    assert completed["slots"]["order_number"] == "NS-000123"
+    assert completed["summary"] == summary_text(
+        "NS-000123", "damaged_item", "My order arrived broken", "high"
+    )
+    serialized = json.dumps(completed)
+    for secret in (
+        "SW1A",
+        '"123456"',
+        "246810",
+        '"delivery_postcode"',
+        '"verification_code"',
+        '"verified_order_number"',
+    ):
+        assert secret not in serialized
+    assert len(provider.calls("extract")) == 12
+    ui.cp("J01.verified-order-confirmed")
+
+    provider.assert_consumed()

@@ -83,7 +83,7 @@ These are defects confirmed by the current HTML/CSS/JavaScript or by a stated cu
 - **Location:** `app/static/index.html:31–37`; `app/static/app.js:968–1070`; `app/static/i18n.js:30–35,62–67`.
 - **Current behavior:** Start/Stop visibility and disabled state change, but no status text or `aria-pressed`/`aria-label` state is exposed. The automatic 60-second cutoff is silent. A denial message is shown in `role="alert"`, but no recovery focus is specified.
 - **Expected behavior:** Start has a stable name; active recording exposes “Recording. Maximum 60 seconds. Stop recording.” and elapsed time where useful; Stop ends the state and announces that a take is ready for transcription. Permission failure says what happened and gives the nearby typed/upload alternatives, with focus on the recovery message or first alternative.
-- **Proposed change:** Use a button state (`aria-pressed` only if it remains a toggle) or separate named buttons plus a `role="status"` recording status; provide a text timer that is not updated every second to a live region; localize all states; add a visible “recorded audio ready” state tied to Transcribe audio. Catch `getUserMedia` failures with actionable copy for permission, unsupported browser, and device-in-use cases.
+- **Implemented behavior:** Keep Start/Stop as named buttons; Stop immediately transcribes the captured PCM WAV, then fills the editable Message draft without sending. While STT is pending, announce “Transcribing audio…” through a localized polite status, make Message readonly and disable every chat control to prevent duplicate actions. Failures show an alert and unlock controls. Catch `getUserMedia` failures with localized recovery copy and keep text/WAV alternatives available.
 - **Test / acceptance assertion:** J06/J07/J10 plus manual screen reader: Start announces recording, Stop announces ready state, auto-stop announces limit, denial leaves Message and WAV controls usable and announces one recovery message. Keyboard can activate both controls.
 - **WCAG:** 1.3.1 Info and Relationships; 4.1.2 Name, Role, Value; 4.1.3 Status Messages; 3.3.3 Error Suggestion.
 
@@ -92,7 +92,7 @@ These are defects confirmed by the current HTML/CSS/JavaScript or by a stated cu
 - **Priority:** high
 - **User impact / journeys:** The real file input is clipped to 1×1 px while the styled `<label>` is not focusable. Keyboard users can encounter an invisible focus target; touch users get a small dashed label, and the selected filename/state is not surfaced. This affects J06/J07 and mobile users who cannot use a microphone.
 - **Location:** `app/static/index.html:35–36`; `app/static/styles.css:108–116,210–229`; `app/static/app.js:1072–1076`.
-- **Current behavior:** `#wav-recording` is visually hidden with clipping. CSS includes a focus selector for the input, but the input cannot present a useful visible outline in that state. The label says only “WAV recording”; no selected file name or accepted-format instruction is shown.
+- **Implemented behavior:** A visible, keyboard-operable paperclip button opens a hidden WAV-only file input. Its localized accessible name is “Attach WAV audio”; selecting the file immediately transcribes it into the draft. The button is disabled while a draft exists or an STT request is pending.
 - **Expected behavior:** Keyboard focus is visibly on a usable upload control; the control says accepted format/size and exposes the selected file name or validation error. The control remains operable at 200% text size and on a narrow viewport.
 - **Proposed change:** Keep the native input in the tab order with a visually hidden technique that preserves a focus proxy, or use a real styled `<label>` with an adjacent status and a visible focus style on the label via `:focus-within`. Add `accept` guidance, filename status, and localized invalid/oversize recovery copy.
 - **Test / acceptance assertion:** Tab through the voice controls at 390×844 and 200% zoom; assert a visible focus indicator, accessible name/description, selected filename, and keyboard activation. Upload invalid, silent, oversized, and valid files; assert one associated actionable error.
@@ -112,11 +112,11 @@ These are defects confirmed by the current HTML/CSS/JavaScript or by a stated cu
 ### F-09 — The page hides horizontal overflow instead of proving content reflows
 
 - **Priority:** medium
-- **User impact / journeys:** `overflow-x: hidden` can conceal clipped content or controls. The hostile long-token J09 check passes at 390 px, but hidden overflow can mask future content, larger text, source titles, or native audio controls. This affects mobile and text-resize users.
+- **User impact / journeys:** `overflow-x: hidden` can conceal clipped content or controls. The hostile long-token J09 check passes at 390 px, but hidden overflow can mask future content, larger text, source titles, or inline speaker controls. This affects mobile and text-resize users.
 - **Location:** `app/static/styles.css:22–35,53–63,80–84,118–123,130–147`; `tests/e2e/test_j09_keyboard_mobile.py:103,114`.
 - **Current behavior:** The document globally hides horizontal overflow. Text uses aggressive `word-break: break-word`; no 320 px, 200% text, or 400% reflow check exists.
 - **Expected behavior:** Content naturally wraps or scrolls within the component that owns overflow; the document does not need to hide a layout defect. At 320 px and 400% equivalent reflow, every action and message remains reachable without two-dimensional scrolling except content that genuinely requires it.
-- **Proposed change:** Remove global `overflow-x:hidden` after fixing offending objects; use `overflow-wrap:anywhere` selectively; give transcript/source bodies local overflow only where needed; test native audio and long labels separately. Add responsive breakpoints based on content, not only `max-width:420px`.
+- **Proposed change:** Remove global `overflow-x:hidden` after fixing offending objects; use `overflow-wrap:anywhere` selectively; give transcript/source bodies local overflow only where needed; test inline speakers and long labels separately. Add responsive breakpoints based on content, not only `max-width:420px`.
 - **Test / acceptance assertion:** Playwright widths 320/390/768/1280 plus browser text zoom/forced font-size; assert `scrollWidth <= clientWidth`, no clipped focus ring, reachable actions, and no two-axis page scrolling. Mark any intentionally scrollable transcript as such and keyboard reachable.
 - **WCAG:** 1.4.10 Reflow; 1.4.4 Resize Text; 2.4.11 Focus Not Obscured.
 
@@ -125,10 +125,10 @@ These are defects confirmed by the current HTML/CSS/JavaScript or by a stated cu
 - **Priority:** medium
 - **User impact / journeys:** Native controls may be exposed inconsistently across browsers and screen readers, especially when several saved replies exist. Users are told “Voice is AI-generated” but not which reply the audio belongs to, whether it is loading, or why playback failed. This affects J06, J07, J09, and J10.
 - **Location:** `app/static/index.html:39–42`; `app/static/app.js:262–287,824–879`; `app/static/playback_labels.js`; `app/static/styles.css:231–245`.
-- **Current behavior:** `<audio controls>` has no `aria-label`, `aria-describedby`, or fallback text. Play buttons are correctly numbered by the existing contract, but the single shared audio element is replaced for each request and its load/play/failure state is silent except a global alert on failure.
-- **Expected behavior:** The audio player has a localized name such as “Reply audio, reply 2” and a description/disclosure. Loading, playing, ended, and unavailable states are exposed without duplicate announcements; a failed play points to the still-available text reply.
-- **Proposed change:** Update the audio accessible name/description from the selected message; add a scoped status; preserve native controls and provide text fallback. Do not make autoplay the only way to start playback; keep Play reply as the keyboard action.
-- **Test / acceptance assertion:** Accessibility Tree sees one named player; with two replies, selecting each updates the name; keyboard Space/Enter on Play reply loads it; simulated TTS failure announces one actionable message and leaves Send/Confirm usable. Verify native controls at mobile width.
+- **Current behavior:** The shared audio element is programmatic and hidden from the accessibility tree; it has no native browser control bar. Each assistant reply has a numbered inline speaker button. Loading/playback state is not announced; TTS failure uses the global alert.
+- **Expected behavior:** Each inline speaker button has a localized accessible name that identifies its reply. Loading and failure status are announced without duplicate messages; failed playback leaves the visible text reply usable.
+- **Proposed change:** Keep the inline speaker action as the sole playback control, add a scoped status for loading/failure, and preserve visible reply text as the fallback. Do not introduce native browser controls or make autoplay the only way to start playback.
+- **Test / acceptance assertion:** Accessibility Tree sees named inline speaker buttons; with two replies their ordinals remain correct; keyboard Space/Enter on Play reply loads it; simulated TTS failure announces one actionable message and leaves Send/Confirm usable. At mobile width verify the browser-native audio bar is absent and inline speaker remains reachable.
 - **WCAG:** 4.1.2 Name, Role, Value; 1.2.2 Captions (if spoken content is intended as prerecorded multimedia, provide an equivalent transcript—the visible reply text is the candidate); 4.1.3 Status Messages.
 
 ### F-11 — Error handling uses a global alert without association, focus policy, or deduplication
@@ -178,7 +178,7 @@ These items are important for a production-ready AA review but are not asserted 
 
 - **Priority:** high if a failure is found; currently unverified
 - **Location:** all `/` states; `styles.css:37–44,186–192,231–240`.
-- **Recommendation:** Use rem-based spacing/type, allow action groups to stack, keep native audio usable, and ensure focus is not clipped by transcript max-height or overflow.
+- **Recommendation:** Use rem-based spacing/type, allow action groups to stack, keep inline audio controls reachable, and ensure focus is not clipped by transcript max-height or overflow.
 - **Test:** Playwright at 320/390 px with 200% text size and 400% equivalent viewport; run J01 review/confirmation, J06 voice, J08 Sources, and J03 error/resume. Assert every primary action is reachable.
 - **WCAG:** 1.4.4; 1.4.10. **Unverified:** existing J09 only checks 390×844 at default sizing.
 
@@ -202,11 +202,11 @@ These items are important for a production-ready AA review but are not asserted 
   - `#new-intake`: **Start a new intake** (or keep “New intake” consistently); description warns that it clears the current draft/view but does not delete the saved session.
   - `#start-recording`: **Start recording**; recording status described separately.
   - `#stop-recording`: **Stop recording**; active recording status described separately.
-  - `#transcribe`: **Transcribe audio**; description says a selected/recorded WAV is required and the result fills Message without sending.
-  - `#wav-recording`: **WAV recording**; description states PCM WAV, maximum size, and selected filename.
+  - `#start-recording` / `#stop-recording`: start or finish one microphone take; Stop starts STT automatically and the returned text fills Message without sending.
+  - `#wav-attach`: localized **Attach WAV audio** paperclip button; it opens `#wav-recording`, which accepts only WAV files and starts STT on selection.
   - language select: **Language** with **English** and **Español** options.
   - each playback button: **Play reply {ordinal}**; if unavailable, disabled name should say why without exposing a UUID.
-  - audio player: **Reply audio, reply {ordinal}** plus AI-generated disclosure.
+  - each inline reply speaker: **Play reply {ordinal}** plus visible AI-generated disclosure; hidden programmatic audio has no native controls and is excluded from the accessibility tree.
   - transcript: **Conversation**; review: **Review details**; Sources: **Sources**; status/error regions have stable names only where needed.
 - **Test:** Use Playwright `get_by_role` plus an Accessibility Tree snapshot; assert every interactive control has exactly one meaningful name and every dynamic description is associated.
 - **WCAG:** 4.1.2; 3.3.2; 1.3.1.
@@ -215,7 +215,7 @@ These items are important for a production-ready AA review but are not asserted 
 
 - **Priority:** high
 - **Acceptance path:**
-  1. Load `/` at 390×844. Tab from the browser document start through heading/Language, Message, Send, Retry when present, Confirm when present, New intake, Start/Stop recording, Transcribe audio, WAV upload, playback, and Sources summaries. There must be no unreachable control, focus trap, or invisible focused target.
+  1. Load `/` at 390×844. Tab from the browser document start through heading/Language, Message, Send, Retry when present, Confirm when present, New intake, WAV attachment, the composer microphone/stop icon, playback, and Sources summaries. There must be no unreachable control, focus trap, or invisible focused target.
   2. Type a message, submit with Enter only where the control contract permits, and verify one status; while pending, verify the draft is not lost.
   3. Trigger a failed resume/turn/STT/TTS/confirmation. Focus lands on the error/recovery target; the message explains what to do; Retry is reachable and does not duplicate the request.
   4. Reach Review, inspect all four facts, activate Confirm with Space/Enter, and verify a named confirmation status and no UUID leakage.

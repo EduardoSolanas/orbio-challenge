@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Portable controlled-provider browser E2E gate (ORB-53).
+"""Portable controlled-provider browser E2E gate.
 
-Runs the real-browser J01-J10 (+ORB27) journeys against the local Uvicorn
+Runs the real-browser J01-J10 (+ confirmation retry) journeys against the local Uvicorn
 fixture with the controlled provider fake. This suite proves the browser
 workflow (JavaScript, HTTP, storage, keyboard, mobile, media, retry, timeout,
 stale-state); it never proves a live provider or a deployed Docker system.

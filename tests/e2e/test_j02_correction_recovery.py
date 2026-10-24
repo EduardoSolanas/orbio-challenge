@@ -34,7 +34,7 @@ pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, ne
 
 HIGH_SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
 LOW_SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "low")
-CONFLICT = conflict_question("NS-000123", "NS-000999", "order number")
+CONFLICT = conflict_question("NS-000123", "NS-000999", "energy account reference")
 
 
 @pytest.mark.parametrize("case_id", [pytest.param("J02", id="J02")])

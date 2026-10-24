@@ -47,12 +47,10 @@ from tests.integration.test_it04_state import (
 )
 
 TURN_LIMIT_MESSAGE = (
-    "This intake has reached its message limit. You can confirm an existing review "
-    "or start a new intake."
+    "This conversation has reached its message limit. You can confirm the current "
+    "details or start a new conversation."
 )
-SESSION_COMPLETED_MESSAGE = (
-    "This intake is complete. Start a new intake to make changes."
-)
+SESSION_COMPLETED_MESSAGE = "This support conversation is complete. Start a new conversation if you need help with another issue."
 NEAR_CAP = 49
 AT_CAP = 50
 PARTIAL_SLOTS = {**FULL_SLOTS, "urgency": None}

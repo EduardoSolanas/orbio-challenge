@@ -31,6 +31,7 @@ def valid_environ():
         "TTS_VOICE": "alloy",
         "SESSION_DIR": SESSION_DIR,
         "PROVIDER_MAX_CONCURRENCY": "4",
+        "ORDER_API_BASE_URL": "http://order-api.test",
     }
 
 
@@ -155,6 +156,17 @@ def test_llm_output_mode_defaults_to_json_schema():
     del environ["LLM_OUTPUT_MODE"]
 
     assert Settings.from_env(environ).llm.output_mode == "json_schema"
+
+
+def test_reasoning_effort_is_optional_and_validated():
+    environ = valid_environ()
+    environ["LLM_REASONING_EFFORT"] = "none"
+
+    assert Settings.from_env(environ).llm.reasoning_effort == "none"
+
+    environ["LLM_REASONING_EFFORT"] = "invalid"
+    with pytest.raises(RuntimeError):
+        Settings.from_env(environ)
 
 
 def test_provider_max_concurrency_defaults_to_four():

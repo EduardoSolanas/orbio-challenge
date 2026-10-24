@@ -6,26 +6,30 @@ services:
       context: .
       dockerfile: docs/deployment/Dockerfile
     extra_hosts:
-      - "${MODEL_HOST_ALIAS:?Set MODEL_HOST_ALIAS in .env}:${MODEL_HOST_GATEWAY:?Set MODEL_HOST_GATEWAY in .env}"
+      - "${MODEL_HOST_ALIAS}:${MODEL_HOST_GATEWAY}"
     env_file:
       - .env
     environment:
       SESSION_DIR: /data/sessions
+      ORDER_API_BASE_URL: http://order-api:8001
+    depends_on:
+      order-api:
+        condition: service_healthy
     command:
       - python
       - -m
       - uvicorn
       - app.main:app
       - --host
-      - "${APP_BIND_HOST:?Set APP_BIND_HOST in .env}"
+      - "${APP_BIND_HOST}"
       - --port
-      - "${APP_PORT:?Set APP_PORT in .env}"
+      - "${APP_PORT}"
       - --workers
       - "1"
       - --timeout-graceful-shutdown
       - "40"
     ports:
-      - "${APP_PUBLISH_HOST:?Set APP_PUBLISH_HOST in .env}:${APP_PUBLISH_PORT:?Set APP_PUBLISH_PORT in .env}:${APP_PORT:?Set APP_PORT in .env}"
+      - "${APP_PUBLISH_HOST}:${APP_PUBLISH_PORT}:${APP_PORT}"
     volumes:
       - sessions:/data
     init: true
@@ -36,5 +40,30 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+  order-api:
+    build:
+      context: .
+      dockerfile: docs/deployment/Dockerfile
+    command:
+      - python
+      - -m
+      - uvicorn
+      - app.order_api:app
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8001"
+      - --workers
+      - "1"
+    # Internal network only: no `ports:` entry, so the browser cannot reach it.
+    expose:
+      - "8001"
+    init: true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=2).close()"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
 volumes:
   sessions:

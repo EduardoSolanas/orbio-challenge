@@ -1,4 +1,4 @@
-"""Tests for scripts/check_mutation_report.py (ORB-15).
+"""Tests for scripts/check_mutation_report.py.
 
 The run-log and results fixtures use the exact line formats printed by the
 installed pinned framework, mutmut 3.8.0:
@@ -288,7 +288,7 @@ def test_help_exits_zero() -> None:
     assert excinfo.value.code == 0
 
 
-# --- commit-safe revision policy (ORB-22) ---------------------------------
+# --- commit-safe revision policy ---------------------------------
 
 
 def git(root: Path, *args: str) -> str:

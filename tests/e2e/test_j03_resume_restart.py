@@ -13,16 +13,20 @@ from tests.support.fakes import (
     ASK_URGENCY,
     CAPABILITY_Q,
     CATEGORY,
+    GREETING_STANDING_CHARGE_Q,
     HIGH,
     PART,
     RECEIPT_TEMPLATE,
     RESUME,
+    STANDING_CHARGE_ANSWER_TEXT,
     UNRELATED,
+    standing_charge_answer,
     summary_text,
     x_capability,
     x_category,
     x_high,
     x_part,
+    x_question,
     x_start_intake,
     x_unrelated,
 )
@@ -37,9 +41,6 @@ def test_j03_resume_restart(case_id, ui, server, provider):
     provider.script_extract(PART, x_part())
     provider.script_extract(CAPABILITY_Q, x_capability())
     provider.script_extract(UNRELATED, x_unrelated())
-    provider.script_extract(RESUME, x_start_intake())
-    provider.script_extract(CATEGORY, x_category())
-    provider.script_extract(HIGH, x_high())
 
     # Partial intake.
     ui.open()
@@ -55,10 +56,10 @@ def test_j03_resume_restart(case_id, ui, server, provider):
     # appends another missing-field prompt while clarification is pending.
     assert ui.send(CAPABILITY_Q).status == 200
     expect(ui.log).to_contain_text(
-        "I can answer Northstar Shop policy questions or help record an order issue."
+        "I can answer questions about Northstar Energy bills, tariffs, meter readings, moving home, and supply issues."
     )
     assert ui.last_assistant(sid)["text"] == (
-        "I can answer Northstar Shop policy questions or help record an order issue."
+        "I can answer questions about Northstar Energy bills, tariffs, meter readings, moving home, and supply issues."
     )
     assert ui.disk(sid)["slots"] == {
         "order_number": "NS-000123",
@@ -68,7 +69,7 @@ def test_j03_resume_restart(case_id, ui, server, provider):
     }
     assert ui.send(UNRELATED).status == 200
     expect(ui.log).to_contain_text(
-        "I can answer Northstar Shop policy questions or help record an order issue."
+        "I can answer questions about Northstar Energy bills, tariffs, meter readings, moving home, and supply issues."
     )
     expect(ui.log).not_to_contain_text(ASK_URGENCY)
     context_before = ui.transcript_text()
@@ -78,6 +79,7 @@ def test_j03_resume_restart(case_id, ui, server, provider):
     # Reload hits one controlled pre-handler 503 on the resume GET.
     fault = server.faults.fail_next("GET", rf"/api/sessions/{sid}$", status=503)
     ui.page.reload()
+    expect(ui.page.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
     expect(ui.button("Retry")).to_be_visible()
     expect(ui.alerts.filter(has_text=re.compile(r"\S")).first).to_be_visible()
     assert fault.triggered == 1
@@ -111,6 +113,7 @@ def test_j03_resume_restart(case_id, ui, server, provider):
     server.restart()
     assert server.base_url == origin
     ui.page.reload()
+    expect(ui.page.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
     expect(ui.log).to_contain_text(ASK_CATEGORY)
     assert ui.transcript_text() == context_before
     assert ui.stored_session_id() == sid
@@ -120,29 +123,51 @@ def test_j03_resume_restart(case_id, ui, server, provider):
     assert provider.methods() == ["extract", "extract", "extract"], "GET after restart must not call the model"
     ui.cp("J03.restart-preserves-history")
 
+    # A FAQ after session restoration answers without replacing the pending
+    # clarification; explicit resume still returns to that exact step.
+    provider.script_extract(GREETING_STANDING_CHARGE_Q, x_question())
+    provider.script_answer(GREETING_STANDING_CHARGE_Q, standing_charge_answer())
+    assert ui.send(GREETING_STANDING_CHARGE_Q).status == 200
+    expect(ui.log).to_contain_text(STANDING_CHARGE_ANSWER_TEXT)
+    assert ui.last_assistant(sid)["citations"][0]["source_id"] == "faq-standing-charge"
+    assert ui.disk(sid)["slots"] == {
+        "order_number": "NS-000123",
+        "category": None,
+        "description": "My order arrived broken",
+        "urgency": None,
+    }
+    assert ui.disk(sid)["revision"] == 4
+    expect(ui.log).not_to_contain_text(ASK_URGENCY)
+
     # Explicit resume follows the pending clarification before new intake work.
+    provider.script_extract(RESUME, x_start_intake())
     assert ui.send(RESUME).status == 200
     expect(ui.log).to_contain_text(ASK_CATEGORY)
     assert ui.last_assistant(sid)["text"] == ASK_CATEGORY
     ui.cp("J03.explicit-resume-pending-clarification")
 
     # Finish through review and confirmation on the restarted server.
+    provider.script_extract(CATEGORY, x_category())
     assert ui.send(CATEGORY).status == 200
     expect(ui.log).to_contain_text(ASK_URGENCY)
+    provider.script_extract(HIGH, x_high())
     assert ui.send(HIGH).status == 200
     expect(ui.review).to_be_visible()
     for line in SUMMARY.split("\n"):
         expect(ui.review).to_contain_text(line)
     saved = ui.disk(sid)
-    assert saved["revision"] == 6 and saved["pending_review_revision"] == 6
+    assert saved["revision"] == 7 and saved["pending_review_revision"] == 7
     assert ui.confirm().status == 200
     expect(ui.log).to_contain_text(RECEIPT_TEMPLATE.format(session_id=sid))
     saved = ui.disk(sid)
-    assert saved["status"] == "completed" and saved["revision"] == 7
-    assert saved["summary"] == SUMMARY and saved["confirmation"]["review_revision"] == 6
+    assert saved["status"] == "completed" and saved["revision"] == 8
+    assert saved["summary"] == SUMMARY and saved["confirmation"]["review_revision"] == 7
     confirms = ui.confirm_posts()
-    assert len(confirms) == 1 and body_of(confirms[0])["review_revision"] == 6
-    assert provider.methods() == ["extract", "extract", "extract", "extract", "extract", "extract"]
+    assert len(confirms) == 1 and body_of(confirms[0])["review_revision"] == 7
+    assert provider.methods() == [
+        "extract", "extract", "extract", "extract", "answer_knowledge",
+        "extract", "extract", "extract",
+    ]
     assert len(ui.requests("GET", SESSION_ITEM)) >= 4
     wait_until(lambda: len(ui.create_posts()) == 1, "no replacement session at any point")
     provider.assert_consumed()

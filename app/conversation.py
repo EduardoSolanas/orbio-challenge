@@ -38,6 +38,8 @@ from app.schemas import (
     Language,
     Message,
     MessageView,
+    OrderVerificationRequest,
+    OrderVerificationResponse,
     ReplayRecord,
     RecentMessage,
     Session,
@@ -55,6 +57,9 @@ from app.validation import (
     normalize_candidate,
     validate_field,
 )
+from app.order_api import OrderRecord
+from app.order_client import OrderApiClient
+from app.verification import VERIFICATION_FAILED, VerificationRegistry
 
 RECENT_MESSAGE_LIMIT = 12
 MAX_COLLECTION_TURNS = 50
@@ -131,7 +136,7 @@ def _find_replay(session: Session, request_id: UUID) -> ReplayRecord | None:
 def transition_frustration(
     previous_active: bool, label: Frustration
 ) -> tuple[bool, bool]:
-    """Return ``(next_active, acknowledge)`` for the committed episode table."""
+    """Return ``(next_active, start_handoff)`` for the episode transition table."""
 
     if label == "present":
         return True, not previous_active
@@ -140,14 +145,9 @@ def transition_frustration(
     return False, False
 
 
-def compose_frustration_reply(
-    base_reply: str, acknowledge: bool, language: Language
-) -> str:
-    """Prefix the localized acknowledgment exactly once, or return the base reply."""
-
-    if not acknowledge:
-        return base_reply
-    return f"{text('frustration_acknowledgment', language)}\n\n{base_reply}"
+def frustration_handoff_reply(language: Language) -> str:
+    """Return the fixed, honest demo-only simulated handoff message."""
+    return text("frustration_handoff", language)
 
 
 def _view(session: Session, speech_languages: frozenset[str]) -> SessionView:
@@ -202,7 +202,10 @@ def _intake_started(session: Session) -> bool:
 
 
 def build_extraction_context(
-    session: Session, current_message: str
+    session: Session,
+    current_message: str,
+    *,
+    verified_order_number: str | None = None,
 ) -> ExtractionContext:
     """Copy the authoritative session state into a detached extraction context.
 
@@ -210,6 +213,10 @@ def build_extraction_context(
     order; the current message is supplied once, outside that list. Every nested
     object is copied so a provider cannot mutate the loaded session by keeping a
     reference (IC §13.4 "Exact model context and window algorithm").
+
+    AUTH-01 exposes only the boolean verification state and the verified order
+    number; postcode, code, email and customer first name never enter the model
+    context.
     """
 
     return ExtractionContext(
@@ -227,6 +234,8 @@ def build_extraction_context(
         intake_started=_intake_started(session),
         reply_language=session.reply_language,
         frustration_active=session.frustration_active,
+        order_verified=verified_order_number is not None,
+        verified_order_number=verified_order_number,
     )
 
 
@@ -280,11 +289,17 @@ class ConversationEngine:
         knowledge_base: KnowledgeBase,
         *,
         speech_languages: frozenset[str] = frozenset({"en"}),
+        customer_data: OrderApiClient | None = None,
+        verification: VerificationRegistry | None = None,
     ) -> None:
         self.repository = repository
         self.provider = provider
         self.knowledge_base = knowledge_base
         self.speech_languages = speech_languages
+        self.customer_data = customer_data
+        self.verification = (
+            verification if verification is not None else VerificationRegistry()
+        )
 
     async def create_session(self) -> SessionView:
         now = _now()
@@ -344,6 +359,8 @@ class ConversationEngine:
                 return replay.response
             if command.expected_revision != session.revision:
                 raise _revision_conflict(session.revision)
+            if session.status == "handed_off":
+                raise app_error("session_handed_off")
             if session.status == "completed":
                 raise app_error("session_completed")
 
@@ -354,7 +371,13 @@ class ConversationEngine:
             try:
                 async with asyncio.timeout(TEXT_TURN_DEADLINE_SECONDS):
                     extraction = await self.provider.extract(
-                        build_extraction_context(session, command.text)
+                        build_extraction_context(
+                            session,
+                            command.text,
+                            verified_order_number=self.verification.grant(
+                                session.session_id
+                            ),
+                        )
                     )
                     reply_language = _reply_language(session, extraction)
                     if extraction.detected_language == "unsupported":
@@ -363,38 +386,53 @@ class ConversationEngine:
                         outcome = _unchanged_outcome(session)
                         plan = _unsupported_plan(session, extraction, reply_language)
                     else:
-                        next_active, acknowledge = transition_frustration(
+                        next_active, start_handoff = transition_frustration(
                             session.frustration_active, extraction.frustration
                         )
-                        outcome = merge_extraction(
-                            session.slots,
-                            session.pending_clarifications,
-                            extraction,
-                            language=reply_language,
-                        )
-                        if at_limit:
-                            review_rejected, recovered_this_turn = _apply_transitions(
-                                session, extraction, outcome
-                            )
-                            if not _is_pure_confirmation(
+                        if start_handoff:
+                            outcome = _unchanged_outcome(session)
+                            plan = _handoff_plan(session, reply_language)
+                        elif extraction.intent == "order_lookup":
+                            # Lookup-only turns never start intake, accept slots or
+                            # reach the customer-data API without a matching grant.
+                            if at_limit:
+                                raise app_error("turn_limit")
+                            outcome = _unchanged_outcome(session)
+                            plan = await self._plan_order_lookup(
                                 session,
                                 extraction,
+                                reply_language,
+                                next_active=next_active,
+                            )
+                        else:
+                            outcome = merge_extraction(
+                                session.slots,
+                                session.pending_clarifications,
+                                extraction,
+                                language=reply_language,
+                            )
+                            if at_limit:
+                                review_rejected, recovered_this_turn = _apply_transitions(
+                                    session, extraction, outcome
+                                )
+                                if not _is_pure_confirmation(
+                                    session,
+                                    extraction,
+                                    outcome,
+                                    review_rejected=review_rejected,
+                                    recovered_this_turn=recovered_this_turn,
+                                    current_review_valid=_current_review_valid(session),
+                                ):
+                                    raise app_error("turn_limit")
+                            plan = await self._plan_turn(
+                                session,
+                                command,
+                                extraction,
                                 outcome,
-                                review_rejected=review_rejected,
-                                recovered_this_turn=recovered_this_turn,
-                                current_review_valid=_current_review_valid(session),
-                            ):
-                                raise app_error("turn_limit")
-                        plan = await self._plan_turn(
-                            session,
-                            command,
-                            extraction,
-                            outcome,
-                            reply_language,
-                            session.revision + 1,
-                            next_active=next_active,
-                            acknowledge=acknowledge,
-                        )
+                                reply_language,
+                                session.revision + 1,
+                                next_active=next_active,
+                            )
             except TimeoutError:
                 raise app_error("provider_timeout") from None
             return await self._commit_turn(session, command, extraction, outcome, plan)
@@ -423,6 +461,8 @@ class ConversationEngine:
                 return replay.response
             if command.expected_revision != session.revision:
                 raise _revision_conflict(session.revision)
+            if session.status == "handed_off":
+                raise app_error("session_handed_off")
             if session.status == "completed":
                 raise app_error("session_completed")
             if session.pending_review_revision is None:
@@ -500,6 +540,120 @@ class ConversationEngine:
             await self.repository.save(committed)
             return response
 
+    async def verify_order(
+        self, session_id: UUID, command: OrderVerificationRequest
+    ) -> OrderVerificationResponse:
+        """Verify the pending/order-slot order without touching session JSON."""
+
+        async with self.repository.locked(session_id):
+            session = await self.repository.load(session_id)
+            if session.status == "handed_off":
+                raise app_error("session_handed_off")
+            if session.status == "completed":
+                raise app_error("session_completed")
+            if self.verification.locked_out(session_id):
+                raise app_error("too_many_verification_attempts")
+            order_number = self.verification.pending_order(
+                session_id
+            ) or session.slots.order_number
+            if order_number is None or self.customer_data is None:
+                self.verification.record_failure(session_id)
+                return OrderVerificationResponse(
+                    verified=False, error=VERIFICATION_FAILED
+                )
+            result = await self.customer_data.verify_order(
+                order_number,
+                command.delivery_postcode,
+                command.verification_code,
+            )
+            if result.verified:
+                self.verification.record_success(session_id, order_number)
+            else:
+                self.verification.record_failure(session_id)
+            return OrderVerificationResponse(
+                verified=result.verified, error=result.error
+            )
+
+    async def _plan_order_lookup(
+        self,
+        session: Session,
+        extraction: Extraction,
+        reply_language: Language,
+        *,
+        next_active: bool,
+    ) -> "TurnPlan":
+        """Answer a lookup-only turn without intake, RAG or premature lookup.
+
+        The customer-data API is reached only when the session holds an
+        unexpired grant for this exact order and the model proposes the single
+        allowlisted tool. Any other combination asks for verification or for the
+        order number, revealing nothing about which detail matched.
+        """
+
+        session_id = session.session_id
+        order_number = self._lookup_order_number(session, extraction)
+        required = False
+        if extraction.candidates.order_number is not None and order_number is None:
+            reply = text("intake.invalid_order", reply_language)
+        elif order_number is None:
+            reply = text("auth.order_number_prompt", reply_language)
+        else:
+            if self.verification.grant(session_id) != order_number:
+                self.verification.set_pending_order(session_id, order_number)
+                reply = text("auth.verification_prompt", reply_language)
+                required = True
+            elif extraction.tool_request is not None:
+                order = await self.customer_data.lookup_order(order_number)
+                if order is None:
+                    self.verification.clear(session_id)
+                    reply = text("auth.verification_failed", reply_language)
+                else:
+                    reply = self._order_summary(order, reply_language)
+            else:
+                reply = text("auth.verified", reply_language)
+
+        return TurnPlan(
+            reply=reply,
+            status=session.status,
+            summary=session.summary,
+            review_revision=session.pending_review_revision,
+            citations=(),
+            completed=False,
+            review_rejected=session.review_rejected,
+            language=reply_language,
+            frustration_active=next_active,
+            order_verification_required=required,
+        )
+
+    def _lookup_order_number(
+        self, session: Session, extraction: Extraction
+    ) -> str | None:
+        """Validated order for this lookup: new candidate, pending, or slot."""
+
+        candidate = extraction.candidates.order_number
+        if candidate is not None:
+            normalized = normalize_candidate("order_number", candidate)
+            if normalized is not None and validate_field("order_number", normalized):
+                return normalized
+            return None
+        return self.verification.pending_order(
+            session.session_id
+        ) or session.slots.order_number
+
+    def _order_summary(self, order: OrderRecord, language: Language) -> str:
+        """Render the allowlisted fixture fields with no extra customer data."""
+
+        return render(
+            "auth.order_result",
+            language,
+            {
+                "order_number": order.order_number,
+                "first_name": order.first_name,
+                "item_names": ", ".join(order.item_names),
+                "status": text(f"auth.status_{order.status}", language),
+            },
+        )
+
     async def _plan_turn(
         self,
         session: Session,
@@ -510,7 +664,6 @@ class ConversationEngine:
         new_revision: int,
         *,
         next_active: bool,
-        acknowledge: bool,
     ) -> "TurnPlan":
         pending = outcome.pending_clarifications
         review_rejected, recovered_this_turn = _apply_transitions(
@@ -549,7 +702,12 @@ class ConversationEngine:
             else:
                 reply = text("no_review_to_reject", reply_language)
         elif pure_social:
-            reply = text("social_acknowledgment", reply_language)
+            reply = text(
+                "gratitude_acknowledgment"
+                if extraction.intent == "gratitude"
+                else "social_acknowledgment",
+                reply_language,
+            )
         elif pure_capability:
             reply = text("capability_reply", reply_language)
         elif pure_question:
@@ -613,7 +771,11 @@ class ConversationEngine:
         if extraction.has_question and intake_directed:
             reply = f"{reply} {text('policy_question_suffix', reply_language)}"
 
-        reply = compose_frustration_reply(reply, acknowledge, reply_language)
+        pending_order = self.verification.pending_order(session.session_id)
+        verification_required = (
+            pending_order is not None
+            and self.verification.grant(session.session_id) != pending_order
+        )
 
         return TurnPlan(
             reply=reply,
@@ -625,6 +787,7 @@ class ConversationEngine:
             review_rejected=review_rejected,
             language=reply_language,
             frustration_active=next_active,
+            order_verification_required=verification_required,
         )
 
     async def _answer_policy_question(
@@ -707,7 +870,16 @@ class ConversationEngine:
             pending_review_revision=plan.review_revision,
             summary=plan.summary,
             citations=list(plan.citations),
+            order_verification_required=plan.order_verification_required,
         )
+        if session.slots.order_number != outcome.slots.order_number:
+            # An accepted order change invalidates any grant for the old order;
+            # the failure count survives so a lockout cannot be reset this way.
+            # Accepting the already verified order into intake keeps its grant.
+            if self.verification.grant(session.session_id) != (
+                outcome.slots.order_number
+            ):
+                self.verification.clear_grant(session.session_id)
         committed = session.model_copy(deep=True)
         committed.revision = new_revision
         committed.updated_at = now
@@ -736,6 +908,8 @@ class ConversationEngine:
             ),
         ]
         await self.repository.save(committed)
+        if plan.status == "handed_off":
+            self.verification.clear(session.session_id)
         return response
 
 
@@ -752,6 +926,22 @@ class TurnPlan:
     review_rejected: bool
     language: Language
     frustration_active: bool
+    order_verification_required: bool = False
+
+
+def _handoff_plan(session: Session, language: Language) -> TurnPlan:
+    return TurnPlan(
+        reply=frustration_handoff_reply(language),
+        status="handed_off",
+        summary=session.summary,
+        review_revision=session.pending_review_revision,
+        citations=(),
+        completed=False,
+        review_rejected=session.review_rejected,
+        language=language,
+        frustration_active=True,
+        order_verification_required=False,
+    )
 
 
 def _unsupported_plan(
@@ -791,7 +981,7 @@ def _has_facts(extraction: Extraction) -> bool:
 
 
 def _is_pure_social(extraction: Extraction) -> bool:
-    return extraction.intent == "social" and not _has_facts(extraction)
+    return extraction.intent in {"social", "gratitude"} and not _has_facts(extraction)
 
 
 def _is_language_only(extraction: Extraction) -> bool:

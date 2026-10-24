@@ -252,7 +252,7 @@ class LocalProviderServer:
                         self.wfile.flush()
                         record.bytes_written = len(spec.body)
                     record.outcome = COMPLETED
-                except (BrokenPipeError, ConnectionResetError):
+                except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
                     record.outcome = ABORTED
                     self.close_connection = True
 
@@ -296,6 +296,7 @@ def build_settings(
         "TTS_VOICE": "test-voice",
         "SESSION_DIR": str(session_dir),
         "PROVIDER_MAX_CONCURRENCY": "4",
+        "ORDER_API_BASE_URL": "http://order-api.test",
     }
     values.update(overrides)
     return Settings.from_env(values)

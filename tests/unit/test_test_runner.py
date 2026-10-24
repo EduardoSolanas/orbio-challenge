@@ -1,4 +1,4 @@
-"""Unit tests for the portable test runner (ORB-54).
+"""Unit tests for the portable test runner.
 
 ``scripts/test.py`` is loaded by path so the tests exercise the real module
 without adding ``scripts/`` to ``sys.path``. Process execution is the external
@@ -81,7 +81,7 @@ def _docker_env() -> dict[str, str]:
         "E2E_JUDGE_TIMEOUT_SECONDS": "30",
         "E2E_JUDGE_MAX_TOKENS": "256",
         "E2E_JUDGE_TEMPERATURE": "0",
-        "E2E_JUDGE_PROMPT_VERSION": "orb-36-intent-judge-v1",
+        "E2E_JUDGE_PROMPT_VERSION": "intent-judge-v1",
     }
 
 
@@ -134,8 +134,9 @@ def test_parse_rejects_unknown_option_before_separator():
 # --------------------------------------------------------------------------- #
 
 
-def test_repo_root_is_the_parent_of_the_scripts_directory():
-    assert runner.repo_root(Path("/tmp/checkout/scripts/test.py")) == Path("/tmp/checkout")
+def test_repo_root_is_the_parent_of_the_scripts_directory(tmp_path):
+    script = tmp_path / "checkout" / "scripts" / "test.py"
+    assert runner.repo_root(script) == script.parent.parent.resolve()
 
 
 def test_help_lists_every_layer_with_scope_and_limits():

@@ -14,14 +14,13 @@ from tests.support.fakes import (
     ASK_CATEGORY,
     ASK_URGENCY,
     CATEGORY,
-    GREETING_RETURN_Q,
+    GREETING_STANDING_CHARGE_Q,
     HIGH,
     PART,
     PAYMENT_Q,
     RECEIPT_TEMPLATE,
-    RETURN_ANSWER_TEXT,
-    RETURN_Q,
-    return_answer,
+    STANDING_CHARGE_ANSWER_TEXT,
+    standing_charge_answer,
     summary_text,
     x_category,
     x_high,
@@ -36,38 +35,40 @@ KNOWLEDGE = json.loads(
         encoding="utf-8"
     )
 )
-RETURNS = next(record for record in KNOWLEDGE["records"] if record["id"] == "faq-returns")
+STANDING_CHARGE = next(
+    record for record in KNOWLEDGE["records"] if record["id"] == "faq-standing-charge"
+)
 KB_VERSION = KNOWLEDGE["version"]
 SNAPSHOT = {
-    "source_id": "faq-returns",
-    "title": RETURNS["title"],
-    "excerpt": RETURNS["body"],
+    "source_id": "faq-standing-charge",
+    "title": STANDING_CHARGE["title"],
+    "excerpt": STANDING_CHARGE["body"],
     "kb_version": KB_VERSION,
 }
 SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
 
 
 def assert_sources_open(region) -> None:
-    """Open the Sources details and check the exact faq-returns snapshot is shown."""
+    """Open Sources and check the exact energy FAQ snapshot is shown."""
 
     region.locator("summary").first.click()
     expect(region.locator("details").first).to_have_js_property("open", True)
-    expect(region).to_contain_text(RETURNS["title"])
-    expect(region).to_contain_text("faq-returns")
-    expect(region).to_contain_text(RETURNS["body"])
+    expect(region).to_contain_text(STANDING_CHARGE["title"])
+    expect(region).to_contain_text("faq-standing-charge")
+    expect(region).to_contain_text(STANDING_CHARGE["body"])
     expect(region).to_contain_text(f"Knowledge base version: {KB_VERSION}")
 
 
 @pytest.mark.parametrize("case_id", [pytest.param("J08", id="J08")])
 def test_j08_rag_questions(case_id, ui, server, provider):
     provider.script_extract(PART, x_part())
-    provider.script_extract(GREETING_RETURN_Q, x_question())
-    provider.script_answer(GREETING_RETURN_Q, return_answer())
+    provider.script_extract(GREETING_STANDING_CHARGE_Q, x_question())
+    provider.script_answer(GREETING_STANDING_CHARGE_Q, standing_charge_answer())
     provider.script_extract(PAYMENT_Q, x_question())
     provider.script_extract(CATEGORY, x_category())
     provider.script_extract(HIGH, x_high())
-    provider.script_extract(RETURN_Q, x_question())
-    provider.script_answer(RETURN_Q, return_answer())
+    provider.script_extract(GREETING_STANDING_CHARGE_Q, x_question())
+    provider.script_answer(GREETING_STANDING_CHARGE_Q, standing_charge_answer())
 
     ui.open()
     ui.expect_greeting()
@@ -79,20 +80,20 @@ def test_j08_rag_questions(case_id, ui, server, provider):
     ui.cp("J08.partial-intake")
 
     # A greeting plus policy question follows the policy route, not social or intake.
-    assert ui.send(GREETING_RETURN_Q).status == 200
-    expect(ui.log).to_contain_text(RETURN_ANSWER_TEXT)
+    assert ui.send(GREETING_STANDING_CHARGE_Q).status == 200
+    expect(ui.log).to_contain_text("fixed daily amount")
     sources = ui.log.get_by_role("region", name="Sources")
     expect(sources).to_have_count(1)
     assert_sources_open(sources.first)
     saved = ui.disk(sid)
     reply = ui.last_assistant(sid)
-    assert reply["text"] == RETURN_ANSWER_TEXT
+    assert reply["text"] == STANDING_CHARGE_ANSWER_TEXT
     assert reply["citations"] == [SNAPSHOT]
     assert saved["revision"] == 2 and saved["collection_turn_count"] == 2
     assert saved["slots"] == partial["slots"] and saved["pending_review_revision"] is None
     answer_call = provider.calls("answer_knowledge")[0]["context"]
-    assert answer_call["question"] == GREETING_RETURN_Q and answer_call["kb_version"] == KB_VERSION
-    assert answer_call["sources"] == [RETURNS]
+    assert answer_call["question"] == GREETING_STANDING_CHARGE_Q and answer_call["kb_version"] == KB_VERSION
+    assert answer_call["sources"] == [STANDING_CHARGE]
     ui.cp("J08.return-answer-cited-sources")
 
     # PAYMENT_Q: deterministic safe abstention only; no missing-field prompt or generation.
@@ -117,15 +118,15 @@ def test_j08_rag_questions(case_id, ui, server, provider):
     assert saved["summary"] == SUMMARY
     ui.cp("J08.intake-finished-review")
 
-    # RETURN_Q at a valid review: revision advances, token/summary/slots preserved.
+    # A policy question at a valid review preserves the token and summary.
     review_slots = saved["slots"]
-    assert ui.send(RETURN_Q).status == 200
+    assert ui.send(GREETING_STANDING_CHARGE_Q).status == 200
     expect(sources).to_have_count(2)
     expect(ui.review).to_be_visible()
     expect(ui.enabled_button("Confirm details")).to_have_count(1)
     saved = ui.disk(sid)
     reply = ui.last_assistant(sid)
-    assert reply["text"] == RETURN_ANSWER_TEXT
+    assert reply["text"] == STANDING_CHARGE_ANSWER_TEXT
     assert reply["citations"] == [SNAPSHOT]
     assert saved["revision"] == 6 and saved["status"] == "awaiting_confirmation"
     assert saved["pending_review_revision"] == 5 and saved["summary"] == SUMMARY
@@ -153,6 +154,7 @@ def test_j08_rag_questions(case_id, ui, server, provider):
     # Reload: saved Sources restore from the stored snapshots, with no new model call.
     gets_before = len(ui.session_gets())
     ui.page.reload()
+    expect(ui.page.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
     expect(ui.log).to_contain_text(receipt)
     restored = ui.log.get_by_role("region", name="Sources")
     expect(restored).to_have_count(2)

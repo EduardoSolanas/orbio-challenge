@@ -142,7 +142,7 @@ async def case_it11_06(settings, provider, session_dir, tmp_path):
         knowledge_base = app.state.knowledge_base
         assert knowledge_base.version == SEED["version"]
         assert [record.model_dump() for record in knowledge_base.records] == SEED["records"]
-        assert len(knowledge_base.records) == 4
+        assert len(knowledge_base.records) == len(SEED["records"])
         # Startup and health never probe the AI service.
         assert provider.calls == []
 
