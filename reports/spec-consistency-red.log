@@ -1,0 +1,12 @@
+FAIL compose: services are ['app']
+FAIL dockerfile: Dockerfile must ship the order_api package
+FAIL env-example: ORDER_API_URL missing from .env.example
+FAIL implementation-contract: POST /internal/v1/order-verifications missing from implementation contract
+FAIL test-matrix: IT15 Order API group missing
+FAIL testing-contract: testing contract must state 199 integration cases
+FAIL startup: startup contract must describe the Order API service
+FAIL build-spec: R14 private Order API requirement missing
+FAIL architecture: architecture diagram lacks an Order API node
+FAIL no-single-service-claims: single-service claims remain in ['startup.md', 'provider-compatibility.md', 'architecture.html']
+
+0/10 checks passed

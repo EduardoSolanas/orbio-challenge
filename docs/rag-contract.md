@@ -24,7 +24,7 @@ Files:
 | `app/static/app.js` | Render cited source details beside the saved answer; restore them on resume |
 | `tests/` | Unit/integration/Playwright/fake-provider/live/mutation additions defined below |
 
-Engine constructor becomes `ConversationEngine(repository, provider, knowledge_base)`. KB path is fixed relative to package: `Path(__file__).parent / "knowledge" / "northstar-faq.json"`; no user path or external upload. Operator edits are Git-reviewed changes; restart/rebuild to apply. Tests inject temporary immutable KB objects. Startup fails nonzero with exact message `knowledge_invalid: The bundled knowledge base is missing or invalid.` for missing/corrupt/empty/unsupported KB. There is no silently disabled RAG mode. Health confirms the immutable KB loaded, without model calls or re-reading files on every probe.
+Engine constructor becomes `ConversationEngine(repository, provider, knowledge_base, order_api)`. KB path is fixed relative to package: `Path(__file__).parent / "knowledge" / "northstar-faq.json"`; no user path or external upload. Operator edits are Git-reviewed changes; restart/rebuild to apply. Tests inject temporary immutable KB objects. Startup fails nonzero with exact message `knowledge_invalid: The bundled knowledge base is missing or invalid.` for missing/corrupt/empty/unsupported KB. There is no silently disabled RAG mode. Health confirms the immutable KB loaded, without model calls or re-reading files on every probe.
 
 ## 2. Exact seed corpus
 

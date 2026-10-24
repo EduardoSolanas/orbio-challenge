@@ -1,0 +1,12 @@
+PASS compose
+PASS dockerfile
+PASS env-example
+PASS implementation-contract
+PASS test-matrix
+PASS testing-contract
+PASS startup
+PASS build-spec
+PASS architecture
+PASS no-single-service-claims
+
+10/10 checks passed

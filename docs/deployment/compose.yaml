@@ -1,4 +1,6 @@
-# Proposed runtime contract: requires the application and requirements.txt to be implemented.
+# Proposed runtime contract: requires app/, order_api/ and requirements.txt to be implemented.
+# Two services: the browser-facing gateway publishes 127.0.0.1:8000 only; the private
+# Order API has no host port and is reachable only on the internal Compose network.
 name: northstar-demo
 services:
   app:
@@ -10,10 +12,18 @@ services:
     environment:
       SESSION_DIR: /data/sessions
       PROVIDER_MAX_CONCURRENCY: "4"
+      ORDER_API_URL: http://order-api:8001
+      ORDER_API_TOKEN: ${ORDER_API_TOKEN:?ORDER_API_TOKEN must be set in docs/deployment/.env}
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
       - sessions:/data
+    depends_on:
+      order-api:
+        condition: service_healthy
+    networks:
+      - default
+      - internal
     init: true
     stop_grace_period: 45s
     healthcheck:
@@ -22,5 +32,29 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+  order-api:
+    build:
+      context: ../..
+      dockerfile: docs/deployment/Dockerfile
+    command: ["python", "-m", "uvicorn", "order_api.main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1", "--timeout-graceful-shutdown", "10"]
+    env_file:
+      - .env
+    environment:
+      ORDER_API_TOKEN: ${ORDER_API_TOKEN:?ORDER_API_TOKEN must be set in docs/deployment/.env}
+      ORDER_API_CATALOG_PATH: /app/order_api/data/orders.json
+      ORDER_API_GRANT_TTL_SECONDS: "300"
+    networks:
+      - internal
+    init: true
+    stop_grace_period: 10s
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=2).close()"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
 volumes:
   sessions:
+networks:
+  internal:
+    internal: true

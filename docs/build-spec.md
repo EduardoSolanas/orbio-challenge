@@ -29,6 +29,7 @@ Requirement labels below distinguish **R** (explicit assignment requirement), **
 | R10 | Git source and README | Source, tests, configuration example, setup, architecture, decisions, improvements | Delivery checklist |
 | R11 | Demo video URL | Record sample conversations and put accessible video URL in README | Delivery checklist |
 | R12 | 4–6 hours expected for core | Timeboxed single-process build; defer bonuses | Build plan |
+| R14 | Private Order API boundary (user-added) | Gateway verifies order numbers and performs grant-bound lookups through a separate private service; the browser cannot reach it | AT20; IT15; J01/J11 |
 
 R9 wording is ambiguous about the depth of voice support. This plan conservatively includes upload transcription and reply playback, and, by user decision, in-page microphone capture encoded to WAV in the browser. Streaming, interruption, telephony, and live duplex audio are out of scope.
 
@@ -38,9 +39,9 @@ R9 wording is ambiguous about the depth of voice support. This plan conservative
 
 Opening: “I can help record an issue for Northstar Shop. What is your order number and what happened? Please do not share payment details.”
 
-The user may answer fields in any order, supply several at once, correct earlier answers, or ask what the bot can do. The bot asks only for missing or invalid information, normally one question per reply. It may acknowledge frustration without implementing a separate sentiment model. It explains it records an intake and cannot verify order existence or perform business actions.
+The user may answer fields in any order, supply several at once, correct earlier answers, or ask what the bot can do. The bot asks only for missing or invalid information, normally one question per reply. It may acknowledge frustration without implementing a separate sentiment model. It explains it records an intake, verifies the order number against the local fictional order catalogue through the private Order API, and cannot issue refunds, change an order or contact a real support team.
 
-When all fields are valid, display a structured review and ask the customer to confirm or correct it. Saving a confirmed intake returns a local reference and summary. “Submitted” means saved locally, never sent to a real queue. No account, email address, name, address, authentication flow, real order integration, external ticket creation, or multilingual behavior is required.
+When all fields are valid, display a structured review and ask the customer to confirm or correct it. Saving a confirmed intake returns a local reference and summary. “Submitted” means saved locally, never sent to a real queue. No account, email address, name, address, authentication flow, real retailer order integration (the private Order API serves only a fictional local catalogue), external ticket creation, or multilingual behavior is required.
 
 ## 3. Architecture and module boundaries
 
@@ -51,23 +52,33 @@ Suggested tree:
 ```text
 app/
   main.py                 # routes, request limits, dependency wiring
+  order_client.py         # gateway → private Order API client (verify + grant lookup)
   schemas.py              # public requests, session and extraction schemas
   conversation.py         # transitions, merge policy, next question, confirmation
   validation.py           # deterministic normalization and field rules
   providers.py            # extraction, transcription and synthesis adapters
   storage.py              # atomic JSON persistence, per-session locks
   static/index.html       # minimal chat and audio interface
+order_api/
+  main.py                 # private service: /health + /internal/v1 endpoints
+  catalog.py              # immutable fictional order catalogue
+  grants.py               # in-memory verification grants (TTL)
+  schemas.py              # strict internal request/response models
+  config.py               # shared token, catalogue path, grant TTL
+  data/orders.json        # fictional demo orders
 tests/
-  test_conversation.py
-  test_api.py
-  test_storage.py
-  test_voice.py
+  unit/
+  integration/
+  e2e/
+  live/
 data/sessions/            # ignored by Git
 .env.example
 README.md
 ```
 
 The model extracts candidate facts and identifies intent. Application code owns accepted state, validation, question selection, persistence, and completion. Customer text and model output cannot invoke arbitrary tools or change system rules. No autonomous business-action tools are exposed.
+
+Two deployable services: the browser-facing gateway (`app/`) and the private Order API (`order_api/`). The gateway is the only client of the Order API; the private service holds no session state, receives no customer text, and is not reachable from the browser.
 
 Service profiles are independently configurable for extraction (LLM), grounded answers (RAG), STT and TTS. Exact settings and HTTP protocols are in provider-compatibility.md. RAG can inherit the complete LLM profile or specify its own complete profile. Local HTTP/no-auth and external HTTPS/bearer services are allowed. Use the selected model IDs and justify them with compatibility/quality evidence; do not assume a universal hosted provider, model allowlist or global API key. Deterministic tests require no real credentials.
 
@@ -123,7 +134,7 @@ States: `collecting`, `awaiting_confirmation`, `completed`. A provider or persis
 2. Return the original response for an identical committed request ID and input digest. Reject reuse with different input as conflict. Check this before revision comparison so retries remain valid.
 3. Reject a stale expected revision with 409 and current revision. The client refreshes; do not silently replay text against changed state.
 4. For normal text turns, call the extractor with current accepted slots and bounded transcript context. Parse against a strict schema. Treat all input/transcript content as data.
-5. Validate candidate fields individually. Preserve accepted values when a new candidate is invalid. Accept explicit corrections; retain unrelated slots. If a new value contradicts an old value without clear correction intent, ask which value is intended before replacing it.
+5. Validate candidate fields individually. Preserve accepted values when a new candidate is invalid. Accept explicit corrections; retain unrelated slots. If a new value contradicts an old value without clear correction intent, ask which value is intended before replacing it. A format-valid order number is verified against the private Order API (verification call plus grant-bound lookup) before it can fill or replace the slot; a well-formed unknown order records a `not_found` clarification and never becomes an accepted value.
 6. Persist invalid-field issues and unresolved contradictions in `pending_clarifications`, keyed by field, including the candidate and clarification question. Clear an issue only when the customer explicitly resolves it with a valid value or explicitly retains the old value. While any issue remains, clear `pending_review_revision`, stay in `collecting`, and reject confirmation. If an invalid field or unresolved contradiction is present, ask to resolve that issue before moving to the next missing field. Ask missing fields in order: order number, category, description, urgency. Never discard valid sibling fields from a successfully parsed extraction because another field fails business validation. A malformed whole extraction commits nothing.
 7. After the rejection/recovery transition in implementation-contract section 5, once all slots are valid, `pending_clarifications` is empty and review_rejected=false, enter `awaiting_confirmation`, build the summary, and bind the review to the resulting revision. Corrections regenerate the review and invalidate prior confirmation. `pending_review_revision` is exactly the revision of the latest emitted structured review. Unrelated questions preserve that review token but increment the session revision. Confirmation requires both `expected_revision == session.revision` and `review_revision == pending_review_revision`; a non-null token and no pending clarification are mandatory.
 8. Confirmation via a dedicated UI action submits the displayed review revision. A turn that recovers a rejected review may not complete; it requires a fresh review and a later confirmation. Natural-language confirmation is also accepted only when the model classifies unambiguous confirmation with no field changes or questions, review_rejected=false, recovered_this_turn=false and the current review is still valid. “Yes, but change urgency to high” edits and asks for fresh confirmation. “No” asks what should change and leaves the intake unconfirmed.
@@ -164,7 +175,9 @@ All responses are JSON except the static page and audio. Session IDs must be val
 | `POST /api/sessions/{id}/speech` | `{message_id: UUID}` for an existing assistant message | 200: audio bytes with correct media type; no arbitrary speech text |
 | `GET /health` | None | 200: service status, no secrets; no paid call |
 
-404: unknown session/message. 409: revision conflict, mismatched request replay, stale review, completed session. 413: upload/text too large. 415: unsupported audio format. 422: invalid request or empty/silent transcription. 429: in-process provider concurrency capacity exceeded. 502: invalid provider response. 503: provider unavailable/configuration or storage unavailable. 504: deadline exceeded. Business-field validation issues use a normal conversational 200 response and do not become HTTP errors.
+404: unknown session/message. 409: revision conflict, mismatched request replay, stale review, completed session. 413: upload/text too large. 415: unsupported audio format. 422: invalid request or empty/silent transcription. 429: in-process provider concurrency capacity exceeded. 502: invalid provider response. 503: provider unavailable/configuration or storage unavailable. 504: deadline exceeded. Business-field validation issues use a normal conversational 200 response and do not become HTTP errors. Private-boundary failures add 502 `invalid_order_api_response`, 503 `order_api_unavailable|order_api_configuration` and 504 `order_api_timeout`, all without committing the turn.
+
+The private Order API serves `POST /internal/v1/order-verifications`, `GET /internal/v1/orders/{order_number}` and `GET /health` on the internal Compose network only, with a shared `X-Order-Api-Token` and a grant-bound `X-Verification-Grant` for order lookup. It publishes no host port, and the gateway exposes no `/internal/*` route, so it is not reachable from the browser; those paths on the gateway return 404. Exact request/response shapes and error codes are in implementation-contract.md section 7.
 
 ## 8. Voice behavior
 
@@ -204,6 +217,7 @@ Unit/domain and Playwright tests use a fake AIProvider; adapter integration test
 | AT14 | TTS success and failure → playable output or graceful text fallback, no duplicate turn or changed state |
 | AT15 | “Yes, but change urgency”; “No”; unrelated question at review → no premature completion |
 | AT16 | Corrupt saved file; traversal-like ID; customer HTML → controlled failure, no arbitrary read/write, content rendered as text |
+| AT20 | Catalogue order verified through the private API before acceptance; well-formed unknown order → `not_found` clarification with no slot change; Order API outage/timeout → retryable safe error with no committed turn and successful recovery; browser and host cannot reach the private API |
 
 Live smoke: complete a real model interview, test one correction, upload a short recording, play one reply, restart/resume, inspect resulting JSON, and record latency observations without presenting them as load benchmarks. This demonstrates integration; mocked tests alone do not.
 
@@ -239,9 +253,9 @@ RAG is now mandatory under [rag-contract.md](rag-contract.md), with requirement 
 
 See [startup.md](startup.md) for prerequisites, configuration, Compose and local-development commands, runtime dependencies, and startup acceptance checks. See [architecture.html](architecture.html) for the interactive component and request-flow diagram.
 
-Deploy the core as one Compose `app` service with exactly one Uvicorn worker, host loopback port 8000, and a named `sessions` volume mounted at `/data`. The app binds `0.0.0.0` inside the container; Compose restricts the published host port to `127.0.0.1`. FastAPI serves the static UI and API together. External extraction, transcription and speech are provider capabilities, not local containers. Deployment templates live in `docs/deployment/`; they require the future `app/`, pinned `requirements.txt`, and `requirements-dev.txt` before build/test commands can succeed.
+Deploy the core as **two Compose services**: the `app` gateway (one Uvicorn worker, host loopback port 8000, named `sessions` volume mounted at `/data`) and the private `order-api` service (one Uvicorn worker on port 8001, no published host port, `internal: true` network only). The gateway joins the internal network, waits for `order-api` to report healthy, and binds `0.0.0.0` inside its container while Compose restricts the published host port to `127.0.0.1`. FastAPI serves the static UI and API together on the gateway. External extraction, transcription and speech are provider capabilities, not local containers. Deployment templates live in `docs/deployment/`; they require the future `app/`, `order_api/`, pinned `requirements.txt`, and `requirements-dev.txt` before build/test commands can succeed.
 
-The configuration contract adds `AI_PROVIDER=openai_compatible`, complete per-role BASE_URL/MODEL/AUTH_MODE/API_KEY profiles, text OUTPUT_MODE, TTS_VOICE, SESSION_DIR and PROVIDER_MAX_CONCURRENCY. Startup must validate required configuration and writable storage without making a paid request. `/health` checks process/storage availability and cannot certify provider access. Non-root container operation, persistent restart/resume, and live text/voice smoke checks are delivery gates. The builder/verifier roles are development supervision, not runtime services.
+The configuration contract adds `AI_PROVIDER=openai_compatible`, complete per-role BASE_URL/MODEL/AUTH_MODE/API_KEY profiles, text OUTPUT_MODE, TTS_VOICE, SESSION_DIR, PROVIDER_MAX_CONCURRENCY, and the private boundary's ORDER_API_URL, ORDER_API_TOKEN, ORDER_API_TIMEOUT_SECONDS, ORDER_API_CATALOG_PATH and ORDER_API_GRANT_TTL_SECONDS. Startup must validate required configuration and writable storage without making a paid request; the Order API validates its token and catalogue before readiness. `/health` checks process/storage (gateway) or catalogue (Order API) and a bounded gateway→Order API probe, and cannot certify provider access. Non-root container operation, persistent restart/resume, and live text/voice smoke checks are delivery gates. The builder/verifier roles are development supervision, not runtime services.
 
 
 ## 14. Exact implementation and mandatory quality contracts
@@ -259,3 +273,17 @@ User-added R13: implement versioned knowledge retrieval, grounded model answers,
 ## 16. Independent compatible model servers
 
 The user requires support for separate servers by service type. provider-compatibility.md is the latest transport/configuration authority: independent LLM, RAG, STT and TTS profiles; configurable model IDs; local none or server-specific bearer auth; generic Chat Completions and audio endpoints. These are the current backend requirements. Full interoperability is gated by actual profile-specific checks; a server claiming compatibility is not presumed to implement audio. RAG remains mandatory.
+
+## 17. Private Order API boundary
+
+User-added requirement R14: the order verification and read-only lookup operations live in a separate private service, not inside the gateway process.
+
+- Service: `order_api/` (FastAPI, one Uvicorn worker, port 8001), same image as the gateway with an overridden command.
+- Routes: `POST /internal/v1/order-verifications`, `GET /internal/v1/orders/{order_number}`, `GET /health`.
+- Data: only the immutable fictional catalogue `order_api/data/orders.json`; no real retailer integration, no customer text, no session state, no outbound calls.
+- Auth: shared `X-Order-Api-Token`; order lookup additionally requires a grant-bound `X-Verification-Grant` issued by verification and valid for a fixed TTL. Grants live in process memory only.
+- Gateway client: `app/order_client.py` verifies a format-valid order number and then performs the grant-bound lookup before the value is accepted; unknown orders become a conversational `not_found` clarification; boundary failures map to `order_api_unavailable`, `order_api_timeout`, `order_api_configuration` or `invalid_order_api_response` with no committed turn.
+- Unreachability: the Order API publishes no host port and joins only the internal Compose network; the gateway exposes no `/internal/*` route, so the private API is not reachable from the browser or the host.
+- Testing: AT20, integration group IT15 (14 cases), extended journey J01 and outage-recovery journey J11; the real Order API runs in integration and E2E, with only its transport doubled for wire-failure cases.
+
+Exact shapes, sequences, error codes, Compose/readiness behaviour and test cases are in implementation-contract.md sections 5, 7, 11 and 13, startup.md and testing-contract.md.
