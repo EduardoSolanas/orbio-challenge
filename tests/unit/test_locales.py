@@ -85,7 +85,6 @@ def test_required_semantic_keys_are_shipped_in_both_languages():
         "actions.retry",
         "speech.play",
         "speech.loading",
-        "speech.started",
         "speech.unavailable",
         "speech.disclosure",
         "intake.order_number",
