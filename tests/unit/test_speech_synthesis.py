@@ -27,7 +27,7 @@ from app.providers import (
     split_tts_text,
 )
 from tests.support.fakes import make_streaming_wav, make_wav
-from tests.unit.test_providers import (
+from tests.unit.provider_support import (
     LLM_PROFILE,
     RAG_PROFILE,
     STT_PROFILE,

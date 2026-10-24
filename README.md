@@ -76,13 +76,14 @@ FastAPI app ── conversation engine ── validators ── JSON session sto
    └── Order API client ──► private Order API (fictional accounts, internal network only)
 ```
 
-- `app/main.py`: routes, request limits, error translation.
-- `app/conversation.py`: the state machine (`collecting` → `awaiting_confirmation` → `completed`).
+- `app/main.py`, `app/routes.py`: app factory and startup wiring; the HTTP routes. `app/asgi_guards.py` and `app/http_support.py` hold the request-size guards, correlation IDs and request parsing.
+- `app/conversation.py`: the turn transaction and state machine (`collecting` → `awaiting_confirmation` → `completed`). It uses `app/intent.py` (what an extraction means), `app/plans.py` (what to reply) and `app/replay.py` (duplicate-request handling).
 - `app/validation.py`, `app/schemas.py`: normalization and strict data models.
-- `app/providers.py`: one OpenAI-compatible adapter for the four roles, with timeouts, retries and a shared concurrency limit.
+- `app/providers.py`: one OpenAI-compatible adapter for the four roles, with timeouts, retries and a shared concurrency limit. `app/provider_wire.py` builds requests and parses replies; `app/speech_wav.py` joins spoken chunks into one WAV.
 - `app/retrieval.py`: knowledge loading, retrieval and citation checks.
 - `app/storage.py`: one JSON file per session, replaced atomically.
 - `app/order_api.py`, `app/order_client.py`, `app/verification.py`: a separate private service for the fictional account check.
+- `app/static/`: the chat page. `app_core.js` holds state and helpers, `app_view.js` renders, `app_session.js` handles the session lifecycle, `app_turns.js` sends turns and confirmations, `app_voice.js` handles recording and playback, and `app.js` wires events.
 
 ## Key design decisions
 
@@ -144,11 +145,12 @@ python scripts/check_backends.py     # live check against the services in your e
 
 | Layer | What it covers | Result |
 |---|---|---|
-| Unit and integration | Validation, state machine, storage, HTTP routes, providers over a real socket, RAG, audio | 1713 unit and 370 integration tests passed on 2026-10-24, run as separate layers (`scripts/test.py unit`, then `integration`). Two wall-clock timeout tests can fail when both layers share one pytest process on a slow machine. |
-| Browser (Playwright) | Twelve journeys in Chromium, including voice and RAG | 12 passed at the last full run; not repeated in the final pass |
-| Real Docker end-to-end | Deployed container against the real LLM, with an LLM judge for intent routing | 3 passed at the last full run; not repeated in the final pass |
+| Unit and integration | Validation, state machine, storage, HTTP routes, providers over a real socket, RAG, audio | 1713 unit and 370 integration tests passed on 2026-10-25, run as separate layers (`scripts/test.py unit`, then `integration`). Two wall-clock timeout tests can fail when both layers share one pytest process on a slow machine. |
+| Browser (Playwright) | Eleven tests in Chromium covering the user journeys, including voice and RAG | 11 passed on 2026-10-25 |
+| Browser scripts | JavaScript unit tests (`node --test tests/unit/*.test.js`) | 26 passed on 2026-10-25 |
+| Real Docker end-to-end | Deployed container against the real LLM, with an LLM judge for intent routing | 3 passed at an earlier full run; not repeated since |
 | Live providers | `scripts/check_backends.py` | 5 of 5 passed (2026-10-24) |
-| Mutation testing | `mutmut` over `app/`, Linux only; runs in CI | Not re-run on the final code. Earlier runs killed 2563 of 2677 mutants; the rest were reviewed as equivalent. |
+| Mutation testing | `mutmut` over `app/`, Linux only; runs in CI | Not re-run since the modules were split. An earlier run killed 2563 of 2677 mutants; the rest were reviewed as equivalent. CI re-runs it. |
 
 ## Limitations
 

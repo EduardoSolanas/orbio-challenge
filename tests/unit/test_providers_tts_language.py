@@ -11,7 +11,7 @@ import pytest
 from app.config import SpeechProfile
 from app.errors import AppError
 from app.providers import OpenAICompatibleProvider
-from tests.unit.test_providers import (
+from tests.unit.provider_support import (
     LLM_PROFILE,
     RAG_PROFILE,
     STT_PROFILE,

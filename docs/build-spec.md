@@ -58,7 +58,7 @@ app/
   storage.py              # atomic JSON persistence, per-session locks
   static/index.html       # minimal chat and audio interface
 tests/
-  test_conversation.py
+  test_conversation_*.py
   test_api.py
   test_storage.py
   test_voice.py
