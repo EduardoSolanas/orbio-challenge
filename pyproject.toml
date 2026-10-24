@@ -11,6 +11,7 @@ addopts = "--strict-markers --strict-config"
 markers = [
     "live: paid provider smoke, requires explicit opt-in",
     "intent_judge: E2E intent routing evaluated by the configured local LLM judge",
+    "docker_e2e: real deployed Docker UI and HTTP routes; never a provider fake",
 ]
 
 [tool.coverage.run]
