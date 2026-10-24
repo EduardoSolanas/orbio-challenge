@@ -27,7 +27,7 @@ from tests.integration.support_api import (
     read_session,
     served_messages,
 )
-from tests.integration.test_it02_intake import (
+from tests.integration.test_intake import (
     FULL_SLOTS,
     FULL_SUMMARY,
     FULL_TEXT,
@@ -42,8 +42,8 @@ from tests.integration.test_it02_intake import (
     start_session,
     turn_body,
 )
-from tests.integration.test_it06_persistence import app_client
-from tests.integration.test_it10_rag import (
+from tests.integration.test_persistence import app_client
+from tests.integration.test_rag import (
     RETURN_ANSWER_TEXT,
     RETURN_Q,
     grounded,

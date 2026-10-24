@@ -1,4 +1,4 @@
-"""Deterministic audio fixtures for the transcription route (IT08).
+"""Deterministic audio fixtures for the transcription route.
 
 Every byte here is built with the standard library only (``wave``, ``struct``);
 nothing is sampled from a third-party recording. The valid signal is a square

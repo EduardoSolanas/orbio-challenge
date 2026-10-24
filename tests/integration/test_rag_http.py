@@ -1,4 +1,4 @@
-"""real RAG/application boundaries over a real provider HTTP service.
+"""Real RAG and application boundaries over a real provider HTTP service.
 
 The app factory, lifespan, routes, schemas, JSON repository, conversation engine
 and lexical retriever are the shipped implementations. No provider object is
@@ -6,31 +6,12 @@ injected: the lifespan constructs the real ``OpenAICompatibleProvider`` from
 settings whose four roles point at ``LocalProviderServer`` on loopback, so every
 extraction and answer crosses a genuine TCP/HTTP boundary.
 
-Coverage of the mandatory IT10 matrix (IC §13.2). Existing cases in
-``test_it10_rag.py`` already prove each row with a scripted AIProvider boundary
-(IT10-01..04, 09, 10, 13, 14, 15, 16) or the real adapter over
-``httpx.MockTransport`` (IT10-05..08, 11, 12). This module re-proves the rows
-that depend on the provider transport (01-08, 11, 12) through the real socket and
-adds the multi-turn/reload, isolation and speech cases that the ticket names:
-
-| IT10 case | This module |
-|-----------|-------------|
-| 01 grounded answer | ``test_it10_01_grounded_answer...`` |
-| 02 no match, no generation | ``test_it10_02_no_match...`` |
-| 03 retrieved but unanswerable | ``test_it10_03_retrieved_but_unanswerable...`` |
-| 04 two sources, order preserved | ``test_it10_04_two_sources...`` |
-| 05 unknown citation | ``test_it10_05_to_08_invalid_citation...`` |
-| 06 duplicate citation | same parametrised case |
-| 07 unretrieved KB citation | same parametrised case |
-| 08 false answer with text | same parametrised case |
-| 09 mixed facts + question | ``test_it10_rag.py::case_it10_09`` |
-| 10 question at review | ``test_it10_rag.py::case_it10_10`` |
-| 11 generation outage rollback | ``test_it10_11_generation_outage...`` |
-| 12 shared deadline | ``test_it10_12_shared_deadline...`` |
-| 13 hostile instruction | ``test_it10_rag.py::case_it10_13`` |
-| 14 replay after restart/new KB | ``test_it10_rag.py::case_it10_14`` |
-| 15 greeting + policy question | ``test_it10_rag.py::case_it10_15`` |
-| 16 social turn, no RAG | ``test_it10_rag.py::case_it10_16`` |
+``test_rag.py`` proves the same behaviours with a scripted provider boundary or
+``httpx.MockTransport``. This module re-proves the ones that depend on the
+provider transport through the real socket: grounded answers, no-match
+abstention, unanswerable questions, two ordered sources, invalid citations,
+generation outage rollback and the shared deadline. It also adds multi-turn and
+reload, isolation and speech cases.
 """
 
 from __future__ import annotations
@@ -151,10 +132,10 @@ def assert_error(response, *, status: int, code: str) -> None:
     assert response.json()["error"]["code"] == code
 
 
-# IT10-01..IT10-04: grounded answers over the real socket ---------------------
+# grounded answers over the real socket ---------------------
 
 
-async def test_it10_01_grounded_answer_crosses_real_http_and_commits(
+async def test_grounded_answer_crosses_real_http_and_commits(
     server, session_dir
 ):
     settings = build_settings(session_dir, server)
@@ -198,7 +179,7 @@ async def test_it10_01_grounded_answer_crosses_real_http_and_commits(
         assert disk["requests"][-1]["response"]["reply"] == RETURN_ANSWER
 
 
-async def test_it10_02_no_match_abstains_without_a_generation_call(server, session_dir):
+async def test_no_match_abstains_without_a_generation_call(server, session_dir):
     settings = build_settings(session_dir, server)
     app = create_app(settings=settings)
     async with running_client(app) as client:
@@ -221,7 +202,7 @@ async def test_it10_02_no_match_abstains_without_a_generation_call(server, sessi
         assert disk["messages"][-1]["citations"] == []
 
 
-async def test_it10_03_retrieved_but_unanswerable_abstains(server, session_dir):
+async def test_retrieved_but_unanswerable_abstains(server, session_dir):
     settings = build_settings(session_dir, server)
     app = create_app(settings=settings)
     async with running_client(app) as client:
@@ -249,7 +230,7 @@ async def test_it10_03_retrieved_but_unanswerable_abstains(server, session_dir):
         assert len(server.requests(CHAT_PATH)) == 2
 
 
-async def test_it10_04_two_sources_are_cited_in_retrieval_order(server, session_dir):
+async def test_two_sources_are_cited_in_retrieval_order(server, session_dir):
     settings = build_settings(session_dir, server)
     app = create_app(settings=settings)
     async with running_client(app) as client:
@@ -283,18 +264,18 @@ async def test_it10_04_two_sources_are_cited_in_retrieval_order(server, session_
         assert disk["messages"][-1]["citations"] == body["citations"]
 
 
-# IT10-05..IT10-08: invalid citations over the real socket --------------------
+# invalid citations over the real socket --------------------
 
 INVALID_ANSWERS = {
-    "IT10-05": answer_payload(answer=RETURN_ANSWER, cited_ids=["faq-unknown"]),
-    "IT10-06": answer_payload(answer=RETURN_ANSWER, cited_ids=["faq-returns", "faq-returns"]),
-    "IT10-07": answer_payload(answer=RETURN_ANSWER, cited_ids=["faq-damaged"]),
-    "IT10-08": answer_payload(answerable=False, answer="You can return it."),
+    "unknown_source": answer_payload(answer=RETURN_ANSWER, cited_ids=["faq-unknown"]),
+    "duplicate_source": answer_payload(answer=RETURN_ANSWER, cited_ids=["faq-returns", "faq-returns"]),
+    "unretrieved_source": answer_payload(answer=RETURN_ANSWER, cited_ids=["faq-damaged"]),
+    "unanswerable_with_text": answer_payload(answerable=False, answer="You can return it."),
 }
 
 
 @pytest.mark.parametrize("case_id", sorted(INVALID_ANSWERS))
-async def test_it10_05_to_08_invalid_citation_rolls_back(case_id, server, session_dir):
+async def test_invalid_citation_rolls_back(case_id, server, session_dir):
     settings = build_settings(session_dir, server)
     app = create_app(settings=settings)
     async with running_client(app) as client:
@@ -315,10 +296,10 @@ async def test_it10_05_to_08_invalid_citation_rolls_back(case_id, server, sessio
         assert persisted_bytes(session_dir, session_id) == before
 
 
-# IT10-11: generation outage rolls back, session stays usable -----------------
+# generation outage rolls back, session stays usable -----------------
 
 
-async def test_it10_11_generation_outage_rolls_back_then_recovers(server, session_dir):
+async def test_generation_outage_rolls_back_then_recovers(server, session_dir):
     settings = build_settings(session_dir, server)
     app = create_app(settings=settings)
     async with running_client(app) as client:
@@ -344,10 +325,10 @@ async def test_it10_11_generation_outage_rolls_back_then_recovers(server, sessio
         assert later.json()["citations"] == [seed_citation("faq-returns")]
 
 
-# IT10-12: one shared deadline across extraction and generation ---------------
+# one shared deadline across extraction and generation ---------------
 
 
-async def test_it10_12_shared_deadline_cuts_generation_without_detached_work(
+async def test_shared_deadline_cuts_generation_without_detached_work(
     server, session_dir, monkeypatch
 ):
     # The engine owns the shared 25 s text-turn deadline. Shorten it for a cheap

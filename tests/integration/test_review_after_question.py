@@ -1,7 +1,7 @@
-"""IT04 regression: a policy question at a valid review keeps the review current.
+"""A policy question at a valid review keeps the review current.
 
 Dedicated confirm and a natural-language YES both carry the current revision with
-the preserved review token (BS §5.7, IC §13.3 J08). Every case runs against the
+the preserved review token (BS §5.7). Every case runs against the
 real app factory, real lifespan, real engine, the real seed knowledge base and a
 real JSON repository in a temporary directory; only the AI service boundary is a
 scripted fake (IC §13.1).
@@ -19,7 +19,7 @@ from tests.integration.support_api import (
     persisted_response,
     read_session,
 )
-from tests.integration.test_it02_intake import (
+from tests.integration.test_intake import (
     FULL_SLOTS,
     FULL_SUMMARY,
     category_extraction,
@@ -148,7 +148,7 @@ async def post_confirm(
     return request_id, response
 
 
-async def test_it04_question_at_review_then_dedicated_confirm_completes(
+async def test_question_at_review_then_dedicated_confirm_completes(
     client, provider: ScriptedProvider, session_dir: Path
 ):
     session_id = await review_session(client, provider)
@@ -197,7 +197,7 @@ async def test_it04_question_at_review_then_dedicated_confirm_completes(
     assert not provider.extractions and not provider.answers
 
 
-async def test_it04_question_at_review_then_yes_completes(
+async def test_question_at_review_then_yes_completes(
     client, provider: ScriptedProvider, session_dir: Path
 ):
     session_id = await review_session(client, provider)
@@ -238,7 +238,7 @@ async def test_it04_question_at_review_then_yes_completes(
     assert not provider.extractions and not provider.answers
 
 
-async def test_it04_question_at_review_then_a_stale_token_is_stale_review(
+async def test_question_at_review_then_a_stale_token_is_stale_review(
     client, provider: ScriptedProvider, session_dir: Path
 ):
     session_id = await review_session(client, provider)

@@ -1,8 +1,8 @@
-"""IT10-01..IT10-16: mandatory RAG - grounded answers, citations, abstention, rollback.
+"""return q supported grounded answer..social turn resumes intake without rag: mandatory RAG - grounded answers, citations, abstention, rollback.
 
 Every case runs the real app factory, real lifespan, real `/api/sessions/{id}/turns`
 route, real engine and the real lexical retriever over the bundled knowledge base
-(IC §13.1, §13.2 IT10). Answers are scripted through the AIProvider boundary, or
+(IC §13.1). Answers are scripted through the AIProvider boundary, or
 served as real Chat Completions wire bodies through
 `OpenAICompatibleProvider` + per-role `httpx.MockTransport` for the citation
 validation and outage cases, so the shipped adapter budget and parser judge the
@@ -42,7 +42,7 @@ from tests.integration.support_api import (
     read_session,
     running_client,
 )
-from tests.integration.test_it02_intake import (
+from tests.integration.test_intake import (
     CATEGORY_TEXT,
     FULL_SLOTS,
     FULL_SUMMARY,
@@ -57,7 +57,7 @@ from tests.integration.test_it02_intake import (
     start_session,
     turn_body,
 )
-from tests.integration.test_it08_transcription import (
+from tests.integration.test_transcription import (
     RoleTransport,
     assert_error,
     json_wire,
@@ -152,10 +152,10 @@ def assert_answer_message(disk: dict, response: dict) -> None:
     assert disk["requests"][-1]["response"] == persisted_response(response)
 
 
-# IT10-01 -------------------------------------------------------------------
+# return q supported grounded answer -------------------------------------------------------------------
 
 
-async def case_it10_01(settings, provider, session_dir):
+async def case_return_q_supported_grounded_answer(settings, provider, session_dir):
     app = create_app(settings=settings, provider=provider)
     async with running_client(app) as client:
         session_id = await start_session(client)
@@ -194,10 +194,10 @@ async def case_it10_01(settings, provider, session_dir):
         assert_answer_message(disk, response)
 
 
-# IT10-02 -------------------------------------------------------------------
+# payment q no match -------------------------------------------------------------------
 
 
-async def case_it10_02(settings, provider, session_dir):
+async def case_payment_q_no_match(settings, provider, session_dir):
     app = create_app(settings=settings, provider=provider)
     async with running_client(app) as client:
         session_id = await start_session(client)
@@ -226,10 +226,10 @@ async def case_it10_02(settings, provider, session_dir):
         assert_answer_message(disk, response)
 
 
-# IT10-03 -------------------------------------------------------------------
+# region q retrieved delivery but unsupported -------------------------------------------------------------------
 
 
-async def case_it10_03(settings, provider, session_dir):
+async def case_region_q_retrieved_delivery_but_unsupported(settings, provider, session_dir):
     app = create_app(settings=settings, provider=provider)
     async with running_client(app) as client:
         session_id = await start_session(client)
@@ -259,10 +259,10 @@ async def case_it10_03(settings, provider, session_dir):
         assert_answer_message(disk, response)
 
 
-# IT10-04 -------------------------------------------------------------------
+# question retrieves two seed policies -------------------------------------------------------------------
 
 
-async def case_it10_04(settings, provider, session_dir):
+async def case_question_retrieves_two_seed_policies(settings, provider, session_dir):
     app = create_app(settings=settings, provider=provider)
     async with running_client(app) as client:
         session_id = await start_session(client)
@@ -295,7 +295,7 @@ async def case_it10_04(settings, provider, session_dir):
         assert_answer_message(disk, response)
 
 
-# IT10-05..IT10-08: invalid citations through the real adapter ---------------
+# generated unknown citation id on both wire attempts..answerable false nonempty text ids: invalid citations through the real adapter ---------------
 
 
 @asynccontextmanager
@@ -407,7 +407,7 @@ async def assert_invalid_answer(settings, session_dir, answer_payload: dict):
         return recorders
 
 
-async def case_it10_05(settings, provider, session_dir):
+async def case_generated_unknown_citation_id_on_both_wire_attempts(settings, provider, session_dir):
     await assert_invalid_answer(
         settings,
         session_dir,
@@ -415,7 +415,7 @@ async def case_it10_05(settings, provider, session_dir):
     )
 
 
-async def case_it10_06(settings, provider, session_dir):
+async def case_duplicate_cited_ids_on_both_attempts(settings, provider, session_dir):
     await assert_invalid_answer(
         settings,
         session_dir,
@@ -427,7 +427,7 @@ async def case_it10_06(settings, provider, session_dir):
     )
 
 
-async def case_it10_07(settings, provider, session_dir):
+async def case_existing_kb_id_not_this_query_s_retrieved_records(settings, provider, session_dir):
     # faq-damaged exists in the knowledge base but was not retrieved for RETURN_Q.
     await assert_invalid_answer(
         settings,
@@ -440,7 +440,7 @@ async def case_it10_07(settings, provider, session_dir):
     )
 
 
-async def case_it10_08(settings, provider, session_dir):
+async def case_answerable_false_nonempty_text_ids(settings, provider, session_dir):
     await assert_invalid_answer(
         settings,
         session_dir,
@@ -448,7 +448,7 @@ async def case_it10_08(settings, provider, session_dir):
     )
 
 
-# IT10-09..IT10-11, IT10-13..IT10-14: routing, review, outage, hostile, replay --
+# mixed asserted facts question..generation outage after extraction, hostile instruction question scripted unanswerable result..saved answer replay after restart new kb version: routing, review, outage, hostile, replay --
 
 MIXED_TEXT = "My order NS-000123 arrived broken; can I return it?"
 EDITED_RETURNS_BODY = (
@@ -485,7 +485,7 @@ async def build_review(client, provider, session_id: str) -> dict:
     return high
 
 
-async def case_it10_09(settings, provider, session_dir):
+async def case_mixed_asserted_facts_question(settings, provider, session_dir):
     app = create_app(settings=settings, provider=provider)
     async with running_client(app) as client:
         session_id = await start_session(client)
@@ -517,7 +517,7 @@ async def case_it10_09(settings, provider, session_dir):
         assert_answer_message(disk, body)
 
 
-async def case_it10_10(settings, provider, session_dir):
+async def case_pure_policy_question_at_review(settings, provider, session_dir):
     app = create_app(settings=settings, provider=provider)
     async with running_client(app) as client:
         session_id = await start_session(client)
@@ -557,7 +557,7 @@ async def case_it10_10(settings, provider, session_dir):
         assert_answer_message(disk, response)
 
 
-async def case_it10_11(settings, provider, session_dir):
+async def case_generation_outage_after_extraction(settings, provider, session_dir):
     async with rag_client(
         settings, {"llm": llm_question(), "rag": rag_status(503)}
     ) as (client, recorders, _):
@@ -582,7 +582,7 @@ async def case_it10_11(settings, provider, session_dir):
         assert later.json()["citations"] == [seed_citation("faq-returns")]
 
 
-async def case_it10_13(settings, provider, session_dir):
+async def case_hostile_instruction_question_scripted_unanswerable_result(settings, provider, session_dir):
     async with rag_client(
         settings, {"llm": llm_question(), "rag": rag_answer(unanswerable().model_dump())}
     ) as (client, recorders, _):
@@ -627,7 +627,7 @@ async def case_it10_13(settings, provider, session_dir):
         assert_answer_message(disk, body)
 
 
-async def case_it10_14(settings, provider, session_dir):
+async def case_saved_answer_replay_after_restart_new_kb_version(settings, provider, session_dir):
     kb_path = session_dir.parent / "kb-it10-14.json"
     kb_path.write_text(json.dumps(SEED, ensure_ascii=False), encoding="utf-8")
     request_id = str(uuid4())
@@ -684,7 +684,7 @@ async def case_it10_14(settings, provider, session_dir):
         ]
 
 
-# IT10-12: extraction and generation share one 25 s outer deadline -------------
+# extraction plus answer exhaust shared25s deadline: extraction and generation share one 25 s outer deadline -------------
 
 EXTRACT_DELAY = 12.0
 ANSWER_DELAY = 14.0
@@ -726,7 +726,7 @@ class SleepyProvider:
         self.close_count += 1
 
 
-async def case_it10_12(settings, provider, session_dir):
+async def case_extraction_plus_answer_exhaust_shared25s_deadline(settings, provider, session_dir):
     sleepy = SleepyProvider()
     app = create_app(settings=settings, provider=sleepy)
     async with running_client(app) as client:
@@ -752,7 +752,7 @@ async def case_it10_12(settings, provider, session_dir):
         assert snapshot(session_dir, session_id) == before
 
 
-async def case_it10_15(settings, provider, session_dir):
+async def case_greeting_then_policy_question_uses_rag_branch(settings, provider, session_dir):
     """A greeting followed by a policy question still takes the RAG branch."""
 
     app = create_app(settings=settings, provider=provider)
@@ -790,7 +790,7 @@ async def case_it10_15(settings, provider, session_dir):
         assert_answer_message(disk, response)
 
 
-async def case_it10_16(settings, provider, session_dir):
+async def case_social_turn_resumes_intake_without_rag(settings, provider, session_dir):
     """A pure social turn acknowledges and resumes intake with no RAG call."""
 
     app = create_app(settings=settings, provider=provider)
@@ -823,25 +823,25 @@ async def case_it10_16(settings, provider, session_dir):
 
 
 CASES = {
-    "IT10-01": case_it10_01,
-    "IT10-02": case_it10_02,
-    "IT10-03": case_it10_03,
-    "IT10-04": case_it10_04,
-    "IT10-05": case_it10_05,
-    "IT10-06": case_it10_06,
-    "IT10-07": case_it10_07,
-    "IT10-08": case_it10_08,
-    "IT10-09": case_it10_09,
-    "IT10-10": case_it10_10,
-    "IT10-11": case_it10_11,
-    "IT10-13": case_it10_13,
-    "IT10-14": case_it10_14,
-    "IT10-12": case_it10_12,
-    "IT10-15": case_it10_15,
-    "IT10-16": case_it10_16,
+    "return_q_supported_grounded_answer": case_return_q_supported_grounded_answer,
+    "payment_q_no_match": case_payment_q_no_match,
+    "region_q_retrieved_delivery_but_unsupported": case_region_q_retrieved_delivery_but_unsupported,
+    "question_retrieves_two_seed_policies": case_question_retrieves_two_seed_policies,
+    "generated_unknown_citation_id_on_both_wire_attempts": case_generated_unknown_citation_id_on_both_wire_attempts,
+    "duplicate_cited_ids_on_both_attempts": case_duplicate_cited_ids_on_both_attempts,
+    "existing_kb_id_not_this_query_s_retrieved_records": case_existing_kb_id_not_this_query_s_retrieved_records,
+    "answerable_false_nonempty_text_ids": case_answerable_false_nonempty_text_ids,
+    "mixed_asserted_facts_question": case_mixed_asserted_facts_question,
+    "pure_policy_question_at_review": case_pure_policy_question_at_review,
+    "generation_outage_after_extraction": case_generation_outage_after_extraction,
+    "hostile_instruction_question_scripted_unanswerable_result": case_hostile_instruction_question_scripted_unanswerable_result,
+    "saved_answer_replay_after_restart_new_kb_version": case_saved_answer_replay_after_restart_new_kb_version,
+    "extraction_plus_answer_exhaust_shared25s_deadline": case_extraction_plus_answer_exhaust_shared25s_deadline,
+    "greeting_then_policy_question_uses_rag_branch": case_greeting_then_policy_question_uses_rag_branch,
+    "social_turn_resumes_intake_without_rag": case_social_turn_resumes_intake_without_rag,
 }
 
 
 @pytest.mark.parametrize("case_id", sorted(CASES))
-async def test_it10_rag(case_id, settings, provider, session_dir):
+async def test_rag(case_id, settings, provider, session_dir):
     await CASES[case_id](settings, provider, session_dir)

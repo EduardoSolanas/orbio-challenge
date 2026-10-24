@@ -1,4 +1,4 @@
-"""Unit tests for the shared English/Spanish translation catalog (I18N-01).
+"""Unit tests for the shared English/Spanish translation catalog.
 
 The shipped dictionaries are the single authored source for backend and browser
 copy: flat semantic keys, identical key and placeholder sets, immutable runtime

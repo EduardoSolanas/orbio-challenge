@@ -1,4 +1,4 @@
-"""Unit tests for Spanish lexical query normalization in retrieval (FEAT-02)."""
+"""Unit tests for Spanish lexical query normalization in retrieval."""
 
 from __future__ import annotations
 

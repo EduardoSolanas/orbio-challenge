@@ -1,8 +1,8 @@
-"""IT01-01..IT01-23: HTTP contract, request guards and correlation IDs.
+"""post sessions empty body..post turns x request id invalid value: HTTP contract, request guards and correlation IDs.
 
 Every case runs against the real app factory, real lifespan, real engine and a
 real JSON repository in a temporary directory; only the AI service boundary is
-a scripted fake (IC §13.1, §13.2 IT01).
+a scripted fake (IC §13.1).
 """
 
 from __future__ import annotations
@@ -104,7 +104,7 @@ def assert_no_calls(provider: ScriptedProvider) -> None:
     assert provider.calls == []
 
 
-async def case_it01_01(client, app, provider, session_dir):
+async def case_post_sessions_empty_body(client, app, provider, session_dir):
     response = await client.post("/api/sessions", content=b"")
     assert response.status_code == 201
     view = response.json()
@@ -133,7 +133,7 @@ async def case_it01_01(client, app, provider, session_dir):
     assert len(disk["messages"]) == 1
 
 
-async def case_it01_02(client, app, provider, session_dir):
+async def case_post_sessions(client, app, provider, session_dir):
     response = await client.post("/api/sessions", json={})
     assert response.status_code == 201
     view = response.json()
@@ -145,14 +145,14 @@ async def case_it01_02(client, app, provider, session_dir):
     assert_no_calls(provider)
 
 
-async def case_it01_03(client, app, provider, session_dir):
+async def case_post_sessions_unknown_field(client, app, provider, session_dir):
     response = await client.post("/api/sessions", json={"unexpected": 1})
     assert_error(response, "invalid_request")
     assert session_files(session_dir) == []
     assert_no_calls(provider)
 
 
-async def case_it01_04(client, app, provider, session_dir):
+async def case_get_existing_partial_session(client, app, provider, session_dir):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     path = Path(session_dir) / f"{session_id}.json"
@@ -177,21 +177,21 @@ async def case_it01_04(client, app, provider, session_dir):
     assert_no_calls(provider)
 
 
-async def case_it01_05(client, app, provider, session_dir):
+async def case_get_valid_format_absent_session_uuid(client, app, provider, session_dir):
     response = await client.get(f"/api/sessions/{uuid4()}")
     assert_error(response, "session_not_found")
     assert session_files(session_dir) == []
     assert_no_calls(provider)
 
 
-async def case_it01_09(client, app, provider, session_dir):
+async def case_get_path_uuid_not_uuid(client, app, provider, session_dir):
     response = await client.get("/api/sessions/not-a-uuid")
     assert_error(response, "invalid_request")
     assert session_files(session_dir) == []
     assert_no_calls(provider)
 
 
-async def case_it01_06(client, app, provider, session_dir):
+async def case_post_turns_unknown_body_key(client, app, provider, session_dir):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     path = Path(session_dir) / f"{session_id}.json"
@@ -204,7 +204,7 @@ async def case_it01_06(client, app, provider, session_dir):
     assert_no_calls(provider)
 
 
-async def case_it01_07(client, app, provider, session_dir):
+async def case_post_confirm_unknown_body_key(client, app, provider, session_dir):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     provider.script_extraction(full_extraction())
@@ -229,7 +229,7 @@ async def case_it01_07(client, app, provider, session_dir):
     assert provider.methods() == ["extract"]
 
 
-async def case_it01_10(client, app, provider, session_dir):
+async def case_post_turns_expected_revision_true(client, app, provider, session_dir):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     path = Path(session_dir) / f"{session_id}.json"
@@ -243,7 +243,7 @@ async def case_it01_10(client, app, provider, session_dir):
     assert_no_calls(provider)
 
 
-async def case_it01_11(client, app, provider, session_dir):
+async def case_post_turns_expected_revision_1(client, app, provider, session_dir):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     path = Path(session_dir) / f"{session_id}.json"
@@ -257,7 +257,7 @@ async def case_it01_11(client, app, provider, session_dir):
     assert_no_calls(provider)
 
 
-async def case_it01_12(client, app, provider, session_dir):
+async def case_post_turns_text_exactly_three_ascii_spaces(client, app, provider, session_dir):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     path = Path(session_dir) / f"{session_id}.json"
@@ -270,7 +270,7 @@ async def case_it01_12(client, app, provider, session_dir):
     assert_no_calls(provider)
 
 
-async def case_it01_13(client, app, provider, session_dir):
+async def case_post_turns_exactly4000_characters_scripted_unrelated(client, app, provider, session_dir):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     provider.script_extraction(unrelated_extraction())
@@ -300,7 +300,7 @@ async def case_it01_13(client, app, provider, session_dir):
     assert disk["collection_turn_count"] == 1
 
 
-async def case_it01_14(client, app, provider, session_dir):
+async def case_post_turns4001_characters(client, app, provider, session_dir):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     path = Path(session_dir) / f"{session_id}.json"
@@ -313,7 +313,7 @@ async def case_it01_14(client, app, provider, session_dir):
     assert_no_calls(provider)
 
 
-async def case_it01_15(client, app, provider, session_dir):
+async def case_post_sessions_valid_padded_exactly65536_utf_8_bytes(client, app, provider, session_dir):
     body = b"{}" + b" " * (65536 - 2)
     assert len(body) == 65536
     response = await client.post(
@@ -324,7 +324,7 @@ async def case_it01_15(client, app, provider, session_dir):
     assert_no_calls(provider)
 
 
-async def case_it01_16(client, app, provider, session_dir):
+async def case_post_sessions_same_valid_body_padded_to65537_bytes(client, app, provider, session_dir):
     body = b"{}" + b" " * (65537 - 2)
     assert len(body) == 65537
     response = await client.post(
@@ -335,7 +335,7 @@ async def case_it01_16(client, app, provider, session_dir):
     assert_no_calls(provider)
 
 
-async def case_it01_17(client, app, provider, session_dir):
+async def case_post_turns_oversized_raw_asgi_body_understated_content(client, app, provider, session_dir):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     path = Path(session_dir) / f"{session_id}.json"
@@ -359,7 +359,7 @@ async def case_it01_17(client, app, provider, session_dir):
     assert_no_calls(provider)
 
 
-async def case_it01_18(client, app, provider, session_dir):
+async def case_post_turns_oversized_body_without_content_length_one_large(client, app, provider, session_dir):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     path = Path(session_dir) / f"{session_id}.json"
@@ -377,7 +377,7 @@ async def case_it01_18(client, app, provider, session_dir):
     assert_no_calls(provider)
 
 
-async def case_it01_19(client, app, provider, session_dir):
+async def case_post_confirm_oversized_body_against_valid_review(client, app, provider, session_dir):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     provider.script_extraction(full_extraction())
@@ -401,7 +401,7 @@ async def case_it01_19(client, app, provider, session_dir):
     assert provider.methods() == ["extract"]
 
 
-async def case_it01_21(client, app, provider, session_dir):
+async def case_post_turns_valid_text_includes_multibyte_utf_8_characters(client, app, provider, session_dir):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     text = "Café ☕ naïve — my order arrived broken."
@@ -422,7 +422,7 @@ async def case_it01_21(client, app, provider, session_dir):
     assert len(disk["messages"]) == 3
 
 
-async def case_it01_22(client, app, provider, session_dir):
+async def case_post_turns_x_request_id_valid_uuid(client, app, provider, session_dir):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     correlation = str(uuid4())
@@ -446,7 +446,7 @@ async def case_it01_22(client, app, provider, session_dir):
     assert provider.methods() == ["extract"]
 
 
-async def case_it01_23(client, app, provider, session_dir):
+async def case_post_turns_x_request_id_invalid_value(client, app, provider, session_dir):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     body = turn_body()
@@ -471,7 +471,7 @@ async def case_it01_23(client, app, provider, session_dir):
     assert provider.methods() == ["extract"]
 
 
-async def case_it01_08(client, app, provider, session_dir):
+async def case_post_speech_caller_supplied_text_extra_key(client, app, provider, session_dir):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     message_id = created["messages"][0]["id"]
@@ -486,7 +486,7 @@ async def case_it01_08(client, app, provider, session_dir):
     assert_no_calls(provider)
 
 
-async def case_it01_20(client, app, provider, session_dir):
+async def case_post_speech_oversized_body_against_saved_assistant_message(client, app, provider, session_dir):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     message_id = created["messages"][0]["id"]
@@ -509,32 +509,32 @@ async def case_it01_20(client, app, provider, session_dir):
 
 
 CASES = [
-    pytest.param(case_it01_01, id="IT01-01"),
-    pytest.param(case_it01_02, id="IT01-02"),
-    pytest.param(case_it01_03, id="IT01-03"),
-    pytest.param(case_it01_04, id="IT01-04"),
-    pytest.param(case_it01_05, id="IT01-05"),
-    pytest.param(case_it01_06, id="IT01-06"),
-    pytest.param(case_it01_07, id="IT01-07"),
-    pytest.param(case_it01_08, id="IT01-08"),
-    pytest.param(case_it01_09, id="IT01-09"),
-    pytest.param(case_it01_10, id="IT01-10"),
-    pytest.param(case_it01_11, id="IT01-11"),
-    pytest.param(case_it01_12, id="IT01-12"),
-    pytest.param(case_it01_13, id="IT01-13"),
-    pytest.param(case_it01_14, id="IT01-14"),
-    pytest.param(case_it01_15, id="IT01-15"),
-    pytest.param(case_it01_16, id="IT01-16"),
-    pytest.param(case_it01_17, id="IT01-17"),
-    pytest.param(case_it01_18, id="IT01-18"),
-    pytest.param(case_it01_19, id="IT01-19"),
-    pytest.param(case_it01_20, id="IT01-20"),
-    pytest.param(case_it01_21, id="IT01-21"),
-    pytest.param(case_it01_22, id="IT01-22"),
-    pytest.param(case_it01_23, id="IT01-23"),
+    pytest.param(case_post_sessions_empty_body, id="post_sessions_empty_body"),
+    pytest.param(case_post_sessions, id="post_sessions"),
+    pytest.param(case_post_sessions_unknown_field, id="post_sessions_unknown_field"),
+    pytest.param(case_get_existing_partial_session, id="get_existing_partial_session"),
+    pytest.param(case_get_valid_format_absent_session_uuid, id="get_valid_format_absent_session_uuid"),
+    pytest.param(case_post_turns_unknown_body_key, id="post_turns_unknown_body_key"),
+    pytest.param(case_post_confirm_unknown_body_key, id="post_confirm_unknown_body_key"),
+    pytest.param(case_post_speech_caller_supplied_text_extra_key, id="post_speech_caller_supplied_text_extra_key"),
+    pytest.param(case_get_path_uuid_not_uuid, id="get_path_uuid_not_uuid"),
+    pytest.param(case_post_turns_expected_revision_true, id="post_turns_expected_revision_true"),
+    pytest.param(case_post_turns_expected_revision_1, id="post_turns_expected_revision_1"),
+    pytest.param(case_post_turns_text_exactly_three_ascii_spaces, id="post_turns_text_exactly_three_ascii_spaces"),
+    pytest.param(case_post_turns_exactly4000_characters_scripted_unrelated, id="post_turns_exactly4000_characters_scripted_unrelated"),
+    pytest.param(case_post_turns4001_characters, id="post_turns4001_characters"),
+    pytest.param(case_post_sessions_valid_padded_exactly65536_utf_8_bytes, id="post_sessions_valid_padded_exactly65536_utf_8_bytes"),
+    pytest.param(case_post_sessions_same_valid_body_padded_to65537_bytes, id="post_sessions_same_valid_body_padded_to65537_bytes"),
+    pytest.param(case_post_turns_oversized_raw_asgi_body_understated_content, id="post_turns_oversized_raw_asgi_body_understated_content"),
+    pytest.param(case_post_turns_oversized_body_without_content_length_one_large, id="post_turns_oversized_body_without_content_length_one_large"),
+    pytest.param(case_post_confirm_oversized_body_against_valid_review, id="post_confirm_oversized_body_against_valid_review"),
+    pytest.param(case_post_speech_oversized_body_against_saved_assistant_message, id="post_speech_oversized_body_against_saved_assistant_message"),
+    pytest.param(case_post_turns_valid_text_includes_multibyte_utf_8_characters, id="post_turns_valid_text_includes_multibyte_utf_8_characters"),
+    pytest.param(case_post_turns_x_request_id_valid_uuid, id="post_turns_x_request_id_valid_uuid"),
+    pytest.param(case_post_turns_x_request_id_invalid_value, id="post_turns_x_request_id_invalid_value"),
 ]
 
 
 @pytest.mark.parametrize("case", CASES)
-async def test_it01_http_contract(case, client, app, provider, session_dir):
+async def test_http_contract(case, client, app, provider, session_dir):
     await case(client, app, provider, session_dir)

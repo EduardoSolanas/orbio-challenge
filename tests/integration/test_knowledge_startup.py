@@ -1,8 +1,8 @@
-"""IT11-01..IT11-08: knowledge-base startup, immutability and ownership.
+"""missing bundled test kb file..valid literal markup source fixture boot app then query its: knowledge-base startup, immutability and ownership.
 
 Every case runs the real app factory and the real lifespan: invalid corpora must
 fail startup with the exact RAG §1 string before readiness, and a valid corpus is
-loaded once and drives real retrieval through the real turn route (IC §13.2 IT11).
+loaded once and drives real retrieval through the real turn route (IC §13.2).
 The KB fixtures under `tests/fixtures/kb/it11/` have distinct filenames from the
 unit fixtures in `tests/fixtures/kb/invalid|valid`.
 
@@ -30,7 +30,7 @@ from tests.integration.support_api import (
     read_session,
     running_client,
 )
-from tests.integration.test_it02_intake import MISSING_ORDER, start_session, turn_body
+from tests.integration.test_intake import MISSING_ORDER, start_session, turn_body
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "kb" / "it11"
 CORRUPT = FIXTURES / "corrupt-it11.json"
@@ -98,28 +98,28 @@ async def expect_startup_failure(settings, knowledge_path: Path) -> ScriptedProv
     return provider
 
 
-# IT11-01..IT11-05: invalid corpora fail startup ----------------------------
+# missing bundled test kb file..kb file256kib 1 bytes: invalid corpora fail startup ----------------------------
 
 
-async def case_it11_01(settings, provider, session_dir, tmp_path):
+async def case_missing_bundled_test_kb_file(settings, provider, session_dir, tmp_path):
     missing = tmp_path / "missing-it11.json"
     assert not missing.exists()
     await expect_startup_failure(settings, missing)
 
 
-async def case_it11_02(settings, provider, session_dir, tmp_path):
+async def case_corrupt_kb_json(settings, provider, session_dir, tmp_path):
     await expect_startup_failure(settings, CORRUPT)
 
 
-async def case_it11_03(settings, provider, session_dir, tmp_path):
+async def case_empty_records_list(settings, provider, session_dir, tmp_path):
     await expect_startup_failure(settings, EMPTY_RECORDS)
 
 
-async def case_it11_04(settings, provider, session_dir, tmp_path):
+async def case_duplicate_record_ids(settings, provider, session_dir, tmp_path):
     await expect_startup_failure(settings, DUPLICATE_IDS)
 
 
-async def case_it11_05(settings, provider, session_dir, tmp_path):
+async def case_kb_file256kib_1_bytes(settings, provider, session_dir, tmp_path):
     # The fixture is schema-valid JSON of exactly 256 KiB + 1 bytes: startup can
     # only fail through the bounded pre-parse size guard, never a parse error.
     raw = OVERSIZE_VALID.read_bytes()
@@ -129,10 +129,10 @@ async def case_it11_05(settings, provider, session_dir, tmp_path):
     await expect_startup_failure(settings, OVERSIZE_VALID)
 
 
-# IT11-06..IT11-08: valid corpus, immutability across requests, literal sources --
+# exact valid seed corpus..valid literal markup source fixture boot app then query its: valid corpus, immutability across requests, literal sources --
 
 
-async def case_it11_06(settings, provider, session_dir, tmp_path):
+async def case_exact_valid_seed_corpus(settings, provider, session_dir, tmp_path):
     app = create_app(settings=settings, provider=provider)
     async with running_client(app) as client:
         health = await client.get("/health")
@@ -152,7 +152,7 @@ async def case_it11_06(settings, provider, session_dir, tmp_path):
     assert SEED_PATH.is_file()
 
 
-async def case_it11_07(settings, provider, session_dir, tmp_path):
+async def case_edit_valid_kb_file_after_lifespan_startup_then_return_q(settings, provider, session_dir, tmp_path):
     kb_path = tmp_path / "kb-it11-07.json"
     kb_path.write_text(json.dumps(SEED, ensure_ascii=False), encoding="utf-8")
 
@@ -199,7 +199,7 @@ async def case_it11_07(settings, provider, session_dir, tmp_path):
         assert second_app.state.knowledge_base.version == EDITED_VERSION
 
 
-async def case_it11_08(settings, provider, session_dir, tmp_path):
+async def case_valid_literal_markup_source_fixture_boot_app_then_query_its(settings, provider, session_dir, tmp_path):
     fixture = json.loads(LITERAL_MARKUP.read_text(encoding="utf-8"))
     record = fixture["records"][0]
     answer_text = "The markup policy record is stored exactly as written."
@@ -241,17 +241,17 @@ async def case_it11_08(settings, provider, session_dir, tmp_path):
 
 
 CASES = {
-    "IT11-01": case_it11_01,
-    "IT11-02": case_it11_02,
-    "IT11-03": case_it11_03,
-    "IT11-04": case_it11_04,
-    "IT11-05": case_it11_05,
-    "IT11-06": case_it11_06,
-    "IT11-07": case_it11_07,
-    "IT11-08": case_it11_08,
+    "missing_bundled_test_kb_file": case_missing_bundled_test_kb_file,
+    "corrupt_kb_json": case_corrupt_kb_json,
+    "empty_records_list": case_empty_records_list,
+    "duplicate_record_ids": case_duplicate_record_ids,
+    "kb_file256kib_1_bytes": case_kb_file256kib_1_bytes,
+    "exact_valid_seed_corpus": case_exact_valid_seed_corpus,
+    "edit_valid_kb_file_after_lifespan_startup_then_return_q": case_edit_valid_kb_file_after_lifespan_startup_then_return_q,
+    "valid_literal_markup_source_fixture_boot_app_then_query_its": case_valid_literal_markup_source_fixture_boot_app_then_query_its,
 }
 
 
 @pytest.mark.parametrize("case_id", sorted(CASES))
-async def test_it11_kb_startup(case_id, settings, provider, session_dir, tmp_path):
+async def test_kb_startup(case_id, settings, provider, session_dir, tmp_path):
     await CASES[case_id](settings, provider, session_dir, tmp_path)

@@ -1,9 +1,9 @@
-"""IT12-01..IT12-28: four-role transport, auth, output modes and status mapping.
+"""llm rag json schema output mode..2xx content list multipart blocks on both attempts: four-role transport, auth, output modes and status mapping.
 
 Every case resolves a real `Settings` from a complete isolated environment, runs
 the real app lifespan and exercises the shipped `OpenAICompatibleProvider`
 against one real `httpx.AsyncClient` per role wired to a per-role
-`httpx.MockTransport` (IC §13.1, §13.2 IT12; PC §3). Only the external service is
+`httpx.MockTransport` (IC §13.1, §13.2; PC §3). Only the external service is
 doubled; URL joining, per-role headers, request serialization, strict parsing,
 retry/repair budgets and status-derived error mapping are production code.
 
@@ -40,8 +40,8 @@ from app.schemas import (
     KnowledgeRecord,
     Slots,
 )
-from tests.integration.test_it02_intake import start_session, turn_body
-from tests.integration.test_it08_transcription import (
+from tests.integration.test_intake import start_session, turn_body
+from tests.integration.test_transcription import (
     RoleTransport,
     assert_error,
     json_wire,
@@ -299,10 +299,10 @@ def assert_emotion_schema(schema: dict) -> None:
     assert {"sentiment", "frustration"} <= set(schema["required"])
 
 
-# IT12-01..IT12-03: output modes ---------------------------------------------
+# llm rag json schema output mode..llm rag prompt json output mode: output modes ---------------------------------------------
 
 
-async def case_it12_01(session_dir):
+async def case_llm_rag_json_schema_output_mode(session_dir):
     settings = settings_from(env(session_dir))
     assert settings.llm.output_mode == "json_schema"
     assert settings.rag.output_mode == "json_schema"
@@ -359,7 +359,7 @@ async def case_it12_01(session_dir):
         }
 
 
-async def case_it12_02(session_dir):
+async def case_llm_rag_json_object_output_mode(session_dir):
     settings = settings_from(
         env(session_dir, LLM_OUTPUT_MODE="json_object", RAG_OUTPUT_MODE="json_object")
     )
@@ -395,7 +395,7 @@ async def case_it12_02(session_dir):
         assert len(harness.recorders["rag"].requests) == 1
 
 
-async def case_it12_03(session_dir):
+async def case_llm_rag_prompt_json_output_mode(session_dir):
     settings = settings_from(
         env(session_dir, LLM_OUTPUT_MODE="prompt_json", RAG_OUTPUT_MODE="prompt_json")
     )
@@ -436,10 +436,10 @@ async def case_it12_03(session_dir):
         assert REPAIR_LINE in third["messages"][0]["content"]
 
 
-# IT12-04..IT12-09: four independent roles, auth and RAG inheritance ----------
+# four independent service endpoints..distinct bearer tokens on four roles: four independent roles, auth and RAG inheritance ----------
 
 
-async def case_it12_04(session_dir):
+async def case_four_independent_service_endpoints(session_dir):
     settings = settings_from(env(session_dir))
     async with adapter_app(
         settings,
@@ -490,7 +490,7 @@ async def case_it12_04(session_dir):
                 assert json.loads(request.content)["model"] == model
 
 
-async def case_it12_05(session_dir):
+async def case_one_shared_host_four_explicit_role_profiles(session_dir):
     settings = settings_from(
         env(
             session_dir,
@@ -540,7 +540,7 @@ async def case_it12_05(session_dir):
     assert harness.provider._closed is True
 
 
-async def case_it12_06(session_dir):
+async def case_all_empty_rag_profile_real_settings_lifespan_resolution_then(session_dir):
     settings = settings_from(
         env(
             session_dir,
@@ -573,7 +573,7 @@ async def case_it12_06(session_dir):
         )
 
 
-async def case_it12_07(session_dir, monkeypatch):
+async def case_partially_specified_rag_profile(session_dir, monkeypatch):
     partial = env(
         session_dir,
         RAG_BASE_URL="http://rag.test/v1",
@@ -601,7 +601,7 @@ async def case_it12_07(session_dir, monkeypatch):
     assert not hasattr(app.state, "engine")
 
 
-async def case_it12_08(session_dir):
+async def case_auth_mode_none_on_all_roles(session_dir):
     settings = settings_from(
         env(
             session_dir,
@@ -642,7 +642,7 @@ async def case_it12_08(session_dir):
             )
 
 
-async def case_it12_09(session_dir):
+async def case_distinct_bearer_tokens_on_four_roles(session_dir):
     settings = settings_from(
         env(
             session_dir,
@@ -683,10 +683,10 @@ async def case_it12_09(session_dir):
                     )
 
 
-# IT12-10..IT12-19: redirect and HTTP status mapping -------------------------
+# http redirect..http500 twice text stt: redirect and HTTP status mapping -------------------------
 
 
-async def case_it12_10(session_dir):
+async def case_http_redirect(session_dir):
     settings = settings_from(env(session_dir))
     redirect = lambda request, attempt: httpx.Response(  # noqa: E731
         302,
@@ -703,7 +703,7 @@ async def case_it12_10(session_dir):
         assert harness.recorders["rag"].requests == []
 
 
-async def case_it12_configuration_status(status, session_dir, caplog):
+async def case_configuration_status(status, session_dir, caplog):
     settings = settings_from(env(session_dir))
     secret = "sk-leaked-credential-sentinel"
     body = json.dumps({"error": secret}).encode("utf-8")
@@ -723,7 +723,7 @@ async def case_it12_configuration_status(status, session_dir, caplog):
             assert len(harness.recorders["llm"].requests) == 1
 
 
-async def case_it12_18(session_dir):
+async def case_http429_twice_text_stt(session_dir):
     settings = settings_from(env(session_dir))
     unavailable = status_responder(429, b'{"error":"rate limited"}')
     async with adapter_app(
@@ -745,7 +745,7 @@ async def case_it12_18(session_dir):
         assert len(harness.recorders["tts"].requests) == 1
 
 
-async def case_it12_19(session_dir):
+async def case_http500_twice_text_stt(session_dir):
     settings = settings_from(env(session_dir))
     unavailable = status_responder(500, b'{"error":"server error"}')
     async with adapter_app(
@@ -777,7 +777,7 @@ async def case_it12_19(session_dir):
         assert len(harness.recorders["llm"].requests) == 2
 
 
-# IT12-20..IT12-28: unusable 2xx payloads, bounded attempts, no commit --------
+# 2xx malformed json twice..2xx content list multipart blocks on both attempts: unusable 2xx payloads, bounded attempts, no commit --------
 
 
 INVALID_ENVELOPES = {
@@ -852,86 +852,86 @@ async def assert_invalid_success(settings, session_dir, kind: str):
         assert snapshot(session_dir, session_id) == before
 
 
-async def case_it12_20(session_dir):
+async def case_2xx_malformed_json_twice(session_dir):
     await assert_invalid_success(settings_from(env(session_dir)), session_dir, "malformed")
 
 
-async def case_it12_21(session_dir):
+async def case_2xx_response_choices_on_both_attempts(session_dir):
     await assert_invalid_success(
         settings_from(env(session_dir)), session_dir, "empty_choices"
     )
 
 
-async def case_it12_22(session_dir):
+async def case_2xx_message_tool_calls_nonempty_twice(session_dir):
     await assert_invalid_success(settings_from(env(session_dir)), session_dir, "tool_calls")
 
 
-async def case_it12_23(session_dir):
+async def case_2xx_refusal_nonempty_twice(session_dir):
     await assert_invalid_success(settings_from(env(session_dir)), session_dir, "refusal")
 
 
-async def case_it12_24(session_dir):
+async def case_2xx_finish_reason_length_on_both_attempts(session_dir):
     await assert_invalid_success(settings_from(env(session_dir)), session_dir, "length")
 
 
-async def case_it12_25(session_dir):
+async def case_2xx_message_content_null_on_both_attempts(session_dir):
     await assert_invalid_success(
         settings_from(env(session_dir)), session_dir, "null_content"
     )
 
 
-async def case_it12_26(session_dir):
+async def case_2xx_response_missing_choices_key_on_both_attempts(session_dir):
     await assert_invalid_success(
         settings_from(env(session_dir)), session_dir, "missing_choices"
     )
 
 
-async def case_it12_27(session_dir):
+async def case_2xx_finish_reason_null_on_both_attempts(session_dir):
     await assert_invalid_success(
         settings_from(env(session_dir)), session_dir, "null_finish_reason"
     )
 
 
-async def case_it12_28(session_dir):
+async def case_2xx_content_list_multipart_blocks_on_both_attempts(session_dir):
     await assert_invalid_success(
         settings_from(env(session_dir)), session_dir, "multipart_content"
     )
 
 
 CASES = {
-    "IT12-01": case_it12_01,
-    "IT12-02": case_it12_02,
-    "IT12-03": case_it12_03,
-    "IT12-04": case_it12_04,
-    "IT12-05": case_it12_05,
-    "IT12-06": case_it12_06,
-    "IT12-07": case_it12_07,
-    "IT12-08": case_it12_08,
-    "IT12-09": case_it12_09,
-    "IT12-10": case_it12_10,
-    "IT12-11": partial(case_it12_configuration_status, 400),
-    "IT12-12": partial(case_it12_configuration_status, 401),
-    "IT12-13": partial(case_it12_configuration_status, 403),
-    "IT12-14": partial(case_it12_configuration_status, 404),
-    "IT12-15": partial(case_it12_configuration_status, 405),
-    "IT12-16": partial(case_it12_configuration_status, 415),
-    "IT12-17": partial(case_it12_configuration_status, 422),
-    "IT12-18": case_it12_18,
-    "IT12-19": case_it12_19,
-    "IT12-20": case_it12_20,
-    "IT12-21": case_it12_21,
-    "IT12-22": case_it12_22,
-    "IT12-23": case_it12_23,
-    "IT12-24": case_it12_24,
-    "IT12-25": case_it12_25,
-    "IT12-26": case_it12_26,
-    "IT12-27": case_it12_27,
-    "IT12-28": case_it12_28,
+    "llm_rag_json_schema_output_mode": case_llm_rag_json_schema_output_mode,
+    "llm_rag_json_object_output_mode": case_llm_rag_json_object_output_mode,
+    "llm_rag_prompt_json_output_mode": case_llm_rag_prompt_json_output_mode,
+    "four_independent_service_endpoints": case_four_independent_service_endpoints,
+    "one_shared_host_four_explicit_role_profiles": case_one_shared_host_four_explicit_role_profiles,
+    "all_empty_rag_profile_real_settings_lifespan_resolution_then": case_all_empty_rag_profile_real_settings_lifespan_resolution_then,
+    "partially_specified_rag_profile": case_partially_specified_rag_profile,
+    "auth_mode_none_on_all_roles": case_auth_mode_none_on_all_roles,
+    "distinct_bearer_tokens_on_four_roles": case_distinct_bearer_tokens_on_four_roles,
+    "http_redirect": case_http_redirect,
+    "http400": partial(case_configuration_status, 400),
+    "http401": partial(case_configuration_status, 401),
+    "http403": partial(case_configuration_status, 403),
+    "http404_model_endpoint_absent": partial(case_configuration_status, 404),
+    "http405": partial(case_configuration_status, 405),
+    "http415": partial(case_configuration_status, 415),
+    "http422": partial(case_configuration_status, 422),
+    "http429_twice_text_stt": case_http429_twice_text_stt,
+    "http500_twice_text_stt": case_http500_twice_text_stt,
+    "2xx_malformed_json_twice": case_2xx_malformed_json_twice,
+    "2xx_response_choices_on_both_attempts": case_2xx_response_choices_on_both_attempts,
+    "2xx_message_tool_calls_nonempty_twice": case_2xx_message_tool_calls_nonempty_twice,
+    "2xx_refusal_nonempty_twice": case_2xx_refusal_nonempty_twice,
+    "2xx_finish_reason_length_on_both_attempts": case_2xx_finish_reason_length_on_both_attempts,
+    "2xx_message_content_null_on_both_attempts": case_2xx_message_content_null_on_both_attempts,
+    "2xx_response_missing_choices_key_on_both_attempts": case_2xx_response_missing_choices_key_on_both_attempts,
+    "2xx_finish_reason_null_on_both_attempts": case_2xx_finish_reason_null_on_both_attempts,
+    "2xx_content_list_multipart_blocks_on_both_attempts": case_2xx_content_list_multipart_blocks_on_both_attempts,
 }
 
 
 @pytest.mark.parametrize("case_id", sorted(CASES))
-async def test_it12_transport(case_id, session_dir, monkeypatch, caplog):
+async def test_transport(case_id, session_dir, monkeypatch, caplog):
     case = CASES[case_id]
     kwargs = {"session_dir": session_dir}
     parameters = inspect.signature(case).parameters

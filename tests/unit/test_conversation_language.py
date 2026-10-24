@@ -1,4 +1,4 @@
-"""Unit tests for English/Spanish conversation behaviour (FEAT-02).
+"""Unit tests for English/Spanish conversation behaviour.
 
 Every test drives the real engine and real JSON repository; only the remote AI
 provider and the knowledge-base lookup are scripted doubles.

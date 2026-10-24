@@ -1,4 +1,4 @@
-"""IT15-01..IT15-14: English/Spanish conversation support over the real HTTP app.
+"""English/Spanish conversation support over the real HTTP app.
 
 Every case runs the real app factory, lifespan, routes, engine and JSON
 repository; only the remote AI service is scripted (IC §13.1). Language is
@@ -27,7 +27,7 @@ from tests.integration.support_api import (
     read_session,
     running_client,
 )
-from tests.integration.test_it02_intake import FULL_SLOTS, FULL_SUMMARY, start_session, turn_body
+from tests.integration.test_intake import FULL_SLOTS, FULL_SUMMARY, start_session, turn_body
 
 SPANISH_TEXT = "Mi pedido NS-000123 llegó dañado, urgencia alta"
 SPANISH_SLOTS = {

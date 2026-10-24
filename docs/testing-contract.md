@@ -201,7 +201,7 @@ The server records each request path, headers and raw body, and each response st
 | Two application instances and sessions isolated (separate servers, directories, revisions, citations) | `::test_two_app_instances_and_sessions_are_isolated` |
 | Speech over real HTTP: exact synthesis request, saved-message-only, arbitrary text/unknown/user message rejected with no provider call and no session write | `::test_speech_synthesizes_only_a_saved_message_over_real_http`, `::test_speech_rejects_unsaved_or_arbitrary_input_without_provider_call` |
 
-IT10 matrix coverage: `test_it10_rag.py` keeps IT10-01..IT10-16 at the scripted-AIProvider and `httpx.MockTransport` layers; `test_rag_http.py` re-proves the transport-dependent rows over the real socket (01 grounded answer, 02 no-match/no generation, 03 retrieved-but-unanswerable, 04 two ordered sources, 05 unknown citation, 06 duplicate citation, 07 unretrieved KB citation, 08 false-with-text, 11 outage rollback, 12 shared deadline). Rows 09, 10, 13, 14, 15 and 16 remain covered by their existing `test_it10_rag.py` cases; the module docstring records the exact mapping.
+IT10 matrix coverage: `test_rag.py` keeps IT10-01..IT10-16 at the scripted-AIProvider and `httpx.MockTransport` layers; `test_rag_http.py` re-proves the transport-dependent rows over the real socket (01 grounded answer, 02 no-match/no generation, 03 retrieved-but-unanswerable, 04 two ordered sources, 05 unknown citation, 06 duplicate citation, 07 unretrieved KB citation, 08 false-with-text, 11 outage rollback, 12 shared deadline). Rows 09, 10, 13, 14, 15 and 16 remain covered by their existing `test_rag.py` cases; the module docstring records the exact mapping.
 
 Timeout cases shorten the real adapter budget (`TEXT_BUDGET`/`ROLE_BUDGETS`) and the engine deadline before construction so wall-clock stays bounded; retry, repair, validation and commit/rollback logic are unchanged. Commands:
 
@@ -221,10 +221,10 @@ The gateway owns no catalog, demo code or credential rule. Verification and look
 
 | Order API case | Test nodeids |
 |---|---|
-| OA-I01 fixture and allowlisted record | `tests/unit/test_order_api.py::test_fixture_record_is_exact_and_allowlisted`, `::test_unknown_order_returns_not_found_without_record_data`; over the real socket `tests/integration/test_auth01_order_verification.py::test_normalized_postcode_and_demo_code_grant_one_allowlisted_lookup`, `::test_missing_fixture_record_clears_the_grant_and_fails_generically` |
+| OA-I01 fixture and allowlisted record | `tests/unit/test_order_api.py::test_fixture_record_is_exact_and_allowlisted`, `::test_unknown_order_returns_not_found_without_record_data`; over the real socket `tests/integration/order_verification/test_order_api_boundary.py::test_normalized_postcode_and_demo_code_grant_one_allowlisted_lookup`, `::test_missing_fixture_record_clears_the_grant_and_fails_generically` |
 | OA-I02 health and private surface | `tests/unit/test_order_api.py::test_health_is_private_and_minimal`, `::test_client_has_no_public_gateway_routes` |
-| OA-I03 gateway browser surface and no host port | `tests/integration/test_auth01_order_verification.py::test_gateway_origin_does_not_expose_the_private_order_api`, `tests/unit/test_compose_order_api.py::test_order_api_publishes_no_host_port_and_is_only_exposed_internally`, `::test_gateway_waits_for_a_healthy_order_api_and_calls_it_by_service_dns` |
-| OA-I04 verification while the Order API is down | `tests/integration/test_auth01_order_verification.py::test_order_api_outage_during_verification_is_safe_and_recovers` |
+| OA-I03 gateway browser surface and no host port | `tests/integration/order_verification/test_order_api_boundary.py::test_gateway_origin_does_not_expose_the_private_order_api`, `tests/unit/test_compose_order_api.py::test_order_api_publishes_no_host_port_and_is_only_exposed_internally`, `::test_gateway_waits_for_a_healthy_order_api_and_calls_it_by_service_dns` |
+| OA-I04 verification while the Order API is down | `tests/integration/order_verification/test_order_api_boundary.py::test_order_api_outage_during_verification_is_safe_and_recovers` |
 | OA-I05 lookup while the Order API is down | `::test_order_api_outage_during_lookup_preserves_the_grant_and_recovers` |
 | OA-I06 restart on the same origin recovers without a gateway restart | the `LocalOrderApiServer.restart()` phase of both OA-I04/I05 tests |
 | OA-I07 slow, malformed and 5xx replies | `::test_unusable_order_api_replies_map_to_fixed_safe_errors` (`OA-I07-timeout`, `OA-I07-malformed`, `OA-I07-5xx` ids) against a real loopback Uvicorn service |
@@ -232,6 +232,6 @@ The gateway owns no catalog, demo code or credential rule. Verification and look
 J01 carries the browser journey extension; the outage/recovery checkpoints are `J01.order-api-outage-safe-error` and `J01.demo-code-success-enables-composer`, alongside the failed-verification checkpoint `J01.wrong-code-localized-error` and the successful lookup checkpoints `J01.verified-allowlisted-order-summary` and `J01.verified-order-review`.
 
 ```bash
-.venv/bin/python -m pytest tests/integration/test_auth01_order_verification.py tests/unit/test_order_api.py tests/unit/test_compose_order_api.py -q
+.venv/bin/python -m pytest tests/integration/order_verification tests/unit/test_order_api.py tests/unit/test_compose_order_api.py -q
 .venv/bin/python scripts/test.py e2e
 ```

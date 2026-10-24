@@ -1,4 +1,4 @@
-"""FEAT-01 frustration classification and simulated agent handoff."""
+"""Frustration classification and simulated agent handoff."""
 from __future__ import annotations
 
 from uuid import uuid4

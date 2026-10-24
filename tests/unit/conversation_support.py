@@ -22,7 +22,6 @@ FULL_SLOTS = make_slots(
     urgency="high",
 )
 
-
 FULL_EXTRACTION = make_extraction(
     candidates={
         "order_number": "NS-000123",
@@ -31,7 +30,6 @@ FULL_EXTRACTION = make_extraction(
         "urgency": "high",
     }
 )
-
 
 SUMMARY = (
     "Account reference: NS-000123\n"

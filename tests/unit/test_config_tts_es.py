@@ -1,4 +1,4 @@
-"""Unit tests for the optional Spanish TTS profile settings (FEAT-02)."""
+"""Unit tests for the optional Spanish TTS profile settings."""
 
 from __future__ import annotations
 

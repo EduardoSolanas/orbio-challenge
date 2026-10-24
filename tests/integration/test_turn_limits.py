@@ -1,11 +1,11 @@
-"""IT05-01..IT05-06: message cap and completion behaviour.
+"""validated near cap session49 then complete details50..completed exact confirmation request replay: message cap and completion behaviour.
 
 Near-cap and completed sessions are prepared through the real repository and a
 temporary directory — `seed_session()` validates a `Session` model and saves it
 with `JsonSessionRepository.save()` exactly like the app does, so every later
 action is served by the real lifespan, routes, engine and JSON store. No Session
 JSON is ever hand-written into the request path and no browser turns are clicked
-(IC §13.2 IT05).
+(IC §13.2).
 
 Only the AI service boundary is scripted (`ScriptedProvider`); E/A counts are
 the logical `extract` / `answer_knowledge` calls of the action under test.
@@ -27,12 +27,12 @@ from tests.integration.support_api import (
     persisted_response,
     read_session,
 )
-from tests.integration.test_it02_intake import (
+from tests.integration.test_intake import (
     FULL_SLOTS,
     FULL_SUMMARY,
     REVIEW_SUFFIX,
 )
-from tests.integration.test_it04_state import (
+from tests.integration.confirmation_support import (
     CHANGE_TEXT,
     YES_TEXT,
     assert_dedicated_confirm_commit,
@@ -117,7 +117,7 @@ async def seed_session(
 ) -> str:
     """Build a schema-validated Session and persist it with the real repository.
 
-    This is the IT05 near-cap state factory: the document is written by
+    This is the near-cap state factory: the document is written by
     `JsonSessionRepository.save()` (atomic temp-file replace) into the isolated
     temp directory the app lifespan then serves, so the routes load it through
     the same validated path as any real session. It never fabricates a request
@@ -205,10 +205,10 @@ async def near_cap_incomplete(client, session_dir: Path) -> str:
     return session_id
 
 
-# IT05-01 -------------------------------------------------------------------
+# validated near cap session49 then complete details50 -------------------------------------------------------------------
 
 
-async def case_it05_01(client, provider, session_dir):
+async def case_validated_near_cap_session49_then_complete_details50(client, provider, session_dir):
     session_id = await near_cap_incomplete(client, session_dir)
     before = read_session(session_dir, session_id)
     assert before["collection_turn_count"] == NEAR_CAP
@@ -262,10 +262,10 @@ async def case_it05_01(client, provider, session_dir):
     assert final["confirmation"]["review_revision"] == AT_CAP
 
 
-# IT05-02 -------------------------------------------------------------------
+# validated near cap49 then details50 text yes -------------------------------------------------------------------
 
 
-async def case_it05_02(client, provider, session_dir):
+async def case_validated_near_cap49_then_details50_text_yes(client, provider, session_dir):
     session_id = await near_cap_incomplete(client, session_dir)
     before = read_session(session_dir, session_id)
     calls_before = len(provider.calls)
@@ -328,10 +328,10 @@ async def case_it05_02(client, provider, session_dir):
     assert final["status"] == "completed"
 
 
-# IT05-03 -------------------------------------------------------------------
+# incomplete session counter50 then ordinary details -------------------------------------------------------------------
 
 
-async def case_it05_03(client, provider, session_dir):
+async def case_incomplete_session_counter50_then_ordinary_details(client, provider, session_dir):
     session_id = await seed_session(
         session_dir,
         revision=AT_CAP,
@@ -373,10 +373,10 @@ async def case_it05_03(client, provider, session_dir):
     assert after["requests"] == []
 
 
-# IT05-04 -------------------------------------------------------------------
+# valid review counter50 then change -------------------------------------------------------------------
 
 
-async def case_it05_04(client, provider, session_dir):
+async def case_valid_review_counter50_then_change(client, provider, session_dir):
     session_id = await seeded_review(client, session_dir, revision=AT_CAP, counter=AT_CAP)
     before_bytes = raw_bytes(session_dir, session_id)
     calls_before = len(provider.calls)
@@ -404,10 +404,10 @@ async def case_it05_04(client, provider, session_dir):
     assert after["requests"] == []
 
 
-# IT05-05 -------------------------------------------------------------------
+# completed session new edit -------------------------------------------------------------------
 
 
-async def case_it05_05(client, provider, session_dir):
+async def case_completed_session_new_edit(client, provider, session_dir):
     session_id = await seeded_review(client, session_dir, revision=AT_CAP, counter=AT_CAP)
     before = read_session(session_dir, session_id)
     _, confirmed = await post_confirm(
@@ -443,10 +443,10 @@ async def case_it05_05(client, provider, session_dir):
     assert len(after["requests"]) == len(completed["requests"])
 
 
-# IT05-06 -------------------------------------------------------------------
+# completed exact confirmation request replay -------------------------------------------------------------------
 
 
-async def case_it05_06(client, provider, session_dir):
+async def case_completed_exact_confirmation_request_replay(client, provider, session_dir):
     session_id = await seeded_review(client, session_dir, revision=AT_CAP, counter=AT_CAP)
     request_id = str(uuid4())
     body = {
@@ -480,15 +480,15 @@ async def case_it05_06(client, provider, session_dir):
 
 
 CASES = [
-    pytest.param(case_it05_01, id="IT05-01"),
-    pytest.param(case_it05_02, id="IT05-02"),
-    pytest.param(case_it05_03, id="IT05-03"),
-    pytest.param(case_it05_04, id="IT05-04"),
-    pytest.param(case_it05_05, id="IT05-05"),
-    pytest.param(case_it05_06, id="IT05-06"),
+    pytest.param(case_validated_near_cap_session49_then_complete_details50, id="validated_near_cap_session49_then_complete_details50"),
+    pytest.param(case_validated_near_cap49_then_details50_text_yes, id="validated_near_cap49_then_details50_text_yes"),
+    pytest.param(case_incomplete_session_counter50_then_ordinary_details, id="incomplete_session_counter50_then_ordinary_details"),
+    pytest.param(case_valid_review_counter50_then_change, id="valid_review_counter50_then_change"),
+    pytest.param(case_completed_session_new_edit, id="completed_session_new_edit"),
+    pytest.param(case_completed_exact_confirmation_request_replay, id="completed_exact_confirmation_request_replay"),
 ]
 
 
 @pytest.mark.parametrize("case", CASES)
-async def test_it05_message_cap_and_completion(case, client, provider, session_dir):
+async def test_message_cap_and_completion(case, client, provider, session_dir):
     await case(client, provider, session_dir)

@@ -15,7 +15,6 @@ from app.schemas import ExtractionContext, KnowledgeContext, KnowledgeRecord, Sl
 
 ROLES = ("llm", "rag", "stt", "tts")
 
-
 LLM_PROFILE = TextProfile(
     base_url="http://llm.test/v1",
     model="llm-model",
@@ -23,7 +22,6 @@ LLM_PROFILE = TextProfile(
     api_key="",
     output_mode="json_schema",
 )
-
 
 RAG_PROFILE = TextProfile(
     base_url="http://rag.test/v1",
@@ -33,11 +31,9 @@ RAG_PROFILE = TextProfile(
     output_mode="json_schema",
 )
 
-
 STT_PROFILE = ServiceProfile(
     base_url="http://stt.test/v1", model="stt-model", auth_mode="none", api_key=""
 )
-
 
 TTS_PROFILE = SpeechProfile(
     base_url="http://tts.test/v1",
@@ -46,7 +42,6 @@ TTS_PROFILE = SpeechProfile(
     api_key="",
     voice="alloy",
 )
-
 
 EXTRACTION_PAYLOAD = {
     "intent": "provide_details",
@@ -65,13 +60,11 @@ EXTRACTION_PAYLOAD = {
 "frustration": "none",
 }
 
-
 ANSWER_PAYLOAD = {
     "answerable": True,
     "answer": "You can request a return within 30 calendar days.",
     "cited_ids": ["faq-returns"],
 }
-
 
 SOURCE = KnowledgeRecord(
     id="faq-returns",

@@ -1,7 +1,7 @@
-"""IT14-01..IT14-10: startup validation, health, isolation and sanitized errors.
+"""invalid service url at real app startup..during real turn route fake extract raises runtimeerror: startup validation, health, isolation and sanitized errors.
 
 Each case runs the real `Settings` resolution and the real app lifespan
-(IC §13.2 IT14). Offline validation, the writable-storage probe, the immutable
+(IC §13.2). Offline validation, the writable-storage probe, the immutable
 loaded knowledge base and the sanitized error surface are production code; only
 the external AI service is doubled, and no case performs a model call during
 startup or health.
@@ -26,21 +26,21 @@ from tests.integration.support_api import (
     ScriptedProvider,
     read_session,
 )
-from tests.integration.test_it02_intake import PART_TEXT, start_session, turn_body
-from tests.integration.test_it08_transcription import (
+from tests.integration.test_intake import PART_TEXT, start_session, turn_body
+from tests.integration.test_transcription import (
     RoleTransport,
     assert_error,
     snapshot,
     unexpected,
 )
-from tests.integration.test_it12_transport import (
+from tests.integration.test_transport import (
     ROLES,
     apply_env,
     chat_valid,
     env,
     settings_from,
 )
-from tests.integration.test_it13_bounds import blocked_stream_responder
+from tests.integration.test_request_bounds import blocked_stream_responder
 
 SENTINEL_KEY = "sk-live-provider-key-sentinel"
 SENTINEL_CUSTOMER = "customer NS-000999 payment details"
@@ -123,15 +123,15 @@ def closing_provider(settings):
     return provider, transports
 
 
-# IT14-01..IT14-04: offline configuration validation -------------------------
+# invalid service url at real app startup..missing required tts voice: offline configuration validation -------------------------
 
 
-async def case_it14_01(session_dir, monkeypatch):
+async def case_invalid_service_url_at_real_app_startup(session_dir, monkeypatch):
     values = env(session_dir, LLM_BASE_URL="ftp://llm.test/v1")
     await expect_configuration_failure(values, monkeypatch)
 
 
-async def case_it14_02(session_dir, monkeypatch):
+async def case_bearer_role_missing_its_key(session_dir, monkeypatch):
     values = env(
         session_dir,
         LLM_AUTH_MODE="bearer",
@@ -142,42 +142,42 @@ async def case_it14_02(session_dir, monkeypatch):
     await expect_configuration_failure(values, monkeypatch)
 
 
-async def case_it14_03(session_dir, monkeypatch):
+async def case_no_auth_role_configured_key(session_dir, monkeypatch):
     values = env(session_dir, LLM_AUTH_MODE="none", LLM_API_KEY=SENTINEL_KEY)
     await expect_configuration_failure(values, monkeypatch)
 
 
-async def case_it14_04(session_dir, monkeypatch):
+async def case_missing_required_tts_voice(session_dir, monkeypatch):
     values = none_auth_env(session_dir, TTS_VOICE=None)
     await expect_configuration_failure(values, monkeypatch)
 
 
-# IT14-11..IT14-13: TTS format/cap variants (PC §3) ---------------------------
+# uppercase tts audio format rejected..wav input limit above 4000 rejected: TTS format/cap variants (PC §3) ---------------------------
 
 
-async def case_it14_11(session_dir, monkeypatch):
+async def case_uppercase_tts_audio_format_rejected(session_dir, monkeypatch):
     values = none_auth_env(session_dir, TTS_AUDIO_FORMAT="WAV")
     await expect_configuration_failure(values, monkeypatch)
 
 
-async def case_it14_12(session_dir, monkeypatch):
+async def case_mp3_200_character_input_limit_rejected(session_dir, monkeypatch):
     values = none_auth_env(
         session_dir, TTS_AUDIO_FORMAT="mp3", TTS_MAX_INPUT_CHARS="200"
     )
     await expect_configuration_failure(values, monkeypatch)
 
 
-async def case_it14_13(session_dir, monkeypatch):
+async def case_wav_input_limit_above_4000_rejected(session_dir, monkeypatch):
     values = none_auth_env(
         session_dir, TTS_AUDIO_FORMAT="wav", TTS_MAX_INPUT_CHARS="4001"
     )
     await expect_configuration_failure(values, monkeypatch)
 
 
-# IT14-05: unwritable session storage ----------------------------------------
+# real startup scoped temp file creation write permissionerror: unwritable session storage ----------------------------------------
 
 
-async def case_it14_05(session_dir, monkeypatch):
+async def case_real_startup_scoped_temp_file_creation_write_permissionerror(session_dir, monkeypatch):
     settings = settings_from(none_auth_env(session_dir))
     provider = ScriptedProvider()
     app = create_app(settings=settings, provider=provider)
@@ -199,10 +199,10 @@ async def case_it14_05(session_dir, monkeypatch):
     assert not hasattr(app.state, "engine")
 
 
-# IT14-06..IT14-07: real health probe ----------------------------------------
+# valid health probe..after healthy startup inject permissionerror into actual: real health probe ----------------------------------------
 
 
-async def case_it14_06(session_dir, monkeypatch):
+async def case_valid_health_probe(session_dir, monkeypatch):
     settings = settings_from(none_auth_env(session_dir))
     real_named_temp = tempfile.NamedTemporaryFile
     probes: list[str] = []
@@ -232,7 +232,7 @@ async def case_it14_06(session_dir, monkeypatch):
     assert app.state.ready is False
 
 
-async def case_it14_07(session_dir, monkeypatch):
+async def case_after_healthy_startup_inject_permissionerror_into_actual(session_dir, monkeypatch):
     settings = settings_from(none_auth_env(session_dir))
     provider, transports = closing_provider(settings)
     app = create_app(settings=settings, provider=provider)
@@ -256,10 +256,10 @@ async def case_it14_07(session_dir, monkeypatch):
             assert all(transport.close_count == 0 for transport in transports.values())
 
 
-# IT14-08: lifespan exit closes all four clients ------------------------------
+# normal lifespan exit: lifespan exit closes all four clients ------------------------------
 
 
-async def case_it14_08(session_dir):
+async def case_normal_lifespan_exit(session_dir):
     # RAG profile fully absent: the inherited RAG client is a distinct client.
     settings = settings_from(
         env(
@@ -299,10 +299,10 @@ async def case_it14_08(session_dir):
         assert transports[role].close_count == 1
 
 
-# IT14-09: two independent app instances --------------------------------------
+# two app instances: two independent app instances --------------------------------------
 
 
-async def case_it14_09(tmp_path):
+async def case_two_app_instances(tmp_path):
     dir_a = tmp_path / "a" / "sessions"
     dir_b = tmp_path / "b" / "sessions"
     settings_a = settings_from(none_auth_env(dir_a))
@@ -394,10 +394,10 @@ async def case_it14_09(tmp_path):
         assert read_session(dir_a, session_a1)["revision"] == 1
 
 
-# IT14-10: sanitized unexpected error on the real turn route ------------------
+# during real turn route fake extract raises runtimeerror: sanitized unexpected error on the real turn route ------------------
 
 
-async def case_it14_10(session_dir, caplog):
+async def case_during_real_turn_route_fake_extract_raises_runtimeerror(session_dir, caplog):
     settings = settings_from(none_auth_env(session_dir))
     provider = RaisingProvider()
     app = create_app(settings=settings, provider=provider)
@@ -432,24 +432,24 @@ async def case_it14_10(session_dir, caplog):
 
 
 CASES = {
-    "IT14-01": case_it14_01,
-    "IT14-02": case_it14_02,
-    "IT14-03": case_it14_03,
-    "IT14-04": case_it14_04,
-    "IT14-11": case_it14_11,
-    "IT14-12": case_it14_12,
-    "IT14-13": case_it14_13,
-    "IT14-05": case_it14_05,
-    "IT14-06": case_it14_06,
-    "IT14-07": case_it14_07,
-    "IT14-08": case_it14_08,
-    "IT14-09": case_it14_09,
-    "IT14-10": case_it14_10,
+    "invalid_service_url_at_real_app_startup": case_invalid_service_url_at_real_app_startup,
+    "bearer_role_missing_its_key": case_bearer_role_missing_its_key,
+    "no_auth_role_configured_key": case_no_auth_role_configured_key,
+    "missing_required_tts_voice": case_missing_required_tts_voice,
+    "uppercase_tts_audio_format_rejected": case_uppercase_tts_audio_format_rejected,
+    "mp3_200_character_input_limit_rejected": case_mp3_200_character_input_limit_rejected,
+    "wav_input_limit_above_4000_rejected": case_wav_input_limit_above_4000_rejected,
+    "real_startup_scoped_temp_file_creation_write_permissionerror": case_real_startup_scoped_temp_file_creation_write_permissionerror,
+    "valid_health_probe": case_valid_health_probe,
+    "after_healthy_startup_inject_permissionerror_into_actual": case_after_healthy_startup_inject_permissionerror_into_actual,
+    "normal_lifespan_exit": case_normal_lifespan_exit,
+    "two_app_instances": case_two_app_instances,
+    "during_real_turn_route_fake_extract_raises_runtimeerror": case_during_real_turn_route_fake_extract_raises_runtimeerror,
 }
 
 
 @pytest.mark.parametrize("case_id", sorted(CASES))
-async def test_it14_startup(case_id, session_dir, tmp_path, monkeypatch, caplog):
+async def test_startup(case_id, session_dir, tmp_path, monkeypatch, caplog):
     case = CASES[case_id]
     names = case.__code__.co_varnames[: case.__code__.co_argcount]
     kwargs = {}

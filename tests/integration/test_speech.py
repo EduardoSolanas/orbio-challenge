@@ -1,4 +1,4 @@
-"""IT09-01..IT09-09: speech route — saved assistant text, bounded TTS delivery.
+"""saved assistant message actual mp3 pcm wav wire fixture..tts unavailable on saved reply: speech route — saved assistant text, bounded TTS delivery.
 
 Every case runs the real app factory, lifespan, `/api/sessions/{id}/speech`
 route, engine message lookup and the real `OpenAICompatibleProvider` TTS adapter
@@ -8,7 +8,7 @@ them through the real bounded stream, so content-type, encoding, empty and
 5 MiB+1 payloads are judged by shipped code, not by a fake.
 
 Only saved assistant messages may reach TTS: the caller sends a message ID, never
-text (arbitrary caller text is IT01-08). No case mutates the session document.
+text (arbitrary caller text is post speech caller supplied text extra key). No case mutates the session document.
 """
 
 from __future__ import annotations
@@ -23,8 +23,8 @@ import httpx
 import pytest
 
 from app.prompts import GREETING
-from tests.integration.test_it02_intake import PART_TEXT, start_session, turn_body
-from tests.integration.test_it08_transcription import (
+from tests.integration.test_intake import PART_TEXT, start_session, turn_body
+from tests.integration.test_transcription import (
     RecordingStream,
     assert_error,
     audio_client,
@@ -119,10 +119,10 @@ async def saved_reply(client, session_id: str) -> dict:
     return response.json()
 
 
-# IT09-01 -------------------------------------------------------------------
+# saved assistant message actual mp3 pcm wav wire fixture -------------------------------------------------------------------
 
 
-async def case_it09_01(settings, session_dir):
+async def case_saved_assistant_message_actual_mp3_pcm_wav_wire_fixture(settings, session_dir):
     async with audio_client(
         settings, {"llm": llm_extraction(), "tts": tts_mp3()}
     ) as (client, rec, _):
@@ -149,10 +149,10 @@ async def case_it09_01(settings, session_dir):
         assert snapshot(session_dir, session_id) == before
 
 
-# IT09-02..IT09-03: only saved assistant messages may be synthesized ---------
+# absent message uuid..existing user message uuid: only saved assistant messages may be synthesized ---------
 
 
-async def case_it09_02(settings, session_dir):
+async def case_absent_message_uuid(settings, session_dir):
     async with audio_client(settings, {"tts": tts_mp3()}) as (client, rec, _):
         session_id = await start_session(client)
         before = snapshot(session_dir, session_id)
@@ -164,7 +164,7 @@ async def case_it09_02(settings, session_dir):
         assert snapshot(session_dir, session_id) == before
 
 
-async def case_it09_03(settings, session_dir):
+async def case_existing_user_message_uuid(settings, session_dir):
     async with audio_client(
         settings, {"llm": llm_extraction(), "tts": tts_mp3()}
     ) as (client, rec, _):
@@ -181,7 +181,7 @@ async def case_it09_03(settings, session_dir):
         assert snapshot(session_dir, session_id) == before
 
 
-# IT09-04..IT09-07: unusable provider responses -----------------------------
+# tts2xx text json content type..tts2xx compressed despite identity: unusable provider responses -----------------------------
 
 
 async def assert_unusable_tts(settings, session_dir, responder):
@@ -198,7 +198,7 @@ async def assert_unusable_tts(settings, session_dir, responder):
         return rec
 
 
-async def case_it09_04(settings, session_dir):
+async def case_tts2xx_text_json_content_type(settings, session_dir):
     def responder(request: httpx.Request, attempt: int) -> httpx.Response:
         return httpx.Response(
             200,
@@ -209,11 +209,11 @@ async def case_it09_04(settings, session_dir):
     await assert_unusable_tts(settings, session_dir, responder)
 
 
-async def case_it09_05(settings, session_dir):
+async def case_tts2xx_empty_bytes(settings, session_dir):
     await assert_unusable_tts(settings, session_dir, tts_mp3(body=b""))
 
 
-async def case_it09_06(settings, session_dir):
+async def case_tts2xx_raw_payload5mib_1(settings, session_dir):
     chunks = [b"x" * (1024 * 1024)] * 5 + [b"x"]
     assert sum(len(chunk) for chunk in chunks) == TTS_LIMIT + 1
     responder = tts_response(chunks, headers={"content-type": "audio/mpeg"})
@@ -221,7 +221,7 @@ async def case_it09_06(settings, session_dir):
     assert responder.stream.closed is True
 
 
-async def case_it09_07(settings, session_dir):
+async def case_tts2xx_compressed_despite_identity(settings, session_dir):
     compressed = gzip.compress(b"x" * 4096)
     responder = tts_response(
         [compressed],
@@ -234,10 +234,10 @@ async def case_it09_07(settings, session_dir):
     assert responder.stream.closed is True
 
 
-# IT09-08: cancellation -----------------------------------------------------
+# cancel tts streaming read: cancellation -----------------------------------------------------
 
 
-async def case_it09_08(settings, session_dir):
+async def case_cancel_tts_streaming_read(settings, session_dir):
     gate = asyncio.Event()
     stream = RecordingStream([b"ID3\x04", b"more audio"], gate)
 
@@ -273,10 +273,10 @@ async def case_it09_08(settings, session_dir):
         assert snapshot(session_dir, session_id) == before
 
 
-# IT09-09: TTS unavailable, text intake keeps working -----------------------
+# tts unavailable on saved reply: TTS unavailable, text intake keeps working -----------------------
 
 
-async def case_it09_09(settings, session_dir):
+async def case_tts_unavailable_on_saved_reply(settings, session_dir):
     async with audio_client(
         settings, {"llm": llm_extraction(), "tts": tts_status(503)}
     ) as (client, rec, _):
@@ -299,18 +299,18 @@ async def case_it09_09(settings, session_dir):
 
 
 CASES = {
-    "IT09-01": case_it09_01,
-    "IT09-02": case_it09_02,
-    "IT09-03": case_it09_03,
-    "IT09-04": case_it09_04,
-    "IT09-05": case_it09_05,
-    "IT09-06": case_it09_06,
-    "IT09-07": case_it09_07,
-    "IT09-08": case_it09_08,
-    "IT09-09": case_it09_09,
+    "saved_assistant_message_actual_mp3_pcm_wav_wire_fixture": case_saved_assistant_message_actual_mp3_pcm_wav_wire_fixture,
+    "absent_message_uuid": case_absent_message_uuid,
+    "existing_user_message_uuid": case_existing_user_message_uuid,
+    "tts2xx_text_json_content_type": case_tts2xx_text_json_content_type,
+    "tts2xx_empty_bytes": case_tts2xx_empty_bytes,
+    "tts2xx_raw_payload5mib_1": case_tts2xx_raw_payload5mib_1,
+    "tts2xx_compressed_despite_identity": case_tts2xx_compressed_despite_identity,
+    "cancel_tts_streaming_read": case_cancel_tts_streaming_read,
+    "tts_unavailable_on_saved_reply": case_tts_unavailable_on_saved_reply,
 }
 
 
 @pytest.mark.parametrize("case_id", sorted(CASES))
-async def test_it09_speech(case_id, settings, session_dir):
+async def test_speech(case_id, settings, session_dir):
     await CASES[case_id](settings, session_dir)

@@ -606,7 +606,7 @@ def test_reply_templates_are_byte_identical_to_the_contract(
 
 
 def test_conflict_and_ambiguous_templates_are_byte_identical() -> None:
-    # I18N-01 requires named scalar placeholders; IC §5 spelled the label
+    # The catalog requires named scalar placeholders; IC §5 spelled the label
     # placeholder with a space, which is not a valid placeholder name.
     assert CONFLICT_TEMPLATE == (
         "You previously gave {old}. Should I keep that or use {candidate} for {field_label}?"

@@ -1,4 +1,4 @@
-"""Unit tests for language-correct speech profile selection (FEAT-02)."""
+"""Unit tests for language-correct speech profile selection."""
 
 from __future__ import annotations
 

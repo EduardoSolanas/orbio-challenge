@@ -2,7 +2,7 @@
 
 Every case here drives the shipped ``OpenAICompatibleProvider`` with its real
 ``httpx.AsyncClient`` over a real TCP socket to ``LocalProviderServer``. Unit
-tests and the existing IT08/IT12/IT13 cases double the transport with
+tests and the existing transcription, transport and bounds cases double the transport with
 ``httpx.MockTransport``; these cases prove the wire-level behaviour those doubles
 cannot: actual request framing, redirect non-following, chunked body bounds with
 an observable client abort, encoded-response rejection and read timeouts with no

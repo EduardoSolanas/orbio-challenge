@@ -1,4 +1,4 @@
-"""Unit tests for the reviewed English/Spanish copy layer (FEAT-02)."""
+"""Unit tests for the reviewed English/Spanish copy layer."""
 
 from __future__ import annotations
 

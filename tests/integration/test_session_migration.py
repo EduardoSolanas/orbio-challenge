@@ -1,4 +1,4 @@
-"""IT16: version-2 persistence and legacy migration over real HTTP routes.
+"""Version-2 persistence and legacy migration over real HTTP routes.
 
 Every case runs the real app factory, lifespan, routes, engine and JSON
 repository against an isolated temporary SESSION_DIR. Legacy documents are
@@ -19,7 +19,7 @@ from httpx import ASGITransport, AsyncClient
 from app.main import create_app
 from app.schemas import Session
 from tests.integration.support_api import make_extraction, session_files
-from tests.integration.test_it02_intake import turn_body
+from tests.integration.test_intake import turn_body
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "sessions"
 V1_FIXTURES = [

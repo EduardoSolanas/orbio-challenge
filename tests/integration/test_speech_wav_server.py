@@ -1,4 +1,4 @@
-"""IT09 WAV variants against a real local HTTP server returning WAV bytes.
+"""WAV variants against a real local HTTP server returning WAV bytes.
 
 The app, lifespan, route, engine and ``OpenAICompatibleProvider`` are the shipped
 implementations. The external AI service is a real ``http.server`` listening on
@@ -21,7 +21,7 @@ import pytest
 from app.config import Settings
 from app.main import create_app
 from tests.integration.support_api import running_client
-from tests.integration.test_it08_transcription import snapshot
+from tests.integration.test_transcription import snapshot
 from tests.support.fakes import make_streaming_wav, make_wav
 
 TTS_LIMIT = 5 * 1024 * 1024

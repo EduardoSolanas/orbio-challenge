@@ -1,4 +1,4 @@
-"""IT17: locale API, startup validation and catalog-backed bootstrap (I18N-01)."""
+"""Locale API, startup validation and catalog-backed bootstrap."""
 
 from __future__ import annotations
 

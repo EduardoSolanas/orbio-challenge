@@ -1,8 +1,8 @@
-"""IT03-01..IT03-12: field validation through the real HTTP turn route.
+"""raw order ns 12345 plus valid sibling description..explicit valid answer resolves previously invalid field: field validation through the real HTTP turn route.
 
 Business-invalid inputs stay conversational 200s with the exact clarification,
 valid siblings and previously accepted values are retained, and issues clear
-only through explicit valid answers (IC §5, §13.2 IT03). Fixtures are scripted
+only through explicit valid answers (IC §5). Fixtures are scripted
 extractions at the AI boundary only; the app, engine and JSON repository are real.
 """
 
@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 
 from tests.integration.support_api import make_extraction, read_session
-from tests.integration.test_it02_intake import (
+from tests.integration.test_intake import (
     EMPTY_SLOTS,
     FULL_SLOTS,
     FULL_SUMMARY,
@@ -49,7 +49,7 @@ async def _disk(session_dir, session_id):
     return read_session(session_dir, session_id)
 
 
-async def case_it03_01(client, provider, session_dir):
+async def case_raw_order_ns_12345_plus_valid_sibling_description(client, provider, session_dir):
     session_id = await start_session(client)
     before = await _disk(session_dir, session_id)
     text = "My order NS-12345 arrived broken."
@@ -86,7 +86,7 @@ async def case_it03_01(client, provider, session_dir):
     )
 
 
-async def case_it03_02(client, provider, session_dir):
+async def case_raw_order_ns_1234567(client, provider, session_dir):
     session_id = await start_session(client)
     before = await _disk(session_dir, session_id)
     text = "My order NS-1234567 arrived broken."
@@ -114,7 +114,7 @@ async def case_it03_02(client, provider, session_dir):
     )
 
 
-async def case_it03_03(client, provider, session_dir):
+async def case_raw_full_width_unicode_order_digits(client, provider, session_dir):
     session_id = await start_session(client)
     before = await _disk(session_dir, session_id)
     text = f"My order {FULL_WIDTH_ORDER} arrived broken."
@@ -146,7 +146,7 @@ async def case_it03_03(client, provider, session_dir):
     )
 
 
-async def case_it03_04(client, provider, session_dir):
+async def case_raw_category_banana(client, provider, session_dir):
     session_id = await start_session(client)
     before = await _disk(session_dir, session_id)
     text = "It is a banana."
@@ -174,7 +174,7 @@ async def case_it03_04(client, provider, session_dir):
     )
 
 
-async def case_it03_05(client, provider, session_dir):
+async def case_description_exactly9_characters(client, provider, session_dir):
     session_id = await start_session(client)
     before = await _disk(session_dir, session_id)
     text = "It broke."
@@ -210,7 +210,7 @@ async def case_it03_05(client, provider, session_dir):
     )
 
 
-async def case_it03_06(client, provider, session_dir):
+async def case_description_exactly10_characters_expressing_problem(client, provider, session_dir):
     session_id = await start_session(client)
     before = await _disk(session_dir, session_id)
     text = "It broke!!"
@@ -244,7 +244,7 @@ async def case_it03_06(client, provider, session_dir):
     )
 
 
-async def case_it03_07(client, provider, session_dir):
+async def case_description_exactly2000_characters(client, provider, session_dir):
     session_id = await start_session(client)
     before = await _disk(session_dir, session_id)
     text = "My order description is long."
@@ -275,7 +275,7 @@ async def case_it03_07(client, provider, session_dir):
     )
 
 
-async def case_it03_08(client, provider, session_dir):
+async def case_description2001_characters(client, provider, session_dir):
     session_id = await start_session(client)
     before = await _disk(session_dir, session_id)
     request_id, response = await post_turn(
@@ -332,7 +332,7 @@ async def case_it03_08(client, provider, session_dir):
     )
 
 
-async def case_it03_09(client, provider, session_dir):
+async def case_description_equal_category_alias_damaged_item(client, provider, session_dir):
     session_id = await start_session(client)
     before = await _disk(session_dir, session_id)
     text = "It is a damaged item."
@@ -364,7 +364,7 @@ async def case_it03_09(client, provider, session_dir):
     )
 
 
-async def case_it03_10(client, provider, session_dir):
+async def case_all_other_fields_valid_urgency_missing(client, provider, session_dir):
     session_id = await start_session(client)
     before = await _disk(session_dir, session_id)
     text = "My order NS-000123 arrived broken. It is a damaged item."
@@ -401,7 +401,7 @@ async def case_it03_10(client, provider, session_dir):
     )
 
 
-async def case_it03_11(client, provider, session_dir):
+async def case_raw_urgency_purple_after_accepted_high(client, provider, session_dir):
     session_id = await start_session(client)
     before = await _disk(session_dir, session_id)
     request_id, response = await post_turn(
@@ -452,7 +452,7 @@ async def case_it03_11(client, provider, session_dir):
     )
 
 
-async def case_it03_12(client, provider, session_dir):
+async def case_explicit_valid_answer_resolves_previously_invalid_field(client, provider, session_dir):
     session_id = await start_session(client)
     before = await _disk(session_dir, session_id)
     text = "My order NS-12345 arrived broken and it is purple urgency."
@@ -567,21 +567,21 @@ async def case_it03_12(client, provider, session_dir):
 
 
 CASES = [
-    pytest.param(case_it03_01, id="IT03-01"),
-    pytest.param(case_it03_02, id="IT03-02"),
-    pytest.param(case_it03_03, id="IT03-03"),
-    pytest.param(case_it03_04, id="IT03-04"),
-    pytest.param(case_it03_05, id="IT03-05"),
-    pytest.param(case_it03_06, id="IT03-06"),
-    pytest.param(case_it03_07, id="IT03-07"),
-    pytest.param(case_it03_08, id="IT03-08"),
-    pytest.param(case_it03_09, id="IT03-09"),
-    pytest.param(case_it03_10, id="IT03-10"),
-    pytest.param(case_it03_11, id="IT03-11"),
-    pytest.param(case_it03_12, id="IT03-12"),
+    pytest.param(case_raw_order_ns_12345_plus_valid_sibling_description, id="raw_order_ns_12345_plus_valid_sibling_description"),
+    pytest.param(case_raw_order_ns_1234567, id="raw_order_ns_1234567"),
+    pytest.param(case_raw_full_width_unicode_order_digits, id="raw_full_width_unicode_order_digits"),
+    pytest.param(case_raw_category_banana, id="raw_category_banana"),
+    pytest.param(case_description_exactly9_characters, id="description_exactly9_characters"),
+    pytest.param(case_description_exactly10_characters_expressing_problem, id="description_exactly10_characters_expressing_problem"),
+    pytest.param(case_description_exactly2000_characters, id="description_exactly2000_characters"),
+    pytest.param(case_description2001_characters, id="description2001_characters"),
+    pytest.param(case_description_equal_category_alias_damaged_item, id="description_equal_category_alias_damaged_item"),
+    pytest.param(case_all_other_fields_valid_urgency_missing, id="all_other_fields_valid_urgency_missing"),
+    pytest.param(case_raw_urgency_purple_after_accepted_high, id="raw_urgency_purple_after_accepted_high"),
+    pytest.param(case_explicit_valid_answer_resolves_previously_invalid_field, id="explicit_valid_answer_resolves_previously_invalid_field"),
 ]
 
 
 @pytest.mark.parametrize("case", CASES)
-async def test_it03_field_validation(case, client, provider, session_dir):
+async def test_field_validation(case, client, provider, session_dir):
     await case(client, provider, session_dir)

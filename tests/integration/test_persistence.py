@@ -1,8 +1,8 @@
-"""IT06-01..IT06-08: durability, atomic-save failure and restart resume.
+"""commit normal partial turn reopen file..resume rejected session pending issue: durability, atomic-save failure and restart resume.
 
 Every case runs the real app factory, lifespan, routes, engine and JSON
 repository against one isolated temp SESSION_DIR; only the AI service boundary
-is scripted (IC §13.1, §13.2 IT06). Restart cases stop the first app (lifespan
+is scripted (IC §13.1). Restart cases stop the first app (lifespan
 exit) and build a second real instance over the same directory.
 
 Failure seams stay test-scoped and portable: `os.replace` is wrapped so it
@@ -35,7 +35,7 @@ from tests.integration.support_api import (
     read_session,
     session_files,
 )
-from tests.integration.test_it02_intake import (
+from tests.integration.test_intake import (
     CATEGORY_TEXT,
     FULL_SLOTS,
     PART_TEXT,
@@ -46,7 +46,7 @@ from tests.integration.test_it02_intake import (
     start_session,
     turn_body,
 )
-from tests.integration.test_it04_state import (
+from tests.integration.confirmation_support import (
     CHANGE_TEXT,
     LOW_SUMMARY,
     assert_session_state,
@@ -109,10 +109,10 @@ async def app_client(settings, provider):
             yield client
 
 
-# IT06-01 -------------------------------------------------------------------
+# commit normal partial turn reopen file -------------------------------------------------------------------
 
 
-async def case_it06_01(settings, provider, session_dir):
+async def case_commit_normal_partial_turn_reopen_file(settings, provider, session_dir):
     async with app_client(settings, provider) as client:
         session_id = await start_session(client)
         request_id, response = await post_turn(
@@ -172,10 +172,10 @@ async def case_it06_01(settings, provider, session_dir):
         assert record["response"] == persisted_response(response)
 
 
-# IT06-02 -------------------------------------------------------------------
+# stop app new instance same directory resume partial -------------------------------------------------------------------
 
 
-async def case_it06_02(settings, provider, session_dir):
+async def case_stop_app_new_instance_same_directory_resume_partial(settings, provider, session_dir):
     async with app_client(settings, provider) as first:
         session_id = await start_session(first)
         _, response = await post_turn(
@@ -226,7 +226,7 @@ async def case_it06_02(settings, provider, session_dir):
         assert disk["requests"][-1]["response"] == persisted_response(continued)
 
 
-# IT06-03 -------------------------------------------------------------------
+# scoped os replace failure during turn save -------------------------------------------------------------------
 
 
 def scoped_replace_failure(target: Path, real_replace):
@@ -240,7 +240,7 @@ def scoped_replace_failure(target: Path, real_replace):
     return replace
 
 
-async def case_it06_03(settings, provider, session_dir):
+async def case_scoped_os_replace_failure_during_turn_save(settings, provider, session_dir):
     async with app_client(settings, provider) as client:
         session_id = await start_session(client)
         _, response = await post_turn(
@@ -300,10 +300,10 @@ async def case_it06_03(settings, provider, session_dir):
         assert_no_temp_files(session_dir)
 
 
-# IT06-04 -------------------------------------------------------------------
+# scoped create write replace failure -------------------------------------------------------------------
 
 
-async def case_it06_04(settings, provider, session_dir):
+async def case_scoped_create_write_replace_failure(settings, provider, session_dir):
     async with app_client(settings, provider) as client:
         def failing_create(*args, **kwargs):
             raise OSError("scoped temp-file create failure")
@@ -349,10 +349,10 @@ async def case_it06_04(settings, provider, session_dir):
         assert_no_temp_files(session_dir)
 
 
-# IT06-05 -------------------------------------------------------------------
+# corrupt existing session json -------------------------------------------------------------------
 
 
-async def case_it06_05(settings, provider, session_dir):
+async def case_corrupt_existing_session_json(settings, provider, session_dir):
     async with app_client(settings, provider) as client:
         session_id = await start_session(client)
         target = session_path(session_dir, session_id)
@@ -390,10 +390,10 @@ async def case_it06_05(settings, provider, session_dir):
         assert provider.calls == []
 
 
-# IT06-06 -------------------------------------------------------------------
+# persisted future schema version -------------------------------------------------------------------
 
 
-async def case_it06_06(settings, provider, session_dir):
+async def case_persisted_future_schema_version(settings, provider, session_dir):
     async with app_client(settings, provider) as client:
         session_id = await start_session(client)
         target = session_path(session_dir, session_id)
@@ -431,10 +431,10 @@ async def case_it06_06(settings, provider, session_dir):
         assert provider.calls == []
 
 
-# IT06-07 -------------------------------------------------------------------
+# path like session id through public route -------------------------------------------------------------------
 
 
-async def case_it06_07(settings, provider, session_dir):
+async def case_path_like_session_id_through_public_route(settings, provider, session_dir):
     outside = session_dir.parent / "evil.json"
     traversal = "..%2F..%2Fsessions%2Fevil.json"
 
@@ -481,10 +481,10 @@ def make_invalid_urgency_extraction():
     )
 
 
-# IT06-08 -------------------------------------------------------------------
+# resume rejected session pending issue -------------------------------------------------------------------
 
 
-async def case_it06_08(settings, provider, session_dir):
+async def case_resume_rejected_session_pending_issue(settings, provider, session_dir):
     async with app_client(settings, provider) as client:
         session_id = await rejected_session(client, provider)
         rejected_disk = read_session(session_dir, session_id)
@@ -567,21 +567,21 @@ async def case_it06_08(settings, provider, session_dir):
 
 
 CASES = [
-    ("IT06-01", case_it06_01),
-    ("IT06-02", case_it06_02),
-    ("IT06-03", case_it06_03),
-    ("IT06-04", case_it06_04),
-    ("IT06-05", case_it06_05),
-    ("IT06-06", case_it06_06),
-    ("IT06-07", case_it06_07),
-    ("IT06-08", case_it06_08),
+    ("commit_normal_partial_turn_reopen_file", case_commit_normal_partial_turn_reopen_file),
+    ("stop_app_new_instance_same_directory_resume_partial", case_stop_app_new_instance_same_directory_resume_partial),
+    ("scoped_os_replace_failure_during_turn_save", case_scoped_os_replace_failure_during_turn_save),
+    ("scoped_create_write_replace_failure", case_scoped_create_write_replace_failure),
+    ("corrupt_existing_session_json", case_corrupt_existing_session_json),
+    ("persisted_future_schema_version", case_persisted_future_schema_version),
+    ("path_like_session_id_through_public_route", case_path_like_session_id_through_public_route),
+    ("resume_rejected_session_pending_issue", case_resume_rejected_session_pending_issue),
 ]
 
 
 @pytest.mark.parametrize(
     "case_id,case", CASES, ids=[case_id for case_id, _ in CASES]
 )
-async def test_it06_persistence_and_restart(
+async def test_persistence_and_restart(
     case_id, case, settings, provider, session_dir
 ):
     await case(settings, provider, session_dir)

@@ -1,7 +1,7 @@
-"""IT13-01..IT13-14: preparse bounds, deadlines, cancellation, capacity, locks.
+"""successful text json exactly1mib valid envelope padding..malformed schema then valid repair response: preparse bounds, deadlines, cancellation, capacity, locks.
 
 Cases 01-09 and 13-14 drive the real `OpenAICompatibleProvider` over per-role
-`httpx.MockTransport` inside the real app lifespan (IC §13.2 IT13). Cases 10-12
+`httpx.MockTransport` inside the real app lifespan (IC §13.2). Cases 10-12
 invoke the real routes while a real turn holds the repository lock, so the 2 s
 lock-acquisition limit and the 429 session_busy mapping are shipped code.
 
@@ -30,15 +30,15 @@ from tests.integration.support_api import (
     make_extraction,
     read_session,
 )
-from tests.integration.test_it02_intake import PART_TEXT, start_session, turn_body
-from tests.integration.test_it08_transcription import (
+from tests.integration.test_intake import PART_TEXT, start_session, turn_body
+from tests.integration.test_transcription import (
     RecordingStream,
     assert_error,
     json_wire,
     snapshot,
     streamed_wire,
 )
-from tests.integration.test_it12_transport import (
+from tests.integration.test_transport import (
     EXTRACTION_PAYLOAD,
     SleepRecorder,
     adapter_app,
@@ -143,10 +143,10 @@ class BlockingProvider(ScriptedProvider):
         return self.extractions.popleft()
 
 
-# IT13-01..IT13-06: provider body bounds --------------------------------------
+# successful text json exactly1mib valid envelope padding..successful json content encoding gzip despite identity: provider body bounds --------------------------------------
 
 
-async def case_it13_01(session_dir):
+async def case_successful_text_json_exactly1mib_valid_envelope_padding(session_dir):
     settings = settings_from(env(session_dir))
     body = padded_envelope(SUCCESS_JSON_LIMIT)
     assert len(body) == 1024 * 1024
@@ -164,7 +164,7 @@ async def case_it13_01(session_dir):
         assert len(harness.recorders["llm"].requests) == 1
 
 
-async def case_it13_02(session_dir):
+async def case_successful_text_json1mib_1(session_dir):
     settings = settings_from(env(session_dir))
     body = padded_envelope(SUCCESS_JSON_LIMIT + 1)
     assert len(body) == SUCCESS_JSON_LIMIT + 1
@@ -187,7 +187,7 @@ async def case_it13_02(session_dir):
         assert snapshot(session_dir, session_id) == before
 
 
-async def case_it13_03(session_dir, caplog):
+async def case_http401_error_body_exactly64kib(session_dir, caplog):
     settings = settings_from(env(session_dir))
     secret = "sk-error-body-secret-sentinel"
     body = secret.encode() + b"x" * (ERROR_BODY_LIMIT - len(secret))
@@ -207,7 +207,7 @@ async def case_it13_03(session_dir, caplog):
         assert secret not in caplog.text
 
 
-async def case_it13_04(session_dir, caplog):
+async def case_http401_body64kib_1(session_dir, caplog):
     settings = settings_from(env(session_dir))
     secret = "sk-oversize-error-secret-sentinel"
     body = secret.encode() + b"y" * (ERROR_BODY_LIMIT + 1 - len(secret))
@@ -229,7 +229,7 @@ async def case_it13_04(session_dir, caplog):
         assert secret not in caplog.text
 
 
-async def case_it13_05(session_dir, caplog):
+async def case_http429_body64kib_1(session_dir, caplog):
     settings = settings_from(env(session_dir))
     secret = "sk-retryable-error-secret-sentinel"
     body = secret.encode() + b"z" * (ERROR_BODY_LIMIT + 1 - len(secret))
@@ -249,7 +249,7 @@ async def case_it13_05(session_dir, caplog):
         assert secret not in caplog.text
 
 
-async def case_it13_06(session_dir):
+async def case_successful_json_content_encoding_gzip_despite_identity(session_dir):
     settings = settings_from(env(session_dir))
     plain = json.dumps(chat_envelope(json.dumps(EXTRACTION_PAYLOAD))).encode()
     compressed = gzip.compress(plain)
@@ -277,10 +277,10 @@ async def case_it13_06(session_dir):
         assert all(stream.closed for stream in streams)
 
 
-# IT13-07..IT13-09: slow read, cancellation and capacity ----------------------
+# slow streaming json read..adapter global capacity occupied: slow read, cancellation and capacity ----------------------
 
 
-async def case_it13_07(session_dir):
+async def case_slow_streaming_json_read(session_dir):
     settings = settings_from(env(session_dir))
     responder = slow_read_responder()
     async with adapter_app(settings, {"llm": responder}) as harness:
@@ -298,7 +298,7 @@ async def case_it13_07(session_dir):
         assert snapshot(session_dir, session_id) == before
 
 
-async def case_it13_08(session_dir):
+async def case_canceled_provider_request_before_result(session_dir):
     settings = settings_from(env(session_dir))
     gate = asyncio.Event()
     started = asyncio.Event()
@@ -322,7 +322,7 @@ async def case_it13_08(session_dir):
         assert len(harness.recorders["llm"].requests) == 2
 
 
-async def case_it13_09(session_dir):
+async def case_adapter_global_capacity_occupied(session_dir):
     settings = settings_from(env(session_dir))
     gate = asyncio.Event()
     started = asyncio.Event()
@@ -342,10 +342,10 @@ async def case_it13_09(session_dir):
         await asyncio.wait_for(held, timeout=5)
 
 
-# IT13-10..IT13-12: 2 s repository lock through the real routes ---------------
+# get session while turn lock held beyond2s..second turn lock acquisition beyond2s: 2 s repository lock through the real routes ---------------
 
 
-async def case_it13_10(session_dir):
+async def case_get_session_while_turn_lock_held_beyond2s(session_dir):
     settings = settings_from(env(session_dir))
     provider = BlockingProvider()
     app = create_app(settings=settings, provider=provider)
@@ -379,7 +379,7 @@ async def case_it13_10(session_dir):
             assert read_session(session_dir, session_id)["revision"] == 1
 
 
-async def case_it13_11(session_dir):
+async def case_speech_message_lookup_while_same_lock_held_beyond2s(session_dir):
     settings = settings_from(env(session_dir))
     provider = BlockingProvider()
     app = create_app(settings=settings, provider=provider)
@@ -424,7 +424,7 @@ async def case_it13_11(session_dir):
             assert completed.status_code == 200, completed.text
 
 
-async def case_it13_12(session_dir):
+async def case_second_turn_lock_acquisition_beyond2s(session_dir):
     settings = settings_from(env(session_dir))
     provider = BlockingProvider()
     app = create_app(settings=settings, provider=provider)
@@ -463,10 +463,10 @@ async def case_it13_12(session_dir):
             assert completed.status_code == 200, completed.text
 
 
-# IT13-13..IT13-14: retry and repair budgets ----------------------------------
+# transient error then valid response..malformed schema then valid repair response: retry and repair budgets ----------------------------------
 
 
-async def case_it13_13(session_dir):
+async def case_transient_error_then_valid_response(session_dir):
     settings = settings_from(env(session_dir))
     sleep = SleepRecorder()
 
@@ -483,7 +483,7 @@ async def case_it13_13(session_dir):
         assert 0.25 <= sleep.calls[0] <= 0.5
 
 
-async def case_it13_14(session_dir):
+async def case_malformed_schema_then_valid_repair_response(session_dir):
     settings = settings_from(env(session_dir))
 
     def responder(request: httpx.Request, attempt: int) -> httpx.Response:
@@ -513,25 +513,25 @@ async def case_it13_14(session_dir):
 
 
 CASES = {
-    "IT13-01": case_it13_01,
-    "IT13-02": case_it13_02,
-    "IT13-03": case_it13_03,
-    "IT13-04": case_it13_04,
-    "IT13-05": case_it13_05,
-    "IT13-06": case_it13_06,
-    "IT13-07": case_it13_07,
-    "IT13-08": case_it13_08,
-    "IT13-09": case_it13_09,
-    "IT13-10": case_it13_10,
-    "IT13-11": case_it13_11,
-    "IT13-12": case_it13_12,
-    "IT13-13": case_it13_13,
-    "IT13-14": case_it13_14,
+    "successful_text_json_exactly1mib_valid_envelope_padding": case_successful_text_json_exactly1mib_valid_envelope_padding,
+    "successful_text_json1mib_1": case_successful_text_json1mib_1,
+    "http401_error_body_exactly64kib": case_http401_error_body_exactly64kib,
+    "http401_body64kib_1": case_http401_body64kib_1,
+    "http429_body64kib_1": case_http429_body64kib_1,
+    "successful_json_content_encoding_gzip_despite_identity": case_successful_json_content_encoding_gzip_despite_identity,
+    "slow_streaming_json_read": case_slow_streaming_json_read,
+    "canceled_provider_request_before_result": case_canceled_provider_request_before_result,
+    "adapter_global_capacity_occupied": case_adapter_global_capacity_occupied,
+    "get_session_while_turn_lock_held_beyond2s": case_get_session_while_turn_lock_held_beyond2s,
+    "speech_message_lookup_while_same_lock_held_beyond2s": case_speech_message_lookup_while_same_lock_held_beyond2s,
+    "second_turn_lock_acquisition_beyond2s": case_second_turn_lock_acquisition_beyond2s,
+    "transient_error_then_valid_response": case_transient_error_then_valid_response,
+    "malformed_schema_then_valid_repair_response": case_malformed_schema_then_valid_repair_response,
 }
 
 
 @pytest.mark.parametrize("case_id", sorted(CASES))
-async def test_it13_bounds(case_id, session_dir, caplog):
+async def test_bounds(case_id, session_dir, caplog):
     case = CASES[case_id]
     if "caplog" in case.__code__.co_varnames[: case.__code__.co_argcount]:
         await case(session_dir, caplog)

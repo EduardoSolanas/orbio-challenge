@@ -1,4 +1,4 @@
-"""Unit tests for Spanish canonical aliases and localized clarifications (FEAT-02)."""
+"""Unit tests for Spanish canonical aliases and localized clarifications."""
 
 from __future__ import annotations
 

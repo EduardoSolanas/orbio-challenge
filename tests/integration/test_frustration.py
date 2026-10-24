@@ -5,7 +5,7 @@ import pytest
 
 from app.localization import text
 from tests.integration.support_api import make_extraction, read_session
-from tests.integration.test_it02_intake import start_session, turn_body
+from tests.integration.test_intake import start_session, turn_body
 
 
 def script_turn(provider, extraction):

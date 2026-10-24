@@ -1,8 +1,8 @@
-"""IT07-01..IT07-08: durable replay, request-ID conflicts, concurrency, cancel.
+"""resend identical committed turn request..cancel request before atomic save: durable replay, request-ID conflicts, concurrency, cancel.
 
 Every case runs the real app factory, lifespan, routes, engine and JSON
 repository over an isolated temp SESSION_DIR; only the AI boundary is scripted
-(IC §13.1, §13.2 IT07). Replay is proved against the persisted `requests`
+(IC §13.1). Replay is proved against the persisted `requests`
 records and the committed bytes on disk, never against an in-memory cache.
 
 Concurrency cases hold one turn inside `extract` with an asyncio event, start
@@ -29,7 +29,7 @@ from tests.integration.support_api import (
     persisted_response,
     read_session,
 )
-from tests.integration.test_it02_intake import (
+from tests.integration.test_intake import (
     CATEGORY_TEXT,
     FULL_SLOTS,
     FULL_SUMMARY,
@@ -40,7 +40,7 @@ from tests.integration.test_it02_intake import (
     start_session,
     turn_body,
 )
-from tests.integration.test_it04_state import (
+from tests.integration.confirmation_support import (
     assert_error,
     receipt_for,
     review_session,
@@ -118,10 +118,10 @@ def assert_single_commit(disk: dict, *, revision: int, request_id: str, response
     assert disk["requests"][0]["response"] == persisted_response(response)
 
 
-# IT07-01 -------------------------------------------------------------------
+# resend identical committed turn request -------------------------------------------------------------------
 
 
-async def case_it07_01(settings, provider, session_dir):
+async def case_resend_identical_committed_turn_request(settings, provider, session_dir):
     async with app_client(settings, provider) as client:
         session_id = await start_session(client)
         request_id = str(uuid4())
@@ -148,10 +148,10 @@ async def case_it07_01(settings, provider, session_dir):
         assert disk["slots"] == PART_SLOTS
 
 
-# IT07-02 -------------------------------------------------------------------
+# reuse request id different text body -------------------------------------------------------------------
 
 
-async def case_it07_02(settings, provider, session_dir):
+async def case_reuse_request_id_different_text_body(settings, provider, session_dir):
     async with app_client(settings, provider) as client:
         session_id = await start_session(client)
         request_id = str(uuid4())
@@ -184,10 +184,10 @@ async def case_it07_02(settings, provider, session_dir):
         )
 
 
-# IT07-03 -------------------------------------------------------------------
+# discard successful response after commit restart app replay -------------------------------------------------------------------
 
 
-async def case_it07_03(settings, provider, session_dir):
+async def case_discard_successful_response_after_commit_restart_app_replay(settings, provider, session_dir):
     request_id = str(uuid4())
     body = turn_body(PART_TEXT, 0, request_id)
 
@@ -216,10 +216,10 @@ async def case_it07_03(settings, provider, session_dir):
         assert len(disk["messages"]) == 3
 
 
-# IT07-04 -------------------------------------------------------------------
+# concurrent same session revision distinct ids -------------------------------------------------------------------
 
 
-async def case_it07_04(settings, provider, session_dir):
+async def case_concurrent_same_session_revision_distinct_ids(settings, provider, session_dir):
     gated = GatedProvider()
     async with app_client(settings, gated) as client:
         session_id = await start_session(client)
@@ -257,10 +257,10 @@ async def case_it07_04(settings, provider, session_dir):
         assert len(disk["messages"]) == 3
 
 
-# IT07-05 -------------------------------------------------------------------
+# concurrent same exact id body -------------------------------------------------------------------
 
 
-async def case_it07_05(settings, provider, session_dir):
+async def case_concurrent_same_exact_id_body(settings, provider, session_dir):
     gated = GatedProvider()
     async with app_client(settings, gated) as client:
         session_id = await start_session(client)
@@ -292,10 +292,10 @@ async def case_it07_05(settings, provider, session_dir):
         assert len(disk["messages"]) == 3
 
 
-# IT07-06 -------------------------------------------------------------------
+# concurrent independent session ids -------------------------------------------------------------------
 
 
-async def case_it07_06(settings, provider, session_dir):
+async def case_concurrent_independent_session_ids(settings, provider, session_dir):
     gated = GatedProvider()
     async with app_client(settings, gated) as client:
         first_session = await start_session(client)
@@ -363,10 +363,10 @@ async def case_it07_06(settings, provider, session_dir):
         ]
 
 
-# IT07-07 -------------------------------------------------------------------
+# same id but changed endpoint turn versus confirm -------------------------------------------------------------------
 
 
-async def case_it07_07(settings, provider, session_dir):
+async def case_same_id_but_changed_endpoint_turn_versus_confirm(settings, provider, session_dir):
     async with app_client(settings, provider) as client:
         # Turn committed first, then a confirm reusing that request ID.
         session_id = await review_session(client, provider)
@@ -431,10 +431,10 @@ async def case_it07_07(settings, provider, session_dir):
         assert other_disk["status"] == "collecting"
 
 
-# IT07-08 -------------------------------------------------------------------
+# cancel request before atomic save -------------------------------------------------------------------
 
 
-async def case_it07_08(settings, provider, session_dir):
+async def case_cancel_request_before_atomic_save(settings, provider, session_dir):
     gated = GatedProvider()
     async with app_client(settings, gated) as client:
         session_id = await start_session(client)
@@ -476,21 +476,21 @@ async def case_it07_08(settings, provider, session_dir):
 
 
 CASES = [
-    ("IT07-01", case_it07_01),
-    ("IT07-02", case_it07_02),
-    ("IT07-03", case_it07_03),
-    ("IT07-04", case_it07_04),
-    ("IT07-05", case_it07_05),
-    ("IT07-06", case_it07_06),
-    ("IT07-07", case_it07_07),
-    ("IT07-08", case_it07_08),
+    ("resend_identical_committed_turn_request", case_resend_identical_committed_turn_request),
+    ("reuse_request_id_different_text_body", case_reuse_request_id_different_text_body),
+    ("discard_successful_response_after_commit_restart_app_replay", case_discard_successful_response_after_commit_restart_app_replay),
+    ("concurrent_same_session_revision_distinct_ids", case_concurrent_same_session_revision_distinct_ids),
+    ("concurrent_same_exact_id_body", case_concurrent_same_exact_id_body),
+    ("concurrent_independent_session_ids", case_concurrent_independent_session_ids),
+    ("same_id_but_changed_endpoint_turn_versus_confirm", case_same_id_but_changed_endpoint_turn_versus_confirm),
+    ("cancel_request_before_atomic_save", case_cancel_request_before_atomic_save),
 ]
 
 
 @pytest.mark.parametrize(
     "case_id,case", CASES, ids=[case_id for case_id, _ in CASES]
 )
-async def test_it07_idempotency_and_concurrency(
+async def test_idempotency_and_concurrency(
     case_id, case, settings, provider, session_dir
 ):
     await case(settings, provider, session_dir)

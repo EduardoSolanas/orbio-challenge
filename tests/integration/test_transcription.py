@@ -1,4 +1,4 @@
-"""IT08-01..IT08-16: transcription route media guards, upload limits, STT mapping.
+"""valid finite16 khz mono16 bit pcm wav..cancel upload stt task: transcription route media guards, upload limits, STT mapping.
 
 Every case runs the real app factory, lifespan, `/api/transcriptions` route, the
 real pure-ASGI upload guard and the real `OpenAICompatibleProvider` adapter over
@@ -30,7 +30,7 @@ from app.main import create_app
 from app.providers import OpenAICompatibleProvider
 from tests.fixtures.audio import gen_wav
 from tests.integration.support_api import raw_asgi
-from tests.integration.test_it02_intake import start_session
+from tests.integration.test_intake import start_session
 
 STT_PATH = "/v1/audio/transcriptions"
 TRANSCRIPT = "My order NS-000123 arrived broken and this is urgent."
@@ -180,10 +180,10 @@ async def upload(client, payload: bytes, *, filename: str = "recording.wav"):
     )
 
 
-# IT08-01 -------------------------------------------------------------------
+# valid finite16 khz mono16 bit pcm wav -------------------------------------------------------------------
 
 
-async def case_it08_01(settings, session_dir):
+async def case_valid_finite16_khz_mono16_bit_pcm_wav(settings, session_dir):
     async with audio_client(settings, {"stt": stt_json(TRANSCRIPT)}) as (client, rec, _):
         session_id = await start_session(client)
         before = snapshot(session_dir, session_id)
@@ -208,37 +208,37 @@ async def case_it08_01(settings, session_dir):
         assert rec["llm"].requests == [] and rec["tts"].requests == []
 
 
-# IT08-02..IT08-07: guards reject before any paid call -----------------------
+# all zero valid wav..valid pcm duration61 seconds: guards reject before any paid call -----------------------
 
 
-async def case_it08_02(settings, session_dir):
+async def case_all_zero_valid_wav(settings, session_dir):
     await assert_guard(settings, session_dir, gen_wav.silence_wav(), status=422, code="silent_audio")
 
 
-async def case_it08_03(settings, session_dir):
+async def case_malformed_riff_header_bytes(settings, session_dir):
     await assert_guard(settings, session_dir, gen_wav.malformed_wav(), status=422, code="invalid_audio")
 
 
-async def case_it08_04(settings, session_dir):
+async def case_declared_frames_exceed_actual_bytes(settings, session_dir):
     await assert_guard(settings, session_dir, gen_wav.truncated_wav(), status=422, code="invalid_audio")
 
 
-async def case_it08_05(settings, session_dir):
+async def case_compressed_wav(settings, session_dir):
     await assert_guard(settings, session_dir, gen_wav.compressed_wav(), status=415, code="unsupported_audio")
 
 
-async def case_it08_06(settings, session_dir):
+async def case_webm_payload_file(settings, session_dir):
     await assert_guard(settings, session_dir, gen_wav.webm_bytes(), status=415, code="unsupported_audio")
 
 
-async def case_it08_07(settings, session_dir):
+async def case_valid_pcm_duration61_seconds(settings, session_dir):
     await assert_guard(settings, session_dir, gen_wav.long_wav(), status=422, code="invalid_audio")
 
 
-# IT08-08..IT08-10: upload caps ---------------------------------------------
+# file10mib 1 bytes..chunked body exceeding multipart cap without content length: upload caps ---------------------------------------------
 
 
-async def case_it08_08(settings, session_dir):
+async def case_file10mib_1_bytes(settings, session_dir):
     async with audio_client(settings, {}) as (client, rec, _):
         session_id = await start_session(client)
         before = snapshot(session_dir, session_id)
@@ -250,7 +250,7 @@ async def case_it08_08(settings, session_dir):
         assert snapshot(session_dir, session_id) == before
 
 
-async def case_it08_09(settings, session_dir):
+async def case_multipart_total10mib_64kib_1(settings, session_dir):
     body, boundary = gen_wav.oversized_multipart()
     assert len(body) == gen_wav.MAX_MULTIPART_BYTES + 1
     async with audio_client(settings, {}) as (client, rec, app):
@@ -272,7 +272,7 @@ async def case_it08_09(settings, session_dir):
         assert snapshot(session_dir, session_id) == before
 
 
-async def case_it08_10(settings, session_dir):
+async def case_chunked_body_exceeding_multipart_cap_without_content_length(settings, session_dir):
     async with audio_client(settings, {}) as (client, rec, app):
         session_id = await start_session(client)
         before = snapshot(session_dir, session_id)
@@ -300,7 +300,7 @@ async def assert_guard(settings, session_dir, payload: bytes, *, status: int, co
         assert snapshot(session_dir, session_id) == before
 
 
-# IT08-11..IT08-13: transcript post-conditions ------------------------------
+# valid wav empty transcript..valid wav with4001 char transcript: transcript post-conditions ------------------------------
 
 
 async def assert_transcript_rejected(settings, session_dir, text: str, *, code: str):
@@ -313,23 +313,23 @@ async def assert_transcript_rejected(settings, session_dir, text: str, *, code: 
         assert snapshot(session_dir, session_id) == before
 
 
-async def case_it08_11(settings, session_dir):
+async def case_valid_wav_empty_transcript(settings, session_dir):
     await assert_transcript_rejected(settings, session_dir, "", code="empty_transcription")
 
 
-async def case_it08_12(settings, session_dir):
+async def case_valid_wav_whitespace_transcript(settings, session_dir):
     await assert_transcript_rejected(
         settings, session_dir, "  \n\t  ", code="empty_transcription"
     )
 
 
-async def case_it08_13(settings, session_dir):
+async def case_valid_wav_with4001_char_transcript(settings, session_dir):
     await assert_transcript_rejected(
         settings, session_dir, "x" * 4001, code="transcript_too_long"
     )
 
 
-# IT08-14..IT08-15: STT service failures ------------------------------------
+# valid wav stt provider unavailable..valid wav stt timeout: STT service failures ------------------------------------
 
 
 async def assert_stt_failure(settings, session_dir, responder, *, status: int, code: str):
@@ -343,7 +343,7 @@ async def assert_stt_failure(settings, session_dir, responder, *, status: int, c
         assert snapshot(session_dir, session_id) == before
 
 
-async def case_it08_14(settings, session_dir):
+async def case_valid_wav_stt_provider_unavailable(settings, session_dir):
     await assert_stt_failure(
         settings,
         session_dir,
@@ -353,16 +353,16 @@ async def case_it08_14(settings, session_dir):
     )
 
 
-async def case_it08_15(settings, session_dir):
+async def case_valid_wav_stt_timeout(settings, session_dir):
     await assert_stt_failure(
         settings, session_dir, stt_timeout(), status=504, code="provider_timeout"
     )
 
 
-# IT08-16: cancellation -----------------------------------------------------
+# cancel upload stt task: cancellation -----------------------------------------------------
 
 
-async def case_it08_16(settings, session_dir):
+async def case_cancel_upload_stt_task(settings, session_dir):
     gate = asyncio.Event()
     stream = RecordingStream([b'{"text": "partial', b'"}'], gate)
 
@@ -396,25 +396,25 @@ async def case_it08_16(settings, session_dir):
 
 
 CASES = {
-    "IT08-01": case_it08_01,
-    "IT08-02": case_it08_02,
-    "IT08-03": case_it08_03,
-    "IT08-04": case_it08_04,
-    "IT08-05": case_it08_05,
-    "IT08-06": case_it08_06,
-    "IT08-07": case_it08_07,
-    "IT08-08": case_it08_08,
-    "IT08-09": case_it08_09,
-    "IT08-10": case_it08_10,
-    "IT08-11": case_it08_11,
-    "IT08-12": case_it08_12,
-    "IT08-13": case_it08_13,
-    "IT08-14": case_it08_14,
-    "IT08-15": case_it08_15,
-    "IT08-16": case_it08_16,
+    "valid_finite16_khz_mono16_bit_pcm_wav": case_valid_finite16_khz_mono16_bit_pcm_wav,
+    "all_zero_valid_wav": case_all_zero_valid_wav,
+    "malformed_riff_header_bytes": case_malformed_riff_header_bytes,
+    "declared_frames_exceed_actual_bytes": case_declared_frames_exceed_actual_bytes,
+    "compressed_wav": case_compressed_wav,
+    "webm_payload_file": case_webm_payload_file,
+    "valid_pcm_duration61_seconds": case_valid_pcm_duration61_seconds,
+    "file10mib_1_bytes": case_file10mib_1_bytes,
+    "multipart_total10mib_64kib_1": case_multipart_total10mib_64kib_1,
+    "chunked_body_exceeding_multipart_cap_without_content_length": case_chunked_body_exceeding_multipart_cap_without_content_length,
+    "valid_wav_empty_transcript": case_valid_wav_empty_transcript,
+    "valid_wav_whitespace_transcript": case_valid_wav_whitespace_transcript,
+    "valid_wav_with4001_char_transcript": case_valid_wav_with4001_char_transcript,
+    "valid_wav_stt_provider_unavailable": case_valid_wav_stt_provider_unavailable,
+    "valid_wav_stt_timeout": case_valid_wav_stt_timeout,
+    "cancel_upload_stt_task": case_cancel_upload_stt_task,
 }
 
 
 @pytest.mark.parametrize("case_id", sorted(CASES))
-async def test_it08_transcription(case_id, settings, session_dir):
+async def test_transcription(case_id, settings, session_dir):
     await CASES[case_id](settings, session_dir)
