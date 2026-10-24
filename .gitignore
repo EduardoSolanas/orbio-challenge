@@ -13,6 +13,7 @@ mutants/
 htmlcov/
 test-results/
 reports/playwright/
+reports/junit/
 tests/e2e/.env.docker
 tests/e2e/.env.judge
 reports/e2e-docker/

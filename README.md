@@ -312,6 +312,56 @@ recorded in `reports/gates/gate1.md` (revision `7f9f258`), `reports/gates/gate2.
 .venv/bin/python -m pytest tests/unit/test_example_session.py -q
 ```
 
+## Portable test runner
+
+`scripts/test.py` gives every test layer one OS-independent command on Linux,
+macOS and Windows. It needs only the Python standard library — no Make, Bash,
+PowerShell or extra task-runner dependency — and resolves the repository root
+from its own location. Run it from the repository root with the project `.venv`
+or any Python that has the development requirements installed.
+
+| Command | Layer | Provider / Docker | Prerequisites |
+|---|---|---|---|
+| `python scripts/test.py unit` | `tests/unit` | Doubles only | Dev requirements |
+| `python scripts/test.py integration` | `tests/integration` | Controlled HTTP doubles | Dev requirements |
+| `python scripts/test.py e2e` | J01–J10 + ORB27 (marker `browser_e2e`) | Controlled provider fake, local Uvicorn | `pytest-playwright` + Chromium |
+| `python scripts/test.py e2e-judge` | `tests/e2e/test_intent_judge.py` (marker `intent_judge`) | Judge config only | `tests/e2e/.env.judge`, Chromium |
+| `python scripts/test.py docker-e2e` | `tests/e2e/test_docker_e2e.py` (marker `docker_e2e`) | Real deployment + real provider | `tests/e2e/.env.docker`, complete `.env.judge`, reachable app and judge |
+| `python scripts/test.py docker-e2e --compose` | Same, after an explicit `docker compose up --build -d` | Real deployment + real provider | Docker CLI, reachable deployment |
+| `python scripts/test.py mutation` | Configured `[tool.mutmut]` scope | None | `mutmut` (not available on Windows) |
+| `python scripts/test.py coverage` | Unit + integration, branch gate 95% | Doubles only | `pytest-cov` |
+| `python scripts/test.py all` | `unit` → `integration` → `e2e` → `coverage`, stops on first failure | Controlled only | Dev requirements + Chromium |
+| `python scripts/test.py help` | Layer list with what each layer proves and does not prove | — | — |
+
+Append test arguments after `--`; they are passed to that layer's pytest command:
+
+```bash
+python scripts/test.py unit -- -k localization -q
+python scripts/test.py e2e -- --browser chromium -q
+```
+
+The runner prints a heading, the exact executed command, the child output, the
+exit code and a final `RESULT: PASS`/`RESULT: FAIL`, and returns the first
+failing exit code. Configuration problems exit `2` before any child starts:
+`e2e-judge` requires a valid `tests/e2e/.env.judge`, and `docker-e2e` requires
+`E2E_DOCKER_BASE_URL` plus a complete judge configuration and probes `/health`
+and the judge `/models` endpoint. `docker-e2e` never falls back to the
+controlled-provider suite. `--compose` is the only way the runner starts the
+Compose stack; without it the runner only verifies the configured deployment and
+never touches volumes or data. Secrets are never printed or written to reports:
+`E2E_JUDGE_API_KEY` stays in the process environment.
+
+Stable report locations (created before each run):
+
+| Artifact | Location |
+|---|---|
+| JUnit XML | `reports/junit/{unit,integration,e2e,judge,docker,coverage}.xml` |
+| Coverage | `reports/coverage.json`, `reports/coverage.xml` |
+| Playwright traces/video/screenshots | `reports/playwright/{journeys,judge,docker}/` |
+| Controlled E2E results | `reports/e2e-results.json`, `reports/e2e-collection.json` |
+| Judge artifacts | `reports/e2e-judge/`, `reports/e2e-docker/judge/` |
+| Mutation | `.mutmut-cache`, `mutants/`; inspect survivors with `python -m mutmut results` |
+
 ## Test-layer matrix
 
 | Layer | What runs | Provider | Command |
