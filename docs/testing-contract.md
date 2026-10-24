@@ -172,3 +172,40 @@ Follow provider-compatibility.md for all per-role transport/configuration cases.
 Required guard regressions under unit/integration: preparse JSON body64KiB/+1 (whitespace/unknown keys count), large single ASGI message, chunked/missing/understated Content-Length, success provider JSON1MiB/+1, error body64KiB/+1 preserving status-derived nonretryable401/403/etc, unexpected Content-Encoding with no decompression, close/cancel cleanup within deadlines, and distinct multipart/audio caps. Test rejection recovery before reply selection for valid correction, invalid correction, no-candidate/equal-value reaffirmation, mixed valid/invalid fields and recovery-without-same-turn-completion. These cases are required, not optional hardening.
 
 The inventory checker must validate each claimed test_nodeid against coverage contexts on executable body lines (pytest-cov contexts ending |run); a hand-authored mapping or aggregate line hit alone is insufficient. Retain context-bearing coverage JSON as evidence.
+
+
+## 13. Real provider HTTP integration layer (ORB-52)
+
+Unit tests and the existing IT08/IT12/IT13 cases double the provider transport with `httpx.MockTransport`. ORB-52 adds the layer between those and browser E2E: the shipped `OpenAICompatibleProvider` with its real `httpx.AsyncClient` talks over a real TCP socket to `tests/integration/support_provider_http.py::LocalProviderServer`, a threaded loopback HTTP service with per-path scripted responses. No provider object is injected into `create_app`; the lifespan builds the adapter from settings, so routes, schemas, engine, JSON repository, retriever, adapter and HTTP client all run as shipped. The harness is test-only; there is no production fake-provider mode.
+
+The server records each request path, headers and raw body, and each response status/headers/outcome, including bytes written and client abort (`broken pipe`) on a chunked stream. Tests therefore assert exact wire requests, retry/repair counts, bounded response consumption and the absence of detached provider work after a timeout.
+
+| Boundary | Case |
+|----------|------|
+| Exact extraction/RAG requests, parsed results, per-role bearer auth, `Accept-Encoding: identity` | `test_orb52_provider_http.py::test_extraction_and_answer_requests_cross_the_real_socket_exactly`, `::test_role_tokens_never_cross_the_wire` |
+| `json_schema`, `json_object`, `prompt_json` payloads at the socket | `::test_all_three_output_modes_are_transported_on_the_wire` and `test_orb52_rag_http.py::test_output_mode_drives_a_real_turn_end_to_end` |
+| Redirect not followed (302, one request, no target hit) | `::test_redirect_is_not_followed` |
+| 1 MiB raw success cap: exact limit accepted; 8 MiB chunked body aborted mid-stream and retried | `::test_success_body_exactly_at_the_limit_is_accepted`, `::test_oversized_chunked_success_is_bounded_and_retried` |
+| Compressed success rejected without decompression | `::test_gzip_encoded_success_is_rejected_without_decompression` |
+| Truncated (`finish_reason=length`) response repaired once | `::test_truncated_success_is_invalid_and_repaired_once` |
+| 503 retried then `provider_unavailable`; 400 not retried | `::test_provider_503_is_retried_then_unavailable`, `::test_provider_400_is_not_retried_and_maps_to_configuration` |
+| Read timeout bounded, both attempts abandoned at the socket | `::test_read_timeout_is_bounded_and_leaves_no_detached_work` |
+| Connection refused maps to `provider_unavailable` | `::test_connection_refused_maps_to_unavailable` |
+| Shared extraction+generation deadline, 504, no partial write, answer request aborted | `test_orb52_rag_http.py::test_it10_12_shared_deadline_cuts_generation_without_detached_work` |
+| Multi-turn RAG: slots/citations/revision after refresh-equivalent reload, old accepted fact outside the latest 12 messages | `::test_multi_turn_rag_keeps_state_and_old_facts_outside_the_window` |
+| Rollback after reload leaves persisted bytes untouched, same revision accepts a later turn | `::test_rollback_after_reload_leaves_the_persisted_session_untouched` |
+| Two application instances and sessions isolated (separate servers, directories, revisions, citations) | `::test_two_app_instances_and_sessions_are_isolated` |
+| Speech over real HTTP: exact synthesis request, saved-message-only, arbitrary text/unknown/user message rejected with no provider call and no session write | `::test_speech_synthesizes_only_a_saved_message_over_real_http`, `::test_speech_rejects_unsaved_or_arbitrary_input_without_provider_call` |
+
+IT10 matrix coverage: `test_it10_rag.py` keeps IT10-01..IT10-16 at the scripted-AIProvider and `httpx.MockTransport` layers; `test_orb52_rag_http.py` re-proves the transport-dependent rows over the real socket (01 grounded answer, 02 no-match/no generation, 03 retrieved-but-unanswerable, 04 two ordered sources, 05 unknown citation, 06 duplicate citation, 07 unretrieved KB citation, 08 false-with-text, 11 outage rollback, 12 shared deadline). Rows 09, 10, 13, 14, 15 and 16 remain covered by their existing `test_it10_rag.py` cases; the module docstring records the exact mapping.
+
+Timeout cases shorten the real adapter budget (`TEXT_BUDGET`/`ROLE_BUDGETS`) and the engine deadline before construction so wall-clock stays bounded; retry, repair, validation and commit/rollback logic are unchanged. Commands:
+
+```bash
+.venv/bin/python -m pytest tests/integration/test_orb52_provider_http.py tests/integration/test_orb52_rag_http.py -q
+.venv/bin/python -m pytest tests/unit tests/integration -q
+```
+
+No Playwright case is added or changed by ORB-52.
+
+Existing suites remain authoritative for boundaries this layer does not re-prove: route and request/response schema validation (IT01–IT05), session storage locking, atomic replacement, migration and restart persistence (IT06, IT13, IT14, IT16), transcription transport (IT08), and speech transport variants (IT09, IT09b). ORB-52 adds the missing real-socket provider layer rather than duplicating those cases.

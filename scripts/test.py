@@ -436,7 +436,7 @@ def main(
             code = run(command, root)
         except (ConfigError, RuntimeError, OSError) as exc:
             _emit(stream, f"ERROR: {exc}")
-            _emit(stream, f"RESULT: FAIL (docker-e2e stopped at step {index}/{len(commands)})")
+            _emit(stream, f"RESULT: FAIL ({layer} stopped at step {index}/{len(commands)})")
             return CONFIG_EXIT_CODE
         _emit(stream, "-" * 78)
         _emit(stream, f"EXIT CODE: {code}")
