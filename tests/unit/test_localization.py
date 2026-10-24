@@ -6,8 +6,8 @@ import pytest
 
 from app import localization
 from app.localization import (
+    CATALOG,
     DEFAULT_LANGUAGE,
-    STRINGS,
     SUPPORTED_LANGUAGES,
     build_review_reply,
     build_summary,
@@ -53,13 +53,14 @@ def test_supported_languages_are_exactly_english_and_spanish():
 
 
 def test_every_semantic_key_has_both_languages_and_no_blank_copy():
-    keys = set(STRINGS)
-    assert keys, "the dictionary must not be empty"
-    for key, entry in STRINGS.items():
-        assert set(entry) == {"en", "es"}, key
-        assert entry["en"].strip(), key
-        assert entry["es"].strip(), key
-        assert entry["es"] != entry["en"] or key.startswith("field_"), key
+    english = CATALOG.mapping("en")
+    spanish = CATALOG.mapping("es")
+    assert english, "the dictionary must not be empty"
+    assert set(english) == set(spanish)
+    for key, value in english.items():
+        assert value.strip(), key
+        assert spanish[key].strip(), key
+        assert spanish[key] != value or key.startswith("intake.field_"), key
 
 
 def test_english_copy_is_the_single_source_for_the_existing_prompt_constants():
@@ -75,14 +76,14 @@ def test_english_copy_is_the_single_source_for_the_existing_prompt_constants():
     assert text("reject_prompt", "en") == REJECT_PROMPT
     assert text("review_suffix", "en") == REVIEW_SUFFIX
     assert text("policy_question_suffix", "en") == POLICY_QUESTION_SUFFIX
-    assert text("missing_order", "en") == MISSING_ORDER
-    assert text("missing_category", "en") == MISSING_CATEGORY
-    assert text("missing_description", "en") == MISSING_DESCRIPTION
-    assert text("missing_urgency", "en") == MISSING_URGENCY
-    assert text("invalid_order", "en") == INVALID_ORDER
-    assert text("invalid_category", "en") == INVALID_CATEGORY
-    assert text("invalid_description", "en") == INVALID_DESCRIPTION
-    assert text("invalid_urgency", "en") == INVALID_URGENCY
+    assert localization.missing_question("order_number", "en") == MISSING_ORDER
+    assert localization.missing_question("category", "en") == MISSING_CATEGORY
+    assert localization.missing_question("description", "en") == MISSING_DESCRIPTION
+    assert localization.missing_question("urgency", "en") == MISSING_URGENCY
+    assert text("intake.invalid_order", "en") == INVALID_ORDER
+    assert text("intake.invalid_category", "en") == INVALID_CATEGORY
+    assert text("intake.invalid_description", "en") == INVALID_DESCRIPTION
+    assert text("intake.invalid_urgency", "en") == INVALID_URGENCY
 
 
 def test_spanish_missing_and_invalid_questions_exist_for_every_field():
@@ -170,9 +171,9 @@ def test_language_switch_restate_notice_exists_in_both_languages():
 
 
 def test_speech_unavailable_notice_is_localized():
-    assert text("speech_unavailable", "es")
-    assert text("speech_unavailable", "en")
-    assert text("speech_unavailable", "es") != text("speech_unavailable", "en")
+    assert text("speech.unavailable", "es")
+    assert text("speech.unavailable", "en")
+    assert text("speech.unavailable", "es") != text("speech.unavailable", "en")
 
 
 def test_unknown_key_or_language_fails_loudly():

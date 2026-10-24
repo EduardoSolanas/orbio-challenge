@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.localization import text
+
 SESSION_NOT_FOUND = "session_not_found"
 MESSAGE_NOT_FOUND = "message_not_found"
 REVISION_CONFLICT = "revision_conflict"
@@ -42,6 +44,9 @@ STORAGE_UNAVAILABLE_MESSAGE = "storage_unavailable: Session storage is unavailab
 KNOWLEDGE_INVALID_MESSAGE = (
     "knowledge_invalid: The bundled knowledge base is missing or invalid."
 )
+LOCALIZATION_INVALID_MESSAGE = (
+    "localization_invalid: The bundled translations are missing or invalid."
+)
 
 
 @dataclass(frozen=True)
@@ -57,115 +62,115 @@ class ErrorSpec:
 ERRORS: dict[str, ErrorSpec] = {
     spec.code: spec
     for spec in (
-        ErrorSpec(SESSION_NOT_FOUND, "Session not found.", 404, False),
-        ErrorSpec(MESSAGE_NOT_FOUND, "Assistant message not found.", 404, False),
+        ErrorSpec(SESSION_NOT_FOUND, text("errors.session_not_found", "en"), 404, False),
+        ErrorSpec(MESSAGE_NOT_FOUND, text("errors.message_not_found", "en"), 404, False),
         ErrorSpec(
             REVISION_CONFLICT,
-            "This session changed. Refresh before sending again.",
+            text("errors.revision_conflict", "en"),
             409,
             False,
         ),
         ErrorSpec(
             REQUEST_ID_CONFLICT,
-            "This request ID was already used for different input.",
+            text("errors.request_id_conflict", "en"),
             409,
             False,
         ),
         ErrorSpec(
             STALE_REVIEW,
-            "The review changed. Review the latest details before confirming.",
+            text("errors.stale_review", "en"),
             409,
             False,
         ),
         ErrorSpec(
             SESSION_COMPLETED,
-            "This intake is complete. Start a new intake to make changes.",
+            text("errors.session_completed", "en"),
             409,
             False,
         ),
         ErrorSpec(
             TURN_LIMIT,
-            "This intake has reached its message limit. You can confirm an existing review or start a new intake.",
+            text("errors.turn_limit", "en"),
             409,
             False,
         ),
         ErrorSpec(
             REVIEW_NOT_READY,
-            "Resolve missing or unclear details before confirming.",
+            text("errors.review_not_ready", "en"),
             409,
             False,
         ),
-        ErrorSpec(INPUT_TOO_LARGE, "The input exceeds the allowed size.", 413, False),
-        ErrorSpec(UNSUPPORTED_AUDIO, "Upload a supported PCM WAV recording.", 415, False),
+        ErrorSpec(INPUT_TOO_LARGE, text("errors.input_too_large", "en"), 413, False),
+        ErrorSpec(UNSUPPORTED_AUDIO, text("errors.unsupported_audio", "en"), 415, False),
         ErrorSpec(
             INVALID_REQUEST,
-            "The request does not match the expected format.",
+            text("errors.invalid_request", "en"),
             422,
             False,
         ),
         ErrorSpec(
             INVALID_AUDIO,
-            "The WAV recording is invalid or exceeds the audio limits.",
+            text("errors.invalid_audio", "en"),
             422,
             False,
         ),
         ErrorSpec(
             SILENT_AUDIO,
-            "No speech was detected. Try another recording or type your message.",
+            text("errors.silent_audio", "en"),
             422,
             False,
         ),
         ErrorSpec(
             EMPTY_TRANSCRIPTION,
-            "No transcript was returned. Try another recording or type your message.",
+            text("errors.empty_transcription", "en"),
             422,
             False,
         ),
         ErrorSpec(
             TRANSCRIPT_TOO_LONG,
-            "The transcript exceeds 4000 characters. Use a shorter recording.",
+            text("errors.transcript_too_long", "en"),
             422,
             False,
         ),
-        ErrorSpec(PROVIDER_BUSY, "The AI service is busy. Please retry.", 429, True),
+        ErrorSpec(PROVIDER_BUSY, text("errors.provider_busy", "en"), 429, True),
         ErrorSpec(
             SESSION_BUSY,
-            "This session is processing another request. Please retry.",
+            text("errors.session_busy", "en"),
             429,
             True,
         ),
         ErrorSpec(
             INVALID_PROVIDER_RESPONSE,
-            "The AI service returned an unusable response. Please retry.",
+            text("errors.invalid_provider_response", "en"),
             502,
             True,
         ),
         ErrorSpec(
             PROVIDER_UNAVAILABLE,
-            "The AI service is unavailable. Please retry.",
+            text("errors.provider_unavailable", "en"),
             503,
             True,
         ),
         ErrorSpec(
             PROVIDER_CONFIGURATION,
-            "The AI service configuration needs attention.",
+            text("errors.provider_configuration", "en"),
             503,
             False,
         ),
         ErrorSpec(
             STORAGE_UNAVAILABLE,
-            "Session storage is unavailable. Please retry.",
+            text("errors.storage_unavailable", "en"),
             503,
             True,
         ),
         ErrorSpec(
             STORAGE_CORRUPT,
-            "This session cannot be loaded. Contact the demo operator.",
+            text("errors.storage_corrupt", "en"),
             503,
             False,
         ),
-        ErrorSpec(PROVIDER_TIMEOUT, "The AI request timed out. Please retry.", 504, True),
-        ErrorSpec(INTERNAL_ERROR, "An internal error occurred.", 500, False),
+        ErrorSpec(PROVIDER_TIMEOUT, text("errors.provider_timeout", "en"), 504, True),
+        ErrorSpec(INTERNAL_ERROR, text("errors.internal_error", "en"), 500, False),
     )
 }
 

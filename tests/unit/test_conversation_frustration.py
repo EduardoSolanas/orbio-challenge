@@ -378,7 +378,7 @@ async def test_spanish_episode_start_uses_the_exact_spanish_prefix(tmp_path):
 
     assert response.reply_language == "es"
     assert response.frustration_active is True
-    assert response.reply == f"{ES_PREFIX}\n\n{text('missing_category', 'es')}"
+    assert response.reply == f"{ES_PREFIX}\n\n{text('intake.category', 'es')}"
     assert EN_PREFIX not in response.reply
     provider.assert_exhausted()
 
@@ -436,7 +436,7 @@ async def test_spanish_policy_question_suffix_uses_the_turn_language(tmp_path):
 
     assert response.reply_language == "es"
     assert response.reply == (
-        f"{text('missing_category', 'es')} "
+        f"{text('intake.category', 'es')} "
         f"{text('policy_question_suffix', 'es')}"
     )
     assert text("policy_question_suffix", "en") not in response.reply

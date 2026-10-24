@@ -3,48 +3,48 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Northstar support intake</title>
+  <title data-i18n="title"></title>
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
   <main class="app">
-    <h1 id="app-title" class="app__title">Northstar support intake</h1>
+    <h1 id="app-title" class="app__title" data-i18n="title"></h1>
 
     <div id="transcript" class="transcript" role="log" aria-live="polite" aria-relevant="additions"></div>
 
-    <section id="review" class="review" role="region" aria-label="Review details" hidden></section>
+    <section id="review" class="review" role="region" data-i18n-aria-label="ui.review_region" hidden></section>
 
     <div id="alert" class="alert" role="alert" hidden></div>
 
     <div class="composer">
-      <label id="message-label" class="composer__label" for="message">Message</label>
-      <textarea id="message" class="composer__message" name="message" rows="4" aria-label="Message"></textarea>
-      <p id="transcribe-help" class="composer__help" hidden>Send or clear your current draft before transcribing.</p>
+      <label id="message-label" class="composer__label" for="message" data-i18n="ui.message_label"></label>
+      <textarea id="message" class="composer__message" name="message" rows="4" data-i18n-aria-label="ui.message_label"></textarea>
+      <p id="transcribe-help" class="composer__help" data-i18n="ui.transcribe_help" hidden></p>
 
       <div class="composer__actions">
-        <button type="button" id="send" class="btn">Send</button>
-        <button type="button" id="retry" class="btn" hidden>Retry</button>
-        <button type="button" id="confirm" class="btn" hidden>Confirm details</button>
-        <button type="button" id="new-intake" class="btn">New intake</button>
+        <button type="button" id="send" class="btn" data-i18n="actions.send"></button>
+        <button type="button" id="retry" class="btn" data-i18n="actions.retry" hidden></button>
+        <button type="button" id="confirm" class="btn" data-i18n="actions.confirm" hidden></button>
+        <button type="button" id="new-intake" class="btn" data-i18n="actions.new_intake"></button>
       </div>
 
       <div class="voice">
-        <button type="button" id="start-recording" class="btn">Start recording</button>
-        <button type="button" id="stop-recording" class="btn" hidden>Stop recording</button>
-        <button type="button" id="transcribe" class="btn">Transcribe audio</button>
-        <label id="wav-label" class="voice__file" for="wav-recording">WAV recording</label>
-        <input id="wav-recording" type="file" accept="audio/wav,.wav,audio/wave" aria-label="WAV recording">
+        <button type="button" id="start-recording" class="btn" data-i18n="actions.start_recording"></button>
+        <button type="button" id="stop-recording" class="btn" data-i18n="actions.stop_recording" hidden></button>
+        <button type="button" id="transcribe" class="btn" data-i18n="actions.transcribe"></button>
+        <label id="wav-label" class="voice__file" for="wav-recording" data-i18n="actions.choose_wav"></label>
+        <input id="wav-recording" type="file" accept="audio/wav,.wav,audio/wave" data-i18n-aria-label="actions.choose_wav">
       </div>
 
       <div class="playback">
         <audio id="reply-audio" data-testid="reply-audio" controls></audio>
-        <p class="playback__disclosure">Voice is AI-generated</p>
+        <p class="playback__disclosure" data-i18n="speech.disclosure"></p>
       </div>
     </div>
   </main>
+  <script type="application/json" id="bootstrap-locale">__BOOTSTRAP_LOCALE__</script>
   <script src="/static/i18n.js"></script>
   <script src="/static/recording.js"></script>
-  <script src="/static/playback_labels.js"></script>
   <script src="/static/request.js"></script>
   <script src="/static/confirmation_retry.js"></script>
   <script src="/static/app.js"></script>

@@ -544,22 +544,23 @@ def test_reply_templates_are_byte_identical_to_the_contract(
 
 
 def test_conflict_and_ambiguous_templates_are_byte_identical() -> None:
-    # IC §5 spells the placeholder with a space: "{field label}".
+    # I18N-01 requires named scalar placeholders; IC §5 spelled the label
+    # placeholder with a space, which is not a valid placeholder name.
     assert CONFLICT_TEMPLATE == (
-        "You previously gave {old}. Should I keep that or use {candidate} for {field label}?"
+        "You previously gave {old}. Should I keep that or use {candidate} for {field_label}?"
     )
-    assert AMBIGUOUS_TEMPLATE == "Please clarify your {field label}."
+    assert AMBIGUOUS_TEMPLATE == "Please clarify your {field_label}."
     assert CONFLICT_TEMPLATE.format_map(
         {
             "old": "delivery",
             "candidate": "return_refund",
-            "field label": "problem category",
+            "field_label": "problem category",
         }
     ) == (
         "You previously gave delivery. Should I keep that or use "
         "return_refund for problem category?"
     )
-    assert AMBIGUOUS_TEMPLATE.format_map({"field label": "urgency"}) == (
+    assert AMBIGUOUS_TEMPLATE.format_map({"field_label": "urgency"}) == (
         "Please clarify your urgency."
     )
 

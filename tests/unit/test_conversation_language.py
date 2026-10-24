@@ -12,7 +12,7 @@ import pytest
 
 from app.conversation import ConversationEngine
 from app.errors import AppError
-from app.localization import build_review_reply, build_summary, text
+from app.localization import build_review_reply, build_summary, render, text
 from app.schemas import (
     Citation,
     ConfirmRequest,
@@ -354,7 +354,7 @@ async def test_numeric_only_turn_keeps_the_current_reply_language(tmp_path):
 
     assert response.reply_language == "es"
     assert response.slots.order_number == "NS-000123"
-    assert response.reply == text("missing_category", "es")
+    assert response.reply == text("intake.category", "es")
 
 
 async def test_spanish_policy_question_gets_a_spanish_answer_with_canonical_citations(tmp_path):
@@ -595,7 +595,7 @@ async def test_validation_message_is_localized_after_a_switch(tmp_path):
         session.session_id, turn_request("Es un paquete misterioso", revision=1)
     )
 
-    assert response.reply == text("invalid_category", "es")
+    assert response.reply == text("intake.invalid_category", "es")
     assert response.pending_clarifications["category"].code == "invalid"
     assert response.slots.category is None
 
@@ -622,7 +622,9 @@ async def test_resumed_session_keeps_the_persisted_reply_language(tmp_path):
     )
 
     assert response.reply_language == "es"
-    assert response.reply == text("conflict_template", "es").format_map(
-        {"old": "high", "candidate": "low", "field label": "urgencia"}
+    assert response.reply == render(
+        "intake.conflict",
+        "es",
+        {"old": "high", "candidate": "low", "field_label": "urgencia"},
     )
     assert response.slots.urgency == "high"

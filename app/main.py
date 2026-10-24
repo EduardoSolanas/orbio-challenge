@@ -18,7 +18,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 from starlette.datastructures import UploadFile
@@ -32,9 +32,11 @@ from app.errors import (
     INPUT_TOO_LARGE,
     INVALID_REQUEST,
     KNOWLEDGE_INVALID_MESSAGE,
+    LOCALIZATION_INVALID_MESSAGE,
     STORAGE_UNAVAILABLE_MESSAGE,
     app_error,
 )
+from app.localization import LOCALES_DIR, LocalizationInvalid, load_locales
 from app.providers import OpenAICompatibleProvider
 from app.retrieval import KnowledgeInvalid, load_knowledge
 from app.schemas import (
@@ -56,6 +58,7 @@ MAX_SPEECH_TEXT_CHARS = 4000
 AUDIO_FIELD = "file"
 DEFAULT_KNOWLEDGE_PATH = Path(__file__).parent / "knowledge" / "northstar-faq.json"
 STATIC_DIR = Path(__file__).parent / "static"
+BOOTSTRAP_PLACEHOLDER = "__BOOTSTRAP_LOCALE__"
 HEALTHY = {"status": "ok"}
 
 
@@ -124,6 +127,19 @@ async def _send_error(send, error: AppError, request_id: str) -> None:
         }
     )
     await send({"type": "http.response.body", "body": body})
+
+
+def _script_safe_json(payload: Any) -> str:
+    """Serialize JSON for an inline script without letting values close the tag."""
+
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True)
+    return (
+        encoded.replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+        .replace("&", "\\u0026")
+        .replace("\u2028", "\\u2028")
+        .replace("\u2029", "\\u2029")
+    )
 
 
 def _header_value(scope, name: bytes) -> str | None:
@@ -275,6 +291,7 @@ def create_app(
     settings: Settings | None = None,
     provider=None,
     knowledge_path: Path | None = None,
+    locales_dir: Path | None = None,
 ) -> FastAPI:
     """Build the app; dependencies are assembled on lifespan start (IC §3)."""
 
@@ -310,6 +327,11 @@ def create_app(
                 capacity=active_settings.provider_max_concurrency,
             )
         try:
+            locales = load_locales(locales_dir)
+        except LocalizationInvalid:
+            await active_provider.close()
+            raise RuntimeError(LOCALIZATION_INVALID_MESSAGE) from None
+        try:
             knowledge_base = load_knowledge(kb_path)
         except KnowledgeInvalid:
             await active_provider.close()
@@ -320,6 +342,7 @@ def create_app(
             speech_languages = speech_languages | {"es"}
 
         app.state.settings = active_settings
+        app.state.locales = locales
         app.state.repository = repository
         app.state.provider = active_provider
         app.state.knowledge_base = knowledge_base
@@ -361,12 +384,35 @@ def create_app(
             headers={"x-request-id": request_id},
         )
 
+    @app.middleware("http")
+    async def revalidate_document_and_assets(request: Request, call_next):
+        response = await call_next(request)
+        path = request.url.path
+        if path == "/" or path.startswith("/static/"):
+            response.headers["Cache-Control"] = "no-cache"
+        return response
+
     @app.get("/", include_in_schema=False)
-    async def index():
+    async def index(request: Request):
         page = STATIC_DIR / "index.html"
         if not page.is_file():
             raise StarletteHTTPException(status_code=404)
-        return FileResponse(page)
+        html = page.read_text(encoding="utf-8")
+        bootstrap = _script_safe_json(dict(request.app.state.locales.mapping("en")))
+        return Response(
+            html.replace(BOOTSTRAP_PLACEHOLDER, bootstrap),
+            media_type="text/html",
+            headers={"Cache-Control": "no-cache"},
+        )
+
+    @app.get("/api/locales/{locale}")
+    async def locale_dictionary(locale: str, request: Request):
+        locales = request.app.state.locales
+        if locale not in locales.languages:
+            raise StarletteHTTPException(status_code=404)
+        return JSONResponse(
+            dict(locales.mapping(locale)), headers={"Cache-Control": "no-cache"}
+        )
 
     @app.get("/health")
     async def health(request: Request):

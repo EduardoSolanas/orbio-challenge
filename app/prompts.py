@@ -444,18 +444,18 @@ NOTHING_TO_CONFIRM = text("nothing_to_confirm", "en")
 
 NO_REVIEW_TO_REJECT = text("no_review_to_reject", "en")
 
-MISSING_ORDER = text("missing_order", "en")
-MISSING_CATEGORY = text("missing_category", "en")
-MISSING_DESCRIPTION = text("missing_description", "en")
-MISSING_URGENCY = text("missing_urgency", "en")
+MISSING_ORDER = localization.missing_question("order_number", "en")
+MISSING_CATEGORY = localization.missing_question("category", "en")
+MISSING_DESCRIPTION = localization.missing_question("description", "en")
+MISSING_URGENCY = localization.missing_question("urgency", "en")
 
-INVALID_ORDER = text("invalid_order", "en")
-INVALID_CATEGORY = text("invalid_category", "en")
-INVALID_DESCRIPTION = text("invalid_description", "en")
-INVALID_URGENCY = text("invalid_urgency", "en")
+INVALID_ORDER = text("intake.invalid_order", "en")
+INVALID_CATEGORY = text("intake.invalid_category", "en")
+INVALID_DESCRIPTION = text("intake.invalid_description", "en")
+INVALID_URGENCY = text("intake.invalid_urgency", "en")
 
-CONFLICT_TEMPLATE = text("conflict_template", "en")
-AMBIGUOUS_TEMPLATE = text("ambiguous_template", "en")
+CONFLICT_TEMPLATE = text("intake.conflict", "en")
+AMBIGUOUS_TEMPLATE = text("intake.ambiguous", "en")
 
 CAPABILITY = text("capability", "en")
 RECEIPT_TEMPLATE = text("receipt", "en")
@@ -463,7 +463,7 @@ LIMIT = text("limit", "en")
 REJECT_PROMPT = text("reject_prompt", "en")
 
 REVIEW_SUFFIX = text("review_suffix", "en")
-SUMMARY_TEMPLATE = text("summary_template", "en")
+SUMMARY_TEMPLATE = text("summary", "en")
 
 FIELD_LABELS: dict[str, str] = {
     field: localization.field_label(field, "en") for field in _FIELD_ORDER

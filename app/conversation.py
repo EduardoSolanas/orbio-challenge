@@ -20,6 +20,7 @@ from app.localization import (
     build_review_reply,
     build_summary,
     missing_question,
+    render,
     text,
 )
 from app.schemas import (
@@ -61,7 +62,6 @@ TEXT_TURN_DEADLINE_SECONDS = 25.0
 MAX_KNOWLEDGE_ANSWER_CHARS = 1200
 TURN_ENDPOINT = "turn"
 CONFIRM_ENDPOINT = "confirm"
-CONFIRM_USER_TEXT = "Confirm reviewed intake"
 
 
 class AIProvider(Protocol):
@@ -436,13 +436,13 @@ class ConversationEngine:
 
             now = _now()
             new_revision = session.revision + 1
-            reply = text("receipt", session.reply_language).format(
-                session_id=session.session_id
+            reply = render(
+                "receipt", session.reply_language, {"session_id": session.session_id}
             )
             user_message = Message(
                 id=uuid4(),
                 role="user",
-                text=CONFIRM_USER_TEXT,
+                text=text("review.confirmed", session.reply_language),
                 input_mode="system",
                 created_at=now,
                 citations=[],
@@ -557,8 +557,8 @@ class ConversationEngine:
                 command.text, reply_language
             )
         elif pure_confirmation:
-            reply = text("receipt", reply_language).format(
-                session_id=session.session_id
+            reply = render(
+                "receipt", reply_language, {"session_id": session.session_id}
             )
             status = "completed"
             summary = session.summary

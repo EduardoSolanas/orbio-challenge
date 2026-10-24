@@ -14,8 +14,10 @@ from tests.support.fakes import (
     ASK_CATEGORY,
     ASK_URGENCY,
     CATEGORY,
+    GREETING,
     HIGH,
     RECEIPT_TEMPLATE,
+    extraction,
     review_reply,
     summary_text,
     x_category,
@@ -37,6 +39,13 @@ CUSTOMER_PART = (
 )
 CUSTOMER_QUESTION = "<script>window.__pwned=1</script> Can I return an unused item?"
 SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
+SPANISH_REVIEW = (
+    "Pedido: NS-000123\n"
+    "Categoría: damaged_item\n"
+    "Problema: My order arrived broken\n"
+    "Urgencia: high\n"
+    "Confirma estos datos o dime qué cambiar."
+)
 
 pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
 
@@ -173,6 +182,59 @@ def test_j09_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_pat
     expect(ui.audio).to_have_attribute("src", re.compile(r"^blob:"))
     ui.cp("J09.play-reachable-by-keyboard")
 
+    # The page boots from the server-rendered English catalog: document lang,
+    # visible labels, tooltips and accessible names all come from it.
+    en_catalog = json.loads(server.request("GET", "/api/locales/en")[2].decode("utf-8"))
+    es_catalog = json.loads(server.request("GET", "/api/locales/es")[2].decode("utf-8"))
+    expect(page.locator("html")).to_have_attribute("lang", "en")
+    expect(ui.button("Send")).to_have_text(en_catalog["actions.send"])
+    expect(ui.button("New intake")).to_have_text(en_catalog["actions.new_intake"])
+    expect(ui.button("Transcribe audio")).to_have_text(en_catalog["actions.transcribe"])
+    expect(page.locator("#wav-recording")).to_have_attribute(
+        "aria-label", en_catalog["actions.choose_wav"]
+    )
+    expect(ui.page.locator(".playback__disclosure")).to_have_text(
+        en_catalog["speech.disclosure"]
+    )
+    expect(play).to_have_attribute("aria-label", "Play reply 5")
+    expect(play).to_have_attribute("title", "Play reply 5")
+
+    # Switching language updates controls and future replies, never history.
+    before_switch = ui.disk(sid)["messages"]
+    provider.script_extract(
+        "En español",
+        extraction(intent="unrelated", detected_language="en", requested_language="es"),
+    )
+    assert ui.send_localized("En español").status == 200
+    expect(page.locator("html")).to_have_attribute("lang", "es")
+    expect(ui.button("Enviar")).to_have_text(es_catalog["actions.send"])
+    expect(ui.button("Nueva consulta")).to_have_text(es_catalog["actions.new_intake"])
+    expect(ui.button("Transcribir audio")).to_have_text(es_catalog["actions.transcribe"])
+    expect(page.locator("#wav-recording")).to_have_attribute(
+        "aria-label", es_catalog["actions.choose_wav"]
+    )
+    expect(page.get_by_role("region", name=es_catalog["ui.review_region"])).to_be_visible()
+    expect(ui.page.locator(".playback__disclosure")).to_have_text(
+        es_catalog["speech.disclosure"]
+    )
+    expect(ui.play_button(review["id"])).to_have_attribute(
+        "aria-label", "Reproducir respuesta 5"
+    )
+    expect(ui.log).to_contain_text(GREETING)
+    expect(ui.log).to_contain_text(SPANISH_REVIEW)
+    after_switch = ui.disk(sid)["messages"]
+    assert after_switch[: len(before_switch)] == before_switch
+    assert_inert_dom()
+
+    provider.script_extract(
+        "Continuemos en inglés",
+        extraction(intent="unrelated", detected_language="es", requested_language="en"),
+    )
+    assert ui.send_localized("Continuemos en inglés").status == 200
+    expect(page.locator("html")).to_have_attribute("lang", "en")
+    expect(ui.button("Send")).to_have_text(en_catalog["actions.send"])
+    expect(ui.log).to_contain_text(SPANISH_REVIEW)
+
     confirm = ui.button("Confirm details")
     ui.tab_to(confirm)
     assert ui.focus_is_visible(confirm), "Confirm needs a visible keyboard focus indicator"
@@ -184,9 +246,10 @@ def test_j09_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_pat
     expect(ui.log).to_contain_text(RECEIPT_TEMPLATE.format(session_id=sid))
     assert_inert_dom()
     saved = ui.disk(sid)
-    assert saved["status"] == "completed" and saved["revision"] == 5
+    assert saved["status"] == "completed" and saved["revision"] == 7
     assert provider.methods() == [
         "extract", "extract", "answer_knowledge", "extract", "extract", "synthesize",
+        "extract", "extract",
     ]  # fmt: skip
     provider.assert_consumed()
     ui.cp("J09.confirm-by-keyboard-no-overflow")

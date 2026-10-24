@@ -208,6 +208,11 @@ async def test_language_switch_does_not_confirm_the_review(client, provider, ses
     assert confirmed.status_code == 200, confirmed.text
     assert confirmed.json()["reply"] == text("receipt", "es").format(session_id=session_id)
     assert confirmed.json()["reply_language"] == "es"
+    stored_after = read_session(session_dir, session_id)
+    assert stored_after["messages"][-2]["text"] == text("review.confirmed", "es")
+    assert stored_after["messages"][-1]["text"] == text("receipt", "es").format(
+        session_id=session_id
+    )
 
 
 async def test_unsupported_language_returns_a_localized_notice_and_no_facts(

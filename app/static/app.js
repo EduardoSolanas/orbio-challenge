@@ -10,10 +10,21 @@
   const DEADLINE_STT_MS = 45000;
   const DEADLINE_TTS_MS = 30000;
   const i18n = window.NorthstarI18n;
-  const playbackLabels = window.NorthstarPlaybackLabels;
 
   function ui(key, values) {
     return i18n.t(state.language, key, values);
+  }
+
+  async function ensureLocale(language) {
+    const target = i18n.languageOf(language);
+    if (!i18n.has(target)) await i18n.load(target);
+    return target;
+  }
+
+  function speechLabel(playable, pending, ordinal) {
+    if (!playable) return ui("speech.unavailable");
+    if (pending) return ui("speech.loading");
+    return ui("speech.play", { ordinal });
   }
 
   const els = {
@@ -205,7 +216,7 @@
 
     if (overLimit && !state.charLimitAlert) {
       state.charLimitAlert = true;
-      showAlert(ui("charLimit"));
+      showAlert(ui("ui.char_limit"));
     } else if (!overLimit && state.charLimitAlert) {
       clearAlert();
     }
@@ -226,7 +237,7 @@
     if (!citations || !citations.length) return;
     const region = document.createElement("div");
     region.setAttribute("role", "region");
-    region.setAttribute("aria-label", ui("sources"));
+    region.setAttribute("aria-label", ui("ui.sources"));
     region.className = "sources";
     for (const cite of citations) {
       const details = document.createElement("details");
@@ -242,7 +253,7 @@
       const version = document.createElement("p");
       version.className = "sources__version";
       version.appendChild(
-        textNode(ui("knowledgeBaseVersion", { version: cite.kb_version }))
+        textNode(ui("ui.knowledge_base_version", { version: cite.kb_version }))
       );
       details.appendChild(version);
       region.appendChild(details);
@@ -274,7 +285,7 @@
     wrap.className = `msg msg--${msg.role}`;
     const role = document.createElement("span");
     role.className = "msg__role";
-    role.appendChild(textNode(msg.role === "user" ? ui("you") : ui("assistant")));
+    role.appendChild(textNode(msg.role === "user" ? ui("ui.you") : ui("ui.assistant")));
     wrap.appendChild(role);
     const text = document.createElement("div");
     text.className = "msg__text";
@@ -289,9 +300,9 @@
       play.dataset.messageId = msg.id;
       const playable = msg.speech_available !== false;
       const pending = playable && speechIsPending(msg.id);
-      const label = playable
-        ? playbackLabels.playbackAccessibleName(playbackNumber, state.language)
-        : ui("speechUnavailable");
+      play.dataset.playable = playable ? "true" : "false";
+      play.dataset.ordinal = String(playbackNumber);
+      const label = speechLabel(playable, pending, playbackNumber);
       play.setAttribute("aria-label", label);
       play.title = label;
       play.setAttribute("aria-busy", pending ? "true" : "false");
@@ -310,11 +321,13 @@
   function updateSpeechButtons() {
     const buttons = els.log.querySelectorAll(".msg__play-button");
     for (const button of buttons) {
+      if (button.dataset.playable !== "true") continue;
       const pending = speechIsPending(button.dataset.messageId);
-      const playable = !button.disabled || pending || button.getAttribute("aria-label") !== ui("speechUnavailable");
-      if (!playable) continue;
       button.disabled = pending;
       button.setAttribute("aria-busy", pending ? "true" : "false");
+      const label = speechLabel(true, pending, Number(button.dataset.ordinal));
+      button.setAttribute("aria-label", label);
+      button.title = label;
       clearChildren(button);
       appendSpeakerIcon(button, pending);
     }
@@ -329,7 +342,9 @@
     }
   }
 
-  function applySessionView(view, { publishId = true } = {}) {
+  async function applySessionView(view, { publishId = true, generation = null } = {}) {
+    await ensureLocale(view.reply_language);
+    if (generation != null && generation !== state.generation) return;
     if (publishId) {
       state.sessionId = view.session_id;
       setStoredId(view.session_id);
@@ -355,7 +370,9 @@
     updateControls();
   }
 
-  function applyTurnResponse(response, userText, inputMode) {
+  async function applyTurnResponse(response, userText, inputMode, generation = null) {
+    await ensureLocale(response.reply_language);
+    if (generation != null && generation !== state.generation) return;
     state.revision = response.revision;
     state.status = response.status;
     state.language = i18n.languageOf(response.reply_language);
@@ -393,14 +410,14 @@
       const code = data && data.error && data.error.code;
       const message = code
         ? i18n.translateError(code, state.language)
-        : ui("network");
+        : ui("errors.provider_unavailable");
       const retryable = !!(data && data.error && data.error.retryable);
       const currentRevision =
         data && data.error && data.error.current_revision;
       return { message, code, retryable, currentRevision, data };
     } catch (_) {
       return {
-        message: ui("network"),
+        message: ui("errors.provider_unavailable"),
         code: null,
         retryable: true,
         currentRevision: undefined,
@@ -458,12 +475,17 @@
           updateControls();
           return;
         }
-        applySessionView(result.view);
+        await applySessionView(result.view);
         clearAlert();
         clearRetry();
       } catch (e) {
+        if (i18n.isLocaleError(e)) {
+          showAlert(ui("errors.locale_unavailable"));
+          setRetry("create", null);
+          return;
+        }
         const aborted = e && e.name === "AbortError";
-        showAlert(aborted ? ui("timeout") : ui("network"));
+        showAlert(aborted ? ui("errors.provider_timeout") : ui("errors.provider_unavailable"));
         setRetry("create", null);
       } finally {
         state.createPending = false;
@@ -490,12 +512,17 @@
         return;
       }
       const view = await response.json();
-      applySessionView(view);
+      await applySessionView(view);
       clearAlert();
       clearRetry();
     } catch (e) {
+      if (i18n.isLocaleError(e)) {
+        showAlert(ui("errors.locale_unavailable"));
+        setRetry("resume", { sessionId: stored });
+        return;
+      }
       const aborted = e && e.name === "AbortError";
-      showAlert(aborted ? ui("timeout") : ui("network"));
+      showAlert(aborted ? ui("errors.provider_timeout") : ui("errors.provider_unavailable"));
       setRetry("resume", { sessionId: stored });
       state.sessionId = stored;
       updateControls();
@@ -513,12 +540,17 @@
         setRetry("create", null);
         return;
       }
-      applySessionView(result.view);
+      await applySessionView(result.view);
       clearAlert();
       clearRetry();
     } catch (e) {
+      if (i18n.isLocaleError(e)) {
+        showAlert(ui("errors.locale_unavailable"));
+        setRetry("create", null);
+        return;
+      }
       const aborted = e && e.name === "AbortError";
-      showAlert(aborted ? ui("timeout") : ui("network"));
+      showAlert(aborted ? ui("errors.provider_timeout") : ui("errors.provider_unavailable"));
       setRetry("create", null);
     } finally {
       state.createPending = false;
@@ -542,12 +574,17 @@
           return;
         }
         const view = await response.json();
-        applySessionView(view);
+        await applySessionView(view);
         clearAlert();
         clearRetry();
       } catch (e) {
+        if (i18n.isLocaleError(e)) {
+          showAlert(ui("errors.locale_unavailable"));
+          setRetry("resume", { sessionId: sid });
+          return;
+        }
         const aborted = e && e.name === "AbortError";
-        showAlert(aborted ? ui("timeout") : ui("network"));
+        showAlert(aborted ? ui("errors.provider_timeout") : ui("errors.provider_unavailable"));
         setRetry("resume", { sessionId: sid });
       }
       return;
@@ -636,13 +673,18 @@
         updateControls();
         return;
       }
-      applySessionView(result.view);
+      await applySessionView(result.view, { generation: gen });
       clearAlert();
       clearRetry();
     } catch (e) {
       if (gen !== state.generation) return;
+      if (i18n.isLocaleError(e)) {
+        showAlert(ui("errors.locale_unavailable"));
+        setRetry("create", null);
+        return;
+      }
       const aborted = e && e.name === "AbortError";
-      showAlert(aborted ? ui("timeout") : ui("network"));
+      showAlert(aborted ? ui("errors.provider_timeout") : ui("errors.provider_unavailable"));
       setRetry("create", null);
     } finally {
       if (gen === state.generation) {
@@ -694,7 +736,7 @@
             if (refreshed.response.ok) {
               const view = await refreshed.response.json();
               if (gen !== state.generation) return;
-              applySessionView(view);
+              await applySessionView(view, { generation: gen });
             }
           } catch (_) {
             /* keep local */
@@ -726,7 +768,7 @@
 
       const data = await response.json();
       if (gen !== state.generation) return;
-      applyTurnResponse(data, payload.text, payload.input_mode);
+      await applyTurnResponse(data, payload.text, payload.input_mode, gen);
       els.message.value = "";
       state.inputMode = "text";
       state.audioBlob = null;
@@ -735,8 +777,13 @@
       clearRetry();
     } catch (e) {
       if (gen !== state.generation) return;
+      if (i18n.isLocaleError(e)) {
+        showAlert(ui("errors.locale_unavailable"));
+        setRetry("turn", payload);
+        return;
+      }
       const aborted = e && e.name === "AbortError";
-      showAlert(aborted ? ui("timeout") : ui("network"));
+      showAlert(aborted ? ui("errors.provider_timeout") : ui("errors.provider_unavailable"));
       els.message.value = payload.text;
       state.inputMode = payload.input_mode;
       setRetry("turn", payload);
@@ -799,7 +846,7 @@
       }
       const data = await response.json();
       if (gen !== state.generation) return;
-      applyTurnResponse(data, null, null);
+      await applyTurnResponse(data, null, null, gen);
       // Re-sync from GET so an idempotent replay after a lost response shows
       // the durable completed state and receipt.
       try {
@@ -810,7 +857,7 @@
           refreshed.response.ok
         ) {
           const view = await refreshed.response.json();
-          if (gen === state.generation) applySessionView(view);
+          if (gen === state.generation) await applySessionView(view, { generation: gen });
         }
       } catch (_) {
         /* turn response already applied */
@@ -819,8 +866,13 @@
       clearRetry();
     } catch (e) {
       if (gen !== state.generation) return;
+      if (i18n.isLocaleError(e)) {
+        showAlert(ui("errors.locale_unavailable"));
+        setRetry("confirmation", command);
+        return;
+      }
       const aborted = e && e.name === "AbortError";
-      showAlert(aborted ? ui("timeout") : ui("network"));
+      showAlert(aborted ? ui("errors.provider_timeout") : ui("errors.provider_unavailable"));
       setRetry("confirmation", command);
     } finally {
       if (gen === state.generation) {
@@ -885,7 +937,7 @@
       const blob = await response.blob();
       if (gen !== state.generation || token !== state.playbackToken) return;
       if (!blob.size || (blob.type && !blob.type.startsWith("audio/"))) {
-        showAlert(ui("playbackFallback"));
+        showAlert(ui("ui.playback_fallback"));
         return;
       }
       const url = URL.createObjectURL(blob);
@@ -904,13 +956,13 @@
         await els.audio.play();
       } catch (_) {
         if (gen === state.generation && token === state.playbackToken) {
-          showAlert(ui("playbackFallback"));
+          showAlert(ui("ui.playback_fallback"));
         }
       }
     } catch (e) {
       if (gen !== state.generation || token !== state.playbackToken) return;
       const aborted = e && e.name === "AbortError";
-      showAlert(aborted ? ui("timeout") : ui("network"));
+      showAlert(aborted ? ui("errors.provider_timeout") : ui("errors.provider_unavailable"));
     } finally {
       if (
         state.speechPending &&
@@ -966,10 +1018,10 @@
     } catch (e) {
       if (gen !== state.generation) return;
       if (e && e.name === "AbortError") {
-        showAlert(ui("timeout"));
+        showAlert(ui("errors.provider_timeout"));
         return;
       }
-      showAlert(ui("network"));
+      showAlert(ui("errors.provider_unavailable"));
     } finally {
       if (gen === state.generation) {
         state.sttPending = false;
@@ -1014,7 +1066,7 @@
     if (state.recording) return;
     clearAlert();
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      showAlert(ui("micDenied"));
+      showAlert(ui("ui.mic_denied"));
       return;
     }
     const gen = state.generation;
@@ -1022,7 +1074,7 @@
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch (_) {
-      showAlert(ui("micDenied"));
+      showAlert(ui("ui.mic_denied"));
       return;
     }
     // New intake or page exit may have happened while permission was pending.
@@ -1105,7 +1157,7 @@
     state.recording = null;
     const blob = encodeWav(merged, sampleRate);
     if (blob.size > MAX_WAV_BYTES) {
-      showAlert("The WAV recording is invalid or exceeds the audio limits.");
+      showAlert(ui("errors.invalid_audio"));
       state.audioBlob = null;
     } else {
       state.audioBlob = blob;
@@ -1169,6 +1221,7 @@
   els.message.addEventListener("input", onMessageInput);
   window.addEventListener("pagehide", onPageHide);
 
+  i18n.applyStaticLabels(state.language);
   updateControls();
   bootstrap();
 })();
