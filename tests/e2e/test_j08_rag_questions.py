@@ -29,6 +29,8 @@ from tests.support.fakes import (
     x_question,
 )
 
+pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+
 KNOWLEDGE = json.loads(
     (Path(__file__).resolve().parents[2] / "app" / "knowledge" / "northstar-faq.json").read_text(
         encoding="utf-8"

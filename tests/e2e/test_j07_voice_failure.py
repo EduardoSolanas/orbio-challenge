@@ -18,6 +18,8 @@ from tests.support.fakes import (
     x_full,
 )
 
+pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+
 SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
 UNAVAILABLE = "The AI service is unavailable. Please retry."
 

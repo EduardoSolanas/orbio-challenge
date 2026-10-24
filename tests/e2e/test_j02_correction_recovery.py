@@ -30,6 +30,8 @@ from tests.support.fakes import (
     x_part,
 )
 
+pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+
 HIGH_SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
 LOW_SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "low")
 CONFLICT = conflict_question("NS-000123", "NS-000999", "order number")

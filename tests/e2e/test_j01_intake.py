@@ -25,6 +25,8 @@ from tests.support.fakes import (
     x_social,
 )
 
+pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+
 SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
 
 

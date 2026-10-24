@@ -27,12 +27,24 @@ def main() -> int:
     evidence = ROOT / "reports/e2e-docker"
     evidence.mkdir(parents=True, exist_ok=True)
     (evidence / "run-config.json").write_text(
-        json.dumps({"application_origin": config.app_url, "judge_model": config.judge.model, "prompt_version": config.judge.prompt_version}, indent=2) + "\n",
+        json.dumps(
+            {
+                "environment_type": "real-docker",
+                "provider_mode": "real-provider",
+                "application_origin": config.app_url,
+                "judge_model": config.judge.model,
+                "prompt_version": config.judge.prompt_version,
+                "deterministic_note": "deterministic assertions precede the judge and stay authoritative; "
+                "a passing judge never overrides a deterministic failure",
+            },
+            indent=2,
+        )
+        + "\n",
         encoding="utf-8",
     )
     commands: list[list[str]] = []
     if args.with_deterministic:
-        commands.append([sys.executable, "-m", "pytest", "tests/e2e", "-q", "-k", "not intent_judge and not docker_e2e", "--browser", "chromium", "--junitxml=reports/e2e-docker/deterministic.xml"])
+        commands.append([sys.executable, "-m", "pytest", "tests/e2e", "-q", "-m", "browser_e2e", "--browser", "chromium", "--junitxml=reports/e2e-docker/deterministic.xml"])
     commands.append([sys.executable, "-m", "pytest", "tests/e2e/test_docker_e2e.py", "--browser", "chromium", "--tracing", "retain-on-failure", "--screenshot", "only-on-failure", "--video", "retain-on-failure", "--output", "reports/e2e-docker/playwright", "--junitxml=reports/e2e-docker/docker.xml"])
     for command in commands:
         completed = subprocess.run(command, cwd=ROOT, check=False)

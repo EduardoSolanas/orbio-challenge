@@ -25,6 +25,8 @@ from tests.support.fakes import (
     x_part,
 )
 
+pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+
 NEXT_TASK = "() => new Promise(resolve => setTimeout(resolve, 0))"
 PLAYING = """() => {
   const audio = document.querySelector('[data-testid="reply-audio"]');

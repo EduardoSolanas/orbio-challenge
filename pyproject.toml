@@ -9,6 +9,7 @@ testpaths = ["tests/unit", "tests/integration"]
 asyncio_mode = "auto"
 addopts = "--strict-markers --strict-config"
 markers = [
+    "browser_e2e: controlled-provider browser workflow journeys J01-J10; never live Docker/provider proof",
     "live: paid provider smoke, requires explicit opt-in",
     "intent_judge: E2E intent routing evaluated by the configured local LLM judge",
     "docker_e2e: real deployed Docker UI and HTTP routes; never a provider fake",

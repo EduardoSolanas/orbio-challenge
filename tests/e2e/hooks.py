@@ -85,6 +85,9 @@ def pytest_collection_finish(session: Any) -> None:
         {
             "source_revision": source_revision(Path(config.rootpath)),
             "browser": browser_name(config),
+            "environment_type": "controlled-provider",
+            "provider_mode": "controlled-fake",
+            "application_url": "local uvicorn fixture (loopback, port 0)",
             "collected": [
                 {
                     "nodeid": item.nodeid,
@@ -164,6 +167,9 @@ def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
         {
             "source_revision": source_revision(Path(config.rootpath)),
             "browser": browser_name(config),
+            "environment_type": "controlled-provider",
+            "provider_mode": "controlled-fake",
+            "application_url": "local uvicorn fixture (loopback, port 0)",
             "exit_status": int(exitstatus),
             "outcomes": outcomes,
         },

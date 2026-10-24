@@ -37,6 +37,9 @@ CUSTOMER_PART = (
 )
 CUSTOMER_QUESTION = "<script>window.__pwned=1</script> Can I return an unused item?"
 SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
+
+pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+
 NO_OVERFLOW = (
     "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
 )

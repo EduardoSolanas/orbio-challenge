@@ -305,10 +305,31 @@ recorded in `reports/gates/gate1.md` (revision `7f9f258`), `reports/gates/gate2.
 .venv/bin/python -m pip check
 .venv/bin/python -m pytest tests/unit tests/integration -q
 .venv/bin/python -m pytest tests/unit tests/integration --cov=app --cov-branch --cov-context=test --cov-report=json:reports/coverage.json --cov-report=term-missing --cov-report=xml:reports/coverage.xml --junitxml=reports/unit-integration.xml
+.venv/bin/python scripts/run_browser_e2e.py
 .venv/bin/python -m pytest tests/e2e --browser chromium --tracing retain-on-failure --screenshot only-on-failure --video retain-on-failure --output reports/playwright --junitxml=reports/e2e.xml
 .venv/bin/python scripts/check_e2e_inventory.py --spec docs/implementation-contract.md --manifest tests/e2e/cases.json --collection reports/e2e-collection.json --results reports/e2e-results.json
+.venv/bin/python scripts/check_e2e_layers.py --collection reports/e2e-collection.json --results reports/e2e-results.json --sources-dir tests/e2e --controlled-config reports/e2e-controlled/run-config.json
 .venv/bin/python -m pytest tests/unit/test_example_session.py -q
 ```
+
+## Test-layer matrix
+
+| Layer | What runs | Provider | Command |
+|---|---|---|---|
+| Unit | `tests/unit` | Doubles only | `.venv/bin/python -m pytest tests/unit -q` |
+| Integration (real app boundaries) | `tests/integration` | Controlled HTTP doubles | `.venv/bin/python -m pytest tests/integration -q` |
+| Browser workflow E2E (controlled provider) | J01–J10 + ORB27, marker `browser_e2e` | Controlled fake | `.venv/bin/python scripts/run_browser_e2e.py` |
+| Real Docker E2E (real provider) | `test_docker_e2e.py`, marker `docker_e2e`, used by ORB-51 | Real deployment | `.venv/bin/python scripts/run_docker_e2e.py` (fails early without Docker config; never falls back to the fake) |
+| LLM semantic judge | `intent_judge` + Docker judge artifacts | Judge config only (`tests/e2e/.env.judge`), separate from app provider config | See `docs/docker-e2e.md` |
+
+The J01–J10 journeys run a real browser, JavaScript, HTTP, storage,
+keyboard, mobile, media, retry, timeout, and stale-state assertions, and the
+evidence reports record `environment_type: controlled-provider`. They prove
+the browser workflow; they do **not** prove a live provider or a deployed
+Docker system. Deterministic assertions stay authoritative: a passing LLM
+judge never overrides a deterministic failure. Never call the
+controlled-provider suite "full E2E" without qualification. Full rules:
+`docs/docker-e2e.md`.
 
 | Gate | Actual status |
 |---|---|

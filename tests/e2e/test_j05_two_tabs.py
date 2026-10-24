@@ -23,6 +23,8 @@ from tests.support.fakes import (
     x_part,
 )
 
+pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+
 CONFLICT_ALERT = "This session changed. Refresh before sending again."
 HIGH_SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
 FINAL_SUMMARY = summary_text("NS-000999", "damaged_item", "My order arrived broken", "low")

@@ -21,6 +21,8 @@ from tests.support.fakes import (
     x_full,
 )
 
+pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+
 EDITED = STT_TEXT.replace("NS-000123", "NS-000456")
 SUMMARY = summary_text("NS-000456", "damaged_item", "My order arrived broken", "high")
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
