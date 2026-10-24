@@ -10,6 +10,7 @@
   const DEADLINE_STT_MS = 45000;
   const DEADLINE_TTS_MS = 30000;
   const i18n = window.NorthstarI18n;
+  const playbackLabels = window.NorthstarPlaybackLabels;
 
   function ui(key, values) {
     return i18n.t(state.language, key, values);
@@ -53,6 +54,7 @@
     charLimitAlert: false,
     audioBlob: null,
     recording: null,
+    speechPending: null,
   };
 
   function isCanonicalUuid(value) {
@@ -248,6 +250,25 @@
     container.appendChild(region);
   }
 
+  function appendSpeakerIcon(button, loading = false) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("focusable", "false");
+    svg.classList.add(loading ? "speaker-icon--loading" : "speaker-icon");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", loading
+      ? "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5v5.59l3.7 3.7-1.4 1.42L11 13.41V7h2Z"
+      : "M3 9v6h4l5 4V5L7 9H3Zm13.5 3a4.5 4.5 0 0 0-2.1-3.8v7.6a4.5 4.5 0 0 0 2.1-3.8Zm0-8.3v2.1a8 8 0 0 1 0 12.4v2.1a10 10 0 0 0 0-16.6Z");
+    svg.appendChild(path);
+    button.appendChild(svg);
+  }
+
+  function speechIsPending(messageId) {
+    const pending = state.speechPending;
+    return !!pending && pending.generation === state.generation && pending.messageId === messageId;
+  }
+
   function renderMessage(msg, playbackNumber) {
     const wrap = document.createElement("article");
     wrap.className = `msg msg--${msg.role}`;
@@ -264,22 +285,19 @@
       playWrap.className = "msg__play";
       const play = document.createElement("button");
       play.type = "button";
-      play.className = "btn";
+      play.className = "btn msg__play-button";
       play.dataset.messageId = msg.id;
       const playable = msg.speech_available !== false;
-      play.appendChild(
-        textNode(playable ? ui("playReply") : ui("speechUnavailable"))
-      );
-      play.setAttribute(
-        "aria-label",
-        playable
-          ? ui("playReplyNumbered", { number: playbackNumber })
-          : ui("speechUnavailable")
-      );
-      if (!playable) {
-        play.disabled = true;
-        play.title = ui("speechUnavailable");
-      } else {
+      const pending = playable && speechIsPending(msg.id);
+      const label = playable
+        ? playbackLabels.playbackAccessibleName(playbackNumber, state.language)
+        : ui("speechUnavailable");
+      play.setAttribute("aria-label", label);
+      play.title = label;
+      play.setAttribute("aria-busy", pending ? "true" : "false");
+      play.disabled = !playable || pending;
+      appendSpeakerIcon(play, pending);
+      if (playable) {
         play.addEventListener("click", () => playReply(msg.id));
       }
       playWrap.appendChild(play);
@@ -287,6 +305,19 @@
       renderSources(wrap, msg.citations || []);
     }
     return wrap;
+  }
+
+  function updateSpeechButtons() {
+    const buttons = els.log.querySelectorAll(".msg__play-button");
+    for (const button of buttons) {
+      const pending = speechIsPending(button.dataset.messageId);
+      const playable = !button.disabled || pending || button.getAttribute("aria-label") !== ui("speechUnavailable");
+      if (!playable) continue;
+      button.disabled = pending;
+      button.setAttribute("aria-busy", pending ? "true" : "false");
+      clearChildren(button);
+      appendSpeakerIcon(button, pending);
+    }
   }
 
   function renderTranscript() {
@@ -572,6 +603,7 @@
     discardRecording();
     const gen = state.generation;
     bumpPlayback();
+    state.speechPending = null;
     revokeAudioUrl();
     if (state.sttAbort) {
       try {
@@ -823,9 +855,14 @@
 
   async function playReply(messageId) {
     if (!state.sessionId) return;
+    if (state.speechPending && state.speechPending.generation === state.generation) {
+      if (state.speechPending.messageId === messageId) return;
+      bumpPlayback();
+    }
     const gen = state.generation;
     const token = bumpPlayback();
-    // Abort prior in-flight TTS by token only (no shared abort required)
+    state.speechPending = { generation: gen, messageId, token };
+    updateSpeechButtons();
     try {
       const response = await fetchWithDeadline(
         `/api/sessions/${state.sessionId}/speech`,
@@ -839,18 +876,16 @@
         },
         DEADLINE_TTS_MS
       );
-      if (gen !== state.generation || token !== state.playbackToken) {
-        return;
-      }
+      if (gen !== state.generation || token !== state.playbackToken) return;
       if (!response.ok) {
         const err = await parseError(response);
-        if (gen === state.generation && token === state.playbackToken) {
-          showAlert(err.message);
-        }
+        showAlert(err.message);
         return;
       }
       const blob = await response.blob();
-      if (gen !== state.generation || token !== state.playbackToken) {
+      if (gen !== state.generation || token !== state.playbackToken) return;
+      if (!blob.size || (blob.type && !blob.type.startsWith("audio/"))) {
+        showAlert(ui("playbackFallback"));
         return;
       }
       const url = URL.createObjectURL(blob);
@@ -876,6 +911,16 @@
       if (gen !== state.generation || token !== state.playbackToken) return;
       const aborted = e && e.name === "AbortError";
       showAlert(aborted ? ui("timeout") : ui("network"));
+    } finally {
+      if (
+        state.speechPending &&
+        state.speechPending.generation === gen &&
+        state.speechPending.messageId === messageId &&
+        state.speechPending.token === token
+      ) {
+        state.speechPending = null;
+        updateSpeechButtons();
+      }
     }
   }
 
@@ -1089,6 +1134,7 @@
 
   function onPageHide() {
     state.generation += 1;
+    state.speechPending = null;
     discardRecording();
     try {
       els.audio.pause();

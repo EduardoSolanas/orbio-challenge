@@ -87,6 +87,33 @@ body {
   margin-top: 0.4rem;
 }
 
+.msg__play-button {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+}
+
+.speaker-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: currentColor;
+}
+
+.speaker-icon--loading {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: currentColor;
+  animation: speaker-spin 0.8s linear infinite;
+}
+
+@keyframes speaker-spin {
+  to { transform: rotate(360deg); }
+}
+
 .sources {
   margin-top: 0.5rem;
   border: 1px solid var(--line);

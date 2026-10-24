@@ -1,14 +1,21 @@
 (() => {
   "use strict";
 
-  const LABEL = "Play reply";
+  const LABELS = Object.freeze({
+    en: "Play reply",
+    es: "Reproducir respuesta",
+  });
 
-  function playbackLabel() {
-    return LABEL;
+  function languageOf(language) {
+    return language === "es" ? "es" : "en";
   }
 
-  function playbackAccessibleName(number) {
-    return `${LABEL} ${number}`;
+  function playbackLabel(language) {
+    return LABELS[languageOf(language)];
+  }
+
+  function playbackAccessibleName(number, language) {
+    return `${playbackLabel(language)} ${number}`;
   }
 
   const api = Object.freeze({ playbackLabel, playbackAccessibleName });

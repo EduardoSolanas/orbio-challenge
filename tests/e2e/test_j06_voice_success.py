@@ -126,6 +126,14 @@ def test_j06_voice_success(case_id, ui, server, provider, tmp_path):
 
     # Play the saved reply: the saved message ID drives real, finite MP3 playback.
     reply = ui.last_assistant(sid)
+    play_button = ui.page.get_by_role("button", name="Play reply 1", exact=True)
+    expect(play_button).to_have_count(1)
+    assert play_button.locator("svg[aria-hidden='true']").count() == 1
+    assert play_button.inner_text() == ""
+    assert not re.search(
+        r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        play_button.get_attribute("aria-label") or "",
+    )
     before_play = server.session_bytes(sid)
     with ui.page.expect_response(lambda r: r.url.endswith("/speech")) as pending:
         ui.play_button(reply["id"]).click()
@@ -183,3 +191,19 @@ def test_j06_voice_success(case_id, ui, server, provider, tmp_path):
     ]  # fmt: skip
     provider.assert_consumed()
     ui.cp("J06.confirm-after-voice")
+
+
+@pytest.mark.parametrize("case_id", [pytest.param("ORB-30-new-intake", id="ORB-30-new-intake")])
+def test_new_intake_stops_recording(ui, case_id):
+    """Changing sessions while recording releases the capture before creating the next one."""
+    ui.open()
+    old_sid = ui.current_session_id()
+    ui.button("Start recording").click()
+    expect(ui.button("Stop recording")).to_be_visible()
+    with ui.page.expect_response(
+        lambda r: r.request.method == "POST" and r.url.endswith("/api/sessions")
+    ) as pending:
+        ui.button("New intake").click()
+    assert pending.value.status == 201
+    expect(ui.button("Stop recording")).to_be_hidden()
+    assert ui.current_session_id() != old_sid
