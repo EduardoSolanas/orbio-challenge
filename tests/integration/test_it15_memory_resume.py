@@ -30,6 +30,7 @@ from tests.integration.support_api import (
 from tests.integration.test_it02_intake import (
     FULL_SLOTS,
     FULL_SUMMARY,
+    FULL_TEXT,
     REVIEW_SUFFIX,
     CATEGORY_TEXT,
     HIGH_TEXT,
@@ -594,5 +595,58 @@ async def test_orb43_05_injected_rag_source_cannot_become_a_citation(
         assert disk["slots"] == partial["slots"]
         assert len(disk["requests"]) == 1
         assert disk["requests"][-1]["response"]["revision"] == partial["revision"]
+
+
+async def test_orb43_06_policy_and_social_detours_preserve_review_state(
+    settings, provider, session_dir
+):
+    async with app_client(settings, provider) as client:
+        session_id = await start_session(client)
+        _, reviewed = await post_turn(
+            client, provider, session_id,
+            text=FULL_TEXT, revision=0, extraction=full_extraction(),
+        )
+        assert reviewed["status"] == "awaiting_confirmation"
+        assert reviewed["pending_review_revision"] == 1
+        assert reviewed["slots"] == FULL_SLOTS
+        assert reviewed["summary"] == FULL_SUMMARY
+
+        _, social = await post_turn(
+            client, provider, session_id,
+            text=SOCIAL_TEXT, revision=reviewed["revision"],
+            extraction=social_extraction(),
+        )
+        assert social["reply"] == SOCIAL_ACKNOWLEDGMENT
+        assert social["status"] == "awaiting_confirmation"
+        assert social["pending_review_revision"] == 1
+        assert social["slots"] == FULL_SLOTS
+        assert social["summary"] == FULL_SUMMARY
+
+        _, answered = await post_turn(
+            client, provider, session_id,
+            text=RETURN_Q, revision=social["revision"],
+            extraction=question_extraction(),
+            answer=grounded(RETURN_ANSWER_TEXT, ["faq-returns"]),
+        )
+        assert answered["reply"] == RETURN_ANSWER_TEXT
+        assert answered["status"] == "awaiting_confirmation"
+        assert answered["pending_review_revision"] == 1
+        assert answered["slots"] == FULL_SLOTS
+        assert answered["summary"] == FULL_SUMMARY
+
+        context = last_extract_context(provider)
+        assert context.status == "awaiting_confirmation"
+        assert context.slots.model_dump() == reviewed["slots"]
+        assert context.intake_started is True
+        assert context.reply_language == "en"
+        assert context.frustration_active is False
+
+        disk = read_session(session_dir, session_id)
+        assert disk["slots"] == FULL_SLOTS
+        assert disk["pending_review_revision"] == 1
+        assert disk["summary"] == FULL_SUMMARY
+        assert disk["status"] == "awaiting_confirmation"
+        assert len(disk["messages"]) == 7
+
 
 

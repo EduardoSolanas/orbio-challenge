@@ -213,9 +213,9 @@ def build_extraction_context(
     """
 
     return ExtractionContext(
-        slots=session.slots.model_copy(deep=True),
+        slots=session.slots.model_copy(),
         pending_clarifications={
-            field: clarification.model_copy(deep=True)
+            field: clarification.model_copy()
             for field, clarification in session.pending_clarifications.items()
         },
         recent_messages=[

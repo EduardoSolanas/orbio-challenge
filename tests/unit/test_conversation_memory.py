@@ -131,6 +131,33 @@ def test_context_marks_a_fresh_session_as_not_started():
     assert context.intake_started is False
 
 
+@pytest.mark.parametrize(
+    "state",
+    [
+        {"slots": make_slots(order_number="NS-000123")},
+        {"pending_clarifications": {"category": PENDING_CATEGORY}},
+        {"review_rejected": True},
+        {"pending_review_revision": 2},
+        {"summary": "Order: NS-000123"},
+        {"status": "completed"},
+    ],
+    ids=[
+        "accepted-slot",
+        "pending-clarification",
+        "rejected-review",
+        "review-token",
+        "summary",
+        "completed",
+    ],
+)
+def test_context_intake_started_is_true_for_every_committed_intake_marker(state):
+    session = make_session(messages=history(1), **state)
+
+    context = build_extraction_context(session, "hello")
+
+    assert context.intake_started is True
+
+
 # --------------------------------------------------------------------------- #
 # Detached context objects
 # --------------------------------------------------------------------------- #
