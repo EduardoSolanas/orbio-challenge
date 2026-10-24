@@ -60,6 +60,8 @@
     pending: false,
     sttPending: false,
     createPending: false,
+    resumePending: false,
+    resumeFailed: false,
     retryKind: null, // "resume" | "turn" | "confirmation" | "create" | null
     retryPayload: null,
     charLimitAlert: false,
@@ -169,9 +171,18 @@
   function updateControls() {
     const completed = state.status === "completed";
     const mutating =
-      state.pending || state.createPending || state.sttPending;
+      state.pending ||
+      state.createPending ||
+      state.sttPending ||
+      state.resumePending ||
+      state.resumeFailed;
     const readonly =
-      completed || state.pending || state.createPending || state.sttPending;
+      completed ||
+      state.pending ||
+      state.createPending ||
+      state.sttPending ||
+      state.resumePending ||
+      state.resumeFailed;
 
     els.message.readOnly = readonly;
     if (completed) {
@@ -180,6 +191,7 @@
 
     const overLimit = draftValue().length > MAX_CHARS;
     const sendOk =
+      !!state.sessionId &&
       !completed &&
       !mutating &&
       !overLimit &&
@@ -202,11 +214,12 @@
 
     els.help.hidden = !draftNonempty() || completed;
 
-    els.newIntake.disabled = state.pending || state.createPending;
-    // During STT, New intake remains available
-    if (state.sttPending && !state.pending && !state.createPending) {
-      els.newIntake.disabled = false;
-    }
+    els.newIntake.disabled =
+      (state.pending ||
+        state.createPending ||
+        state.resumePending ||
+        state.resumeFailed) &&
+      !state.sttPending;
 
     els.startRecording.disabled =
       !!state.recording || mutating || completed;
@@ -494,10 +507,14 @@
       return;
     }
 
+    state.resumePending = true;
+    state.resumeFailed = false;
+    updateControls();
     try {
       const { response, stale } = await getSession(stored);
       if (stale) return;
       if (response.status === 404) {
+        state.resumePending = false;
         setStoredId(null);
         state.sessionId = null;
         await bootstrapCreateOnly();
@@ -505,6 +522,8 @@
       }
       if (!response.ok) {
         const err = await parseError(response);
+        state.resumePending = false;
+        state.resumeFailed = true;
         showAlert(err.message);
         setRetry("resume", { sessionId: stored });
         state.sessionId = stored;
@@ -512,13 +531,18 @@
         return;
       }
       const view = await response.json();
+      state.resumePending = false;
+      state.resumeFailed = false;
       await applySessionView(view);
       clearAlert();
       clearRetry();
     } catch (e) {
+      state.resumePending = false;
+      state.resumeFailed = true;
       if (i18n.isLocaleError(e)) {
         showAlert(ui("errors.locale_unavailable"));
         setRetry("resume", { sessionId: stored });
+        updateControls();
         return;
       }
       const aborted = e && e.name === "AbortError";
@@ -564,28 +588,39 @@
       const sid = (state.retryPayload && state.retryPayload.sessionId) || readStoredId();
       if (!sid) return;
       clearAlert();
+      state.resumePending = true;
+      state.resumeFailed = false;
+      updateControls();
       try {
         const { response, stale } = await getSession(sid);
         if (stale) return;
         if (!response.ok) {
           const err = await parseError(response);
+          state.resumePending = false;
+          state.resumeFailed = true;
           showAlert(err.message);
           setRetry("resume", { sessionId: sid });
           return;
         }
         const view = await response.json();
+        state.resumePending = false;
+        state.resumeFailed = false;
         await applySessionView(view);
         clearAlert();
         clearRetry();
       } catch (e) {
+        state.resumePending = false;
+        state.resumeFailed = true;
         if (i18n.isLocaleError(e)) {
           showAlert(ui("errors.locale_unavailable"));
           setRetry("resume", { sessionId: sid });
+          updateControls();
           return;
         }
         const aborted = e && e.name === "AbortError";
         showAlert(aborted ? ui("errors.provider_timeout") : ui("errors.provider_unavailable"));
         setRetry("resume", { sessionId: sid });
+        updateControls();
       }
       return;
     }
