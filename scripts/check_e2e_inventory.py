@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gate the Playwright E2E evidence against the J01-J10 journey manifest.
+"""Gate the Playwright E2E evidence against the browser journey manifest.
 
 Reads the spec journey table, the pytest manifest, the collection report and the
 results report. Fails closed on missing, duplicated, skipped, xfailed, xpassed,
@@ -20,8 +20,22 @@ from typing import Any
 
 from evidence_revision import gated_input_revision
 
-JOURNEY_IDS = tuple(f"J{i:02d}" for i in range(1, 11))
-SPEC_JOURNEY_ROW = re.compile(r"^\|\s*(J\d{2})\s*\|", re.MULTILINE)
+JOURNEY_IDS = (
+    "complete_intake",
+    "rejected_review_recovery",
+    "resume_after_restart",
+    "failed_request_retry",
+    "two_tab_conflict",
+    "voice_success",
+    "voice_failure",
+    "policy_questions",
+    "keyboard_mobile",
+    "stale_voice_results",
+)
+SPEC_JOURNEY_SECTION = re.compile(
+    r"^### 13\.3[^\n]*\n(.*?)(?=^### |\Z)", re.MULTILINE | re.DOTALL
+)
+SPEC_JOURNEY_ROW = re.compile(r"^\|\s*([a-z][a-z0-9_]*)\s*\|", re.MULTILINE)
 FORBIDDEN_OUTCOMES = {
     "skipped",
     "xfailed",
@@ -66,7 +80,8 @@ def require_string_list(value: Any, field: str, label: str, errors: list[str]) -
 
 
 def parse_spec_ids(text: str) -> set[str]:
-    return set(SPEC_JOURNEY_ROW.findall(text))
+    section = SPEC_JOURNEY_SECTION.search(text)
+    return set(SPEC_JOURNEY_ROW.findall(section.group(1))) if section else set()
 
 
 def nodeid_of(entry: Any) -> str | None:
@@ -235,7 +250,7 @@ def check_results(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Gate Playwright E2E evidence against the J01-J10 manifest."
+        description="Gate Playwright E2E evidence against the browser journey manifest."
     )
     parser.add_argument("--spec", required=True, help="implementation contract markdown")
     parser.add_argument("--manifest", required=True, help="tests/e2e/cases.json")
@@ -285,7 +300,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"ERROR: {error}", file=sys.stderr)
         print(f"E2E inventory gate FAILED ({len(errors)} error(s))", file=sys.stderr)
         return 1
-    print(f"E2E inventory gate passed: {len(manifest)} journeys J01-J10")
+    print(f"E2E inventory gate passed: {len(manifest)} journeys")
     return 0
 
 

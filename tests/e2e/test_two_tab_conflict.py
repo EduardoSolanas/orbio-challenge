@@ -1,4 +1,4 @@
-"""J05: stale second tab hits a 409, refreshes, then resolves explicitly (IC §13.3)."""
+"""Stale second tab hits a 409, refreshes, then resolves explicitly (IC §13.3)."""
 
 from __future__ import annotations
 
@@ -31,8 +31,8 @@ FINAL_SUMMARY = summary_text("NS-000999", "damaged_item", "My order arrived brok
 CONFLICT = conflict_question("NS-000123", "NS-000999", "energy account reference")
 
 
-@pytest.mark.parametrize("case_id", [pytest.param("J05", id="J05")])
-def test_j05_two_tabs(case_id, ui, server, provider):
+@pytest.mark.parametrize("case_id", [pytest.param("two_tab_conflict", id="two_tab_conflict")])
+def test_two_tab_conflict(case_id, ui, server, provider):
     provider.script_extract(PART, x_part())
     provider.script_extract(CATEGORY, x_category())
     provider.script_extract(HIGH, x_high())
@@ -63,7 +63,7 @@ def test_j05_two_tabs(case_id, ui, server, provider):
     message_b = page_b.get_by_role("textbox", name="Message")
     expect(review_b).to_contain_text("Urgency: high")
     expect(page_b.get_by_role("button", name="Confirm details", exact=True)).to_be_visible()
-    ui.cp("J05.two-tabs-share-review")
+    ui.cp("two_tab_conflict.two-tabs-share-review")
 
     # A commits CHANGE: revision 4, urgency low, fresh review token 4.
     assert ui.send(CHANGE).status == 200
@@ -71,7 +71,7 @@ def test_j05_two_tabs(case_id, ui, server, provider):
     saved = ui.disk(sid)
     assert saved["revision"] == 4 and saved["pending_review_revision"] == 4
     assert saved["slots"]["urgency"] == "low"
-    ui.cp("J05.tab-a-commits-change")
+    ui.cp("two_tab_conflict.tab-a-commits-change")
 
     # B submits from revision 3: visible 409, draft retained, GET refresh only.
     extracts_before = len(provider.calls("extract"))
@@ -96,7 +96,7 @@ def test_j05_two_tabs(case_id, ui, server, provider):
     assert len(ui.turn_posts()) == 5, "no automatic replay of the stale request"
     assert len(provider.calls("extract")) == extracts_before, "the 409 must not call the model"
     assert ui.disk(sid)["revision"] == 4
-    ui.cp("J05.stale-conflict-refresh")
+    ui.cp("two_tab_conflict.stale-conflict-refresh")
 
     # B sends explicitly: a new request ID against the current revision.
     with page_b.expect_response(
@@ -113,7 +113,7 @@ def test_j05_two_tabs(case_id, ui, server, provider):
     saved = ui.disk(sid)
     assert saved["revision"] == 5 and saved["pending_review_revision"] is None
     assert saved["pending_clarifications"]["order_number"]["code"] == "conflict"
-    ui.cp("J05.explicit-send-new-id")
+    ui.cp("two_tab_conflict.explicit-send-new-id")
 
     # B resolves the conflict explicitly and confirms the fresh review.
     assert ui.send(USE_NEW, page=page_b).status == 200
@@ -128,7 +128,7 @@ def test_j05_two_tabs(case_id, ui, server, provider):
     assert pending.value.status == 200
     receipt = RECEIPT_TEMPLATE.format(session_id=sid)
     expect(log_b).to_contain_text(receipt)
-    ui.cp("J05.tab-b-resolves-and-confirms")
+    ui.cp("two_tab_conflict.tab-b-resolves-and-confirms")
 
     # Only one confirmation; explicitly reload A before comparing its completion.
     confirms = ui.confirm_posts()
@@ -149,4 +149,4 @@ def test_j05_two_tabs(case_id, ui, server, provider):
     assert provider.methods() == ["extract"] * 6
     wait_until(lambda: server.session_ids() == [sid], "single session on disk")
     provider.assert_consumed()
-    ui.cp("J05.single-confirmation-consistent")
+    ui.cp("two_tab_conflict.single-confirmation-consistent")

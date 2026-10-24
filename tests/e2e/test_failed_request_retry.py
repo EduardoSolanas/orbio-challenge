@@ -1,4 +1,4 @@
-"""J04: hold a text turn, fail it recoverably, Retry the identical request (IC §13.3)."""
+"""Hold a text turn, fail it recoverably, Retry the identical request (IC §13.3)."""
 
 from __future__ import annotations
 
@@ -21,8 +21,8 @@ SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "
 UNAVAILABLE = "The AI service is unavailable. Please retry."
 
 
-@pytest.mark.parametrize("case_id", [pytest.param("J04", id="J04")])
-def test_j04_failed_retry(case_id, ui, server, provider):
+@pytest.mark.parametrize("case_id", [pytest.param("failed_request_retry", id="failed_request_retry")])
+def test_failed_request_retry(case_id, ui, server, provider):
     gate = Gate("FULL extraction")
     provider.script_extract(FULL, fail="provider_unavailable", hold=gate)
     provider.script_extract(FULL, x_full())
@@ -49,7 +49,7 @@ def test_j04_failed_retry(case_id, ui, server, provider):
     assert len(posts) == 1 and posts[0]["done"] is False
     assert provider.methods() == ["extract"]
     assert server.session_bytes(sid) == baseline
-    ui.cp("J04.pending-locks-one-request")
+    ui.cp("failed_request_retry.pending-locks-one-request")
 
     # Recoverable failure: draft retained, nothing committed, no fake success.
     gate.release()
@@ -66,7 +66,7 @@ def test_j04_failed_retry(case_id, ui, server, provider):
     assert server.session_bytes(sid) == baseline
     saved = ui.disk(sid)
     assert saved["revision"] == 0 and saved["requests"] == [] and len(saved["messages"]) == 1
-    ui.cp("J04.failure-keeps-draft")
+    ui.cp("failed_request_retry.failure-keeps-draft")
 
     # Resending the restored draft creates a fresh request and succeeds once.
     with ui.page.expect_response(
@@ -86,7 +86,7 @@ def test_j04_failed_retry(case_id, ui, server, provider):
     assert saved["pending_review_revision"] == 1 and saved["summary"] == SUMMARY
     assert ui.last_assistant(sid)["text"] == review_reply(SUMMARY)
     assert len(saved["requests"]) == 1
-    ui.cp("J04.retry-identical-request")
+    ui.cp("failed_request_retry.retry-identical-request")
 
     # Confirm: one eventual pair, one review, one receipt.
     assert ui.confirm().status == 200
@@ -105,4 +105,4 @@ def test_j04_failed_retry(case_id, ui, server, provider):
     assert provider.methods() == ["extract", "extract"]
     assert len(ui.confirm_posts()) == 1
     provider.assert_consumed()
-    ui.cp("J04.confirm-single-success")
+    ui.cp("failed_request_retry.confirm-single-success")

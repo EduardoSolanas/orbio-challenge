@@ -20,7 +20,7 @@ from tests.e2e.docker_config import load_config, probe  # noqa: E402
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--with-deterministic", action="store_true", help="run fake-provider J01-J10 first")
+    parser.add_argument("--with-deterministic", action="store_true", help="run fake-provider the ten browser journeys first")
     args = parser.parse_args()
     config = load_config(ROOT)
     probe(config)

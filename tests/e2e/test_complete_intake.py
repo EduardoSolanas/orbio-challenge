@@ -1,4 +1,4 @@
-"""J01: complete an intake, reload the completed view, start a new intake (IC §13.3)."""
+"""Complete an intake, reload the completed view, start a new intake (IC §13.3)."""
 
 from __future__ import annotations
 
@@ -49,8 +49,8 @@ SUMMARY = (
 )
 
 
-@pytest.mark.parametrize("case_id", [pytest.param("J01", id="J01")])
-def test_j01_intake(case_id, ui, server, provider):
+@pytest.mark.parametrize("case_id", [pytest.param("complete_intake", id="complete_intake")])
+def test_complete_intake(case_id, ui, server, provider):
     provider.script_extract(THANKS, x_gratitude())
     provider.script_extract(MIXED_PART, x_part())
     provider.script_extract(CATEGORY, x_category())
@@ -68,7 +68,7 @@ def test_j01_intake(case_id, ui, server, provider):
     assert saved["revision"] == 0 and saved["status"] == "collecting"
     assert [m["text"] for m in saved["messages"]] == [GREETING]
     assert provider.methods() == []
-    ui.cp("J01.fresh-greeting")
+    ui.cp("complete_intake.fresh-greeting")
 
     # Social thanks resumes the same UX without retrieval or an intake prompt.
     assert ui.send(THANKS).status == 200
@@ -82,7 +82,7 @@ def test_j01_intake(case_id, ui, server, provider):
         "urgency": None,
     }
     assert provider.methods() == ["extract"]
-    ui.cp("J01.social-acknowledgment-no-intake-prompt")
+    ui.cp("complete_intake.social-acknowledgment-no-intake-prompt")
 
     # A greeting plus facts is substantive intake, not social conversation.
     assert ui.send(MIXED_PART).status == 200
@@ -105,7 +105,7 @@ def test_j01_intake(case_id, ui, server, provider):
     assert body_of(first)["text"] == MIXED_PART
     assert body_of(first)["expected_revision"] == 1
     assert body_of(first)["input_mode"] == "text"
-    ui.cp("J01.mixed-greeting-facts-start-intake")
+    ui.cp("complete_intake.mixed-greeting-facts-start-intake")
 
     # CATEGORY: asks for urgency.
     assert ui.send(CATEGORY).status == 200
@@ -113,7 +113,7 @@ def test_j01_intake(case_id, ui, server, provider):
     saved = ui.disk(sid)
     assert saved["revision"] == 3 and saved["slots"]["category"] == "damaged_item"
     assert saved["pending_review_revision"] is None
-    ui.cp("J01.category-asks-urgency")
+    ui.cp("complete_intake.category-asks-urgency")
 
     # HIGH: review with exactly the four slots, bound to the resulting revision.
     assert ui.send(HIGH).status == 200
@@ -132,7 +132,7 @@ def test_j01_intake(case_id, ui, server, provider):
         "urgency": "high",
     }
     assert ui.last_assistant(sid)["text"] == review_reply(SUMMARY)
-    ui.cp("J01.review-four-slots")
+    ui.cp("complete_intake.review-four-slots")
 
     # Confirm details: dedicated confirmation, one local-only receipt, no model call.
     response = ui.confirm()
@@ -153,7 +153,7 @@ def test_j01_intake(case_id, ui, server, provider):
     expect(ui.message).not_to_be_editable()
     expect(ui.enabled_button("Send")).to_have_count(0)
     expect(ui.enabled_button("Confirm details")).to_have_count(0)
-    ui.cp("J01.confirmed-local-receipt")
+    ui.cp("complete_intake.confirmed-local-receipt")
 
     # Reload: completed view restored by GET, read-only, no model call, no commit.
     completed_bytes = server.session_bytes(sid)
@@ -170,7 +170,7 @@ def test_j01_intake(case_id, ui, server, provider):
     assert len(ui.create_posts()) == 1
     assert provider.methods() == ["extract", "extract", "extract", "extract"]
     assert server.session_bytes(sid) == completed_bytes
-    ui.cp("J01.reload-completed-read-only")
+    ui.cp("complete_intake.reload-completed-read-only")
 
     # New intake: new ID, empty intake, previous saved file untouched.
     assert ui.new_intake().status == 201
@@ -188,7 +188,7 @@ def test_j01_intake(case_id, ui, server, provider):
     assert fresh["revision"] == 0 and fresh["status"] == "collecting"
     assert [m["text"] for m in fresh["messages"]] == [GREETING]
     assert len(ui.create_posts()) == 2
-    ui.cp("J01.new-intake-isolated")
+    ui.cp("complete_intake.new-intake-isolated")
 
     # Report an issue first: volunteered issue details need no verification.
     provider.script_extract(MIXED_PART, x_part())
@@ -203,7 +203,7 @@ def test_j01_intake(case_id, ui, server, provider):
         "urgency": None,
     }
     assert saved["pending_review_revision"] is None
-    ui.cp("J01.issue-reported-without-verification")
+    ui.cp("complete_intake.issue-reported-without-verification")
 
     # Protected order lookup: the intake order becomes pending and no data is
     # returned until the demo credentials are verified.
@@ -218,7 +218,7 @@ def test_j01_intake(case_id, ui, server, provider):
     assert AUTH_DEMO_CODE_NOTICE not in ui.transcript_text()
     assert "SW1A" not in ui.transcript_text()
     assert ui.disk(new_sid)["slots"]["order_number"] == "NS-000123"
-    ui.cp("J01.verification-form-demo-notice")
+    ui.cp("complete_intake.verification-form-demo-notice")
 
     wrong = ui.verify_order("SW1A 1AA", "123456")
     assert wrong.status == 200
@@ -232,7 +232,7 @@ def test_j01_intake(case_id, ui, server, provider):
     expect(ui.message).to_be_editable()
     assert "123456" not in ui.last_assistant(new_sid)["text"]
     assert "SW1A" not in ui.transcript_text()
-    ui.cp("J01.wrong-code-localized-error")
+    ui.cp("complete_intake.wrong-code-localized-error")
 
     # A FAQ remains available while account verification is pending. Answering
     # it must preserve the pending verification form and intake data.
@@ -268,7 +268,7 @@ def test_j01_intake(case_id, ui, server, provider):
     expect(ui.message).to_be_editable()
     assert ui.disk(new_sid)["slots"]["order_number"] == "NS-000123"
     assert len(ui.verification_posts()) == 2
-    ui.cp("J01.order-api-outage-safe-error")
+    ui.cp("complete_intake.order-api-outage-safe-error")
 
     server.start_order_api()
     correct = ui.verify_order(" sw1a 1aa ", "246810")
@@ -278,7 +278,7 @@ def test_j01_intake(case_id, ui, server, provider):
     expect(ui.verification_status).to_contain_text(AUTH_VERIFIED)
     expect(ui.message).to_be_editable()
     assert len(ui.verification_posts()) == 3
-    ui.cp("J01.demo-code-success-enables-composer")
+    ui.cp("complete_intake.demo-code-success-enables-composer")
 
     # FAQ is still a side path after verification and before the protected
     # lookup; it must not consume or weaken the order-specific grant.
@@ -300,7 +300,7 @@ def test_j01_intake(case_id, ui, server, provider):
     expect(ui.log).to_contain_text(AUTH_ORDER_RESULT)
     assert ui.last_assistant(new_sid)["text"] == AUTH_ORDER_RESULT
     assert ui.disk(new_sid)["slots"]["order_number"] == "NS-000123"
-    ui.cp("J01.verified-allowlisted-order-summary")
+    ui.cp("complete_intake.verified-allowlisted-order-summary")
 
     # A FAQ after the protected result returns to the still-pending issue step.
     provider.script_extract(GREETING_STANDING_CHARGE_Q, x_question())
@@ -340,7 +340,7 @@ def test_j01_intake(case_id, ui, server, provider):
         '"verification_code"',
     ):
         assert secret not in serialized
-    ui.cp("J01.verified-order-still-collects-issue-fields")
+    ui.cp("complete_intake.verified-order-still-collects-issue-fields")
 
     provider.script_extract(HIGH, x_high())
     assert ui.send(HIGH).status == 200
@@ -349,7 +349,7 @@ def test_j01_intake(case_id, ui, server, provider):
         "NS-000123", "damaged_item", "My order arrived broken", "high"
     )))
     assert ui.disk(new_sid)["pending_review_revision"] == 8
-    ui.cp("J01.verified-order-review")
+    ui.cp("complete_intake.verified-order-review")
 
     assert ui.confirm().status == 200
     new_receipt = RECEIPT_TEMPLATE.format(session_id=new_sid)
@@ -371,6 +371,6 @@ def test_j01_intake(case_id, ui, server, provider):
     ):
         assert secret not in serialized
     assert len(provider.calls("extract")) == 12
-    ui.cp("J01.verified-order-confirmed")
+    ui.cp("complete_intake.verified-order-confirmed")
 
     provider.assert_consumed()

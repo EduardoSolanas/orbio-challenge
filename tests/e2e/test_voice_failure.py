@@ -1,4 +1,4 @@
-"""J07: speech failures never block the text path (IC §13.3)."""
+"""Speech failures never block the text path (IC §13.3)."""
 
 from __future__ import annotations
 
@@ -24,8 +24,8 @@ SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "
 UNAVAILABLE = "The AI service is unavailable. Please retry."
 
 
-@pytest.mark.parametrize("case_id", [pytest.param("J07", id="J07")])
-def test_j07_voice_failure(case_id, ui, server, provider, tmp_path):
+@pytest.mark.parametrize("case_id", [pytest.param("voice_failure", id="voice_failure")])
+def test_voice_failure(case_id, ui, server, provider, tmp_path):
     wav = make_wav()
     wav_path = tmp_path / "valid-16k-mono.wav"
     wav_path.write_bytes(wav)
@@ -55,7 +55,7 @@ def test_j07_voice_failure(case_id, ui, server, provider, tmp_path):
     assert ui.turn_posts() == []
     assert [p["status"] for p in ui.transcription_posts()] == [503]
     assert [c["outcome"] for c in provider.calls("transcribe")] == ["failed:provider_unavailable"]
-    ui.cp("J07.stt-outage-safe-error")
+    ui.cp("voice_failure.stt-outage-safe-error")
 
     # Typed FULL still works and is recorded as text input.
     assert ui.send(FULL).status == 200
@@ -67,7 +67,7 @@ def test_j07_voice_failure(case_id, ui, server, provider, tmp_path):
     assert user_message["input_mode"] == "text" and user_message["text"] == FULL
     assert saved["revision"] == 1 and saved["pending_review_revision"] == 1
     assert saved["summary"] == SUMMARY
-    ui.cp("J07.typed-text-mode-review")
+    ui.cp("voice_failure.typed-text-mode-review")
 
     # One TTS outage: safe error, text reply and state untouched.
     reply = ui.last_assistant(sid)
@@ -83,7 +83,7 @@ def test_j07_voice_failure(case_id, ui, server, provider, tmp_path):
     assert server.session_bytes(sid) == before_play
     assert len(ui.turn_posts()) == 1
     assert [c["outcome"] for c in provider.calls("synthesize")] == ["failed:provider_unavailable"]
-    ui.cp("J07.tts-outage-text-intact")
+    ui.cp("voice_failure.tts-outage-text-intact")
 
     # Confirmation succeeds normally with exactly one receipt.
     assert ui.confirm().status == 200
@@ -95,4 +95,4 @@ def test_j07_voice_failure(case_id, ui, server, provider, tmp_path):
     assert len(ui.confirm_posts()) == 1
     assert provider.methods() == ["transcribe", "extract", "synthesize"]
     provider.assert_consumed()
-    ui.cp("J07.single-receipt-after-failures")
+    ui.cp("voice_failure.single-receipt-after-failures")

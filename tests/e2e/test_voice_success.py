@@ -1,4 +1,4 @@
-"""J06: voice end to end - recording take, WAV upload, transcript review, MP3 playback (IC §13.3)."""
+"""Voice end to end - recording take, WAV upload, transcript review, MP3 playback (IC §13.3)."""
 
 from __future__ import annotations
 
@@ -50,8 +50,8 @@ def assert_accepted_pcm_wav(audio: bytes) -> None:
     assert peak >= 128, "recorded take must not be silent"
 
 
-@pytest.mark.parametrize("case_id", [pytest.param("J06", id="J06")])
-def test_j06_voice_success(case_id, ui, server, provider, tmp_path):
+@pytest.mark.parametrize("case_id", [pytest.param("voice_success", id="voice_success")])
+def test_voice_success(case_id, ui, server, provider, tmp_path):
     wav = make_wav()
     wav_path = tmp_path / "valid-16k-mono.wav"
     wav_path.write_bytes(wav)
@@ -83,7 +83,7 @@ def test_j06_voice_success(case_id, ui, server, provider, tmp_path):
     expect(denied.get_by_role("button", name="Attach WAV audio")).to_be_enabled()
     denied.close()
     assert provider.methods() == [] and server.session_bytes(sid) == baseline
-    ui.cp("J06.microphone-denied-alert")
+    ui.cp("voice_success.microphone-denied-alert")
 
     # Starting a new intake during a take releases the microphone without STT.
     ui.button("Start recording").click()
@@ -98,7 +98,7 @@ def test_j06_voice_success(case_id, ui, server, provider, tmp_path):
     sid = ui.current_session_id()
     baseline = server.session_bytes(sid)
     transcript_before = ui.transcript_text()
-    ui.cp("J06.new-intake-stops-recording")
+    ui.cp("voice_success.new-intake-stops-recording")
 
     # Start/Stop recording on Chromium's fake media device -> accepted PCM WAV -> draft.
     ui.button("Start recording").click()
@@ -112,7 +112,7 @@ def test_j06_voice_success(case_id, ui, server, provider, tmp_path):
             "buttons => buttons.length > 0 && buttons.every(button => button.disabled)"
         )
         assert len(provider.calls("transcribe")) == 1
-        ui.cp("J06.stop-auto-transcribes-and-locks-controls")
+        ui.cp("voice_success.stop-auto-transcribes-and-locks-controls")
         recording_gate.release()
     assert pending.value.status == 200
     expect(ui.message).to_have_value(STT_TEXT)
@@ -121,7 +121,7 @@ def test_j06_voice_success(case_id, ui, server, provider, tmp_path):
     assert server.session_bytes(sid) == baseline
     assert ui.transcript_text() == transcript_before
     ui.message.fill("")
-    ui.cp("J06.recording-take-fills-draft")
+    ui.cp("voice_success.recording-take-fills-draft")
 
     # Upload a valid finite WAV and transcribe: draft only, nothing committed.
     with ui.page.expect_response(lambda r: r.url.endswith("/api/transcriptions")) as pending:
@@ -136,7 +136,7 @@ def test_j06_voice_success(case_id, ui, server, provider, tmp_path):
     assert ui.turn_posts() == []
     saved = ui.disk(sid)
     assert saved["revision"] == 0 and len(saved["messages"]) == 1
-    ui.cp("J06.upload-fills-draft-no-commit")
+    ui.cp("voice_success.upload-fills-draft-no-commit")
 
     # Edit the order in the draft, then Send: transcript mode and edited facts persist.
     ui.message.fill(EDITED)
@@ -152,7 +152,7 @@ def test_j06_voice_success(case_id, ui, server, provider, tmp_path):
     assert user_message["input_mode"] == "transcript" and user_message["text"] == EDITED
     assert saved["slots"]["order_number"] == "NS-000456"
     assert saved["revision"] == 1 and saved["pending_review_revision"] == 1
-    ui.cp("J06.edited-transcript-persisted")
+    ui.cp("voice_success.edited-transcript-persisted")
 
     # Play the saved reply: the saved message ID drives real, finite MP3 playback.
     reply = ui.last_assistant(sid)
@@ -182,7 +182,7 @@ def test_j06_voice_success(case_id, ui, server, provider, tmp_path):
     assert spy["plays"] and spy["plays"][-1] == spy["created"][0]["url"]
     expect(ui.page.get_by_text("Voice is AI-generated").first).to_be_visible()
     assert server.session_bytes(sid) == before_play
-    ui.cp("J06.saved-reply-plays-mp3")
+    ui.cp("voice_success.saved-reply-plays-mp3")
 
     # Second checkpoint: the same saved reply played from a PCM WAV response.
     wav_reply = make_wav(seconds=0.5, peak=1200)
@@ -208,7 +208,7 @@ def test_j06_voice_success(case_id, ui, server, provider, tmp_path):
     assert spy["created"][1]["url"] == src_wav
     assert spy["created"][0]["url"] in spy["revoked"], "MP3 object URL replaced by WAV"
     assert server.session_bytes(sid) == before_play
-    ui.cp("J06.saved-reply-plays-wav")
+    ui.cp("voice_success.saved-reply-plays-wav")
 
     # Confirmation still succeeds after voice input and playback.
     assert ui.confirm().status == 200
@@ -220,4 +220,4 @@ def test_j06_voice_success(case_id, ui, server, provider, tmp_path):
         "transcribe", "transcribe", "extract", "synthesize", "synthesize",
     ]  # fmt: skip
     provider.assert_consumed()
-    ui.cp("J06.confirm-after-voice")
+    ui.cp("voice_success.confirm-after-voice")

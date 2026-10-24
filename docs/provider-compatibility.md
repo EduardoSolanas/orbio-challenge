@@ -142,7 +142,7 @@ Required strict-TDD cases:
 
 - Unit: complete/partial/atomic RAG inheritance, no cross-host key inheritance, invalid URL/model/auth combinations, no-auth header absence, output-mode validation, endpoint joining, schema/JSON parsing, deadline/cancellation and client cleanup.
 - Integration: four distinct httpx MockTransport endpoints receive only their assigned calls and credentials; all three output modes; no redirects/fallback; each unsupported endpoint fails clearly; both shared-server and split-server profiles; shared RAG deadline and citations remain correct. Verify real application HTTP serialization against controlled transport responses.
-- Playwright: preserve all existing journeys using the same server-side fake AIProvider; cover backend failure isolation in J07/J10 and IT12–IT14: STT/TTS errors leave text/RAG usable and saved state intact. Do not add UI controls for operator URLs or credentials.
+- Playwright: preserve all existing journeys using the same server-side fake AIProvider; cover backend failure isolation in voice_failure/stale_voice_results and IT12–IT14: STT/TTS errors leave text/RAG usable and saved state intact. Do not add UI controls for operator URLs or credentials.
 - Mutation: providers.py/config.py remain in the required mutmut scope; kill mutations that swap LLM/RAG/STT/TTS profiles, attach a wrong auth header, enable hidden fallback, skip parsing or share credentials incorrectly. New functions enter inventory/coverage gates.
 - Live: run compatibility smoke against the actual selected profiles; list each backend+model combination verified. Unavailable endpoints mark integration incomplete, not silently skipped or universally supported.
 

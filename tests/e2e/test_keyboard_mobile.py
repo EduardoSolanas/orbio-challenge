@@ -1,4 +1,4 @@
-"""J09: keyboard and 390x844 mobile use with hostile markup in customer, answer and source text."""
+"""Keyboard and 390x844 mobile use with hostile markup in customer, answer and source text."""
 
 from __future__ import annotations
 
@@ -81,8 +81,8 @@ def write_hostile_knowledge(path) -> None:
     )
 
 
-@pytest.mark.parametrize("case_id", [pytest.param("J09", id="J09")])
-def test_j09_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
+@pytest.mark.parametrize("case_id", [pytest.param("keyboard_mobile", id="keyboard_mobile")])
+def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
     knowledge = tmp_path / "hostile-faq.json"
     write_hostile_knowledge(knowledge)
     server = server_factory.start(knowledge_path=knowledge)
@@ -156,7 +156,7 @@ def test_j09_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_pat
     expect(ui.message).to_be_visible()
     expect(ui.file_input).to_be_attached()
     assert page.evaluate(NO_OVERFLOW)
-    ui.cp("J09.mobile-named-controls")
+    ui.cp("keyboard_mobile.mobile-named-controls")
 
     # Enter submits from the message field; Shift+Enter remains a newline.
     ui.message.fill("first line")
@@ -173,7 +173,7 @@ def test_j09_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_pat
     saved = ui.disk(sid)
     assert saved["messages"][1]["text"] == CUSTOMER_PART
     assert body_of(ui.turn_posts()[0])["text"] == CUSTOMER_PART
-    ui.cp("J09.customer-markup-escaped")
+    ui.cp("keyboard_mobile.customer-markup-escaped")
 
     # Supported policy answer containing markup: answer text and Sources stay literal.
     assert send_with_keyboard(CUSTOMER_QUESTION).status == 200
@@ -200,7 +200,7 @@ def test_j09_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_pat
         }
     ]
     assert provider.calls("answer_knowledge")[0]["context"]["sources"][0]["body"] == HOSTILE_BODY
-    ui.cp("J09.answer-and-sources-escaped-keyboard")
+    ui.cp("keyboard_mobile.answer-and-sources-escaped-keyboard")
 
     # Finish the intake and reach Play and Confirm with the keyboard alone.
     assert send_with_keyboard(CATEGORY).status == 200
@@ -218,7 +218,7 @@ def test_j09_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_pat
         page.keyboard.press("Enter")
     assert pending.value.status == 200
     expect(ui.audio).to_have_attribute("src", re.compile(r"^blob:"))
-    ui.cp("J09.play-reachable-by-keyboard")
+    ui.cp("keyboard_mobile.play-reachable-by-keyboard")
 
     # The page boots from the server-rendered English catalog: document lang,
     # visible labels, tooltips and accessible names all come from it.
@@ -292,4 +292,4 @@ def test_j09_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_pat
         "extract", "extract",
     ]  # fmt: skip
     provider.assert_consumed()
-    ui.cp("J09.confirm-by-keyboard-no-overflow")
+    ui.cp("keyboard_mobile.confirm-by-keyboard-no-overflow")

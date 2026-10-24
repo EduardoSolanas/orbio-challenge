@@ -94,7 +94,7 @@ def test_missing_controlled_label_fails(tmp_path: Path) -> None:
 def test_unqualified_full_e2e_in_source_fails(tmp_path: Path) -> None:
     src = tmp_path / "src"
     src.mkdir()
-    (src / "test_j01_x.py").write_text(
+    (src / "test_x.py").write_text(
         '"""Browser workflow E2E (controlled provider)."""\nFULL = "full E2E run"\n',
         encoding="utf-8",
     )
@@ -110,7 +110,7 @@ def test_unqualified_full_e2e_in_source_fails(tmp_path: Path) -> None:
 def test_qualified_full_e2e_passes(tmp_path: Path) -> None:
     src = tmp_path / "src"
     src.mkdir()
-    (src / "test_j01_x.py").write_text(
+    (src / "test_x.py").write_text(
         '"""Browser workflow E2E (controlled provider, not the full E2E live system)."""\n'
         'LABEL = "full E2E (controlled-provider browser workflow)"\n',
         encoding="utf-8",

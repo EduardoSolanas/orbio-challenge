@@ -1,4 +1,4 @@
-"""J08: policy questions during an intake - real retrieval, cited Sources, abstention (IC §13.3, RAG §6)."""
+"""Policy questions during an intake - real retrieval, cited Sources, abstention (IC §13.3, RAG §6)."""
 
 from __future__ import annotations
 
@@ -59,8 +59,8 @@ def assert_sources_open(region) -> None:
     expect(region).to_contain_text(f"Knowledge base version: {KB_VERSION}")
 
 
-@pytest.mark.parametrize("case_id", [pytest.param("J08", id="J08")])
-def test_j08_rag_questions(case_id, ui, server, provider):
+@pytest.mark.parametrize("case_id", [pytest.param("policy_questions", id="policy_questions")])
+def test_policy_questions(case_id, ui, server, provider):
     provider.script_extract(PART, x_part())
     provider.script_extract(GREETING_STANDING_CHARGE_Q, x_question())
     provider.script_answer(GREETING_STANDING_CHARGE_Q, standing_charge_answer())
@@ -77,7 +77,7 @@ def test_j08_rag_questions(case_id, ui, server, provider):
     expect(ui.log).to_contain_text(ASK_CATEGORY)
     partial = ui.disk(sid)
     assert partial["revision"] == 1
-    ui.cp("J08.partial-intake")
+    ui.cp("policy_questions.partial-intake")
 
     # A greeting plus policy question follows the policy route, not social or intake.
     assert ui.send(GREETING_STANDING_CHARGE_Q).status == 200
@@ -94,7 +94,7 @@ def test_j08_rag_questions(case_id, ui, server, provider):
     answer_call = provider.calls("answer_knowledge")[0]["context"]
     assert answer_call["question"] == GREETING_STANDING_CHARGE_Q and answer_call["kb_version"] == KB_VERSION
     assert answer_call["sources"] == [STANDING_CHARGE]
-    ui.cp("J08.return-answer-cited-sources")
+    ui.cp("policy_questions.return-answer-cited-sources")
 
     # PAYMENT_Q: deterministic safe abstention only; no missing-field prompt or generation.
     assert ui.send(PAYMENT_Q).status == 200
@@ -106,7 +106,7 @@ def test_j08_rag_questions(case_id, ui, server, provider):
     assert reply["citations"] == []
     assert saved["revision"] == 3 and saved["slots"] == partial["slots"]
     assert len(provider.calls("answer_knowledge")) == 1
-    ui.cp("J08.payment-abstention-no-sources")
+    ui.cp("policy_questions.payment-abstention-no-sources")
 
     # Finish the intake.
     assert ui.send(CATEGORY).status == 200
@@ -116,7 +116,7 @@ def test_j08_rag_questions(case_id, ui, server, provider):
     saved = ui.disk(sid)
     assert saved["revision"] == 5 and saved["pending_review_revision"] == 5
     assert saved["summary"] == SUMMARY
-    ui.cp("J08.intake-finished-review")
+    ui.cp("policy_questions.intake-finished-review")
 
     # A policy question at a valid review preserves the token and summary.
     review_slots = saved["slots"]
@@ -132,7 +132,7 @@ def test_j08_rag_questions(case_id, ui, server, provider):
     assert saved["pending_review_revision"] == 5 and saved["summary"] == SUMMARY
     assert saved["slots"] == review_slots and saved["review_rejected"] is False
     assert len(provider.calls("answer_knowledge")) == 2
-    ui.cp("J08.review-question-preserves-token")
+    ui.cp("policy_questions.review-question-preserves-token")
 
     # Confirm with the current revision and the prior review token.
     assert ui.confirm().status == 200
@@ -149,7 +149,7 @@ def test_j08_rag_questions(case_id, ui, server, provider):
         "extract", "extract", "answer_knowledge", "extract",
         "extract", "extract", "extract", "answer_knowledge",
     ]  # fmt: skip
-    ui.cp("J08.confirm-prior-token")
+    ui.cp("policy_questions.confirm-prior-token")
 
     # Reload: saved Sources restore from the stored snapshots, with no new model call.
     gets_before = len(ui.session_gets())
@@ -163,4 +163,4 @@ def test_j08_rag_questions(case_id, ui, server, provider):
     assert len(provider.calls("answer_knowledge")) == 2 and len(provider.calls("extract")) == 6
     assert ui.disk(sid)["messages"] == saved["messages"]
     provider.assert_consumed()
-    ui.cp("J08.reload-restores-sources")
+    ui.cp("policy_questions.reload-restores-sources")

@@ -235,7 +235,7 @@ For each gate the builder provides changed files, command/results, one represent
 - Demo video URL in README, checked for accessibility: show a normal interview, invalid answer, correction, resumed context, JSON output, and voice upload/playback. Record only fictional data; never show credentials.
 - Verification report mapping every original assignment requirement and every user-promoted mandatory feature to observed evidence, and listing remaining limitations. A specification review is not proof that the implementation passes.
 
-RAG is mandatory under [rag-contract.md](rag-contract.md), with requirement R13 and AT17–AT19, J08–J09 and IT10–IT11. User-promoted requirements are also mandatory: frustration detection (FEAT-01), English/Spanish support (FEAT-02), and within-session multi-turn memory/resume/isolation (VERIFY-01). They supersede any earlier optional/deferred wording. Remaining optional improvements include cross-session memory with identity/consent, streaming voice and database-backed multi-worker operation.
+RAG is mandatory under [rag-contract.md](rag-contract.md), with requirement R13 and AT17–AT19, policy_questions and keyboard_mobile and IT10–IT11. User-promoted requirements are also mandatory: frustration detection (FEAT-01), English/Spanish support (FEAT-02), and within-session multi-turn memory/resume/isolation (VERIFY-01). They supersede any earlier optional/deferred wording. Remaining optional improvements include cross-session memory with identity/consent, streaming voice and database-backed multi-worker operation.
 
 
 ## 13. Startup and deployment addendum

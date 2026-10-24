@@ -3,9 +3,9 @@
   "spec": "docs/implementation-contract.md#13.3",
   "cases": [
     {
-      "id": "J01",
+      "id": "complete_intake",
       "title": "Report an order problem, reload completed view, start a new conversation",
-      "nodeid": "tests/e2e/test_j01_intake.py::test_j01_intake[chromium-J01]",
+      "nodeid": "tests/e2e/test_complete_intake.py::test_complete_intake[chromium-complete_intake]",
       "requirement_ids": [
         "R1",
         "R2",
@@ -15,32 +15,32 @@
         "R7",
         "AT1",
         "AT9",
-        "IC-13.3-J01"
+        "IC-13.3-complete_intake"
       ],
       "checkpoints": [
-        "J01.fresh-greeting",
-        "J01.social-acknowledgment-no-intake-prompt",
-        "J01.mixed-greeting-facts-start-intake",
-        "J01.category-asks-urgency",
-        "J01.review-four-slots",
-        "J01.confirmed-local-receipt",
-        "J01.reload-completed-read-only",
-        "J01.new-intake-isolated",
-        "J01.issue-reported-without-verification",
-        "J01.verification-form-demo-notice",
-        "J01.wrong-code-localized-error",
-        "J01.order-api-outage-safe-error",
-        "J01.demo-code-success-enables-composer",
-        "J01.verified-allowlisted-order-summary",
-        "J01.verified-order-still-collects-issue-fields",
-        "J01.verified-order-review",
-        "J01.verified-order-confirmed"
+        "complete_intake.fresh-greeting",
+        "complete_intake.social-acknowledgment-no-intake-prompt",
+        "complete_intake.mixed-greeting-facts-start-intake",
+        "complete_intake.category-asks-urgency",
+        "complete_intake.review-four-slots",
+        "complete_intake.confirmed-local-receipt",
+        "complete_intake.reload-completed-read-only",
+        "complete_intake.new-intake-isolated",
+        "complete_intake.issue-reported-without-verification",
+        "complete_intake.verification-form-demo-notice",
+        "complete_intake.wrong-code-localized-error",
+        "complete_intake.order-api-outage-safe-error",
+        "complete_intake.demo-code-success-enables-composer",
+        "complete_intake.verified-allowlisted-order-summary",
+        "complete_intake.verified-order-still-collects-issue-fields",
+        "complete_intake.verified-order-review",
+        "complete_intake.verified-order-confirmed"
       ]
     },
     {
-      "id": "J02",
+      "id": "rejected_review_recovery",
       "title": "Correct and recover a rejected review",
-      "nodeid": "tests/e2e/test_j02_correction_recovery.py::test_j02_correction_recovery[chromium-J02]",
+      "nodeid": "tests/e2e/test_rejected_review_recovery.py::test_rejected_review_recovery[chromium-rejected_review_recovery]",
       "requirement_ids": [
         "R3",
         "R4",
@@ -48,123 +48,123 @@
         "AT4",
         "AT15",
         "IC-5",
-        "IC-13.3-J02"
+        "IC-13.3-rejected_review_recovery"
       ],
       "checkpoints": [
-        "J02.invalid-order-keeps-problem",
-        "J02.order-corrected",
-        "J02.review-reached",
-        "J02.conflict-hides-confirm",
-        "J02.retain-old-restores-review",
-        "J02.reject-clears-token",
-        "J02.recovery-needs-later-confirm",
-        "J02.later-confirm-saves-low"
+        "rejected_review_recovery.invalid-order-keeps-problem",
+        "rejected_review_recovery.order-corrected",
+        "rejected_review_recovery.review-reached",
+        "rejected_review_recovery.conflict-hides-confirm",
+        "rejected_review_recovery.retain-old-restores-review",
+        "rejected_review_recovery.reject-clears-token",
+        "rejected_review_recovery.recovery-needs-later-confirm",
+        "rejected_review_recovery.later-confirm-saves-low"
       ]
     },
     {
-      "id": "J03",
+      "id": "resume_after_restart",
       "title": "Resume across refresh and server restart",
-      "nodeid": "tests/e2e/test_j03_resume_restart.py::test_j03_resume_restart[chromium-J03]",
+      "nodeid": "tests/e2e/test_resume_after_restart.py::test_resume_after_restart[chromium-resume_after_restart]",
       "requirement_ids": [
         "R5",
         "R6",
         "AT9",
         "IC-9",
-        "IC-13.3-J03"
+        "IC-13.3-resume_after_restart"
       ],
       "checkpoints": [
-        "J03.partial-created",
-        "J03.capability-and-unrelated-do-not-start-intake",
-        "J03.retry-visible-no-replacement",
-        "J03.retry-restores-context",
-        "J03.restart-preserves-history",
-        "J03.explicit-resume-pending-clarification",
-        "J03.finish-after-restart"
+        "resume_after_restart.partial-created",
+        "resume_after_restart.capability-and-unrelated-do-not-start-intake",
+        "resume_after_restart.retry-visible-no-replacement",
+        "resume_after_restart.retry-restores-context",
+        "resume_after_restart.restart-preserves-history",
+        "resume_after_restart.explicit-resume-pending-clarification",
+        "resume_after_restart.finish-after-restart"
       ]
     },
     {
-      "id": "J04",
+      "id": "failed_request_retry",
       "title": "Recover one failed text request",
-      "nodeid": "tests/e2e/test_j04_failed_retry.py::test_j04_failed_retry[chromium-J04]",
+      "nodeid": "tests/e2e/test_failed_request_retry.py::test_failed_request_retry[chromium-failed_request_retry]",
       "requirement_ids": [
         "R4",
         "AT6",
         "AT10",
         "IC-9",
-        "IC-13.3-J04"
+        "IC-13.3-failed_request_retry"
       ],
       "checkpoints": [
-        "J04.pending-locks-one-request",
-        "J04.failure-keeps-draft",
-        "J04.retry-identical-request",
-        "J04.confirm-single-success"
+        "failed_request_retry.pending-locks-one-request",
+        "failed_request_retry.failure-keeps-draft",
+        "failed_request_retry.retry-identical-request",
+        "failed_request_retry.confirm-single-success"
       ]
     },
     {
-      "id": "J05",
+      "id": "two_tab_conflict",
       "title": "Resolve stale state from two tabs",
-      "nodeid": "tests/e2e/test_j05_two_tabs.py::test_j05_two_tabs[chromium-J05]",
+      "nodeid": "tests/e2e/test_two_tab_conflict.py::test_two_tab_conflict[chromium-two_tab_conflict]",
       "requirement_ids": [
         "R5",
         "AT3",
         "AT11",
         "IC-9",
-        "IC-13.3-J05"
+        "IC-13.3-two_tab_conflict"
       ],
       "checkpoints": [
-        "J05.two-tabs-share-review",
-        "J05.tab-a-commits-change",
-        "J05.stale-conflict-refresh",
-        "J05.explicit-send-new-id",
-        "J05.tab-b-resolves-and-confirms",
-        "J05.single-confirmation-consistent"
+        "two_tab_conflict.two-tabs-share-review",
+        "two_tab_conflict.tab-a-commits-change",
+        "two_tab_conflict.stale-conflict-refresh",
+        "two_tab_conflict.explicit-send-new-id",
+        "two_tab_conflict.tab-b-resolves-and-confirms",
+        "two_tab_conflict.single-confirmation-consistent"
       ]
     },
     {
-      "id": "J06",
+      "id": "voice_success",
       "title": "Use voice successfully (recording, upload, playback)",
-      "nodeid": "tests/e2e/test_j06_voice_success.py::test_j06_voice_success[chromium-J06]",
+      "nodeid": "tests/e2e/test_voice_success.py::test_voice_success[chromium-voice_success]",
       "requirement_ids": [
         "R9",
         "AT12",
         "AT14",
         "IC-7",
         "IC-9",
-        "IC-13.3-J06"
+        "IC-13.3-voice_success"
       ],
       "checkpoints": [
-        "J06.microphone-denied-alert",
-        "J06.new-intake-stops-recording",
-        "J06.stop-auto-transcribes-and-locks-controls",
-        "J06.recording-take-fills-draft",
-        "J06.upload-fills-draft-no-commit",
-        "J06.edited-transcript-persisted",
-        "J06.saved-reply-plays-mp3",
-        "J06.confirm-after-voice"
+        "voice_success.microphone-denied-alert",
+        "voice_success.new-intake-stops-recording",
+        "voice_success.stop-auto-transcribes-and-locks-controls",
+        "voice_success.recording-take-fills-draft",
+        "voice_success.upload-fills-draft-no-commit",
+        "voice_success.edited-transcript-persisted",
+        "voice_success.saved-reply-plays-mp3",
+        "voice_success.confirm-after-voice"
       ]
     },
     {
-      "id": "J07",
+      "id": "voice_failure",
       "title": "Continue when speech fails",
-      "nodeid": "tests/e2e/test_j07_voice_failure.py::test_j07_voice_failure[chromium-J07]",
+      "nodeid": "tests/e2e/test_voice_failure.py::test_voice_failure[chromium-voice_failure]",
       "requirement_ids": [
         "R4",
         "R9",
         "AT13",
         "AT14",
-        "IC-13.3-J07"
+        "IC-13.3-voice_failure"
       ],
       "checkpoints": [
-        "J07.stt-outage-safe-error",
-        "J07.typed-text-mode-review",
-        "J07.tts-outage-text-intact",
-        "J07.single-receipt-after-failures"
+        "voice_failure.stt-outage-safe-error",
+        "voice_failure.typed-text-mode-review",
+        "voice_failure.tts-outage-text-intact",
+        "voice_failure.single-receipt-after-failures"
       ]
     },
     {
-      "id": "J08",
+      "id": "policy_questions",
       "title": "Ask policy questions during intake",
-      "nodeid": "tests/e2e/test_j08_rag_questions.py::test_j08_rag_questions[chromium-J08]",
+      "nodeid": "tests/e2e/test_policy_questions.py::test_policy_questions[chromium-policy_questions]",
       "requirement_ids": [
         "R13",
         "AT17",
@@ -172,56 +172,56 @@
         "AT19",
         "RAG-5",
         "RAG-6",
-        "IC-13.3-J08"
+        "IC-13.3-policy_questions"
       ],
       "checkpoints": [
-        "J08.partial-intake",
-        "J08.return-answer-cited-sources",
-        "J08.payment-abstention-no-sources",
-        "J08.intake-finished-review",
-        "J08.review-question-preserves-token",
-        "J08.confirm-prior-token",
-        "J08.reload-restores-sources"
+        "policy_questions.partial-intake",
+        "policy_questions.return-answer-cited-sources",
+        "policy_questions.payment-abstention-no-sources",
+        "policy_questions.intake-finished-review",
+        "policy_questions.review-question-preserves-token",
+        "policy_questions.confirm-prior-token",
+        "policy_questions.reload-restores-sources"
       ]
     },
     {
-      "id": "J09",
+      "id": "keyboard_mobile",
       "title": "Always-open chat, keyboard and mobile with safe content",
-      "nodeid": "tests/e2e/test_j09_keyboard_mobile.py::test_j09_keyboard_mobile[chromium-J09]",
+      "nodeid": "tests/e2e/test_keyboard_mobile.py::test_keyboard_mobile[chromium-keyboard_mobile]",
       "requirement_ids": [
         "R13",
         "AT16",
         "RAG-6",
         "IC-9",
-        "IC-13.3-J09"
+        "IC-13.3-keyboard_mobile"
       ],
       "checkpoints": [
-        "J09.mobile-named-controls",
-        "J09.customer-markup-escaped",
-        "J09.answer-and-sources-escaped-keyboard",
-        "J09.play-reachable-by-keyboard",
-        "J09.confirm-by-keyboard-no-overflow"
+        "keyboard_mobile.mobile-named-controls",
+        "keyboard_mobile.customer-markup-escaped",
+        "keyboard_mobile.answer-and-sources-escaped-keyboard",
+        "keyboard_mobile.play-reachable-by-keyboard",
+        "keyboard_mobile.confirm-by-keyboard-no-overflow"
       ]
     },
     {
-      "id": "J10",
+      "id": "stale_voice_results",
       "title": "Ignore stale voice results",
-      "nodeid": "tests/e2e/test_j10_stale_voice.py::test_j10_stale_voice[chromium-J10]",
+      "nodeid": "tests/e2e/test_stale_voice_results.py::test_stale_voice_results[chromium-stale_voice_results]",
       "requirement_ids": [
         "R9",
         "AT12",
         "AT14",
         "IC-9",
-        "IC-13.3-J10"
+        "IC-13.3-stale_voice_results"
       ],
       "checkpoints": [
-        "J10.stt-locks-chat-controls",
-        "J10.auto-stt-fills-editable-draft",
-        "J10.new-intake-after-stt-unlock",
-        "J10.saved-replies-a-b",
-        "J10.only-latest-tts-owns-audio",
-        "J10.send-usable-during-playback",
-        "J10.pagehide-pauses-and-revokes"
+        "stale_voice_results.stt-locks-chat-controls",
+        "stale_voice_results.auto-stt-fills-editable-draft",
+        "stale_voice_results.new-intake-after-stt-unlock",
+        "stale_voice_results.saved-replies-a-b",
+        "stale_voice_results.only-latest-tts-owns-audio",
+        "stale_voice_results.send-usable-during-playback",
+        "stale_voice_results.pagehide-pauses-and-revokes"
       ]
     }
   ]

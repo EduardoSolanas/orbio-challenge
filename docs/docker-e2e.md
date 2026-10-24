@@ -23,7 +23,7 @@ The command probes `/health` and the judge `/models` endpoint before launching C
 |---|---|---|---|
 | Unit | `tests/unit` | Doubles only | Pure domain rules |
 | Integration (real application boundaries) | `tests/integration` | Real FastAPI routes/engine/storage, controlled HTTP doubles | Wiring and error mapping |
-| Browser workflow E2E (controlled provider) | J01–J10 + confirmation retry, marker `browser_e2e`, `scripts/run_browser_e2e.py` | Controlled provider fake, local Uvicorn fixture | Real browser workflow: JavaScript, HTTP, storage, keyboard, mobile, media, retry, timeout, stale-state |
+| Browser workflow E2E (controlled provider) | the ten browser journeys + confirmation retry, marker `browser_e2e`, `scripts/run_browser_e2e.py` | Controlled provider fake, local Uvicorn fixture | Real browser workflow: JavaScript, HTTP, storage, keyboard, mobile, media, retry, timeout, stale-state |
 | Real Docker E2E (real provider) | `tests/e2e/test_docker_e2e.py`, marker `docker_e2e`, `scripts/run_docker_e2e.py` | Real deployed UI/API and real provider; no `tests.support.fakes` import | Shipped UI/API path against the real deployment |
 | LLM semantic judge | `intent_judge` marker + per-node Docker judge artifacts | Judge config only (`tests/e2e/.env.judge`), kept separate from the application provider config (`LLM_*`/`STT_*`/`TTS_*`) | Relevance/grounding of responses; deterministic assertions stay authoritative |
 

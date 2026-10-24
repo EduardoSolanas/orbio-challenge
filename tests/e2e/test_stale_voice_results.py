@@ -1,4 +1,4 @@
-"""J10: stale STT and TTS results from an older generation or token are ignored (IC §13.3)."""
+"""Stale STT and TTS results from an older generation or token are ignored (IC §13.3)."""
 
 from __future__ import annotations
 
@@ -34,8 +34,8 @@ PLAYING = """() => {
 }"""
 
 
-@pytest.mark.parametrize("case_id", [pytest.param("J10", id="J10")])
-def test_j10_stale_voice(case_id, ui, server, provider, tmp_path):
+@pytest.mark.parametrize("case_id", [pytest.param("stale_voice_results", id="stale_voice_results")])
+def test_stale_voice_results(case_id, ui, server, provider, tmp_path):
     wav = make_wav()
     wav_path = tmp_path / "valid-16k-mono.wav"
     wav_path.write_bytes(wav)
@@ -62,14 +62,14 @@ def test_j10_stale_voice(case_id, ui, server, provider, tmp_path):
             "buttons => buttons.length > 0 && buttons.every(button => button.disabled)"
         )
         assert len(ui.transcription_posts()) == 1 and ui.transcription_posts()[0]["done"] is False
-        ui.cp("J10.stt-locks-chat-controls")
+        ui.cp("stale_voice_results.stt-locks-chat-controls")
         stt_gate.release()
     assert pending.value.status == 200
     expect(ui.message).to_have_value(STT_TEXT)
     expect(ui.message).to_be_editable()
     provider.wait_finished("transcribe", 1)
     assert server.session_bytes(old_sid) == old_bytes
-    ui.cp("J10.auto-stt-fills-editable-draft")
+    ui.cp("stale_voice_results.auto-stt-fills-editable-draft")
 
     # A new intake becomes available once transcription releases its lock.
     assert ui.new_intake().status == 201
@@ -87,7 +87,7 @@ def test_j10_stale_voice(case_id, ui, server, provider, tmp_path):
     assert server.session_bytes(new_sid) == new_bytes
     assert ui.disk(new_sid)["revision"] == 0 and ui.turn_posts() == []
     assert [c["outcome"] for c in provider.calls("transcribe")] == ["ok"]
-    ui.cp("J10.new-intake-after-stt-unlock")
+    ui.cp("stale_voice_results.new-intake-after-stt-unlock")
 
     # New intake: two saved replies A and B.
     assert ui.send(PART).status == 200
@@ -98,7 +98,7 @@ def test_j10_stale_voice(case_id, ui, server, provider, tmp_path):
     reply_a, reply_b = replies[1], replies[2]
     assert (reply_a["text"], reply_b["text"]) == (ASK_CATEGORY, ASK_URGENCY)
     before_audio = server.session_bytes(new_sid)
-    ui.cp("J10.saved-replies-a-b")
+    ui.cp("stale_voice_results.saved-replies-a-b")
 
     # Hold TTS A, Play B completes, then A completes late: only B owns the audio.
     ui.play_button(reply_a["id"]).click()
@@ -124,14 +124,14 @@ def test_j10_stale_voice(case_id, ui, server, provider, tmp_path):
     assert set(created) - set(spy["revoked"]) == {src_b}, "stale audio URLs must be revoked"
     assert all(c["type"] == "audio/mpeg" for c in spy["created"])
     assert server.session_bytes(new_sid) == before_audio
-    ui.cp("J10.only-latest-tts-owns-audio")
+    ui.cp("stale_voice_results.only-latest-tts-owns-audio")
 
     # Send stays usable during playback.
     assert ui.send(HIGH).status == 200
     expect(ui.review).to_be_visible()
     expect(ui.audio).to_have_attribute("src", src_b)
     assert ui.disk(new_sid)["revision"] == 3
-    ui.cp("J10.send-usable-during-playback")
+    ui.cp("stale_voice_results.send-usable-during-playback")
 
     # A real pagehide event pauses and revokes the assigned audio.
     ui.page.evaluate(
@@ -143,4 +143,4 @@ def test_j10_stale_voice(case_id, ui, server, provider, tmp_path):
         "transcribe", "extract", "extract", "synthesize", "synthesize", "extract",
     ]  # fmt: skip
     provider.assert_consumed()
-    ui.cp("J10.pagehide-pauses-and-revokes")
+    ui.cp("stale_voice_results.pagehide-pauses-and-revokes")

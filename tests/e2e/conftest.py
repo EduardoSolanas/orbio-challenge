@@ -79,7 +79,7 @@ MEDIA_SPY_JS = """
 })();
 """
 
-# Media-policy failure seam (J06): the browser refuses microphone access.
+# Media-policy failure seam (voice_success): the browser refuses microphone access.
 DENY_MICROPHONE_JS = """
 (() => {
   const denied = () => Promise.reject(new DOMException('Permission denied', 'NotAllowedError'));
@@ -89,7 +89,7 @@ DENY_MICROPHONE_JS = """
 
 
 # --------------------------------------------------------------------------- #
-# Browser configuration (fake media device for the J06 recording take)
+# Browser configuration (fake media device for the voice_success recording take)
 # --------------------------------------------------------------------------- #
 
 

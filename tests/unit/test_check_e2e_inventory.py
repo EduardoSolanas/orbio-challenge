@@ -19,7 +19,18 @@ sys.path.insert(0, str(SCRIPTS))
 
 import check_e2e_inventory  # noqa: E402
 
-JOURNEY_IDS = [f"J{i:02d}" for i in range(1, 11)]
+JOURNEY_IDS = [
+    "complete_intake",
+    "rejected_review_recovery",
+    "resume_after_restart",
+    "failed_request_retry",
+    "two_tab_conflict",
+    "voice_success",
+    "voice_failure",
+    "policy_questions",
+    "keyboard_mobile",
+    "stale_voice_results",
+]
 
 
 def nodeid(journey_id: str) -> str:
@@ -145,7 +156,7 @@ def test_empty_collection_fails(tmp_path: Path) -> None:
 
 def test_deselected_journey_fails(tmp_path: Path) -> None:
     collected = collection()
-    collected["deselected"] = [nodeid("J03")]
+    collected["deselected"] = [nodeid("resume_after_restart")]
     paths = write_evidence(tmp_path, collected=collected)
     assert run(tmp_path, paths) != 0
 
