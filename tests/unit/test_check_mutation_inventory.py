@@ -65,6 +65,14 @@ SOURCES = {
 }
 
 
+SOURCES.update(
+    {
+        module: f"def {module}_helper():\n    return 1\n"
+        for module in ("intent", "plans", "replay", "provider_wire", "speech_wav")
+    }
+)
+
+
 @pytest.fixture(autouse=True)
 def isolated_cwd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Every fixture path and git lookup is resolved inside the temporary tree."""
@@ -178,6 +186,10 @@ def default_inventory() -> dict:
             entry("retrieval", ("search",)),
             entry("retrieval", ("outer",)),
             entry("retrieval", ("outer", "inner")),
+            *(
+                entry(module, (f"{module}_helper",))
+                for module in ("intent", "plans", "replay", "provider_wire", "speech_wav")
+            ),
         ]
     )
 
@@ -536,6 +548,10 @@ def test_exporter_roundtrip_passes_the_gate(tmp_path: Path) -> None:
         "app.retrieval.search",
         "app.retrieval.outer",
         "app.retrieval.outer.inner",
+        *(
+            f"app.{module}.{module}_helper"
+            for module in ("intent", "plans", "replay", "provider_wire", "speech_wav")
+        ),
     }
     assert data["source_revision"] == "rev1"
     start = next(

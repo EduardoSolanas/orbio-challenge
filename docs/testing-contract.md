@@ -75,7 +75,7 @@ markers = ["live: paid provider smoke, requires explicit opt-in"]
 [tool.coverage.run]
 branch = true
 source = ["app"]
-omit = ["app/main.py", "app/schemas.py", "app/prompts.py", "app/errors.py"]
+omit = ["app/main.py", "app/routes.py", "app/http_support.py", "app/asgi_guards.py", "app/schemas.py", "app/prompts.py", "app/errors.py"]
 
 [tool.coverage.json]
 show_contexts = true
@@ -86,13 +86,13 @@ show_missing = true
 
 [tool.mutmut]
 source_paths = ["app/"]
-do_not_mutate = ["app/__init__.py", "app/main.py", "app/schemas.py", "app/prompts.py", "app/errors.py"]
+do_not_mutate = ["app/__init__.py", "app/main.py", "app/routes.py", "app/http_support.py", "app/asgi_guards.py", "app/schemas.py", "app/prompts.py", "app/errors.py"]
 pytest_add_cli_args_test_selection = ["tests/unit", "tests/integration"]
 also_copy = ["tests/", "pyproject.toml"]
 mutate_only_covered_lines = false
 ```
 
-Mutate all eligible functions in **conversation.py, validation.py, storage.py, audio.py, providers.py, config.py, retrieval.py**, including uncovered lines. Main wiring/errors/schema declarations/prompt literals remain covered by integration assertions and are explicitly outside mutmut scope. Do not describe those excluded files as mutation-tested. mutmut 3's mutation operator scope does not prove module-level schema/prompt constants; write direct assertions for their contracts. A coverage percentage is not proof of test strength.
+Mutate all eligible functions in **conversation.py, intent.py, plans.py, replay.py, validation.py, storage.py, audio.py, providers.py, provider_wire.py, speech_wav.py, config.py, retrieval.py**, including uncovered lines. Main wiring/errors/schema declarations/prompt literals remain covered by integration assertions and are explicitly outside mutmut scope. Do not describe those excluded files as mutation-tested. mutmut 3's mutation operator scope does not prove module-level schema/prompt constants; write direct assertions for their contracts. A coverage percentage is not proof of test strength.
 
 ## 7. Mutation framework gate
 

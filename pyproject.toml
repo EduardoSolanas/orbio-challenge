@@ -18,7 +18,7 @@ markers = [
 [tool.coverage.run]
 branch = true
 source = ["app"]
-omit = ["app/main.py", "app/schemas.py", "app/prompts.py", "app/errors.py"]
+omit = ["app/main.py", "app/routes.py", "app/http_support.py", "app/asgi_guards.py", "app/schemas.py", "app/prompts.py", "app/errors.py"]
 
 [tool.coverage.json]
 show_contexts = true
@@ -29,7 +29,7 @@ show_missing = true
 
 [tool.mutmut]
 source_paths = ["app/"]
-do_not_mutate = ["app/__init__.py", "app/main.py", "app/schemas.py", "app/prompts.py", "app/errors.py"]
+do_not_mutate = ["app/__init__.py", "app/main.py", "app/routes.py", "app/http_support.py", "app/asgi_guards.py", "app/schemas.py", "app/prompts.py", "app/errors.py"]
 pytest_add_cli_args_test_selection = ["tests/unit", "tests/integration"]
 also_copy = ["tests/", "scripts/", "examples/", "docs/", "README.md", "pyproject.toml", "compose.yaml"]
 mutate_only_covered_lines = false

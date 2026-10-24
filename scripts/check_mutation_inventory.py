@@ -25,10 +25,15 @@ from evidence_revision import gated_input_revision
 
 MODULES = (
     "conversation",
+    "intent",
+    "plans",
+    "replay",
     "validation",
     "storage",
     "audio",
     "providers",
+    "provider_wire",
+    "speech_wav",
     "config",
     "retrieval",
 )

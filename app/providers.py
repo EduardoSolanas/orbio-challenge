@@ -5,22 +5,20 @@ redirects disabled, ``trust_env=False`` and ``Accept-Encoding: identity``.
 Every call is bounded, status-first mapped to the fixed IC section 11 error
 table, and the adapter owns all retry/repair/jitter attempts inside the
 operation deadline (PC sections 1-3, IC sections 4, 7, 11, 12).
+
+Request payloads and response parsers live in ``provider_wire``; speech chunk
+and WAV helpers live in ``speech_wav``.
 """
 
 from __future__ import annotations
 
 import asyncio
-import json
 import random
-import struct
 import time
-import wave
 from dataclasses import dataclass
-from io import BytesIO
-from typing import Awaitable, Callable, Literal, Mapping, Protocol, Sequence, TypeVar
+from typing import Awaitable, Callable, Literal, Mapping, Protocol, TypeVar
 
 import httpx
-from pydantic import BaseModel, ValidationError
 
 from app.config import (
     DEFAULT_PROVIDER_MAX_CONCURRENCY,
@@ -34,12 +32,41 @@ from app.prompts import (
     KNOWLEDGE_PROMPT,
     serialize_context,
 )
+from app.provider_wire import (
+    REPAIR_LINE,
+    SCHEMA_INSTRUCTION,
+    InvalidContent,
+    parse_extraction,
+    parse_knowledge_answer,
+    parse_transcription,
+    text_payload,
+)
 from app.schemas import (
     Extraction,
     ExtractionContext,
     KnowledgeAnswer,
     KnowledgeContext,
 )
+from app.speech_wav import (
+    TTS_LIMIT,
+    PcmChunk,
+    assemble_wav,
+    decode_pcm_wav,
+    split_tts_text,
+)
+
+__all__ = [
+    "REPAIR_LINE",
+    "SCHEMA_INSTRUCTION",
+    "SUCCESS_JSON_LIMIT",
+    "AIProvider",
+    "Budget",
+    "OpenAICompatibleProvider",
+    "SynthesizedAudio",
+    "assemble_wav",
+    "decode_pcm_wav",
+    "split_tts_text",
+]
 
 Role = str
 ROLES: tuple[Role, ...] = ("llm", "rag", "stt", "tts")
@@ -56,24 +83,12 @@ EXTRACTION_SCHEMA_NAME = "extraction"
 KNOWLEDGE_SCHEMA_NAME = "knowledge_answer"
 
 SUCCESS_JSON_LIMIT = 1024 * 1024
-TTS_LIMIT = 5 * 1024 * 1024
 TTS_MAX_CHUNKS = 20
 MP3_MEDIA_TYPES = ("audio/mpeg", "audio/mp3")
 WAV_MEDIA_TYPES = ("audio/wav", "audio/x-wav", "audio/wave")
-WAV_MIN_RATE = 8000
-WAV_MAX_RATE = 48000
-WAV_MAX_CHANNELS = 2
-WAV_SAMPLE_WIDTH = 2
-WAVE_FORMAT_PCM = 1
-STREAMING_CHUNK_SIZE = 0xFFFFFFFF
 
 JITTER_MIN = 0.25
 JITTER_MAX = 0.5
-
-REPAIR_LINE = (
-    "The previous response did not satisfy the schema. Return a complete schema object."
-)
-SCHEMA_INSTRUCTION = "Return one JSON object matching this schema: "
 
 TEXT_ATTEMPT_TIMEOUT = 10.0
 TEXT_TOTAL_DEADLINE = 25.0
@@ -81,10 +96,6 @@ STT_ATTEMPT_TIMEOUT = 15.0
 STT_TOTAL_DEADLINE = 35.0
 TTS_ATTEMPT_TIMEOUT = 20.0
 TTS_TOTAL_DEADLINE = 20.0
-
-MAX_TRANSCRIPT_CHARS = 4000
-MAX_KNOWLEDGE_ANSWER_CHARS = 1200
-MAX_CITED_IDS = 2
 
 
 @dataclass(frozen=True)
@@ -129,10 +140,6 @@ class AIProvider(Protocol):
     async def close(self) -> None: ...
 
 
-class _InvalidContent(Exception):
-    """Internal marker: successful HTTP with unusable content."""
-
-
 Parsed = TypeVar("Parsed")
 
 
@@ -152,140 +159,6 @@ def _join(base_url: str, suffix: str) -> str:
     return base_url.rstrip("/") + suffix
 
 
-def _schema_instruction(schema: type[BaseModel]) -> str:
-    return SCHEMA_INSTRUCTION + json.dumps(schema.model_json_schema(), ensure_ascii=False)
-
-
-def _text_payload(
-    profile: TextProfile,
-    system_prompt: str,
-    user_content: str,
-    max_tokens: int,
-    schema: type[BaseModel],
-    schema_name: str,
-    *,
-    repair: bool = False,
-) -> dict[str, object]:
-    system = system_prompt
-    mode = profile.output_mode
-    if mode in ("json_object", "prompt_json"):
-        system = f"{system}\n\n{_schema_instruction(schema)}"
-    if repair:
-        system = f"{system}\n{REPAIR_LINE}"
-    payload: dict[str, object] = {
-        "model": profile.model,
-        "messages": [
-            {"role": "system", "content": system},
-            {"role": "user", "content": user_content},
-        ],
-        "stream": False,
-        "temperature": 0,
-        "max_tokens": max_tokens,
-    }
-    if profile.reasoning_effort is not None:
-        payload["reasoning_effort"] = profile.reasoning_effort
-    if mode == "json_schema":
-        payload["response_format"] = {
-            "type": "json_schema",
-            "json_schema": {
-                "name": schema_name,
-                "strict": True,
-                "schema": schema.model_json_schema(),
-            },
-        }
-    elif mode == "json_object":
-        payload["response_format"] = {"type": "json_object"}
-    return payload
-
-
-def _message_content(envelope: object) -> str:
-    """Parse the first choice only, requiring an explicit clean ``stop``."""
-
-    if not isinstance(envelope, dict):
-        raise _InvalidContent
-    choices = envelope.get("choices")
-    if not isinstance(choices, list) or not choices:
-        raise _InvalidContent
-    choice = choices[0]
-    if not isinstance(choice, dict):
-        raise _InvalidContent
-    if choice.get("finish_reason") != "stop":
-        raise _InvalidContent
-    message = choice.get("message")
-    if not isinstance(message, dict):
-        raise _InvalidContent
-    if message.get("refusal"):
-        raise _InvalidContent
-    if message.get("tool_calls"):
-        raise _InvalidContent
-    content = message.get("content")
-    if not isinstance(content, str):
-        raise _InvalidContent
-    return content
-
-
-def _loads(raw: str) -> object:
-    try:
-        return json.loads(raw)
-    except (TypeError, ValueError):
-        raise _InvalidContent from None
-
-
-def _parse_extraction(body: str) -> Extraction:
-    payload = _loads(_message_content(_loads(body)).strip())
-    if not isinstance(payload, dict):
-        raise _InvalidContent
-    try:
-        return Extraction.model_validate(payload)
-    except ValidationError:
-        raise _InvalidContent from None
-
-
-def _parse_knowledge_answer(body: str, context: KnowledgeContext) -> KnowledgeAnswer:
-    payload = _loads(_message_content(_loads(body)).strip())
-    if not isinstance(payload, dict):
-        raise _InvalidContent
-    try:
-        answer = KnowledgeAnswer.model_validate(payload)
-    except ValidationError:
-        raise _InvalidContent from None
-    _validate_answer(answer, context.sources)
-    return answer
-
-
-def _validate_answer(answer: KnowledgeAnswer, sources: list) -> None:
-    """RAG section 4 citation rules, checked inside the bounded operation."""
-
-    if not answer.answerable:
-        if answer.answer != "" or answer.cited_ids:
-            raise _InvalidContent
-        return
-    text = answer.answer.strip()
-    if not 1 <= len(text) <= MAX_KNOWLEDGE_ANSWER_CHARS:
-        raise _InvalidContent
-    cited_ids = answer.cited_ids
-    if not 1 <= len(cited_ids) <= MAX_CITED_IDS or len(set(cited_ids)) != len(cited_ids):
-        raise _InvalidContent
-    supplied = {record.id for record in sources}
-    if any(cited_id not in supplied for cited_id in cited_ids):
-        raise _InvalidContent
-
-
-def _parse_transcription(body: str) -> str:
-    payload = _loads(body)
-    if not isinstance(payload, dict):
-        raise _InvalidContent
-    text = payload.get("text")
-    if not isinstance(text, str):
-        raise app_error("empty_transcription")
-    trimmed = text.strip()
-    if not trimmed:
-        raise app_error("empty_transcription")
-    if len(trimmed) > MAX_TRANSCRIPT_CHARS:
-        raise app_error("transcript_too_long")
-    return trimmed
-
-
 def _media_type(response: httpx.Response) -> str:
     return response.headers.get("content-type", "").split(";")[0].strip().lower()
 
@@ -295,7 +168,7 @@ def _reject_encoded(response: httpx.Response) -> None:
 
     encoding = response.headers.get("content-encoding", "").strip().lower()
     if encoding and encoding != "identity":
-        raise _InvalidContent
+        raise InvalidContent
 
 
 async def _read_bounded(response: httpx.Response, limit: int) -> bytes:
@@ -306,103 +179,18 @@ async def _read_bounded(response: httpx.Response, limit: int) -> bytes:
     async for chunk in response.aiter_raw():
         total += len(chunk)
         if total > limit:
-            raise _InvalidContent
+            raise InvalidContent
         chunks.append(chunk)
     return b"".join(chunks)
 
 
-def split_tts_text(text: str, limit: int) -> list[str]:
-    """Partition ``text`` into consecutive slices of at most ``limit`` code points."""
+async def _success_json_body(response: httpx.Response) -> str:
+    """Status-first, uncompressed, size-bounded JSON body of a 2xx response."""
 
-    return [text[index : index + limit] for index in range(0, len(text), limit)]
-
-
-def _parse_pcm_wav(data: bytes) -> tuple[int, int, int, bytes]:
-    """Read one RIFF/WAVE payload, treating ``0xFFFFFFFF`` sizes as unspecified.
-
-    Streaming encoders (Groq Orpheus) emit ``0xFFFFFFFF`` for the RIFF and data
-    sizes because the length is unknown up front. The bytes actually received
-    are the frame payload; finite sizes remain authoritative and are rejected
-    when they exceed the buffer.
-    """
-
-    if len(data) < 12 or data[0:4] != b"RIFF" or data[8:12] != b"WAVE":
-        raise ValueError("not a decodable PCM WAV")
-    offset = 12
-    geometry: tuple[int, int, int] | None = None
-    # A RIFF chunk header is at least 8 bytes, so this bounds iteration even if
-    # a malformed chunk size would otherwise move the cursor backwards.
-    for _ in range(len(data) // 8):
-        if offset + 8 > len(data):
-            break
-        chunk_id = data[offset : offset + 4]
-        size = int.from_bytes(data[offset + 4 : offset + 8], "little")
-        body = offset + 8
-        if chunk_id == b"fmt ":
-            if size < 16 or body + size > len(data):
-                raise ValueError("not a decodable PCM WAV")
-            format_tag, channels, rate, _, _, bits = struct.unpack_from(
-                "<HHLLHH", data, body
-            )
-            if format_tag != WAVE_FORMAT_PCM or channels == 0 or bits == 0:
-                raise ValueError("not a decodable PCM WAV")
-            geometry = (channels, (bits + 7) // 8, rate)
-        elif chunk_id == b"data":
-            if geometry is None:
-                raise ValueError("not a decodable PCM WAV")
-            available = len(data) - body
-            if size == STREAMING_CHUNK_SIZE:
-                payload = data[body:]
-            elif size > available:
-                raise ValueError("empty or truncated WAV frames")
-            else:
-                payload = data[body : body + size]
-            channels, width, rate = geometry
-            if not payload or len(payload) % (channels * width):
-                raise ValueError("empty or truncated WAV frames")
-            return channels, width, rate, payload
-        elif size == STREAMING_CHUNK_SIZE:
-            raise ValueError("not a decodable PCM WAV")
-        offset = body + size + (size & 1)
-    raise ValueError("not a decodable PCM WAV")
-
-
-def decode_pcm_wav(data: bytes) -> tuple[int, int, int, bytes]:
-    """Decode one provider WAV chunk into ``(channels, sample width, rate, frames)``.
-
-    Accepts complete uncompressed PCM WAVs, including streaming WAVs whose RIFF
-    and data sizes are ``0xFFFFFFFF``. Raises ``ValueError`` unless the payload
-    is complete, frame-aligned and within the accepted geometry window.
-    """
-
-    channels, width, rate, frames = _parse_pcm_wav(data)
-    if not 1 <= channels <= WAV_MAX_CHANNELS or width != WAV_SAMPLE_WIDTH:
-        raise ValueError("unsupported WAV geometry")
-    if not WAV_MIN_RATE <= rate <= WAV_MAX_RATE:
-        raise ValueError("unsupported WAV sample rate")
-    return channels, width, rate, frames
-
-
-def assemble_wav(parts: Sequence[tuple[int, int, int, bytes]]) -> bytes:
-    """Join PCM chunks under one new RIFF/WAVE header, preserving frame order."""
-
-    if not parts:
-        raise ValueError("no WAV chunks to assemble")
-    channels, width, rate = parts[0][0], parts[0][1], parts[0][2]
-    frames = bytearray()
-    for part_channels, part_width, part_rate, payload in parts:
-        if (part_channels, part_width, part_rate) != (channels, width, rate):
-            raise ValueError("mismatched WAV geometry between chunks")
-        frames += payload
-    if len(frames) > TTS_LIMIT:
-        raise ValueError("assembled WAV exceeds the response cap")
-    buffer = BytesIO()
-    with wave.open(buffer, "wb") as writer:
-        writer.setnchannels(channels)
-        writer.setsampwidth(width)
-        writer.setframerate(rate)
-        writer.writeframes(bytes(frames))
-    return buffer.getvalue()
+    if not 200 <= response.status_code < 300:
+        raise _status_error(response.status_code)
+    _reject_encoded(response)
+    return (await _read_bounded(response, SUCCESS_JSON_LIMIT)).decode("utf-8")
 
 
 class OpenAICompatibleProvider:
@@ -455,7 +243,7 @@ class OpenAICompatibleProvider:
             user_content = serialize_context(context)
 
             def build(repair: bool) -> dict[str, object]:
-                return _text_payload(
+                return text_payload(
                     profile,
                     EXTRACTION_SYSTEM_PROMPT,
                     user_content,
@@ -466,7 +254,7 @@ class OpenAICompatibleProvider:
                 )
 
             return await self._text_operation(
-                "llm", profile, build, _parse_extraction, TEXT_BUDGET
+                "llm", profile, build, parse_extraction, TEXT_BUDGET
             )
         finally:
             self._release()
@@ -478,7 +266,7 @@ class OpenAICompatibleProvider:
             user_content = serialize_context(context)
 
             def build(repair: bool) -> dict[str, object]:
-                return _text_payload(
+                return text_payload(
                     profile,
                     KNOWLEDGE_PROMPT,
                     user_content,
@@ -492,7 +280,7 @@ class OpenAICompatibleProvider:
                 "rag",
                 profile,
                 build,
-                lambda body: _parse_knowledge_answer(body, context),
+                lambda body: parse_knowledge_answer(body, context),
                 TEXT_BUDGET,
             )
         finally:
@@ -505,7 +293,7 @@ class OpenAICompatibleProvider:
             files = {"file": ("upload.wav", audio, "audio/wav")}
             data = {"model": profile.model, "response_format": "json"}
             return await self._audio_operation(
-                "stt", profile, files, data, _parse_transcription, STT_BUDGET
+                "stt", profile, files, data, parse_transcription, STT_BUDGET
             )
         finally:
             self._release()
@@ -525,34 +313,42 @@ class OpenAICompatibleProvider:
             ):
                 raise app_error("provider_configuration")
             deadline = self._clock() + TTS_BUDGET.total_deadline
+            client = self._clients[role]
             url = _join(profile.base_url, SPEECH_SUFFIX)
             if profile.audio_format == "mp3":
                 audio = await self._speech_request(
-                    self._clients[role], url, profile, chunks[0], deadline, TTS_LIMIT
+                    client, url, profile, chunks[0], deadline, TTS_LIMIT
                 )
                 return SynthesizedAudio(audio, "audio/mpeg")
-            raw_total = 0
-            parts: list[tuple[int, int, int, bytes]] = []
-            for chunk in chunks:
-                raw = await self._speech_request(
-                    self._clients[role],
-                    url,
-                    profile,
-                    chunk,
-                    deadline,
-                    TTS_LIMIT - raw_total,
-                )
-                raw_total += len(raw)
-                try:
-                    parts.append(decode_pcm_wav(raw))
-                except ValueError:
-                    raise app_error("invalid_provider_response") from None
-            try:
-                return SynthesizedAudio(assemble_wav(parts), "audio/wav")
-            except ValueError:
-                raise app_error("invalid_provider_response") from None
+            return await self._synthesize_wav(client, url, profile, chunks, deadline)
         finally:
             self._release()
+
+    async def _synthesize_wav(
+        self,
+        client: httpx.AsyncClient,
+        url: str,
+        profile: SpeechProfile,
+        chunks: list[str],
+        deadline: float,
+    ) -> SynthesizedAudio:
+        """One request per text chunk, joined under a single WAV header."""
+
+        raw_total = 0
+        parts: list[PcmChunk] = []
+        for chunk in chunks:
+            raw = await self._speech_request(
+                client, url, profile, chunk, deadline, TTS_LIMIT - raw_total
+            )
+            raw_total += len(raw)
+            try:
+                parts.append(decode_pcm_wav(raw))
+            except ValueError:
+                raise app_error("invalid_provider_response") from None
+        try:
+            return SynthesizedAudio(assemble_wav(parts), "audio/wav")
+        except ValueError:
+            raise app_error("invalid_provider_response") from None
 
     async def _speech_request(
         self,
@@ -583,9 +379,9 @@ class OpenAICompatibleProvider:
                     try:
                         _reject_encoded(response)
                         if _media_type(response) not in allowed:
-                            raise _InvalidContent
+                            raise InvalidContent
                         audio = await _read_bounded(response, limit)
-                    except _InvalidContent:
+                    except InvalidContent:
                         raise app_error("invalid_provider_response") from None
                     if not audio:
                         raise app_error("invalid_provider_response")
@@ -618,10 +414,7 @@ class OpenAICompatibleProvider:
 
         async def attempt(repair: bool) -> Parsed:
             async with client.stream("POST", url, json=build(repair)) as response:
-                if not 200 <= response.status_code < 300:
-                    raise _status_error(response.status_code)
-                _reject_encoded(response)
-                body = (await _read_bounded(response, SUCCESS_JSON_LIMIT)).decode("utf-8")
+                body = await _success_json_body(response)
             return parse(body)
 
         return await self._retry(budget, deadline, attempt, repair_on_invalid=True)
@@ -641,10 +434,7 @@ class OpenAICompatibleProvider:
 
         async def attempt(repair: bool) -> Parsed:
             async with client.stream("POST", url, files=files, data=data) as response:
-                if not 200 <= response.status_code < 300:
-                    raise _status_error(response.status_code)
-                _reject_encoded(response)
-                body = (await _read_bounded(response, SUCCESS_JSON_LIMIT)).decode("utf-8")
+                body = await _success_json_body(response)
             return parse(body)
 
         return await self._retry(budget, deadline, attempt, repair_on_invalid=False)
@@ -661,33 +451,30 @@ class OpenAICompatibleProvider:
 
         repair = False
         for attempt_number in range(1, budget.attempts + 1):
+            last = attempt_number == budget.attempts
             remaining = deadline - self._clock()
             if remaining <= 0:
                 raise app_error("provider_timeout")
             try:
                 async with asyncio.timeout(min(budget.attempt_timeout, remaining)):
                     return await attempt(repair)
-            except _InvalidContent:
-                if attempt_number == budget.attempts:
+            except InvalidContent:
+                if last:
                     raise app_error("invalid_provider_response") from None
                 repair = repair_on_invalid
             except UnicodeDecodeError:
-                if attempt_number == budget.attempts:
+                if last:
                     raise app_error("invalid_provider_response") from None
-            except TimeoutError:
-                if attempt_number == budget.attempts:
-                    raise app_error("provider_timeout") from None
-                await self._pause(deadline)
-            except httpx.TimeoutException:
-                if attempt_number == budget.attempts:
+            except (TimeoutError, httpx.TimeoutException):
+                if last:
                     raise app_error("provider_timeout") from None
                 await self._pause(deadline)
             except httpx.TransportError:
-                if attempt_number == budget.attempts:
+                if last:
                     raise app_error("provider_unavailable") from None
                 await self._pause(deadline)
             except AppError as error:
-                if error.code != "provider_unavailable" or attempt_number == budget.attempts:
+                if error.code != "provider_unavailable" or last:
                     raise
                 await self._pause(deadline)
         raise app_error("provider_timeout")
