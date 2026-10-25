@@ -8,8 +8,8 @@ import { App } from "../../../web/js/app.js";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const readJson = (relative) => JSON.parse(readFileSync(path.join(ROOT, relative), "utf8"));
 
-export const EN = readJson("backend/gateway/locales/en.json");
-export const ES = readJson("backend/gateway/locales/es.json");
+export const EN = readJson("gateway/locales/en.json");
+export const ES = readJson("gateway/locales/es.json");
 const PAGE = readFileSync(path.join(ROOT, "web/index.html"), "utf8");
 
 export const SESSION_ID = "11111111-1111-4111-8111-111111111111";
@@ -19,8 +19,7 @@ export const SECOND_SESSION_ID = "22222222-2222-4222-8222-222222222222";
 export function loadPage(doc = document) {
   const body = /<body>([\s\S]*)<\/body>/
     .exec(PAGE)[1]
-    .replace(/<script[^>]*src=[^>]*><\/script>/g, "")
-    .replace("__BOOTSTRAP_LOCALE__", JSON.stringify(EN));
+    .replace(/<script[^>]*src=[^>]*><\/script>/g, "");
   doc.body.innerHTML = body;
   doc.documentElement.lang = "en";
   return doc;
@@ -143,6 +142,15 @@ export function turnResponse(overrides = {}) {
   };
 }
 
+/** The locale endpoint, as the browser's fetch would reach it. */
+export function installLocaleFetch(win = window) {
+  const catalogues = { en: EN, es: ES };
+  win.fetch = jest.fn(async (url) => {
+    const language = /\/api\/locales\/(\w+)$/.exec(url)?.[1];
+    return language in catalogues ? ok(catalogues[language]) : new FakeResponse({}, { status: 404 });
+  });
+}
+
 /** Stand-ins for the media APIs jsdom does not implement. */
 export function installMediaStubs(win = window) {
   win.HTMLMediaElement.prototype.play = jest.fn(() => Promise.resolve());
@@ -158,6 +166,7 @@ export async function startApp({ http, storedId = null, newRequestId } = {}) {
   window.localStorage.clear();
   if (storedId) window.localStorage.setItem("northstar.session_id", storedId);
   installMediaStubs();
+  installLocaleFetch();
   let counter = 0;
   const app = new App({
     window,
@@ -179,7 +188,7 @@ export function buildApp({ http = new ScriptedHttp(), newRequestId } = {}) {
     http,
     newRequestId: newRequestId ?? (() => `00000000-0000-4000-8000-${String(++counter).padStart(12, "0")}`),
   });
-  app.i18n.init();
+  app.i18n.seed("en", EN);
   app.i18n.seed("es", ES);
   return app;
 }

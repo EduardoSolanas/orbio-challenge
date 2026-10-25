@@ -11,8 +11,8 @@ import json
 import httpx
 import pytest
 
-from backend.gateway.errors import AppError
-from backend.gateway.providers.client import REPAIR_LINE
+from gateway.errors import AppError
+from gateway.providers.client import REPAIR_LINE
 from tests.unit.gateway.providers.provider_support import (
     ChunkedStream,
     EXTRACTION_PAYLOAD,

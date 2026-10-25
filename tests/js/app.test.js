@@ -47,11 +47,11 @@ describe("starting", () => {
     expect(app.dom.startRecording.disabled).toBe(false);
   });
 
-  test("the page cannot be started without its bootstrap catalogue", () => {
+  test("the page cannot be started without its English catalogue", async () => {
     const app = new App({ window, http: new ScriptedHttp() });
-    document.getElementById("bootstrap-locale")?.remove();
+    window.fetch = jest.fn(async () => ({ ok: false, status: 503 }));
 
-    expect(() => app.start()).toThrow(/bootstrap locale/i);
+    await expect(app.start()).rejects.toThrow(/locale request failed: en/);
   });
 
   test("uses the browser's own request id when none is injected", () => {

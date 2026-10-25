@@ -98,18 +98,9 @@ export class I18n {
     return Object.freeze(table);
   }
 
-  /** Read the English catalogue the server embedded in the page. */
-  init() {
-    const element = this.document && this.document.getElementById("bootstrap-locale");
-    if (!element) throw new LocaleError("missing bootstrap locale catalog");
-    let parsed;
-    try {
-      parsed = JSON.parse(element.textContent || "");
-    } catch (_) {
-      throw new LocaleError("invalid bootstrap locale catalog");
-    }
-    this.seed(DEFAULT_LANGUAGE, parsed);
-    return DEFAULT_LANGUAGE;
+  /** Load the English catalogue the page starts in. */
+  async init() {
+    return this.load(DEFAULT_LANGUAGE);
   }
 
   async load(language) {

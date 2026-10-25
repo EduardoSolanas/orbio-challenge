@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import pytest
 
-from backend.gateway.providers.prompts import CAPABILITY
-from backend.gateway.schemas import KnowledgeAnswer
+from gateway.providers.prompts import CAPABILITY
+from gateway.schemas import KnowledgeAnswer
 from tests.integration.support.api import read_session
 from tests.integration.support.confirmation import (
     CHANGE_TEXT,

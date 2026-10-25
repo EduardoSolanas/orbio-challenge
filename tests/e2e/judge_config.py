@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from backend.gateway.config import REASONING_EFFORTS
+from gateway.config import REASONING_EFFORTS
 
 PROMPT_VERSION = "intent-judge-v2"
 

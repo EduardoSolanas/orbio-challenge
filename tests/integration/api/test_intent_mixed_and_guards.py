@@ -20,7 +20,7 @@ from uuid import uuid4
 
 import pytest
 
-from backend.gateway.providers.prompts import MISSING_CATEGORY, POLICY_QUESTION_SUFFIX, SOCIAL_ACKNOWLEDGMENT
+from gateway.providers.prompts import MISSING_CATEGORY, POLICY_QUESTION_SUFFIX, SOCIAL_ACKNOWLEDGMENT
 from tests.integration.support.api import make_extraction, read_session
 from tests.integration.support.confirmation import (
     assert_error,

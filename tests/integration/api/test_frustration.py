@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from backend.gateway.localization import text
+from gateway.localization import text
 from tests.integration.support.api import make_extraction, read_session
 from tests.integration.support.intake import start_session, turn_body
 

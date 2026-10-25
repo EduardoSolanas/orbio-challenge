@@ -31,7 +31,7 @@ from tests.support.fakes import (
 pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
 
 KNOWLEDGE = json.loads(
-    (Path(__file__).resolve().parents[2] / "backend" / "gateway" / "knowledge" / "northstar-faq.json").read_text(
+    (Path(__file__).resolve().parents[2] / "gateway" / "knowledge" / "northstar-faq.json").read_text(
         encoding="utf-8"
     )
 )

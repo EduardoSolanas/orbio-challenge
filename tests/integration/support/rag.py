@@ -5,12 +5,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from backend.gateway.schemas import KnowledgeAnswer
+from gateway.schemas import KnowledgeAnswer
 from tests.integration.support.api import make_extraction
 
 
 SEED = json.loads(
-    (Path(__file__).resolve().parents[3] / "backend" / "gateway" / "knowledge" / "northstar-faq.json").read_text(
+    (Path(__file__).resolve().parents[3] / "gateway" / "knowledge" / "northstar-faq.json").read_text(
         encoding="utf-8"
     )
 )

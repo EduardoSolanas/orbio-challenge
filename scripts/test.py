@@ -108,7 +108,7 @@ LAYER_INFO: dict[str, LayerInfo] = {
     ),
     "coverage": LayerInfo(
         summary="Unit and integration suites with branch coverage (gate 95%).",
-        proves="Line and branch coverage of backend/ by the offline suites.",
+        proves="Line and branch coverage of gateway/, backend_api/ and shared/ by the offline suites.",
         does_not_prove="Browser, Docker or real-provider paths; coverage is not correctness.",
         prerequisites="pytest-cov installed.",
         reports="reports/coverage.json, reports/coverage.xml, reports/junit/coverage.xml",
@@ -260,7 +260,9 @@ def build_commands(
                 passthrough,
                 junit="reports/junit/coverage.xml",
                 extra=[
-                    "--cov=backend",
+                    "--cov=gateway",
+                    "--cov=backend_api",
+                    "--cov=shared",
                     "--cov-branch",
                     "--cov-context=test",
                     "--cov-report=json:reports/coverage.json",

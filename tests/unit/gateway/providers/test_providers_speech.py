@@ -11,7 +11,7 @@ import json
 import httpx
 import pytest
 
-from backend.gateway.errors import AppError
+from gateway.errors import AppError
 from tests.unit.gateway.providers.provider_support import (
     ChunkedStream,
     SleepRecorder,

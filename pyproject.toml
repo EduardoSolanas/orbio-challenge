@@ -24,8 +24,8 @@ markers = [
 
 [tool.coverage.run]
 branch = true
-source = ["backend"]
-omit = ["backend/gateway/main.py", "backend/gateway/routes/endpoints.py", "backend/gateway/routes/http_support.py", "backend/gateway/routes/asgi_guards.py", "backend/gateway/schemas.py", "backend/gateway/providers/prompts.py", "backend/gateway/errors.py"]
+source = ["gateway", "backend_api", "shared"]
+omit = ["gateway/main.py", "gateway/routes/endpoints.py", "gateway/routes/http_support.py", "gateway/routes/asgi_guards.py", "gateway/schemas.py", "gateway/providers/prompts.py", "gateway/errors.py"]
 
 [tool.coverage.json]
 show_contexts = true
@@ -35,8 +35,8 @@ fail_under = 95
 show_missing = true
 
 [tool.mutmut]
-source_paths = ["backend/"]
-do_not_mutate = ["backend/gateway/__init__.py", "backend/gateway/routes/__init__.py", "backend/gateway/conversation/__init__.py", "backend/gateway/providers/__init__.py", "backend/gateway/knowledge/__init__.py", "backend/__init__.py", "backend/gateway/main.py", "backend/gateway/routes/endpoints.py", "backend/gateway/routes/http_support.py", "backend/gateway/routes/asgi_guards.py", "backend/gateway/schemas.py", "backend/gateway/providers/prompts.py", "backend/gateway/errors.py"]
+source_paths = ["gateway/", "backend_api/", "shared/"]
+do_not_mutate = ["gateway/__init__.py", "gateway/routes/__init__.py", "gateway/conversation/__init__.py", "gateway/providers/__init__.py", "gateway/knowledge/__init__.py", "backend_api/__init__.py", "shared/__init__.py", "gateway/main.py", "gateway/routes/endpoints.py", "gateway/routes/http_support.py", "gateway/routes/asgi_guards.py", "gateway/schemas.py", "gateway/providers/prompts.py", "gateway/errors.py"]
 pytest_add_cli_args_test_selection = ["tests/unit", "tests/integration"]
 also_copy = ["web/", "tests/", "scripts/", "examples/", "docs/", "README.md", "pyproject.toml", "compose.yaml"]
 mutate_only_covered_lines = false

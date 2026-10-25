@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from backend.gateway import localization
-from backend.gateway.localization import (
+from gateway import localization
+from gateway.localization import (
     CATALOG,
     DEFAULT_LANGUAGE,
     SUPPORTED_LANGUAGES,
@@ -14,7 +14,7 @@ from backend.gateway.localization import (
     field_label,
     text,
 )
-from backend.gateway.providers.prompts import (
+from gateway.providers.prompts import (
     ABSTENTION,
     CAPABILITY,
     CAPABILITY_REPLY,
@@ -37,8 +37,8 @@ from backend.gateway.providers.prompts import (
     REVIEW_SUFFIX,
     SOCIAL_ACKNOWLEDGMENT,
 )
-from backend.gateway.schemas import Slots
-from backend.gateway.conversation.validation import FIELD_ORDER
+from gateway.schemas import Slots
+from gateway.conversation.validation import FIELD_ORDER
 
 SLOTS = Slots(
     order_number="NS-000123",

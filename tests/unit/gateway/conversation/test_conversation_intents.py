@@ -6,8 +6,8 @@ from uuid import uuid4
 
 import pytest
 
-from backend.gateway.conversation.engine import ConversationEngine
-from backend.gateway.providers.prompts import (
+from gateway.conversation.engine import ConversationEngine
+from gateway.providers.prompts import (
     ABSTENTION,
     CAPABILITY,
     CAPABILITY_REPLY,
@@ -21,8 +21,8 @@ from backend.gateway.providers.prompts import (
     REJECT_PROMPT,
     SOCIAL_ACKNOWLEDGMENT,
 )
-from backend.gateway.schemas import KnowledgeAnswer
-from backend.gateway.storage import JsonSessionRepository
+from gateway.schemas import KnowledgeAnswer
+from gateway.storage import JsonSessionRepository
 from tests.support.unit_fakes import (
     FakeKnowledgeBase,
     FakeProvider,

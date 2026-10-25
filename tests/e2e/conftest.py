@@ -26,11 +26,14 @@ from uuid import uuid4
 import pytest
 import uvicorn
 from playwright.sync_api import Locator, Page, Response, expect
+from starlette.exceptions import HTTPException
+from starlette.responses import PlainTextResponse
+from starlette.staticfiles import StaticFiles
 
-from backend.gateway.config import Settings
-from backend.api.main import create_backend_api_app
-from backend.gateway.errors import app_error
-from backend.gateway.main import create_app
+from gateway.config import Settings
+from backend_api.main import create_backend_api_app
+from gateway.errors import app_error
+from gateway.main import create_app
 from tests.e2e.hooks import (  # noqa: F401  (pytest registers these hook functions)
     pytest_collection_finish,
     pytest_collectreport,
@@ -208,6 +211,30 @@ class Faults:
         return None
 
 
+WEB_DIR = Path(__file__).resolve().parents[2] / "web"
+
+
+class WebFront:
+    """Stands in for the nginx proxy: serves web/ and passes everything else on."""
+
+    def __init__(self, app: Any) -> None:
+        self.app = app
+        self.files = StaticFiles(directory=WEB_DIR)
+
+    async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> None:
+        path = scope.get("path", "")
+        if scope["type"] != "http" or not (path == "/" or path.startswith("/static/")):
+            await self.app(scope, receive, send)
+            return
+        name = "index.html" if path == "/" else path[len("/static/") :]
+        try:
+            response = await self.files.get_response(name, scope)
+        except HTTPException:
+            response = PlainTextResponse("Not Found", status_code=404)
+        response.headers["Cache-Control"] = "no-cache"
+        await response(scope, receive, send)
+
+
 class ObservedApp:
     """ASGI wrapper in front of the real app: ledger + one-shot pre-handler faults."""
 
@@ -358,7 +385,7 @@ class AppServer:
             settings=self.settings, provider=self.provider, knowledge_path=self.knowledge_path
         )
         config = uvicorn.Config(
-            ObservedApp(app, self.log, self.faults),
+            ObservedApp(WebFront(app), self.log, self.faults),
             log_level="warning",
             lifespan="on",
             access_log=False,

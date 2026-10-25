@@ -77,7 +77,7 @@ def turn_ok(status_code: int, payload: object) -> bool:
 
 
 def _settings(session_dir: Path) -> Any:
-    from backend.gateway.config import Settings
+    from gateway.config import Settings
 
     # Explicit test configuration, resolved by the real Settings validator.
     return Settings.from_env(
@@ -138,8 +138,8 @@ def main() -> int:
     try:
         import uvicorn
 
-        from backend.gateway.main import create_app
-        from backend.gateway.schemas import Extraction, Slots
+        from gateway.main import create_app
+        from gateway.schemas import Extraction, Slots
         from support.fakes import E2EProvider
     except Exception as exc:  # sanitized: class and missing module only
         missing = getattr(exc, "name", None)

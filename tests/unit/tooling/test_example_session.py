@@ -14,13 +14,13 @@ from pathlib import Path
 
 import pytest
 
-from backend.gateway.providers.prompts import GREETING, RECEIPT_TEMPLATE, build_review_reply, build_summary
-from backend.gateway.schemas import Session
+from gateway.providers.prompts import GREETING, RECEIPT_TEMPLATE, build_review_reply, build_summary
+from gateway.schemas import Session
 
 ROOT = Path(__file__).resolve().parents[3]
 EXAMPLE_PATH = ROOT / "examples" / "session.example.json"
 README_PATH = ROOT / "README.md"
-KB_PATH = ROOT / "backend" / "gateway" / "knowledge" / "northstar-faq.json"
+KB_PATH = ROOT / "gateway" / "knowledge" / "northstar-faq.json"
 
 REQUIRED_HEADINGS = [
     "Fictional scenario",

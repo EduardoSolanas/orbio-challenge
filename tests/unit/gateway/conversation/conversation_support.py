@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from backend.gateway.conversation.engine import ConversationEngine
-from backend.gateway.schemas import ConfirmRequest, TurnRequest
-from backend.gateway.storage import JsonSessionRepository
+from gateway.conversation.engine import ConversationEngine
+from gateway.schemas import ConfirmRequest, TurnRequest
+from gateway.storage import JsonSessionRepository
 from tests.support.unit_fakes import (
     FakeKnowledgeBase,
     FakeProvider,

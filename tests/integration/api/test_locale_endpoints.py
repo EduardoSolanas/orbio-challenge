@@ -1,25 +1,19 @@
-"""Locale API, startup validation and catalog-backed bootstrap."""
+"""Locale API and startup validation."""
 
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 
 import pytest
 
-from backend.gateway.errors import LOCALIZATION_INVALID_MESSAGE
-from backend.gateway.localization import LOCALES_DIR, load_locales
-from backend.gateway.main import create_app
+from gateway.errors import LOCALIZATION_INVALID_MESSAGE
+from gateway.localization import LOCALES_DIR, load_locales
+from gateway.main import create_app
 from tests.integration.support.api import (
     ScriptedProvider,
     build_settings,
     running_client,
-)
-
-
-BOOTSTRAP = re.compile(
-    r'<script type="application/json" id="bootstrap-locale">(.*?)</script>', re.DOTALL
 )
 
 
@@ -67,62 +61,6 @@ async def test_unknown_or_traversal_locale_paths_return_sanitized_404(client, pa
     assert response.json() == {"detail": "Not Found"}
     assert "passwd" not in response.text
     assert "en.json" not in response.text
-
-
-async def test_index_embeds_the_english_catalog_without_duplicating_literals(client):
-    response = await client.get("/")
-
-    assert response.status_code == 200
-    assert response.headers["cache-control"] == "no-cache"
-    html = response.text
-    assert "__BOOTSTRAP_LOCALE__" not in html
-    match = BOOTSTRAP.search(html)
-    assert match is not None
-    assert json.loads(match.group(1)) == shipped("en")
-    # Static labels are keyed, not hard-coded English duplicates.
-    assert ">Send<" not in html
-    assert ">New conversation<" not in html
-    assert 'data-i18n="actions.send"' in html
-
-
-async def test_index_escapes_json_that_could_close_the_script_element(tmp_path: Path):
-    english = {"greeting": "</script><b>&\u2028\u2029", "actions.send": "Send"}
-    spanish = {"greeting": "Hola", "actions.send": "Enviar"}
-    locales = write_locales(tmp_path / "locales", english, spanish)
-    app = create_app(
-        settings=build_settings(tmp_path / "sessions"),
-        provider=ScriptedProvider(),
-        locales_dir=locales,
-    )
-
-    async with running_client(app) as client:
-        response = await client.get("/")
-
-    html = response.text
-    assert "</script><b>" not in html
-    assert "\u2028" not in html and "\u2029" not in html
-    assert "\\u003c/script\\u003e\\u003cb\\u003e\\u0026" in html
-    match = BOOTSTRAP.search(html)
-    assert match is not None
-    assert json.loads(match.group(1)) == english
-
-
-@pytest.mark.parametrize(
-    "path,media_type",
-    [
-        ("/static/js/main.js", "javascript"),
-        ("/static/js/app.js", "javascript"),
-        ("/static/css/base.css", "css"),
-        ("/static/css/objects.css", "css"),
-        ("/static/css/skins.css", "css"),
-    ],
-)
-async def test_static_assets_revalidate_after_deployment(client, path, media_type):
-    response = await client.get(path)
-    assert response.status_code == 200
-    assert response.headers["cache-control"] == "no-cache"
-    # Browsers refuse a module script that is not served with a JavaScript type.
-    assert media_type in response.headers["content-type"]
 
 
 @pytest.mark.parametrize(
@@ -192,7 +130,7 @@ async def test_missing_dictionary_file_fails_startup(tmp_path: Path):
 
 async def test_shipped_dictionaries_cover_every_error_code(client):
     body = (await client.get("/api/locales/en")).json()
-    from backend.gateway.errors import ERRORS
+    from gateway.errors import ERRORS
 
     for code in ERRORS:
         assert body[f"errors.{code}"]

@@ -25,18 +25,18 @@ from evidence_revision import gated_input_revision
 
 # Dotted module paths from the repository root; each is also the prefix of its mutant ids.
 MODULES = (
-    "backend.gateway.conversation.engine",
-    "backend.gateway.conversation.intent",
-    "backend.gateway.conversation.plans",
-    "backend.gateway.conversation.replay",
-    "backend.gateway.conversation.validation",
-    "backend.gateway.storage",
-    "backend.gateway.providers.audio",
-    "backend.gateway.providers.client",
-    "backend.gateway.providers.wire",
-    "backend.gateway.providers.speech_wav",
-    "backend.gateway.config",
-    "backend.gateway.knowledge.retrieval",
+    "gateway.conversation.engine",
+    "gateway.conversation.intent",
+    "gateway.conversation.plans",
+    "gateway.conversation.replay",
+    "gateway.conversation.validation",
+    "gateway.storage",
+    "gateway.providers.audio",
+    "gateway.providers.client",
+    "gateway.providers.wire",
+    "gateway.providers.speech_wav",
+    "gateway.config",
+    "gateway.knowledge.retrieval",
 )
 CLASS_SEPARATOR = "\u01c1"
 ENTRY_FIELDS = {

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from backend.gateway.config import Settings
+from gateway.config import Settings
 
 
 SESSION_DIR = "/tmp/orbio-sessions"

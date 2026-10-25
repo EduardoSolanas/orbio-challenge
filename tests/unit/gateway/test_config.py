@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from backend.gateway.config import ServiceProfile, Settings, SpeechProfile, TextProfile
+from gateway.config import ServiceProfile, Settings, SpeechProfile, TextProfile
 from tests.unit.gateway.config_support import (
     SESSION_DIR,
     assert_configuration_invalid,

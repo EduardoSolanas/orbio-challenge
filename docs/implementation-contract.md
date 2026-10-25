@@ -20,25 +20,26 @@ All packages have `__init__.py`. Use absolute imports rooted at `app`. App path 
 
 | File | What to implement |
 |---|---|
-| `backend/gateway/main.py` | `create_app(settings=None, provider=None, knowledge_path=None)` app factory; `app = create_app()`; lifespan assembly, route handlers, middleware/error mapping; no state decisions |
-| `backend/api/main.py` | Private Backend API service: `create_backend_api_app(orders=None)`, module-level `app`; fixed fictional catalog, demo code, credential rule, `POST /internal/v1/order-verifications`, `GET /internal/v1/orders/{order_number}`, private `GET /health`; docs/OpenAPI disabled |
-| `backend/gateway/backend_client.py` | `BackendApiClient` gateway boundary over real `httpx.AsyncClient`; exact internal request shapes, 404→`None`, fixed error mapping for connect/timeout/malformed/status failures |
-| `backend/gateway/conversation/verification.py` | Gateway-only `VerificationRegistry`: pending order, failure count, 15-minute session/order grant; no catalog or demo code |
-| `backend/gateway/config.py` | Frozen settings dataclass populated from process environment, explicit validation; no implicit dotenv load or paid boot request |
-| `backend/gateway/schemas.py` | Strict Pydantic models below; UTC time and UUID serializers; no network/filesystem effects |
-| `backend/gateway/conversation/validation.py` | Pure normalization, field validation, and slot/clarification merge functions |
-| `backend/gateway/conversation/engine.py` | `ConversationEngine`; turn transaction, prompt context, state machine, review/confirmation |
-| `backend/gateway/providers/prompts.py` | Literal extraction instruction, few-shot examples, reply/summary templates |
-| `backend/gateway/providers/client.py` | `AIProvider` protocol and `OpenAICompatibleProvider`; HTTP request/response mapping, capacity gate, timeout/retry/error translation |
-| `backend/gateway/providers/audio.py` | Bounded PCM WAV validation and silent-recording detection; no session state |
-| `backend/gateway/storage.py` | `JsonSessionRepository`; lock context, JSON load, atomic save, path validation |
-| `backend/gateway/errors.py` | `AppError(code, message, status, retryable)`; all allowed error-code constants |
+| `gateway/main.py` | `create_app(settings=None, provider=None, knowledge_path=None)` app factory; `app = create_app()`; lifespan assembly, route handlers, middleware/error mapping; no state decisions |
+| `shared/models.py` | Wire models and error codes of the Backend API contract; imported by both the gateway and `backend_api/`, so neither imports the other |
+| `backend_api/main.py` | Private Backend API service: `create_backend_api_app(orders=None)`, module-level `app`; fixed fictional catalog, demo code, credential rule, `POST /internal/v1/order-verifications`, `GET /internal/v1/orders/{order_number}`, private `GET /health`; docs/OpenAPI disabled |
+| `gateway/backend_client.py` | `BackendApiClient` gateway boundary over real `httpx.AsyncClient`; exact internal request shapes, 404→`None`, fixed error mapping for connect/timeout/malformed/status failures |
+| `gateway/conversation/verification.py` | Gateway-only `VerificationRegistry`: pending order, failure count, 15-minute session/order grant; no catalog or demo code |
+| `gateway/config.py` | Frozen settings dataclass populated from process environment, explicit validation; no implicit dotenv load or paid boot request |
+| `gateway/schemas.py` | Strict Pydantic models below; UTC time and UUID serializers; no network/filesystem effects |
+| `gateway/conversation/validation.py` | Pure normalization, field validation, and slot/clarification merge functions |
+| `gateway/conversation/engine.py` | `ConversationEngine`; turn transaction, prompt context, state machine, review/confirmation |
+| `gateway/providers/prompts.py` | Literal extraction instruction, few-shot examples, reply/summary templates |
+| `gateway/providers/client.py` | `AIProvider` protocol and `OpenAICompatibleProvider`; HTTP request/response mapping, capacity gate, timeout/retry/error translation |
+| `gateway/providers/audio.py` | Bounded PCM WAV validation and silent-recording detection; no session state |
+| `gateway/storage.py` | `JsonSessionRepository`; lock context, JSON load, atomic save, path validation |
+| `gateway/errors.py` | `AppError(code, message, status, retryable)`; all allowed error-code constants |
 | `web/index.html` | Accessible page; loads `/static/js/main.js` (ES module) and the three stylesheets under `/static/css/` |
 | `web/js/*.js` | Browser session/turn/draft/audio handling as one class per concern; never inject customer content as HTML |
 | `web/css/*.css` | Responsive chat styling (OOCSS: `objects.css` structure, `skins.css` colour, `base.css` tokens); no framework dependency |
 | `tests/unit/`, `tests/integration/`, `tests/e2e/`, `tests/live/` | Suites defined by testing contract; fakes under `tests/support/` |
 | `requirements.txt`, `requirements-dev.txt`, `pyproject.toml` | Exact dependency baseline/test/mutation settings specified below and in testing contract |
-| `compose.yaml`, `docs/deployment/Dockerfile` | Two services: public `gateway` and private `backend-api` (no host port, internal health check); one image, separate commands |
+| `compose.yaml`, `web/Dockerfile`, `web/nginx.conf`, `gateway/Dockerfile`, `backend_api/Dockerfile` | Three services: `web` (nginx, the only host port; serves the page, forwards `/api/` and `/health`), `gateway` and private `backend-api` (no host port, internal health check); one Dockerfile each |
 | `.github/workflows/quality.yml` | Unit/integration, browser, mutation and image-build jobs; no live secrets for PRs |
 | `README.md` | Setup, exact commands, architecture, limitations, accessible demo video URL and test evidence links |
 
@@ -1066,12 +1067,12 @@ contacted. Do not merely add an empathy prefix and continue automated work.
 
 | Existing file | Mandatory responsibility |
 |---|---|
-| backend/gateway/schemas.py | Strict label enums, Extraction/Message/Session/context/wire fields and migration-compatible models |
-| backend/gateway/providers/prompts.py and existing localization resources | Classifier instructions/examples, fixed localized simulated-handoff and terminal-state messages |
-| backend/gateway/conversation/engine.py | Pure episode transition, handoff-priority routing, terminal state, one atomic turn transaction |
+| gateway/schemas.py | Strict label enums, Extraction/Message/Session/context/wire fields and migration-compatible models |
+| gateway/providers/prompts.py and existing localization resources | Classifier instructions/examples, fixed localized simulated-handoff and terminal-state messages |
+| gateway/conversation/engine.py | Pure episode transition, handoff-priority routing, terminal state, one atomic turn transaction |
 | web/js/ | Render the handoff transcript and lock the transferred chat while keeping New conversation available |
-| backend/gateway/providers/client.py | Generate the extended JSON Schema in all three output modes; existing parsing/repair/deadline rules |
-| backend/gateway/storage.py | Validate/migrate legacy data without rewriting on GET; preserve atomic writes |
+| gateway/providers/client.py | Generate the extended JSON Schema in all three output modes; existing parsing/repair/deadline rules |
+| gateway/storage.py | Validate/migrate legacy data without rewriting on GET; preserve atomic writes |
 | tests/support/fakes.py | Script exact classifications and record context; never implement alternate production routing |
 | tests/unit, tests/integration, existing E2E journeys and semantic judge suite | Behavioral tests below, including state preservation, no-tool/no-RAG, replay and terminal UI |
 | examples/session.example.json and README | Valid sanitized example and honest configured-model evaluation limits |
@@ -1289,7 +1290,7 @@ current supported language rather than fabricate a language switch.
 
 Localize all customer-facing prompts, acknowledgments, validation explanations,
 review field labels, summaries/receipts, capability/abstention/error text, buttons,
-form labels and accessible names. Use backend/gateway/locales/en.json and backend/gateway/locales/es.json
+form labels and accessible names. Use gateway/locales/en.json and gateway/locales/es.json
 as the single authored source shared by frontend and backend under I18N-01;
 no duplicate browser dictionaries, translation API or user-supplied HTML.
 Update document lang on session load/turn response. Initial language follows
@@ -1648,7 +1649,7 @@ Use the composer microphone/stop icons and inline assistant speaker controls; do
 
 ## I18N-01: Shared translation files for every static customer-facing string
 
-Files: backend/gateway/locales/en.json and backend/gateway/locales/es.json. These are the only authored
+Files: gateway/locales/en.json and gateway/locales/es.json. These are the only authored
 customer-facing dictionaries, shared by backend and browser. Flat stable semantic
 keys, UTF-8 nonempty string values, identical key sets and named-placeholder sets.
 Load/validate both once per lifespan; reject duplicate keys, malformed JSON,
@@ -1853,7 +1854,7 @@ code and `123456` as the wrong-code test input. The code is a constant in the
 Backend API, not a secret or environment variable. All record values are sample
 data, not real policy or customer information.
 
-`backend/api/main.py` is the private Backend API service (`create_backend_api_app`,
+`backend_api/main.py` is the private Backend API service (`create_backend_api_app`,
 module-level `app`). It is the only process that holds the fixture catalog, the
 demo code and the credential rule (`credentials_match`, `normalize_postcode`,
 `valid_verification_code`). It exposes exactly:
@@ -1875,7 +1876,7 @@ service; it is reachable only as `http://backend-api:8001` on the internal netwo
 The browser therefore cannot call the private API, and the gateway exposes no
 `/internal` route.
 
-`backend/gateway/backend_client.py` defines `BackendApiClient(base_url, timeout_seconds=5.0,
+`gateway/backend_client.py` defines `BackendApiClient(base_url, timeout_seconds=5.0,
 transport=None)` over a real `httpx.AsyncClient`. The gateway constructs one
 client per app instance from `BACKEND_API_BASE_URL` (required, absolute http(s) URL
 validated at startup) and `BACKEND_API_TIMEOUT_SECONDS` (default 5.0, maximum 60),
@@ -1887,7 +1888,7 @@ fixed safe application errors without leaking detail: connect errors and
 A 404 on lookup maps to `None` so the gateway can clear the grant and return the
 generic localized verification failure.
 
-`backend/gateway/conversation/verification.py` is gateway-only session state: pending order, failure
+`gateway/conversation/verification.py` is gateway-only session state: pending order, failure
 count and the 15-minute grant. No catalog, postcode or demo code exists in the
 gateway process. The browser-facing verification route remains
 `POST /api/sessions/{session_id}/order-verification` with strict JSON body

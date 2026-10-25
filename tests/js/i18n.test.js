@@ -12,11 +12,9 @@ import { EN, ES } from "./support/page.js";
 const placeholders = (template) =>
   [...template.matchAll(/\{([A-Za-z_][A-Za-z0-9_]*)\}/g)].map((m) => m[1]).sort();
 
-/** A page holding the given elements; ``bootstrap`` adds the server-rendered catalogue. */
-function pageWith(html, { bootstrap = true } = {}) {
-  document.body.innerHTML =
-    (bootstrap ? `<script type="application/json" id="bootstrap-locale">${JSON.stringify(EN)}</script>` : "") +
-    html;
+/** A page holding the given elements. */
+function pageWith(html) {
+  document.body.innerHTML = html;
 }
 
 let i18n;
@@ -64,10 +62,13 @@ describe("catalogue", () => {
 });
 
 describe("init and static labels", () => {
-  test("init seeds English from the server-rendered bootstrap catalogue", () => {
+  test("init loads English from the locale endpoint", async () => {
     pageWith('<h1 id="app-title" data-i18n="title"></h1>');
+    const fetchFn = jest.fn(async () => ({ ok: true, status: 200, json: async () => EN }));
+    i18n = new I18n({ document, fetchFn });
 
-    expect(i18n.init()).toBe("en");
+    expect(await i18n.init()).toBe("en");
+    expect(fetchFn.mock.calls[0][0]).toBe("/api/locales/en");
     expect(i18n.has("en")).toBe(true);
     expect(i18n.t("en", "actions.send")).toBe("Send");
     expect(i18n.applyStaticLabels("en")).toBe("en");
@@ -75,26 +76,18 @@ describe("init and static labels", () => {
     expect(document.getElementById("app-title").textContent).toBe(EN.title);
   });
 
-  test("init fails loudly without a bootstrap catalogue instead of showing raw keys", () => {
-    pageWith("", { bootstrap: false });
+  test("init fails loudly when English cannot be loaded instead of showing raw keys", async () => {
+    pageWith("");
+    const fetchFn = jest.fn(async () => ({ ok: false, status: 503 }));
+    i18n = new I18n({ document, fetchFn });
 
-    expect(() => i18n.init()).toThrow(/bootstrap locale/i);
+    await expect(i18n.init()).rejects.toThrow(LocaleError);
     expect(i18n.has("en")).toBe(false);
-  });
-
-  test("init fails loudly when the bootstrap catalogue is not JSON", () => {
-    document.body.innerHTML = '<script type="application/json" id="bootstrap-locale">not json</script>';
-
-    expect(() => i18n.init()).toThrow(/invalid bootstrap locale/i);
-  });
-
-  test("init without a document fails the same way", () => {
-    expect(() => new I18n({ document: null }).init()).toThrow(LocaleError);
   });
 
   test("applyStaticLabels localises placeholder attributes with the active locale", () => {
     pageWith('<input id="composer" data-i18n-placeholder="actions.send">');
-    i18n.init();
+    i18n.seed("en", EN);
 
     i18n.applyStaticLabels("en");
     expect(document.getElementById("composer").getAttribute("placeholder")).toBe("Send");
@@ -111,7 +104,7 @@ describe("init and static labels", () => {
       <textarea id="message" data-i18n-aria-label="ui.message_label"></textarea>
       <section id="review" data-i18n-aria-label="ui.review_region"></section>
       <p id="disclosure" data-i18n="speech.disclosure"></p>`);
-    i18n.init();
+    i18n.seed("en", EN);
     i18n.seed("es", ES);
 
     expect(i18n.applyStaticLabels("es")).toBe("es");
@@ -130,7 +123,7 @@ describe("init and static labels", () => {
 
   test("applyStaticLabels refuses an unloaded locale instead of mixing languages", () => {
     pageWith('<button id="send" data-i18n="actions.send"></button>');
-    i18n.init();
+    i18n.seed("en", EN);
 
     expect(() => i18n.applyStaticLabels("es")).toThrow(/locale not loaded/);
     expect(document.getElementById("send").textContent).toBe("");

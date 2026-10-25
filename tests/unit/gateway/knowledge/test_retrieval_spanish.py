@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from backend.gateway.knowledge.retrieval import load_knowledge, tokenize
+from gateway.knowledge.retrieval import load_knowledge, tokenize
 
-KB_PATH = "backend/gateway/knowledge/northstar-faq.json"
+KB_PATH = "gateway/knowledge/northstar-faq.json"
 
 
 @pytest.fixture(scope="module")

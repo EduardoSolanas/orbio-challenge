@@ -8,7 +8,7 @@ from uuid import UUID
 import pytest
 from playwright.sync_api import expect
 
-from backend.gateway.localization import text
+from gateway.localization import text
 from tests.e2e.conftest import body_of, response_of, wait_until
 from tests.support.fakes import (
     ASK_CATEGORY,

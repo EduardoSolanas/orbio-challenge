@@ -24,10 +24,10 @@ from uuid import uuid4
 
 import pytest
 
-from backend.gateway.conversation.engine import RECENT_MESSAGE_LIMIT
-from backend.gateway.main import create_app
-from backend.gateway.providers.prompts import ABSTENTION, EXTRACTION_SYSTEM_PROMPT, KNOWLEDGE_PROMPT
-from backend.gateway.providers.client import REPAIR_LINE
+from gateway.conversation.engine import RECENT_MESSAGE_LIMIT
+from gateway.main import create_app
+from gateway.providers.prompts import ABSTENTION, EXTRACTION_SYSTEM_PROMPT, KNOWLEDGE_PROMPT
+from gateway.providers.client import REPAIR_LINE
 from tests.integration.support.api import running_client
 from tests.integration.support.provider_http import (
     ABORTED,
@@ -43,7 +43,7 @@ from tests.integration.support.provider_http import (
 
 
 KB = json.loads(
-    (Path(__file__).resolve().parents[3] / "backend" / "gateway" / "knowledge" / "northstar-faq.json").read_text(
+    (Path(__file__).resolve().parents[3] / "gateway" / "knowledge" / "northstar-faq.json").read_text(
         encoding="utf-8"
     )
 )
@@ -334,7 +334,7 @@ async def test_shared_deadline_cuts_generation_without_detached_work(
 ):
     # The engine owns the shared 25 s text-turn deadline. Shorten it for a cheap
     # wall-clock test; the extraction and answer both still cross real HTTP.
-    import backend.gateway.conversation.engine as conversation
+    import gateway.conversation.engine as conversation
 
     monkeypatch.setattr(conversation, "TEXT_TURN_DEADLINE_SECONDS", 1.0)
     settings = build_settings(session_dir, server)

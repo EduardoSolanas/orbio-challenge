@@ -67,8 +67,8 @@ export class App {
     });
   }
 
-  start() {
-    this.i18n.init();
+  async start() {
+    await this.i18n.init();
     this.i18n.applyStaticLabels(this.state.language);
     this.bindEvents();
     this.view.updateControls();

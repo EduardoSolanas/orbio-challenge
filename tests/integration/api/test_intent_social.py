@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import pytest
 
-from backend.gateway.providers.prompts import (
+from gateway.providers.prompts import (
     ABSTENTION,
     GRATITUDE_ACKNOWLEDGMENT,
     INVALID_ORDER,

@@ -19,7 +19,9 @@ from pathlib import Path
 
 GATED_INPUTS = (
     "web",
-    "backend",
+    "gateway",
+    "backend_api",
+    "shared",
     "tests",
     "scripts",
     "pyproject.toml",

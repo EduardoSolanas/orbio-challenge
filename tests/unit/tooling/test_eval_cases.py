@@ -9,12 +9,12 @@ from typing import get_args
 
 import pytest
 
-from backend.gateway.knowledge.retrieval import load_knowledge
-from backend.gateway.schemas import Intent
+from gateway.knowledge.retrieval import load_knowledge
+from gateway.schemas import Intent
 
 ROOT = Path(__file__).resolve().parents[3]
 CASES = json.loads((ROOT / "tests" / "eval" / "utterances.json").read_text("utf-8"))
-RECORD_IDS = {r.id for r in load_knowledge(ROOT / "backend" / "gateway" / "knowledge" / "northstar-faq.json").records}
+RECORD_IDS = {r.id for r in load_knowledge(ROOT / "gateway" / "knowledge" / "northstar-faq.json").records}
 # Context-free intents only: confirm, reject and correction need an open review.
 EVALUATED = set(get_args(Intent)) - {"confirm", "reject", "correction"}
 

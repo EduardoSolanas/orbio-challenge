@@ -1,10 +1,28 @@
 # Run from the repository root: docker compose up --build -d
+# Three containers: `web` (nginx: serves the page, forwards the API), `gateway`
+# (the chat service) and `backend-api` (private account and booking service).
 name: northstar-demo
 services:
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    depends_on:
+      gateway:
+        condition: service_healthy
+    ports:
+      - "${APP_PUBLISH_HOST}:${APP_PUBLISH_PORT}:8080"
+    init: true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
   gateway:
     build:
       context: .
-      dockerfile: docs/deployment/Dockerfile
+      dockerfile: gateway/Dockerfile
     extra_hosts:
       - "${MODEL_HOST_ALIAS}:${MODEL_HOST_GATEWAY}"
     env_file:
@@ -15,27 +33,15 @@ services:
     depends_on:
       backend-api:
         condition: service_healthy
-    command:
-      - python
-      - -m
-      - uvicorn
-      - backend.gateway.main:app
-      - --host
-      - "${APP_BIND_HOST}"
-      - --port
-      - "${APP_PORT}"
-      - --workers
-      - "1"
-      - --timeout-graceful-shutdown
-      - "40"
-    ports:
-      - "${APP_PUBLISH_HOST}:${APP_PUBLISH_PORT}:${APP_PORT}"
+    # Internal network only: the browser reaches it through `web`.
+    expose:
+      - "8000"
     volumes:
       - sessions:/data
     init: true
     stop_grace_period: 45s
     healthcheck:
-      test: ["CMD", "python", "-c", "import os, urllib.request; urllib.request.urlopen(os.environ['APP_HEALTH_URL'], timeout=2).close()"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).close()"]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -43,18 +49,7 @@ services:
   backend-api:
     build:
       context: .
-      dockerfile: docs/deployment/Dockerfile
-    command:
-      - python
-      - -m
-      - uvicorn
-      - backend.api.main:app
-      - --host
-      - "0.0.0.0"
-      - --port
-      - "8001"
-      - --workers
-      - "1"
+      dockerfile: backend_api/Dockerfile
     environment:
       BACKEND_DATA_PATH: /data/backend/bookings.json
     volumes:

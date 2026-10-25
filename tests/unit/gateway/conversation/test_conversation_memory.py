@@ -12,19 +12,19 @@ from uuid import uuid4
 
 import pytest
 
-from backend.gateway.conversation.engine import (
+from gateway.conversation.engine import (
     RECENT_MESSAGE_LIMIT,
     ConversationEngine,
     build_extraction_context,
 )
-from backend.gateway.errors import AppError, app_error
-from backend.gateway.schemas import (
+from gateway.errors import AppError, app_error
+from gateway.schemas import (
     Clarification,
     KnowledgeAnswer,
     RecentMessage,
     TurnRequest,
 )
-from backend.gateway.storage import JsonSessionRepository
+from gateway.storage import JsonSessionRepository
 from tests.support.unit_fakes import (
     FakeKnowledgeBase,
     FakeProvider,

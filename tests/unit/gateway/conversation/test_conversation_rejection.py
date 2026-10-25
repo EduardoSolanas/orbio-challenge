@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from backend.gateway.providers.prompts import CAPABILITY
+from gateway.providers.prompts import CAPABILITY
 from tests.support.unit_fakes import make_extraction
 from tests.unit.gateway.conversation.conversation_support import (
     FULL_EXTRACTION,

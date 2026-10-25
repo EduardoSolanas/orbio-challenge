@@ -2,7 +2,7 @@
 
 import pytest
 
-from backend.gateway.config import Settings
+from gateway.config import Settings
 from tests.unit.gateway.config_support import (
     assert_configuration_invalid,
     complete_rag_environ,

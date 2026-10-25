@@ -32,11 +32,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from backend.gateway.config import Settings
-from backend.gateway.errors import AppError
-from backend.gateway.providers.prompts import EMOTION_EVALUATION_CASES
-from backend.gateway.providers.client import OpenAICompatibleProvider
-from backend.gateway.schemas import ExtractionContext, RecentMessage, Slots
+from gateway.config import Settings
+from gateway.errors import AppError
+from gateway.providers.prompts import EMOTION_EVALUATION_CASES
+from gateway.providers.client import OpenAICompatibleProvider
+from gateway.schemas import ExtractionContext, RecentMessage, Slots
 
 DEFAULT_REPORT = REPO_ROOT / "reports" / "emotion-evaluation.json"
 

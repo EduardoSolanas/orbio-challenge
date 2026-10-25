@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from backend.gateway.providers.prompts import (
+from gateway.providers.prompts import (
     ABSTENTION,
     AMBIGUOUS_TEMPLATE,
     CAPABILITY,
@@ -37,7 +37,7 @@ from backend.gateway.providers.prompts import (
     SYSTEM_INSTRUCTIONS,
     serialize_context,
 )
-from backend.gateway.schemas import (
+from gateway.schemas import (
     Clarification,
     ExtractionContext,
     KnowledgeContext,

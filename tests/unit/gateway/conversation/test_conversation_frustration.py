@@ -5,11 +5,11 @@ from uuid import uuid4
 
 import pytest
 
-from backend.gateway.conversation.engine import ConversationEngine, transition_frustration
-from backend.gateway.errors import AppError, app_error
-from backend.gateway.localization import text
-from backend.gateway.schemas import TurnRequest
-from backend.gateway.storage import JsonSessionRepository
+from gateway.conversation.engine import ConversationEngine, transition_frustration
+from gateway.errors import AppError, app_error
+from gateway.localization import text
+from gateway.schemas import TurnRequest
+from gateway.storage import JsonSessionRepository
 from tests.support.unit_fakes import FakeKnowledgeBase, FakeProvider, make_extraction, make_session, make_slots
 
 
@@ -150,7 +150,7 @@ async def test_extraction_failure_does_not_commit_a_handoff(tmp_path):
 
 @pytest.mark.asyncio
 async def test_atomic_save_failure_rolls_back_handoff_state(tmp_path, monkeypatch):
-    import backend.gateway.storage as storage
+    import gateway.storage as storage
 
     provider = FakeProvider([("extract", make_extraction(sentiment="negative", frustration="present"))])
     repository = JsonSessionRepository(tmp_path)

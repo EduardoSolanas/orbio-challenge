@@ -20,8 +20,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-from backend.gateway.config import Settings
-from backend.gateway.providers.client import Budget, OpenAICompatibleProvider
+from gateway.config import Settings
+from gateway.providers.client import Budget, OpenAICompatibleProvider
 
 CHAT_PATH = "/v1/chat/completions"
 SPEECH_PATH = "/v1/audio/speech"
@@ -326,7 +326,7 @@ def shorten_text_budget(monkeypatch, *, attempt_timeout: float, total_deadline: 
     the provider is constructed. Retry/repair/validation logic is unchanged.
     """
 
-    import backend.gateway.providers.client as providers
+    import gateway.providers.client as providers
 
     budget = Budget(2, attempt_timeout, total_deadline)
     monkeypatch.setattr(providers, "TEXT_BUDGET", budget)

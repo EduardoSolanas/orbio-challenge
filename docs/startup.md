@@ -6,15 +6,15 @@ Read [implementation-contract.md](implementation-contract.md) for exact wiring/m
 
 Model-service configuration is now independent by role: [provider-compatibility.md](provider-compatibility.md). Extraction, RAG answers, STT and TTS may use separate OpenAI-compatible servers. Hosted OpenAI is optional, no fixed model allowlist or universal TTS date cutoff applies, and local auth=none services need no OpenAI credential.
 
-RAG is mandatory: [rag-contract.md](rag-contract.md). The four-record FAQ ships inside backend/gateway/knowledge and is loaded/validated at startup; a missing or invalid KB prevents readiness. Lexical retrieval adds no embedding API, vector service or container. The configured RAG text model generates grounded policy answers with citations.
+RAG is mandatory: [rag-contract.md](rag-contract.md). The four-record FAQ ships inside gateway/knowledge and is loaded/validated at startup; a missing or invalid KB prevents readiness. Lexical retrieval adds no embedding API, vector service or container. The configured RAG text model generates grounded policy answers with citations.
 
 ## Recommended runtime
 
-Use Docker Compose with **two services**. `gateway` is the public chat gateway: one Uvicorn worker, FastAPI serving the static browser UI and JSON/audio endpoints from the same origin. `backend-api` is a private FastAPI service that owns the fictional demo account fixture, the demo verification code and the credential rule; it is reachable only on the internal Compose network, publishes no host port, and the gateway calls it through `app.backend_client.BackendApiClient` over HTTP. FastAPI in the gateway calls independently configured model services over local HTTP or remote HTTPS for extraction, RAG, STT and TTS. Those are logical capabilities, not local containers. A named Docker volume stores JSON sessions at `/data/sessions`.
+Use Docker Compose with **three services**, each built from its own Dockerfile. `web` is an nginx container and the only service with a host port: it serves the static browser UI and forwards `/api/` and `/health` to the gateway, so the browser sees one origin. `gateway` is the chat gateway: one Uvicorn worker, FastAPI serving the JSON/audio endpoints on the internal network. `backend-api` is a private FastAPI service that owns the fictional demo account fixture, the demo verification code and the credential rule; it is reachable only on the internal Compose network, publishes no host port, and the gateway calls it through `gateway.backend_client.BackendApiClient` over HTTP. FastAPI in the gateway calls independently configured model services over local HTTP or remote HTTPS for extraction, RAG, STT and TTS. Those are logical capabilities, not local containers. A named Docker volume stores JSON sessions at `/data/sessions`.
 
-The gateway starts only after `backend-api` reports healthy (`depends_on: condition: service_healthy`). The Backend API `/health` endpoint is private: it confirms the service is up, is not exposed to the host or browser, and makes no model or catalog write. Gateway `/health` checks writable session storage and the loaded knowledge base; verification and lookup failures are reported at request time as fixed safe errors (`backend_api_unavailable`, `backend_api_timeout`, `invalid_backend_api_response`), never as transport detail.
+The gateway starts only after `backend-api` reports healthy, and `web` only after the gateway does (`depends_on: condition: service_healthy`). The Backend API `/health` endpoint is private: it confirms the service is up, is not exposed to the host or browser, and makes no model or catalog write. Gateway `/health` checks writable session storage and the loaded knowledge base; verification and lookup failures are reported at request time as fixed safe errors (`backend_api_unavailable`, `backend_api_timeout`, `invalid_backend_api_response`), never as transport detail.
 
-No database, Redis, reverse proxy, GPU, Node runtime, or ffmpeg is required for the core demo. Standard-library `wave` validates the supported PCM WAV uploads. A verifier supervises build artifacts; it is not a running application component.
+No database, Redis, GPU, Node runtime, or ffmpeg is required for the core demo. Standard-library `wave` validates the supported PCM WAV uploads. A verifier supervises build artifacts; it is not a running application component.
 
 ## Prerequisites
 
@@ -22,7 +22,7 @@ No database, Redis, reverse proxy, GPU, Node runtime, or ffmpeg is required for 
 - Internet access for image/package downloads and provider API calls.
 - Running compatible model servers for all required roles, with valid model/voice IDs and role-specific credentials only where authentication is enabled. Hosted services may additionally require account access/billing.
 - A free local port 8000, browser, and short fictional PCM WAV recording for the voice smoke test.
-- Application source and pinned dependencies from this checkout; build context must include `backend/`, `web/` and `requirements.txt`.
+- Application source and pinned dependencies from this checkout; build context (the repository root) must include `gateway/`, `backend_api/`, `shared/`, `web/` and `requirements.txt`.
 
 Python runtime dependencies (pins are in requirements.txt): `fastapi`, `uvicorn`, `pydantic`, `python-multipart` for uploads, and httpx for generic compatible-service transport. All pinned development dependencies in testing-contract.md are required, including pytest-asyncio, pytest-playwright, Playwright and Linux/WSL mutmut. Pin versions tested together during implementation; Docker base image should be pinned to a tested digest before reproducible delivery.
 

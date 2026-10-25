@@ -10,16 +10,16 @@ from uuid import uuid4
 
 import pytest
 
-from backend.gateway.conversation.engine import ConversationEngine
-from backend.gateway.errors import AppError
-from backend.gateway.localization import build_review_reply, build_summary, render, text
-from backend.gateway.schemas import (
+from gateway.conversation.engine import ConversationEngine
+from gateway.errors import AppError
+from gateway.localization import build_review_reply, build_summary, render, text
+from gateway.schemas import (
     Citation,
     ConfirmRequest,
     KnowledgeAnswer,
     TurnRequest,
 )
-from backend.gateway.storage import JsonSessionRepository
+from gateway.storage import JsonSessionRepository
 from tests.support.unit_fakes import (
     FakeKnowledgeBase,
     FakeProvider,

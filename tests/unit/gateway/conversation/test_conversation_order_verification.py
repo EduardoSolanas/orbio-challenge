@@ -13,11 +13,11 @@ from uuid import uuid4
 import httpx
 import pytest
 
-from backend.gateway.conversation.engine import ConversationEngine
-from backend.gateway.backend_client import BackendApiClient
-from backend.gateway.schemas import OrderVerificationRequest
-from backend.gateway.storage import JsonSessionRepository
-from backend.gateway.conversation.verification import VerificationRegistry
+from gateway.conversation.engine import ConversationEngine
+from gateway.backend_client import BackendApiClient
+from gateway.schemas import OrderVerificationRequest
+from gateway.storage import JsonSessionRepository
+from gateway.conversation.verification import VerificationRegistry
 from tests.support.unit_fakes import (
     FakeKnowledgeBase,
     FakeProvider,

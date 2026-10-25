@@ -16,9 +16,9 @@ from uuid import UUID
 
 from httpx import ASGITransport, AsyncClient
 
-from backend.gateway.config import Settings
-from backend.gateway.providers.client import SynthesizedAudio
-from backend.gateway.schemas import Extraction, KnowledgeAnswer, Slots, ToolRequest
+from gateway.config import Settings
+from gateway.providers.client import SynthesizedAudio
+from gateway.schemas import Extraction, KnowledgeAnswer, Slots, ToolRequest
 
 NO_SLOTS: dict[str, str | None] = {
     "order_number": None,

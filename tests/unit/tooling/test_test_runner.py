@@ -211,7 +211,7 @@ def test_coverage_runs_both_offline_suites_with_reports():
     command = recorder.calls[0]
     joined = " ".join(command)
     assert "tests/unit" in command and "tests/integration" in command
-    assert "--cov=backend" in command
+    assert "--cov=gateway" in command and "--cov=backend_api" in command and "--cov=shared" in command
     assert "reports/coverage.json" in joined
     assert "reports/coverage.xml" in joined
 
@@ -251,7 +251,7 @@ def test_all_completes_every_offline_layer_when_green():
     assert "tests/unit" in targets[0]
     assert "tests/integration" in targets[1]
     assert "browser_e2e" in targets[2]
-    assert "--cov=backend" in targets[3]
+    assert "--cov=gateway" in targets[3] and "--cov=backend_api" in targets[3]
 
 
 # --------------------------------------------------------------------------- #

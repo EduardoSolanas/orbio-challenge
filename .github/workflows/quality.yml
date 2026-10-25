@@ -37,7 +37,7 @@ jobs:
       - name: Unit and integration coverage
         run: |
           python -m pytest tests/unit tests/integration \
-            --cov=backend --cov-branch --cov-context=test \
+            --cov=gateway --cov=backend_api --cov=shared --cov-branch --cov-context=test \
             --cov-report=json:reports/coverage.json \
             --cov-report=term-missing \
             --cov-report=xml:reports/coverage.xml \
@@ -226,8 +226,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build runtime image without secrets
-        run: docker build -f docs/deployment/Dockerfile -t northstar-test .
+      - name: Build the three images without secrets
+        run: |
+          docker build -f gateway/Dockerfile -t northstar-test .
+          docker build -f backend_api/Dockerfile -t northstar-backend-api-test .
+          docker build -f web/Dockerfile -t northstar-web-test .
 
       - name: Boot image as non-root and run health/session smoke
         run: |

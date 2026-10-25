@@ -16,10 +16,10 @@ from uuid import uuid4
 import pytest
 from httpx import AsyncClient
 
-from backend.gateway.config import Settings
-from backend.gateway.localization import build_review_reply, build_summary, text
-from backend.gateway.main import create_app
-from backend.gateway.schemas import Slots
+from gateway.config import Settings
+from gateway.localization import build_review_reply, build_summary, text
+from gateway.main import create_app
+from gateway.schemas import Slots
 from tests.integration.support.api import (
     ScriptedProvider,
     build_settings,
@@ -61,22 +61,22 @@ def wav_bytes() -> bytes:
 
 
 def spanish_summary_of_english_facts() -> str:
-    from backend.gateway.localization import build_summary as build
-    from backend.gateway.schemas import Slots
+    from gateway.localization import build_summary as build
+    from gateway.schemas import Slots
 
     return build(Slots(**FULL_SLOTS), "es")
 
 
 def english_review() -> str:
-    from backend.gateway.localization import build_review_reply as build
-    from backend.gateway.schemas import Slots
+    from gateway.localization import build_review_reply as build
+    from gateway.schemas import Slots
 
     return build(Slots(**FULL_SLOTS), "en")
 
 
 def spanish_review(slots: dict | None = None) -> str:
-    from backend.gateway.localization import build_review_reply as build
-    from backend.gateway.schemas import Slots
+    from gateway.localization import build_review_reply as build
+    from gateway.schemas import Slots
 
     return build(Slots(**(slots or SPANISH_SLOTS)), "es")
 
@@ -345,7 +345,7 @@ async def test_spanish_faq_answer_keeps_english_source_citations(client, provide
     provider.script_extraction(
         make_extraction(intent="question", has_question=True, detected_language="es")
     )
-    from backend.gateway.schemas import KnowledgeAnswer
+    from gateway.schemas import KnowledgeAnswer
 
     provider.script_answer(
         KnowledgeAnswer(

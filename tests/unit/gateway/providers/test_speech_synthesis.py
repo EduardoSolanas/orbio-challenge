@@ -18,9 +18,9 @@ from io import BytesIO
 import httpx
 import pytest
 
-from backend.gateway.config import ServiceProfile, SpeechProfile, TextProfile
-from backend.gateway.errors import AppError
-from backend.gateway.providers.client import (
+from gateway.config import ServiceProfile, SpeechProfile, TextProfile
+from gateway.errors import AppError
+from gateway.providers.client import (
     SynthesizedAudio,
     assemble_wav,
     decode_pcm_wav,
