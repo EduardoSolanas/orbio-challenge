@@ -55,6 +55,7 @@ def make_extraction(
     requested_language: str | None = None,
     sentiment: str = "neutral",
     frustration: str = "none",
+    safety_concern: bool = False,
 ) -> Extraction:
     return Extraction(
         intent=intent,
@@ -66,6 +67,7 @@ def make_extraction(
         requested_language=requested_language,
         sentiment=sentiment,
         frustration=frustration,
+        safety_concern=safety_concern,
     )
 
 

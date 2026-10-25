@@ -39,6 +39,7 @@ def make_extraction(
     requested_language: str | None = None,
     sentiment: str = "neutral",
     frustration: str = "none",
+    safety_concern: bool = False,
     tool_request: ToolRequest | None = None,
 ) -> Extraction:
     """Build a strict extraction object for scripting the fake provider."""
@@ -53,6 +54,7 @@ def make_extraction(
         requested_language=requested_language,
         sentiment=sentiment,
         frustration=frustration,
+        safety_concern=safety_concern,
         tool_request=tool_request,
     )
 

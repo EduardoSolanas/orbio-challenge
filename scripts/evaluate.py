@@ -34,6 +34,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from gateway.config import Settings  # noqa: E402
+from gateway.conversation.safety import rule_language  # noqa: E402
 from gateway.main import DEFAULT_KNOWLEDGE_PATH, _build_provider  # noqa: E402
 from gateway.knowledge.retrieval import load_knowledge  # noqa: E402
 from gateway.schemas import ExtractionContext, Slots  # noqa: E402
@@ -89,6 +90,43 @@ async def evaluate_intents(provider, cases: list[dict]) -> dict:
     for miss in misses:
         print(f"  miss: {miss['text']!r} expected {miss['expected']}, got {miss['got']}")
     return {"correct": correct, "total": count, "misses": misses}
+
+
+async def evaluate_safety(provider, cases: list[dict]) -> dict:
+    """Recall and precision of the gas-safety triage: the rule, the model's flag, both."""
+
+    rows = []
+    for case in cases:
+        rule = rule_language(case["text"]) is not None
+        try:
+            model = (await provider.extract(context_for(case["text"]))).safety_concern
+        except Exception:  # noqa: BLE001 - one bad call must not stop the run
+            model = False
+        rows.append((case, rule, model))
+    layers = {
+        "rule": lambda rule, model: rule,
+        "model flag": lambda rule, model: model,
+        "rule or model": lambda rule, model: rule or model,
+    }
+    report = {}
+    print("\nSafety triage (recall matters most):")
+    for name, fires in layers.items():
+        caught = sum(1 for case, rule, model in rows if case["concern"] and fires(rule, model))
+        alarms = sum(1 for case, rule, model in rows if not case["concern"] and fires(rule, model))
+        positives = sum(1 for case, _, _ in rows if case["concern"])
+        negatives = len(rows) - positives
+        print(f"  {name:14} caught {caught}/{positives}, false alarms {alarms}/{negatives}")
+        report[name] = {"caught": caught, "positives": positives, "false_alarms": alarms, "negatives": negatives}
+    combined = layers["rule or model"]
+    misses = [
+        {"text": c["text"], "expected": c["concern"], "rule": r, "model": m}
+        for c, r, m in rows
+        if combined(r, m) != c["concern"]
+    ]
+    for miss in misses:
+        print(f"  miss: {miss['text']!r} expected {miss['expected']}, rule={miss['rule']} model={miss['model']}")
+    report["misses"] = misses
+    return report
 
 
 async def evaluate_frustration(provider, cases: list[dict]) -> dict:
@@ -173,6 +211,8 @@ async def main(mode: str, cases_path: Path) -> None:
     try:
         if mode in ("intents", "all"):
             report["intents"] = await evaluate_intents(provider, cases["intents"])
+        if mode in ("safety", "all"):
+            report["safety"] = await evaluate_safety(provider, cases["safety"])
         if mode in ("frustration", "all"):
             report["frustration"] = await evaluate_frustration(provider, cases["frustration"])
         if mode in ("retrieval", "all"):
@@ -192,7 +232,7 @@ async def main(mode: str, cases_path: Path) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("mode", nargs="?", choices=("intents", "frustration", "retrieval", "all"), default="all")
+    parser.add_argument("mode", nargs="?", choices=("intents", "frustration", "safety", "retrieval", "all"), default="all")
     parser.add_argument("--cases", type=Path, default=DEFAULT_CASES)
     arguments = parser.parse_args()
     asyncio.run(main(arguments.mode, arguments.cases))

@@ -18,6 +18,12 @@ from uuid import UUID, uuid4
 from shared.models import OrderRecord
 from gateway.backend_client import BackendApiClient
 from gateway.errors import AppError, app_error
+from gateway.conversation.safety import (
+    SAFETY_QUERY,
+    as_safety_question,
+    rule_extraction,
+    rule_language,
+)
 from gateway.conversation.intent import (
     apply_transitions,
     current_review_valid,
@@ -51,6 +57,7 @@ from gateway.schemas import (
     Extraction,
     ExtractionContext,
     Frustration,
+    KnowledgeAnswer,
     KnowledgeContext,
     KnowledgeRecord,
     Language,
@@ -361,16 +368,25 @@ class ConversationEngine:
     ) -> tuple[Extraction, MergeOutcome, TurnPlan]:
         """Extract, merge and choose the reply for one text turn."""
 
-        extraction = await self.provider.extract(
-            build_extraction_context(
-                session,
-                command.text,
-                verified_order_number=self.verification.grant(session.session_id),
+        # Safety triage comes first. The rule needs no model call, so a gas report is
+        # answered even when the model is slow or down; the model's own flag covers
+        # wording the rule cannot know.
+        caught = rule_language(command.text)
+        if caught is not None:
+            extraction = rule_extraction(caught)
+        else:
+            extraction = await self.provider.extract(
+                build_extraction_context(
+                    session,
+                    command.text,
+                    verified_order_number=self.verification.grant(session.session_id),
+                )
             )
-        )
+            if extraction.safety_concern:
+                extraction = as_safety_question(extraction)
         reply_language = choose_reply_language(session, extraction)
 
-        if extraction.detected_language == "unsupported":
+        if extraction.detected_language == "unsupported" and not extraction.safety_concern:
             if at_limit:
                 raise app_error("turn_limit")
             return (
@@ -382,7 +398,7 @@ class ConversationEngine:
         next_active, start_handoff = transition_frustration(
             session.frustration_active, extraction.frustration
         )
-        if start_handoff:
+        if start_handoff and not extraction.safety_concern:
             return (
                 extraction,
                 unchanged_outcome(session),
@@ -768,7 +784,9 @@ class ConversationEngine:
             reply = text("capability_reply", reply_language)
         elif pure_question:
             reply, citations = await self._answer_policy_question(
-                command.text, reply_language
+                SAFETY_QUERY if extraction.safety_concern else command.text,
+                reply_language,
+                urgent=extraction.safety_concern,
             )
         elif pure_confirmation:
             reply = render(
@@ -852,7 +870,7 @@ class ConversationEngine:
         return self.knowledge_base.retrieve(question)
 
     async def _answer_policy_question(
-        self, question: str, reply_language: Language
+        self, question: str, reply_language: Language, *, urgent: bool = False
     ) -> tuple[str, tuple[Citation, ...]]:
         retrieved = await self._retrieve(question)
         if not retrieved:
@@ -863,7 +881,15 @@ class ConversationEngine:
             sources=retrieved,
             reply_language=reply_language,
         )
-        answer = await self.provider.answer_knowledge(context)
+        try:
+            answer = await self.provider.answer_knowledge(context)
+        except AppError:
+            if not urgent:
+                raise
+            # A safety answer must not depend on the model: give the record itself.
+            answer = KnowledgeAnswer(
+                answerable=True, answer=retrieved[0].body, cited_ids=[retrieved[0].id]
+            )
         citations = validate_knowledge_answer(
             answer, retrieved, self.knowledge_base.version
         )

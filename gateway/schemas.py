@@ -148,6 +148,7 @@ class Extraction(ContractModel):
     requested_language: Language | None
     sentiment: Sentiment
     frustration: Frustration
+    safety_concern: StrictBool = False
     tool_request: ToolRequest | None = None
 
     @field_validator("explicit_corrections", "ambiguous_fields")

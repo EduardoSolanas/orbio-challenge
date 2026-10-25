@@ -57,3 +57,14 @@ def test_frustration_cases_cover_angry_and_calm_messages_in_both_languages() -> 
         assert counts[(label, "en")] >= 4
         assert counts[(label, "es")] >= 2
     assert len({c["text"] for c in cases}) == len(cases)
+
+
+def test_safety_cases_have_both_labels_in_both_languages_and_are_unique() -> None:
+    cases = CASES["safety"]
+    texts = [c["text"] for c in cases]
+
+    assert len(texts) == len(set(texts))
+    assert all(isinstance(c["concern"], bool) for c in cases)
+    for flag in (True, False):
+        for language in ("en", "es"):
+            assert sum(1 for c in cases if c["concern"] is flag and c["language"] == language) >= 4
