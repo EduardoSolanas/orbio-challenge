@@ -10,9 +10,9 @@ RAG is mandatory: [rag-contract.md](rag-contract.md). The four-record FAQ ships 
 
 ## Recommended runtime
 
-Use Docker Compose with **two services**. `app` is the public chat gateway: one Uvicorn worker, FastAPI serving the static browser UI and JSON/audio endpoints from the same origin. `backend-api` is a private FastAPI service that owns the fictional demo account fixture, the demo verification code and the credential rule; it is reachable only on the internal Compose network, publishes no host port, and the gateway calls it through `app.backend_client.BackendApiClient` over HTTP. FastAPI in the gateway calls independently configured model services over local HTTP or remote HTTPS for extraction, RAG, STT and TTS. Those are logical capabilities, not local containers. A named Docker volume stores JSON sessions at `/data/sessions`.
+Use Docker Compose with **two services**. `gateway` is the public chat gateway: one Uvicorn worker, FastAPI serving the static browser UI and JSON/audio endpoints from the same origin. `backend` is a private FastAPI service that owns the fictional demo account fixture, the demo verification code and the credential rule; it is reachable only on the internal Compose network, publishes no host port, and the gateway calls it through `app.backend_client.BackendApiClient` over HTTP. FastAPI in the gateway calls independently configured model services over local HTTP or remote HTTPS for extraction, RAG, STT and TTS. Those are logical capabilities, not local containers. A named Docker volume stores JSON sessions at `/data/sessions`.
 
-The gateway starts only after `backend-api` reports healthy (`depends_on: condition: service_healthy`). The Backend API `/health` endpoint is private: it confirms the service is up, is not exposed to the host or browser, and makes no model or catalog write. Gateway `/health` checks writable session storage and the loaded knowledge base; verification and lookup failures are reported at request time as fixed safe errors (`backend_api_unavailable`, `backend_api_timeout`, `invalid_backend_api_response`), never as transport detail.
+The gateway starts only after `backend` reports healthy (`depends_on: condition: service_healthy`). The Backend API `/health` endpoint is private: it confirms the service is up, is not exposed to the host or browser, and makes no model or catalog write. Gateway `/health` checks writable session storage and the loaded knowledge base; verification and lookup failures are reported at request time as fixed safe errors (`backend_api_unavailable`, `backend_api_timeout`, `invalid_backend_api_response`), never as transport detail.
 
 No database, Redis, reverse proxy, GPU, Node runtime, or ffmpeg is required for the core demo. Standard-library `wave` validates the supported PCM WAV uploads. A verifier supervises build artifacts; it is not a running application component.
 
@@ -43,15 +43,15 @@ Git and image build context; `env_file` injects values at container creation.
 docker compose config --quiet
 docker compose up --build -d --wait --wait-timeout 120
 docker compose ps
-docker compose logs --tail 100 app
-docker compose logs --tail 100 backend-api
-docker compose exec -T backend-api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=2).close()"
+docker compose logs --tail 100 gateway
+docker compose logs --tail 100 backend
+docker compose exec -T backend python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=2).close()"
 ```
 
 Open http://127.0.0.1:8000 and http://127.0.0.1:8000/health in your browser. The Backend API has no host port; `docker compose ps` must show it running and healthy without a published port. `GET /internal/v1/orders/{order_number}` and `POST /internal/v1/order-verifications` exist only on the internal network. The root Compose file builds from the repository root. Compose paths are relative to that file, so `.env` is also in the root. After editing configuration, repeat `docker compose up --build -d --wait --wait-timeout 120` to recreate both services.
 
 ```text
-docker compose restart app
+docker compose restart gateway
 docker compose down
 ```
 
@@ -62,7 +62,7 @@ idempotency are process-local. Volume retention is not backup.
 ## Startup acceptance gate
 
 1. Fresh build succeeds with pinned dependencies; container runs as non-root with exactly one worker.
-2. Compose reports both `app` and `backend-api` healthy; gateway `/health` succeeds with writable session storage and the private Backend API `/health` answers on the internal network. No provider call is made by either health check, and the Backend API publishes no host port.
+2. Compose reports both `gateway` and `backend` healthy; gateway `/health` succeeds with writable session storage and the private Backend API `/health` answers on the internal network. No provider call is made by either health check, and the Backend API publishes no host port.
 3. Open page, create a session, complete a real text interview and correction, then confirm.
 4. Restart the container and resume an incomplete session; confirm saved JSON survives.
 5. Upload a valid PCM WAV, inspect/edit the transcript, submit, and play an assistant reply.

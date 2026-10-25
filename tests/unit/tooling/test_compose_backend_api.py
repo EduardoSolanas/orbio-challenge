@@ -13,6 +13,8 @@ from pathlib import Path
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
+GATEWAY = "gateway"
+BACKEND = "backend"
 BACKEND_API_PORT = "8001"
 
 
@@ -23,11 +25,11 @@ def compose() -> dict:
 def test_compose_runs_the_gateway_and_the_private_backend_api() -> None:
     services = compose()["services"]
 
-    assert set(services) == {"app", "backend-api"}
+    assert set(services) == {GATEWAY, BACKEND}
 
 
 def test_backend_api_publishes_no_host_port_and_is_only_exposed_internally() -> None:
-    backend_api = compose()["services"]["backend-api"]
+    backend_api = compose()["services"][BACKEND]
 
     assert "ports" not in backend_api
     assert backend_api["expose"] == [BACKEND_API_PORT]
@@ -38,8 +40,8 @@ def test_backend_api_publishes_no_host_port_and_is_only_exposed_internally() -> 
 
 
 def test_gateway_waits_for_a_healthy_backend_api_and_calls_it_by_service_dns() -> None:
-    app = compose()["services"]["app"]
+    gateway = compose()["services"][GATEWAY]
 
-    assert app["depends_on"] == {"backend-api": {"condition": "service_healthy"}}
-    assert app["environment"]["BACKEND_API_BASE_URL"] == f"http://backend-api:{BACKEND_API_PORT}"
-    assert "ports" in app
+    assert gateway["depends_on"] == {BACKEND: {"condition": "service_healthy"}}
+    assert gateway["environment"]["BACKEND_API_BASE_URL"] == f"http://{BACKEND}:{BACKEND_API_PORT}"
+    assert "ports" in gateway

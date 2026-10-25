@@ -38,7 +38,7 @@ All packages have `__init__.py`. Use absolute imports rooted at `app`. App path 
 | `gateway/static/css/*.css` | Responsive chat styling (OOCSS: `objects.css` structure, `skins.css` colour, `base.css` tokens); no framework dependency |
 | `tests/unit/`, `tests/integration/`, `tests/e2e/`, `tests/live/` | Suites defined by testing contract; fakes under `tests/support/` |
 | `requirements.txt`, `requirements-dev.txt`, `pyproject.toml` | Exact dependency baseline/test/mutation settings specified below and in testing contract |
-| `compose.yaml`, `docs/deployment/Dockerfile` | Two services: public `app` gateway and private `backend-api` (no host port, internal health check); one image, separate commands |
+| `compose.yaml`, `docs/deployment/Dockerfile` | Two services: public `gateway` and private `backend` (no host port, internal health check); one image, separate commands |
 | `.github/workflows/quality.yml` | Unit/integration, browser, mutation and image-build jobs; no live secrets for PRs |
 | `README.md` | Setup, exact commands, architecture, limitations, accessible demo video URL and test evidence links |
 
@@ -1871,7 +1871,7 @@ demo code and the credential rule (`credentials_match`, `normalize_postcode`,
 
 FastAPI docs, Redoc and OpenAPI are disabled on the Backend API (`docs_url=None`,
 `redoc_url=None`, `openapi_url=None`). Compose publishes **no host port** for the
-service; it is reachable only as `http://backend-api:8001` on the internal network.
+service; it is reachable only as `http://backend:8001` on the internal network.
 The browser therefore cannot call the private API, and the gateway exposes no
 `/internal` route.
 

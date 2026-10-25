@@ -1,7 +1,7 @@
 # Run from the repository root: docker compose up --build -d
 name: northstar-demo
 services:
-  app:
+  gateway:
     build:
       context: .
       dockerfile: docs/deployment/Dockerfile
@@ -11,9 +11,9 @@ services:
       - .env
     environment:
       SESSION_DIR: /data/sessions
-      BACKEND_API_BASE_URL: http://backend-api:8001
+      BACKEND_API_BASE_URL: http://backend:8001
     depends_on:
-      backend-api:
+      backend:
         condition: service_healthy
     command:
       - python
@@ -40,7 +40,7 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
-  backend-api:
+  backend:
     build:
       context: .
       dockerfile: docs/deployment/Dockerfile
