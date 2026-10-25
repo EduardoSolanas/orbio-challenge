@@ -37,7 +37,7 @@ jobs:
       - name: Unit and integration coverage
         run: |
           python -m pytest tests/unit tests/integration \
-            --cov=gateway --cov=backend --cov-branch --cov-context=test \
+            --cov=backend --cov-branch --cov-context=test \
             --cov-report=json:reports/coverage.json \
             --cov-report=term-missing \
             --cov-report=xml:reports/coverage.xml \

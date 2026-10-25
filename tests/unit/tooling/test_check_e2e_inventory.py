@@ -243,8 +243,8 @@ def commit_all(root: Path, message: str) -> str:
 
 def write_repo_inputs(root: Path) -> None:
     """Create one file under every gated input path."""
-    (root / "gateway").mkdir(exist_ok=True)
-    (root / "gateway" / "conversation.py").write_text("def start():\n    return 1\n", encoding="utf-8")
+    (root / "backend" / "gateway").mkdir(parents=True, exist_ok=True)
+    (root / "backend" / "gateway" / "conversation.py").write_text("def start():\n    return 1\n", encoding="utf-8")
     (root / "tests" / "e2e").mkdir(parents=True, exist_ok=True)
     (root / "tests" / "e2e" / "test_journeys.py").write_text(
         "def test_placeholder():\n    assert True\n", encoding="utf-8"
@@ -290,7 +290,7 @@ def test_commit_touching_app_after_evidence_fails(tmp_path: Path) -> None:
     inputs_revision = commit_all(tmp_path, "code at inputs revision")
     paths = write_repo_evidence(tmp_path, inputs_revision)
     commit_all(tmp_path, "store evidence")
-    (tmp_path / "gateway" / "conversation.py").write_text(
+    (tmp_path / "backend" / "gateway" / "conversation.py").write_text(
         "def start():\n    return 2\n", encoding="utf-8"
     )
     commit_all(tmp_path, "later app change")

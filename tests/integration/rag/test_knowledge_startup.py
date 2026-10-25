@@ -19,11 +19,11 @@ from pathlib import Path
 
 import pytest
 
-import gateway.main as main_module
-from gateway.errors import KNOWLEDGE_INVALID_MESSAGE
-from gateway.main import create_app
-from gateway.providers.prompts import ABSTENTION
-from gateway.schemas import KnowledgeAnswer
+import backend.gateway.main as main_module
+from backend.gateway.errors import KNOWLEDGE_INVALID_MESSAGE
+from backend.gateway.main import create_app
+from backend.gateway.providers.prompts import ABSTENTION
+from backend.gateway.schemas import KnowledgeAnswer
 from tests.integration.support.api import (
     ScriptedProvider,
     make_extraction,

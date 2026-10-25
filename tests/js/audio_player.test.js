@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, jest, test } from "@jest/globals";
 
-import { AudioPlayer } from "../../gateway/static/js/audio_player.js";
-import { ChatState } from "../../gateway/static/js/state.js";
+import { AudioPlayer } from "../../web/js/audio_player.js";
+import { ChatState } from "../../web/js/state.js";
 
 function build() {
   const element = {

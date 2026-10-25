@@ -14,14 +14,14 @@ Files:
 
 | File | Required change |
 |---|---|
-| `gateway/knowledge/northstar-faq.json` | Exactly the versioned seed corpus below, committed and copied into the image under gateway/knowledge/ |
-| `gateway/knowledge/retrieval.py` | KB schema/load validation, tokenization, retrieval/ranking and citation validation |
-| `gateway/schemas.py` | KnowledgeRecord, KnowledgeContext, KnowledgeAnswer, Citation; response/message additions |
-| `gateway/providers/prompts.py` | Literal grounded-answer prompt below |
-| `gateway/providers/client.py` | Add `async answer_knowledge(context: KnowledgeContext) -> KnowledgeAnswer` to AIProvider/OpenAICompatibleProvider |
-| `gateway/conversation/engine.py` | Inject immutable KnowledgeBase, route policy questions, return standalone grounded policy answers, persist citations |
-| `gateway/main.py` | Load and validate KB during lifespan before readiness; inject into engine |
-| `gateway/static/js/` | Render cited source details beside the saved answer; restore them on resume |
+| `backend/gateway/knowledge/northstar-faq.json` | Exactly the versioned seed corpus below, committed and copied into the image under backend/gateway/knowledge/ |
+| `backend/gateway/knowledge/retrieval.py` | KB schema/load validation, tokenization, retrieval/ranking and citation validation |
+| `backend/gateway/schemas.py` | KnowledgeRecord, KnowledgeContext, KnowledgeAnswer, Citation; response/message additions |
+| `backend/gateway/providers/prompts.py` | Literal grounded-answer prompt below |
+| `backend/gateway/providers/client.py` | Add `async answer_knowledge(context: KnowledgeContext) -> KnowledgeAnswer` to AIProvider/OpenAICompatibleProvider |
+| `backend/gateway/conversation/engine.py` | Inject immutable KnowledgeBase, route policy questions, return standalone grounded policy answers, persist citations |
+| `backend/gateway/main.py` | Load and validate KB during lifespan before readiness; inject into engine |
+| `web/js/` | Render cited source details beside the saved answer; restore them on resume |
 | `tests/` | Unit/integration/Playwright/fake-provider/live/mutation additions defined below |
 
 Engine constructor becomes `ConversationEngine(repository, provider, knowledge_base)`. KB path is fixed relative to package: `Path(__file__).parent / "knowledge" / "northstar-faq.json"`; no user path or external upload. Operator edits are Git-reviewed changes; restart/rebuild to apply. Tests inject temporary immutable KB objects. Startup fails nonzero with exact message `knowledge_invalid: The bundled knowledge base is missing or invalid.` for missing/corrupt/empty/unsupported KB. There is no silently disabled RAG mode. Health confirms the immutable KB loaded, without model calls or re-reading files on every probe.
@@ -110,7 +110,7 @@ R13 is a **user-added mandatory requirement**, distinct from the PDF's optional 
 - **policy_questions and keyboard_mobile/Playwright:** policy_questions covers a visible unsupported-payment abstention and persisted valid Sources/review behavior; keyboard_mobile covers literal customer/answer/source markup escaping and keyboard/mobile behavior. Regional-policy and hostile-instruction orchestration are named IT10 integration parameters; real-model resistance remains live evaluation, not fake-model browser proof.
 - **Live RAG smoke:** with separately authorized provider access, verify the standing-charge answer, unsupported payment-method abstention and one hostile question; inspect the cited energy record and ensure no tariff or account-specific claim is invented. Fake success cannot establish grounded model quality.
 
-Add `gateway/knowledge/retrieval.py` to required **mutmut** scope/inventory, making seven core source files. Also mutate RAG engine/provider functions under existing required modules. Baseline corpus/prompt declarations are outside mutmut function scope and require exact fixture assertions. Relevant mutation kills include reversed ranking, removed match gate, top-k changed, citation membership validation removed, abstention inverted, dropped review preservation and bypassed answer deadline. Only mutmut creates variants; no model-authored source mutations.
+Add `backend/gateway/knowledge/retrieval.py` to required **mutmut** scope/inventory, making seven core source files. Also mutate RAG engine/provider functions under existing required modules. Baseline corpus/prompt declarations are outside mutmut function scope and require exact fixture assertions. Relevant mutation kills include reversed ranking, removed match gate, top-k changed, citation membership validation removed, abstention inverted, dropped review preservation and bypassed answer deadline. Only mutmut creates variants; no model-authored source mutations.
 
 Follow strict test-first RED/GREEN for each new retrieval, adapter, engine and browser behavior. E2E fake adds answer_knowledge with explicit fixed outputs for supported and unsupported seeded questions; unexpected calls fail. Unit/integration tests use the real retriever and fixed KB, never a fake retriever. E2E still uses real HTTP/server/engine/retrieval/JSON and replaces only the AI boundary. All original quality gates remain mandatory. Add the RAG demo to README/video; do not waive it as a bonus or remove it to fit the original estimate.
 

@@ -35,15 +35,15 @@ shown in the page (fictional account `NS-000123`, postcode `SW1A 1AA`, code
 
 | Requirement | Where |
 |---|---|
-| Natural conversation, one question at a time, several answers per message | `gateway/conversation/engine.py`, `gateway/providers/prompts.py` |
-| Collect order/account reference, category, description, urgency | `gateway/conversation/validation.py`, `gateway/schemas.py` |
+| Natural conversation, one question at a time, several answers per message | `backend/gateway/conversation/engine.py`, `backend/gateway/providers/prompts.py` |
+| Collect order/account reference, category, description, urgency | `backend/gateway/conversation/validation.py`, `backend/gateway/schemas.py` |
 | Extract and validate into structured output | LLM extraction with strict schema, then deterministic validators |
 | Error handling and edge cases | Bounded retries, clear error codes, state never changes on a failed turn |
 | Conversation context | Saved transcript plus accepted fields; sessions resume after a restart |
-| JSON storage and summary | `gateway/storage.py`, [`examples/session.example.json`](examples/session.example.json) |
-| Speech-to-text and text-to-speech | Upload or record audio, edit the transcript, play replies (`gateway/providers/`) |
-| RAG | Embedding retrieval (keyword matching if no embedding model is set) over `gateway/knowledge/northstar-faq.json`, validated citations, abstention |
-| Account actions (extra) | After verifying the demo account: installation status and booking a technician (`backend/`, `gateway/conversation/visits.py`) |
+| JSON storage and summary | `backend/gateway/storage.py`, [`examples/session.example.json`](examples/session.example.json) |
+| Speech-to-text and text-to-speech | Upload or record audio, edit the transcript, play replies (`backend/gateway/providers/`) |
+| RAG | Embedding retrieval (keyword matching if no embedding model is set) over `backend/gateway/knowledge/northstar-faq.json`, validated citations, abstention |
+| Account actions (extra) | After verifying the demo account: installation status and booking a technician (`backend/api/`, `backend/gateway/conversation/visits.py`) |
 | Sentiment (bonus) | The extraction call also labels sentiment and frustration; clear frustration hands off to a simulated agent |
 | Multiple languages (bonus) | English and Spanish |
 | Multi-turn memory (bonus) | Within a session |
@@ -76,18 +76,21 @@ Gateway (FastAPI) ── conversation engine ── validators ── JSON sessi
    └── Backend API client ──► private Backend API (fictional accounts, bookings; internal network only)
 ```
 
-Two services, two top-level packages, each split by concern:
+The browser page and the two services live in separate folders:
 
 ```
-gateway/   chat service   api/  conversation/  providers/  knowledge/  static/  locales/
-backend/   Backend API    api.py  models.py  bookings.py  availability.json
-tests/     unit/{gateway,backend,tooling}  integration/  e2e/  js/
+web/               the chat page: index.html, css/, js/
+backend/gateway/   chat service     routes/  conversation/  providers/  knowledge/  locales/
+backend/api/       Backend API      main.py  models.py  bookings.py  availability.json
+tests/             unit/{gateway,api,tooling}  integration/  e2e/  js/
 ```
 
-- `gateway/conversation/engine.py` is the turn transaction and state machine (`collecting` → `awaiting_confirmation` → `completed`); `intent.py`, `plans.py` and `replay.py` decide what an extraction means, what to reply and how duplicates are handled.
-- `gateway/providers/client.py` is one OpenAI-compatible adapter for every role, with timeouts, retries and a concurrency limit.
-- `backend/` is the only place that holds account data: the account check, installation status, technician windows (edited in `availability.json`) and bookings, kept in one JSON file. The gateway reaches it over the internal network only.
-- `gateway/static/` is the chat page with no build step: plain ES modules, one class per concern, everything injected so tests replace the network and microphone. CSS follows OOCSS: `objects.css` structure, `skins.css` colour, `base.css` tokens.
+Docker runs two containers from one image: `gateway` (the chat API, which also serves `web/`) and the private `backend-api`.
+
+- `backend/gateway/conversation/engine.py` is the turn transaction and state machine (`collecting` → `awaiting_confirmation` → `completed`); `intent.py`, `plans.py` and `replay.py` decide what an extraction means, what to reply and how duplicates are handled.
+- `backend/gateway/providers/client.py` is one OpenAI-compatible adapter for every role, with timeouts, retries and a concurrency limit.
+- `backend/api/` is the only place that holds account data: the account check, installation status, technician windows (edited in `availability.json`) and bookings, kept in one JSON file. The gateway reaches it over the internal network only.
+- `web/` is the chat page with no build step: plain ES modules, one class per concern, everything injected so tests replace the network and microphone. CSS follows OOCSS: `objects.css` structure, `skins.css` colour, `base.css` tokens.
 
 ## Key design decisions
 
@@ -123,7 +126,7 @@ The fictional corpus has twelve records. Retrieval depends on configuration:
 - **Keywords** (default): records are scored by the words they share with the question.
 
 Either way the model only sees the retrieved records, and the app checks the citations
-(`gateway/knowledge/`).
+(`backend/gateway/knowledge/`).
 
 Records:
 `faq-delivery` Delivery times ·
@@ -143,7 +146,7 @@ Records:
 
 ```bash
 pip install -r requirements-dev.txt
-python -m ruff check gateway backend
+python -m ruff check backend
 python scripts/test.py unit          # also: integration, e2e, coverage, mutation, all
 python scripts/check_backends.py     # live check against the services in your environment
 npm ci && npm test                   # frontend unit tests (Jest)
@@ -157,7 +160,7 @@ npm ci && npm test                   # frontend unit tests (Jest)
 | Judge journeys | 31 browser tests with a scripted provider; 29 record a conversation that a judge LLM grades against a written rule. Every intent, including verification before account actions, and frustration hand-off | 31 passed; 29 of 29 judged pass. Replies are mostly templates, so this checks wording rules, not model behaviour. |
 | Real Docker end-to-end | 15 tests on the deployed containers against the real LLM, speech services and embeddings, graded by the judge LLM: every intent, a full intake, RAG with abstention, account actions, angry and nervous customers in both languages | 15 passed, with the same DeepSeek model as judge, so it grades itself. The booking test uses the demo account's one visit; reset with `docker compose down --volumes`. A reasoning judge needs `E2E_JUDGE_MAX_TOKENS=4096`. |
 | Live providers | `scripts/check_backends.py` | 5 of 5 (2026-10-24) |
-| Mutation testing | `mutmut` over `gateway/` and `backend/`, Linux only, in CI | Not re-run since the package split. An earlier run killed 2563 of 2677 mutants; the rest were reviewed as equivalent. |
+| Mutation testing | `mutmut` over `backend/`, Linux only, in CI | Not re-run since the package split. An earlier run killed 2563 of 2677 mutants; the rest were reviewed as equivalent. |
 
 ## Evaluation
 

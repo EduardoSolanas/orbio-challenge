@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 
-import { ConfirmationCommand } from "../../gateway/static/js/confirmation.js";
+import { ConfirmationCommand } from "../../web/js/confirmation.js";
 
 describe("ConfirmationCommand", () => {
   test("stores the original request id and exact body for retry", () => {

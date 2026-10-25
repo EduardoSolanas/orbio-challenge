@@ -10,9 +10,9 @@ from __future__ import annotations
 import json
 from uuid import UUID, uuid4
 
-from gateway.localization import build_review_reply, build_summary, text
-from backend.api import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
-from gateway.schemas import KnowledgeAnswer, Slots
+from backend.gateway.localization import build_review_reply, build_summary, text
+from backend.api.main import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
+from backend.gateway.schemas import KnowledgeAnswer, Slots
 from tests.integration.order_verification.support import (
     ORDER_NUMBER_PROMPT,
     ORDER_NUMBER_TEXT,

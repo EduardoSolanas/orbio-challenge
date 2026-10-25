@@ -6,8 +6,8 @@ from uuid import uuid4
 
 import pytest
 
-from gateway.errors import AppError
-from gateway.providers.prompts import GREETING
+from backend.gateway.errors import AppError
+from backend.gateway.providers.prompts import GREETING
 from tests.support.unit_fakes import make_slots
 from tests.unit.gateway.conversation.conversation_support import (
     FULL_EXTRACTION,

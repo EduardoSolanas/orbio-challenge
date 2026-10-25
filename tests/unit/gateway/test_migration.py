@@ -14,9 +14,9 @@ from pathlib import Path
 
 import pytest
 
-from gateway.errors import AppError
-from gateway.schemas import Session
-from gateway.storage import JsonSessionRepository, migrate_session_document
+from backend.gateway.errors import AppError
+from backend.gateway.schemas import Session
+from backend.gateway.storage import JsonSessionRepository, migrate_session_document
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "sessions"
 V1_FIXTURES = [

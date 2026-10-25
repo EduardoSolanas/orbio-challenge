@@ -74,18 +74,18 @@ SOURCES.update(
 
 # Fixture key -> dotted module path, as listed in check_mutation_inventory.MODULES.
 DOTTED = {
-    "conversation": "gateway.conversation.engine",
-    "validation": "gateway.conversation.validation",
-    "intent": "gateway.conversation.intent",
-    "plans": "gateway.conversation.plans",
-    "replay": "gateway.conversation.replay",
-    "storage": "gateway.storage",
-    "audio": "gateway.providers.audio",
-    "providers": "gateway.providers.client",
-    "provider_wire": "gateway.providers.wire",
-    "speech_wav": "gateway.providers.speech_wav",
-    "config": "gateway.config",
-    "retrieval": "gateway.knowledge.retrieval",
+    "conversation": "backend.gateway.conversation.engine",
+    "validation": "backend.gateway.conversation.validation",
+    "intent": "backend.gateway.conversation.intent",
+    "plans": "backend.gateway.conversation.plans",
+    "replay": "backend.gateway.conversation.replay",
+    "storage": "backend.gateway.storage",
+    "audio": "backend.gateway.providers.audio",
+    "providers": "backend.gateway.providers.client",
+    "provider_wire": "backend.gateway.providers.wire",
+    "speech_wav": "backend.gateway.providers.speech_wav",
+    "config": "backend.gateway.config",
+    "retrieval": "backend.gateway.knowledge.retrieval",
 }
 
 
@@ -329,7 +329,7 @@ def test_missing_inventory_entry_fails(tmp_path: Path) -> None:
 def test_unknown_inventory_entry_fails(tmp_path: Path) -> None:
     data = default_inventory()
     data["functions"].append(entry("audio", ("transcribe",)))
-    data["functions"][-1]["qualified_name"] = "gateway.providers.audio.ghost"
+    data["functions"][-1]["qualified_name"] = "backend.gateway.providers.audio.ghost"
     paths = write_evidence(tmp_path, inventory_data=data, review_data=review(data))
     assert run_checker(paths) != 0
 
@@ -357,7 +357,7 @@ def test_stale_source_hash_fails(tmp_path: Path) -> None:
 
 def test_wholly_uncovered_function_fails(tmp_path: Path) -> None:
     coverage = json.loads(build_coverage(tmp_path, SOURCES).read_text(encoding="utf-8"))
-    file_entry = coverage["files"]["gateway/conversation/validation.py"]
+    file_entry = coverage["files"]["backend/gateway/conversation/validation.py"]
     node, _, _ = locate(SOURCES["validation"], ("validate",))
     body = sorted(body_lines(node))
     file_entry["executed_lines"] = sorted(set(file_entry["executed_lines"]) - set(body))
@@ -374,7 +374,7 @@ def test_wholly_uncovered_function_fails(tmp_path: Path) -> None:
 
 def test_declaration_line_coverage_only_fails(tmp_path: Path) -> None:
     coverage = json.loads(build_coverage(tmp_path, SOURCES).read_text(encoding="utf-8"))
-    file_entry = coverage["files"]["gateway/storage.py"]
+    file_entry = coverage["files"]["backend/gateway/storage.py"]
     node, _, _ = locate(SOURCES["storage"], ("save",))
     body = sorted(body_lines(node))
     file_entry["executed_lines"] = [node.lineno]
@@ -405,7 +405,7 @@ def test_missing_test_nodeids_fails(tmp_path: Path) -> None:
 
 def test_mutant_id_not_matching_function_fails(tmp_path: Path) -> None:
     data = default_inventory()
-    data["functions"][0]["mutant_ids"] = ["gateway.providers.audio.x_transcribe__mutmut_1"]
+    data["functions"][0]["mutant_ids"] = ["backend.gateway.providers.audio.x_transcribe__mutmut_1"]
     paths = write_evidence(tmp_path, inventory_data=data, review_data=review(data))
     assert run_checker(paths) != 0
 
@@ -415,7 +415,7 @@ def test_no_variants_without_reason_fails(tmp_path: Path) -> None:
     nested = next(
         item
         for item in data["functions"]
-        if item["qualified_name"] == "gateway.knowledge.retrieval.outer.inner"
+        if item["qualified_name"] == "backend.gateway.knowledge.retrieval.outer.inner"
     )
     nested["no_operator_reason"] = None
     paths = write_evidence(tmp_path, inventory_data=data, review_data=review(data))
@@ -553,20 +553,20 @@ def test_exporter_help_exits_zero() -> None:
 
 def test_exporter_roundtrip_passes_the_gate(tmp_path: Path) -> None:
     write_sources(tmp_path, SOURCES)
-    write_mutants(tmp_path, SOURCES, {"gateway.conversation.engine.start": 2})
+    write_mutants(tmp_path, SOURCES, {"backend.gateway.conversation.engine.start": 2})
     inventory_path = export(tmp_path)
     data = json.loads(inventory_path.read_text(encoding="utf-8"))
     names = {item["qualified_name"] for item in data["functions"]}
     assert names == {
-        "gateway.conversation.engine.start",
-        "gateway.conversation.validation.validate",
-        "gateway.storage.save",
-        "gateway.providers.audio.transcribe",
-        "gateway.providers.client.OpenAICompatibleProvider.chat",
-        "gateway.config.Settings.from_env",
-        "gateway.knowledge.retrieval.search",
-        "gateway.knowledge.retrieval.outer",
-        "gateway.knowledge.retrieval.outer.inner",
+        "backend.gateway.conversation.engine.start",
+        "backend.gateway.conversation.validation.validate",
+        "backend.gateway.storage.save",
+        "backend.gateway.providers.audio.transcribe",
+        "backend.gateway.providers.client.OpenAICompatibleProvider.chat",
+        "backend.gateway.config.Settings.from_env",
+        "backend.gateway.knowledge.retrieval.search",
+        "backend.gateway.knowledge.retrieval.outer",
+        "backend.gateway.knowledge.retrieval.outer.inner",
         *(
             f"{DOTTED[module]}.{module}_helper"
             for module in ("intent", "plans", "replay", "provider_wire", "speech_wav")
@@ -574,16 +574,16 @@ def test_exporter_roundtrip_passes_the_gate(tmp_path: Path) -> None:
     }
     assert data["source_revision"] == "rev1"
     start = next(
-        item for item in data["functions"] if item["qualified_name"] == "gateway.conversation.engine.start"
+        item for item in data["functions"] if item["qualified_name"] == "backend.gateway.conversation.engine.start"
     )
     assert start["mutant_ids"] == [
-        "gateway.conversation.engine.x_start__mutmut_1",
-        "gateway.conversation.engine.x_start__mutmut_2",
+        "backend.gateway.conversation.engine.x_start__mutmut_1",
+        "backend.gateway.conversation.engine.x_start__mutmut_2",
     ]
     nested = next(
         item
         for item in data["functions"]
-        if item["qualified_name"] == "gateway.knowledge.retrieval.outer.inner"
+        if item["qualified_name"] == "backend.gateway.knowledge.retrieval.outer.inner"
     )
     assert nested["mutant_ids"] == []
     assert nested["no_operator_reason"]
@@ -597,7 +597,7 @@ def test_exporter_roundtrip_passes_the_gate(tmp_path: Path) -> None:
 def test_exporter_rejects_stale_framework_state(tmp_path: Path) -> None:
     write_sources(tmp_path, SOURCES)
     write_mutants(tmp_path, SOURCES)
-    meta_path = tmp_path / "mutants" / "gateway" / "config.py.meta"
+    meta_path = tmp_path / "mutants" / "backend" / "gateway" / "config.py.meta"
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
     meta["hash_by_function_name"]["x\u01c1Settings\u01c1from_env"] = "0" * 12
     meta_path.write_text(json.dumps(meta), encoding="utf-8")
@@ -624,7 +624,7 @@ def test_exporter_rejects_stale_framework_state(tmp_path: Path) -> None:
 def test_exporter_rejects_missing_framework_state(tmp_path: Path) -> None:
     write_sources(tmp_path, SOURCES)
     write_mutants(tmp_path, SOURCES)
-    (tmp_path / "mutants" / "gateway" / "providers" / "audio.py.meta").unlink()
+    (tmp_path / "mutants" / "backend" / "gateway" / "providers" / "audio.py.meta").unlink()
     coverage_path = build_coverage(tmp_path, SOURCES)
     output = tmp_path / "reports" / "mutation-inventory.json"
     code = export_mutation_inventory.main(
@@ -647,7 +647,7 @@ def test_exporter_rejects_missing_framework_state(tmp_path: Path) -> None:
 def test_exporter_rejects_missing_source_module(tmp_path: Path) -> None:
     write_sources(tmp_path, SOURCES)
     write_mutants(tmp_path, SOURCES)
-    (tmp_path / "gateway" / "providers" / "audio.py").unlink()
+    (tmp_path / "backend" / "gateway" / "providers" / "audio.py").unlink()
     coverage_path = build_coverage(tmp_path, SOURCES)
     output = tmp_path / "reports" / "mutation-inventory.json"
     code = export_mutation_inventory.main(
@@ -722,7 +722,7 @@ def test_commit_touching_gateway_after_inventory_fails(tmp_path: Path) -> None:
         tmp_path, inventory_data=data, review_data=review(data, revision=inputs_revision)
     )
     commit_all(tmp_path, "store evidence")
-    (tmp_path / "gateway" / "providers" / "audio.py").write_text(
+    (tmp_path / "backend" / "gateway" / "providers" / "audio.py").write_text(
         "def transcribe(chunk):\n    return chunk.decode('utf-8')\n", encoding="utf-8"
     )
     commit_all(tmp_path, "later gateway change")

@@ -11,7 +11,7 @@ from pydantic import ValidationError
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
-from gateway.schemas import (
+from backend.gateway.schemas import (
     Clarification,
     ConfirmRequest,
     Confirmation,

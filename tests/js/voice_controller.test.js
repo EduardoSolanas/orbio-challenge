@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, jest, test } from "@jest/globals";
 
-import { MAX_RECORD_SECONDS, MAX_WAV_BYTES } from "../../gateway/static/js/config.js";
-import { MicrophoneRecording } from "../../gateway/static/js/microphone.js";
-import { WavEncoder } from "../../gateway/static/js/recording.js";
+import { MAX_RECORD_SECONDS, MAX_WAV_BYTES } from "../../web/js/config.js";
+import { MicrophoneRecording } from "../../web/js/microphone.js";
+import { WavEncoder } from "../../web/js/recording.js";
 import {
   EN,
   FakeResponse,

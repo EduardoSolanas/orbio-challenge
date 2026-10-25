@@ -6,7 +6,7 @@ import {
   I18n,
   LANGUAGES,
   LocaleError,
-} from "../../gateway/static/js/i18n.js";
+} from "../../web/js/i18n.js";
 import { EN, ES } from "./support/page.js";
 
 const placeholders = (template) =>

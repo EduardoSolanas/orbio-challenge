@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from gateway.localization import field_label
-from gateway.schemas import Clarification, Extraction, Slots
-from gateway.conversation.validation import merge_extraction, normalize_candidate, validate_field
+from backend.gateway.localization import field_label
+from backend.gateway.schemas import Clarification, Extraction, Slots
+from backend.gateway.conversation.validation import merge_extraction, normalize_candidate, validate_field
 
 NO_SLOTS = {
     "order_number": None,

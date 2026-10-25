@@ -3,7 +3,7 @@
 **Review date:** 2026-10-24
 **Scope:** the served page at `/` (`gateway/static/index.html`, `styles.css`, `app.js`, `i18n.js`) and the existing the ten browser journeys Playwright journeys.
 
-> Note: file and line references below describe the page as audited, before the frontend was rewritten into `gateway/static/js/` modules and `gateway/static/css/` (`app.js`, `i18n.js` and `styles.css` no longer exist). The findings still apply; the code that implements them now lives in those modules.
+> Note: file and line references below describe the page as audited, before the frontend was rewritten into `web/js/` modules and `web/css/` (`app.js`, `i18n.js` and `styles.css` no longer exist). The findings still apply; the code that implements them now lives in those modules.
 **Method:** source/DOM-contract inspection, existing deterministic browser journeys, JavaScript unit tests, and a narrow mobile keyboard journey. No application behavior was changed by this review.
 
 ## Evidence and limits

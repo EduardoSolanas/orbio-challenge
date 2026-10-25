@@ -1,4 +1,4 @@
-"""Compose topology for the split gateway/Backend API deployment.
+"""Compose topology for the split backend/gateway/Backend API deployment.
 
 The private Backend API must be a second service reachable only on the internal
 network: no host port, its own health check, and the gateway must start only
@@ -14,7 +14,7 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 GATEWAY = "gateway"
-BACKEND = "backend"
+BACKEND = "backend-api"
 BACKEND_API_PORT = "8001"
 
 
@@ -34,7 +34,7 @@ def test_backend_api_publishes_no_host_port_and_is_only_exposed_internally() -> 
     assert "ports" not in backend_api
     assert backend_api["expose"] == [BACKEND_API_PORT]
     command = backend_api["command"]
-    assert "backend.api:app" in command
+    assert "backend.api.main:app" in command
     assert command[command.index("--port") + 1] == BACKEND_API_PORT
     assert backend_api["healthcheck"]["test"][-1].endswith("/health', timeout=2).close()")
 

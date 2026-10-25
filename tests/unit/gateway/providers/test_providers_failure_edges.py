@@ -13,9 +13,9 @@ import json
 import httpx
 import pytest
 
-from gateway.errors import AppError
-from gateway.providers.client import OpenAICompatibleProvider
-from gateway.schemas import Extraction, KnowledgeContext, KnowledgeRecord
+from backend.gateway.errors import AppError
+from backend.gateway.providers.client import OpenAICompatibleProvider
+from backend.gateway.schemas import Extraction, KnowledgeContext, KnowledgeRecord
 from tests.unit.gateway.providers.provider_support import (
     ChunkedStream,
     EXTRACTION_PAYLOAD,

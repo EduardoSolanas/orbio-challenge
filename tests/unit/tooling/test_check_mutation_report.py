@@ -85,7 +85,7 @@ def approval(
 
 def write_evidence(tmp_path: Path, *, run_text: str, results_text: str, review_data: dict | None):
     (tmp_path / "pyproject.toml").write_text(
-        '[tool.mutmut]\nsource_paths = ["gateway/"]\n', encoding="utf-8"
+        '[tool.mutmut]\nsource_paths = ["backend/gateway/"]\n', encoding="utf-8"
     )
     (tmp_path / "mutation-run.txt").write_text(run_text, encoding="utf-8")
     (tmp_path / "mutation-results.txt").write_text(results_text, encoding="utf-8")
@@ -127,7 +127,7 @@ def test_unapproved_survivor_fails(tmp_path: Path) -> None:
 
 
 def test_approved_equivalent_survivor_passes(tmp_path: Path) -> None:
-    mutant = "gateway.config.xǁSettingsǁfrom_env__mutmut_6"
+    mutant = "backend.gateway.config.xǁSettingsǁfrom_env__mutmut_6"
     results_text = f"    {mutant}: survived\n"
     paths = write_evidence(
         tmp_path,
@@ -142,7 +142,7 @@ def test_approved_equivalent_survivor_passes(tmp_path: Path) -> None:
 
 
 def test_survivor_approved_with_invalid_status_fails(tmp_path: Path) -> None:
-    mutant = "gateway.config.xǁSettingsǁfrom_env__mutmut_6"
+    mutant = "backend.gateway.config.xǁSettingsǁfrom_env__mutmut_6"
     results_text = f"    {mutant}: survived\n"
     paths = write_evidence(
         tmp_path,
@@ -154,7 +154,7 @@ def test_survivor_approved_with_invalid_status_fails(tmp_path: Path) -> None:
 
 
 def test_approved_invalid_timeout_passes(tmp_path: Path) -> None:
-    mutant = "gateway.config.xǁSettingsǁfrom_env__mutmut_7"
+    mutant = "backend.gateway.config.xǁSettingsǁfrom_env__mutmut_7"
     results_text = f"    {mutant}: timeout\n"
     paths = write_evidence(
         tmp_path,
@@ -168,7 +168,7 @@ def test_approved_invalid_timeout_passes(tmp_path: Path) -> None:
 
 
 def test_unapproved_timeout_fails(tmp_path: Path) -> None:
-    mutant = "gateway.config.xǁSettingsǁfrom_env__mutmut_7"
+    mutant = "backend.gateway.config.xǁSettingsǁfrom_env__mutmut_7"
     results_text = f"    {mutant}: timeout\n"
     paths = write_evidence(
         tmp_path, run_text=run_log(killed=4, timeout=1), results_text=results_text, review_data=review()
@@ -204,7 +204,7 @@ def test_unexecuted_mutants_fail(tmp_path: Path) -> None:
         tmp_path,
         run_text=run_log(total=5, checked=4, killed=4, survived=1),
         results_text="    app.config.x_covered__mutmut_1: survived\n",
-        review_data=review([approval("gateway.config.x_covered__mutmut_1", "equivalent")]),
+        review_data=review([approval("backend.gateway.config.x_covered__mutmut_1", "equivalent")]),
     )
     assert run(tmp_path, paths) != 0
 
@@ -214,13 +214,13 @@ def test_result_count_mismatch_fails(tmp_path: Path) -> None:
         tmp_path,
         run_text=run_log(killed=3, survived=2),
         results_text="    app.config.x_covered__mutmut_1: survived\n",
-        review_data=review([approval("gateway.config.x_covered__mutmut_1", "equivalent")]),
+        review_data=review([approval("backend.gateway.config.x_covered__mutmut_1", "equivalent")]),
     )
     assert run(tmp_path, paths) != 0
 
 
 def test_duplicate_result_line_fails(tmp_path: Path) -> None:
-    mutant = "gateway.config.x_covered__mutmut_1"
+    mutant = "backend.gateway.config.x_covered__mutmut_1"
     results_text = f"    {mutant}: survived\n    {mutant}: survived\n"
     paths = write_evidence(
         tmp_path,
@@ -237,7 +237,7 @@ def test_missing_review_file_fails(tmp_path: Path) -> None:
 
 
 def test_approval_without_verifier_fails(tmp_path: Path) -> None:
-    mutant = "gateway.config.x_covered__mutmut_1"
+    mutant = "backend.gateway.config.x_covered__mutmut_1"
     paths = write_evidence(
         tmp_path,
         run_text=run_log(killed=4, survived=1),
@@ -248,7 +248,7 @@ def test_approval_without_verifier_fails(tmp_path: Path) -> None:
 
 
 def test_approval_without_rationale_fails(tmp_path: Path) -> None:
-    mutant = "gateway.config.x_covered__mutmut_1"
+    mutant = "backend.gateway.config.x_covered__mutmut_1"
     paths = write_evidence(
         tmp_path,
         run_text=run_log(killed=4, survived=1),
@@ -263,14 +263,14 @@ def test_approval_for_unknown_mutant_fails(tmp_path: Path) -> None:
         tmp_path,
         run_text=run_log(),
         results_text="",
-        review_data=review([approval("gateway.config.x_covered__mutmut_99", "equivalent")]),
+        review_data=review([approval("backend.gateway.config.x_covered__mutmut_99", "equivalent")]),
     )
     assert run(tmp_path, paths) != 0
 
 
 def test_all_results_include_killed_lines(tmp_path: Path) -> None:
-    killed = [f"gateway.config.x__fail__mutmut_{i}" for i in range(1, 5)]
-    survived = "gateway.config.x_covered__mutmut_1"
+    killed = [f"backend.gateway.config.x__fail__mutmut_{i}" for i in range(1, 5)]
+    survived = "backend.gateway.config.x_covered__mutmut_1"
     results_text = "".join(f"    {mutant}: killed\n" for mutant in killed)
     results_text += f"    {survived}: survived\n"
     paths = write_evidence(
@@ -313,14 +313,14 @@ def commit_all(root: Path, message: str) -> str:
 
 def write_repo_inputs(root: Path) -> None:
     """Create one file under every gated input path."""
-    (root / "gateway").mkdir(exist_ok=True)
-    (root / "gateway" / "config.py").write_text("class Settings:\n    pass\n", encoding="utf-8")
+    (root / "backend" / "gateway").mkdir(parents=True, exist_ok=True)
+    (root / "backend" / "gateway" / "config.py").write_text("class Settings:\n    pass\n", encoding="utf-8")
     (root / "tests").mkdir(exist_ok=True)
     (root / "tests" / "test_unit.py").write_text("def test_x():\n    assert True\n", encoding="utf-8")
     (root / "scripts").mkdir(exist_ok=True)
     (root / "scripts" / "gate.py").write_text("GATE = 1\n", encoding="utf-8")
     (root / "pyproject.toml").write_text(
-        '[tool.mutmut]\nsource_paths = ["gateway/"]\n', encoding="utf-8"
+        '[tool.mutmut]\nsource_paths = ["backend/gateway/"]\n', encoding="utf-8"
     )
 
 
@@ -349,7 +349,7 @@ def test_commit_touching_app_after_review_fails(tmp_path: Path) -> None:
         review_data=review(revision=inputs_revision),
     )
     commit_all(tmp_path, "store evidence")
-    (tmp_path / "gateway" / "config.py").write_text(
+    (tmp_path / "backend" / "gateway" / "config.py").write_text(
         "class Settings:\n    value = 2\n", encoding="utf-8"
     )
     commit_all(tmp_path, "later app change")
@@ -378,7 +378,7 @@ def test_review_revision_from_an_older_commit_fails(tmp_path: Path) -> None:
     init_repo(tmp_path)
     write_repo_inputs(tmp_path)
     stale_revision = commit_all(tmp_path, "code at inputs revision")
-    (tmp_path / "gateway" / "config.py").write_text(
+    (tmp_path / "backend" / "gateway" / "config.py").write_text(
         "class Settings:\n    value = 3\n", encoding="utf-8"
     )
     commit_all(tmp_path, "later app change")

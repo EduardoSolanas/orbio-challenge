@@ -16,8 +16,8 @@
       "**/*.test.js"
     ],
     "collectCoverageFrom": [
-      "gateway/static/js/**/*.js",
-      "!gateway/static/js/main.js"
+      "web/js/**/*.js",
+      "!web/js/main.js"
     ],
     "coverageDirectory": "reports/js-coverage",
     "coverageReporters": [

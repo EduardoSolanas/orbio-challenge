@@ -11,15 +11,15 @@ services:
       - .env
     environment:
       SESSION_DIR: /data/sessions
-      BACKEND_API_BASE_URL: http://backend:8001
+      BACKEND_API_BASE_URL: http://backend-api:8001
     depends_on:
-      backend:
+      backend-api:
         condition: service_healthy
     command:
       - python
       - -m
       - uvicorn
-      - gateway.main:app
+      - backend.gateway.main:app
       - --host
       - "${APP_BIND_HOST}"
       - --port
@@ -40,7 +40,7 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
-  backend:
+  backend-api:
     build:
       context: .
       dockerfile: docs/deployment/Dockerfile
@@ -48,7 +48,7 @@ services:
       - python
       - -m
       - uvicorn
-      - backend.api:app
+      - backend.api.main:app
       - --host
       - "0.0.0.0"
       - --port

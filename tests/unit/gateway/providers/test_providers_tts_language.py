@@ -8,9 +8,9 @@ from dataclasses import replace
 import httpx
 import pytest
 
-from gateway.config import SpeechProfile
-from gateway.errors import AppError
-from gateway.providers.client import OpenAICompatibleProvider
+from backend.gateway.config import SpeechProfile
+from backend.gateway.errors import AppError
+from backend.gateway.providers.client import OpenAICompatibleProvider
 from tests.unit.gateway.providers.provider_support import (
     LLM_PROFILE,
     RAG_PROFILE,

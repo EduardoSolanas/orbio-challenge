@@ -22,7 +22,7 @@ from uuid import uuid4
 import httpx
 import pytest
 
-from gateway.providers.prompts import GREETING
+from backend.gateway.providers.prompts import GREETING
 from tests.integration.support.intake import PART_TEXT, start_session, turn_body
 from tests.integration.support.transcription import (
     RecordingStream,

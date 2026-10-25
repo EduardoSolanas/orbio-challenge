@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from gateway.config import DEFAULT_EMBED_MIN_SIMILARITY, ServiceProfile, Settings
-from gateway.errors import CONFIGURATION_INVALID_MESSAGE
+from backend.gateway.config import DEFAULT_EMBED_MIN_SIMILARITY, ServiceProfile, Settings
+from backend.gateway.errors import CONFIGURATION_INVALID_MESSAGE
 from tests.unit.gateway.test_config_tts_es import BASE_ENV
 
 COMPLETE = {

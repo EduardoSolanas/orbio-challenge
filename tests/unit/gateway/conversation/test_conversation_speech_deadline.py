@@ -6,9 +6,9 @@ from uuid import uuid4
 
 import pytest
 
-from gateway.errors import AppError
-from gateway.providers.prompts import GREETING, NOTHING_TO_CONFIRM
-from gateway.schemas import KnowledgeAnswer
+from backend.gateway.errors import AppError
+from backend.gateway.providers.prompts import GREETING, NOTHING_TO_CONFIRM
+from backend.gateway.schemas import KnowledgeAnswer
 from tests.support.unit_fakes import SlowProvider, make_extraction, make_record
 from tests.unit.gateway.conversation.conversation_support import (
     FULL_EXTRACTION,
@@ -64,7 +64,7 @@ async def test_assistant_text_missing_session_raises_session_not_found(tmp_path)
 async def test_extraction_deadline_maps_provider_timeout_and_saves_nothing(
     tmp_path, monkeypatch
 ):
-    import gateway.conversation.engine as conversation_module
+    import backend.gateway.conversation.engine as conversation_module
 
     monkeypatch.setattr(conversation_module, "TEXT_TURN_DEADLINE_SECONDS", 0.05)
     engine, repository, provider = build_engine(tmp_path, script=[])
@@ -87,7 +87,7 @@ async def test_extraction_deadline_maps_provider_timeout_and_saves_nothing(
 
 
 async def test_rag_answer_shares_the_extraction_deadline(tmp_path, monkeypatch):
-    import gateway.conversation.engine as conversation_module
+    import backend.gateway.conversation.engine as conversation_module
 
     monkeypatch.setattr(conversation_module, "TEXT_TURN_DEADLINE_SECONDS", 0.05)
     record = make_record()

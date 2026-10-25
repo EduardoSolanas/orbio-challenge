@@ -23,9 +23,9 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import check_backends  # noqa: E402
 
-from gateway.config import Settings  # noqa: E402
+from backend.gateway.config import Settings  # noqa: E402
 
-KNOWLEDGE_PATH = REPO_ROOT / "gateway" / "knowledge" / "northstar-faq.json"
+KNOWLEDGE_PATH = REPO_ROOT / "backend" / "gateway" / "knowledge" / "northstar-faq.json"
 MP3_BYTES = (REPO_ROOT / "tests" / "fixtures" / "reply.mp3").read_bytes()
 
 EXTRACTION_PAYLOAD = {

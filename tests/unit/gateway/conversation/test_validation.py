@@ -2,7 +2,7 @@
 
 import pytest
 
-from gateway.providers.prompts import (
+from backend.gateway.providers.prompts import (
     MISSING_CATEGORY,
     MISSING_DESCRIPTION,
     MISSING_ORDER,
@@ -12,8 +12,8 @@ from gateway.providers.prompts import (
     build_review_reply,
     build_summary,
 )
-from gateway.schemas import Clarification, Extraction, Slots
-from gateway.conversation.validation import (
+from backend.gateway.schemas import Clarification, Extraction, Slots
+from backend.gateway.conversation.validation import (
     FIELD_ORDER,
     MergeOutcome,
     merge_extraction,

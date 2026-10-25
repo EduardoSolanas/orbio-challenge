@@ -3,14 +3,14 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { jest } from "@jest/globals";
 
-import { App } from "../../../gateway/static/js/app.js";
+import { App } from "../../../web/js/app.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const readJson = (relative) => JSON.parse(readFileSync(path.join(ROOT, relative), "utf8"));
 
-export const EN = readJson("gateway/locales/en.json");
-export const ES = readJson("gateway/locales/es.json");
-const PAGE = readFileSync(path.join(ROOT, "gateway/static/index.html"), "utf8");
+export const EN = readJson("backend/gateway/locales/en.json");
+export const ES = readJson("backend/gateway/locales/es.json");
+const PAGE = readFileSync(path.join(ROOT, "web/index.html"), "utf8");
 
 export const SESSION_ID = "11111111-1111-4111-8111-111111111111";
 export const SECOND_SESSION_ID = "22222222-2222-4222-8222-222222222222";

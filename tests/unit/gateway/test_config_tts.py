@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from gateway.config import (
+from backend.gateway.config import (
     DEFAULT_TTS_AUDIO_FORMAT,
     DEFAULT_TTS_MAX_INPUT_CHARS,
     SpeechProfile,
     Settings,
 )
-from gateway.errors import CONFIGURATION_INVALID_MESSAGE
+from backend.gateway.errors import CONFIGURATION_INVALID_MESSAGE
 
 SESSION_DIR = "/tmp/orbio-sessions"
 

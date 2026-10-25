@@ -8,7 +8,7 @@ import re
 import pytest
 from playwright.sync_api import expect
 
-from gateway.schemas import KnowledgeAnswer
+from backend.gateway.schemas import KnowledgeAnswer
 from tests.e2e.conftest import body_of
 from tests.support.fakes import (
     ASK_CATEGORY,

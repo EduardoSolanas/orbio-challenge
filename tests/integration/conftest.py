@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from gateway.main import create_app
+from backend.gateway.main import create_app
 from tests.integration.support.api import (
     ScriptedProvider,
     build_settings,

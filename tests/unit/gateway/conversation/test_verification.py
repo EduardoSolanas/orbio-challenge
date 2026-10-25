@@ -1,6 +1,6 @@
 """Unit tests for the gateway-side verification registry.
 
-The Backend API owns the credential rule and fixture (`tests/unit/backend/test_backend_api.py`).
+The Backend API owns the credential rule and fixture (`tests/unit/api/test_backend_api.py`).
 This registry only tracks the pending order, failure count and 15-minute grant per
 session; these tests pin binding, expiry, lockout and every reset path.
 """
@@ -12,14 +12,14 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
-from gateway.localization import text
-from gateway.schemas import (
+from backend.gateway.localization import text
+from backend.gateway.schemas import (
     Extraction,
     OrderVerificationRequest,
     Slots,
     ToolRequest,
 )
-from gateway.conversation.verification import (
+from backend.gateway.conversation.verification import (
     MAX_VERIFICATION_ATTEMPTS,
     VERIFICATION_TTL_SECONDS,
     VerificationRegistry,

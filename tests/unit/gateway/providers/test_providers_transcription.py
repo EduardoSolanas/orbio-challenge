@@ -10,7 +10,7 @@ import json
 
 import pytest
 
-from gateway.errors import AppError
+from backend.gateway.errors import AppError
 from tests.unit.gateway.providers.provider_support import (
     SleepRecorder,
     build_provider,

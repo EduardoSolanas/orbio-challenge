@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test } from "@jest/globals";
 
-import { ApiClient } from "../../gateway/static/js/api.js";
-import { DEADLINES } from "../../gateway/static/js/config.js";
-import { I18n } from "../../gateway/static/js/i18n.js";
+import { ApiClient } from "../../web/js/api.js";
+import { DEADLINES } from "../../web/js/config.js";
+import { I18n } from "../../web/js/i18n.js";
 import { EN, ES, FakeResponse, ScriptedHttp, SESSION_ID, failure, ok } from "./support/page.js";
 
 let http;

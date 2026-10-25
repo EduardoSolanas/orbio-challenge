@@ -11,10 +11,10 @@ import json
 from pathlib import Path
 from uuid import UUID, uuid4
 
-from gateway.conversation.engine import ConversationEngine
-from gateway.providers.prompts import GREETING
-from gateway.schemas import ConfirmRequest, TurnRequest
-from gateway.storage import JsonSessionRepository
+from backend.gateway.conversation.engine import ConversationEngine
+from backend.gateway.providers.prompts import GREETING
+from backend.gateway.schemas import ConfirmRequest, TurnRequest
+from backend.gateway.storage import JsonSessionRepository
 from tests.support.unit_fakes import (
     FakeKnowledgeBase,
     FakeProvider,

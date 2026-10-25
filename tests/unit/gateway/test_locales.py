@@ -12,8 +12,8 @@ from pathlib import Path
 
 import pytest
 
-from gateway.schemas import Slots
-from gateway.localization import (
+from backend.gateway.schemas import Slots
+from backend.gateway.localization import (
     CATALOG,
     DEFAULT_LANGUAGE,
     LOCALES_DIR,
@@ -344,7 +344,7 @@ def test_render_mismatch_error_names_the_key():
 
 
 def test_order_question_hint_is_localized_with_the_requested_language():
-    from gateway.localization import missing_question
+    from backend.gateway.localization import missing_question
 
     assert missing_question("order_number", "en") == (
         "What is your energy account reference? Use NS- followed by six digits, for example NS-123456."
@@ -356,7 +356,7 @@ def test_order_question_hint_is_localized_with_the_requested_language():
 
 
 def test_incomplete_summary_error_is_explicit():
-    from gateway.localization import build_summary
+    from backend.gateway.localization import build_summary
 
     with pytest.raises(ValueError) as caught:
         build_summary(

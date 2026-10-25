@@ -16,9 +16,9 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import evaluate_emotions  # noqa: E402
 
-from gateway.errors import app_error  # noqa: E402
-from gateway.providers.prompts import EMOTION_EVALUATION_CASES  # noqa: E402
-from gateway.schemas import Extraction, Slots  # noqa: E402
+from backend.gateway.errors import app_error  # noqa: E402
+from backend.gateway.providers.prompts import EMOTION_EVALUATION_CASES  # noqa: E402
+from backend.gateway.schemas import Extraction, Slots  # noqa: E402
 
 EMPTY_SLOTS = Slots(order_number=None, category=None, description=None, urgency=None)
 

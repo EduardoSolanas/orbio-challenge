@@ -8,8 +8,8 @@ import dataclasses
 
 import pytest
 
-from gateway import errors
-from gateway.errors import AppError, ErrorSpec, app_error
+from backend.gateway import errors
+from backend.gateway.errors import AppError, ErrorSpec, app_error
 
 # code -> (message, status, retryable), transcribed from IC section 11.
 EXPECTED = {

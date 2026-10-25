@@ -18,11 +18,11 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-from gateway.errors import INVALID_BACKEND_API_RESPONSE, BACKEND_API_TIMEOUT
-from gateway.localization import text
-from gateway.main import create_app
-from backend.api import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
-from gateway.backend_client import BackendApiClient
+from backend.gateway.errors import INVALID_BACKEND_API_RESPONSE, BACKEND_API_TIMEOUT
+from backend.gateway.localization import text
+from backend.gateway.main import create_app
+from backend.api.main import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
+from backend.gateway.backend_client import BackendApiClient
 from tests.integration.order_verification.support import (
     ORDER_NUMBER_TEXT,
     ORDER_RESULT,

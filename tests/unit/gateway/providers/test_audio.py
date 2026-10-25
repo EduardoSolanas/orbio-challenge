@@ -11,8 +11,8 @@ import struct
 
 import pytest
 
-from gateway.providers.audio import validate_wav
-from gateway.errors import AppError
+from backend.gateway.providers.audio import validate_wav
+from backend.gateway.errors import AppError
 
 LOUD = 1000
 

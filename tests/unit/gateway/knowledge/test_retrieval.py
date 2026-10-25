@@ -9,8 +9,8 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from gateway.errors import INVALID_PROVIDER_RESPONSE, KNOWLEDGE_INVALID_MESSAGE, AppError
-from gateway.knowledge.retrieval import (
+from backend.gateway.errors import INVALID_PROVIDER_RESPONSE, KNOWLEDGE_INVALID_MESSAGE, AppError
+from backend.gateway.knowledge.retrieval import (
     MAX_ANSWER_CHARS,
     MAX_KB_BYTES,
     ImmutableKnowledgeRecord,
@@ -20,10 +20,10 @@ from gateway.knowledge.retrieval import (
     tokenize,
     validate_knowledge_answer,
 )
-from gateway.schemas import Citation, KnowledgeAnswer
+from backend.gateway.schemas import Citation, KnowledgeAnswer
 
 CONTRACT = Path(__file__).resolve().parents[4] / "docs" / "rag-contract.md"
-SEED_KB = Path(__file__).resolve().parents[4] / "gateway" / "knowledge" / "northstar-faq.json"
+SEED_KB = Path(__file__).resolve().parents[4] / "backend" / "gateway" / "knowledge" / "northstar-faq.json"
 KB_FIXTURES = Path(__file__).resolve().parents[3] / "fixtures" / "kb"
 INVALID_FIXTURES = sorted(path.name for path in (KB_FIXTURES / "invalid").glob("*.json"))
 VALID_FIXTURES = sorted(path.name for path in (KB_FIXTURES / "valid").glob("*.json"))

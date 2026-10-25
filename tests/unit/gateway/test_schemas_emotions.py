@@ -12,7 +12,7 @@ from uuid import UUID, uuid4
 import pytest
 from pydantic import ValidationError
 
-from gateway.schemas import (
+from backend.gateway.schemas import (
     Extraction,
     ExtractionContext,
     Message,

@@ -8,12 +8,12 @@ import json
 import httpx
 import pytest
 
-from gateway.config import ServiceProfile
-from gateway.errors import AppError
-from gateway.providers.wire import InvalidContent, parse_embeddings
-from gateway.providers.client import OpenAICompatibleProvider
-from gateway.schemas import KnowledgeRecord
-from gateway.knowledge.semantic import SemanticIndex, cosine
+from backend.gateway.config import ServiceProfile
+from backend.gateway.errors import AppError
+from backend.gateway.providers.wire import InvalidContent, parse_embeddings
+from backend.gateway.providers.client import OpenAICompatibleProvider
+from backend.gateway.schemas import KnowledgeRecord
+from backend.gateway.knowledge.semantic import SemanticIndex, cosine
 from tests.unit.gateway.providers.provider_support import (
     LLM_PROFILE,
     RAG_PROFILE,

@@ -2,7 +2,7 @@
 import http from "node:http";
 import { describe, expect, test } from "@jest/globals";
 
-import { DeadlineHttp } from "../../gateway/static/js/http.js";
+import { DeadlineHttp } from "../../web/js/http.js";
 
 function stalledServer(body, delayMs) {
   return http.createServer((_req, res) => {

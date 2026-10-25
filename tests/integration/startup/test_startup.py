@@ -16,9 +16,9 @@ from contextlib import AsyncExitStack
 import httpx
 import pytest
 
-from gateway.errors import CONFIGURATION_INVALID_MESSAGE, STORAGE_UNAVAILABLE_MESSAGE
-from gateway.main import create_app
-from gateway.providers.client import OpenAICompatibleProvider
+from backend.gateway.errors import CONFIGURATION_INVALID_MESSAGE, STORAGE_UNAVAILABLE_MESSAGE
+from backend.gateway.main import create_app
+from backend.gateway.providers.client import OpenAICompatibleProvider
 from tests.integration.support.adapter import (
     ROLES,
     apply_env,

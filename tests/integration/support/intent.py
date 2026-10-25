@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from gateway.providers.prompts import POLICY_QUESTION_SUFFIX
+from backend.gateway.providers.prompts import POLICY_QUESTION_SUFFIX
 from tests.integration.support.api import make_extraction
 
 

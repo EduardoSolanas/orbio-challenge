@@ -6,9 +6,9 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from gateway.conversation.engine import ConversationEngine
-from gateway.errors import AppError
-from gateway.providers.prompts import (
+from backend.gateway.conversation.engine import ConversationEngine
+from backend.gateway.errors import AppError
+from backend.gateway.providers.prompts import (
     ABSTENTION,
     CAPABILITY,
     GREETING,
@@ -16,8 +16,8 @@ from gateway.providers.prompts import (
     POLICY_QUESTION_SUFFIX,
     REJECT_PROMPT,
 )
-from gateway.schemas import ConfirmRequest, KnowledgeAnswer, TurnRequest
-from gateway.storage import JsonSessionRepository
+from backend.gateway.schemas import ConfirmRequest, KnowledgeAnswer, TurnRequest
+from backend.gateway.storage import JsonSessionRepository
 from tests.support.unit_fakes import (
     FakeKnowledgeBase,
     FakeProvider,
@@ -55,7 +55,7 @@ def canonical_digest(endpoint, session_id, body):
 
 
 async def test_turn_digest_is_canonical_json_with_endpoint_and_request_body():
-    from gateway.conversation.engine import turn_digest
+    from backend.gateway.conversation.engine import turn_digest
 
     sid = UUID("8b9dc0ee-1111-4a4a-8a8a-0123456789ab")
     command = TurnRequest(
@@ -79,7 +79,7 @@ async def test_turn_digest_is_canonical_json_with_endpoint_and_request_body():
 
 
 async def test_confirm_digest_is_canonical_json_with_endpoint_and_tokens():
-    from gateway.conversation.engine import confirm_digest
+    from backend.gateway.conversation.engine import confirm_digest
 
     sid = UUID("8b9dc0ee-1111-4a4a-8a8a-0123456789ab")
     command = ConfirmRequest(

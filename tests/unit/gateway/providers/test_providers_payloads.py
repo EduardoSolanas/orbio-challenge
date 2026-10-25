@@ -12,10 +12,10 @@ import json
 import httpx
 import pytest
 
-from gateway.errors import AppError
-from gateway.providers.prompts import EXTRACTION_SYSTEM_PROMPT, KNOWLEDGE_PROMPT, serialize_context
-from gateway.providers.client import REPAIR_LINE, SCHEMA_INSTRUCTION
-from gateway.schemas import Extraction, KnowledgeAnswer
+from backend.gateway.errors import AppError
+from backend.gateway.providers.prompts import EXTRACTION_SYSTEM_PROMPT, KNOWLEDGE_PROMPT, serialize_context
+from backend.gateway.providers.client import REPAIR_LINE, SCHEMA_INSTRUCTION
+from backend.gateway.schemas import Extraction, KnowledgeAnswer
 from tests.unit.gateway.providers.provider_support import (
     ANSWER_PAYLOAD,
     EXTRACTION_PAYLOAD,

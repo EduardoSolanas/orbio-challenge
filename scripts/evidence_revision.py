@@ -18,7 +18,7 @@ import subprocess
 from pathlib import Path
 
 GATED_INPUTS = (
-    "gateway",
+    "web",
     "backend",
     "tests",
     "scripts",

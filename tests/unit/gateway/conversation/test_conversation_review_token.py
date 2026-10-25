@@ -6,11 +6,11 @@ from uuid import uuid4
 
 import pytest
 
-from gateway.conversation.engine import ConversationEngine
-from gateway.errors import AppError
-from gateway.providers.prompts import ABSTENTION
-from gateway.schemas import ConfirmRequest, KnowledgeAnswer
-from gateway.storage import JsonSessionRepository
+from backend.gateway.conversation.engine import ConversationEngine
+from backend.gateway.errors import AppError
+from backend.gateway.providers.prompts import ABSTENTION
+from backend.gateway.schemas import ConfirmRequest, KnowledgeAnswer
+from backend.gateway.storage import JsonSessionRepository
 from tests.support.unit_fakes import (
     FakeKnowledgeBase,
     FakeProvider,
@@ -513,7 +513,7 @@ async def test_completed_session_still_replays_identical_commands(tmp_path):
 async def test_atomic_save_failure_keeps_prior_bytes_and_no_replay_record(
     tmp_path, monkeypatch
 ):
-    import gateway.storage as storage_module
+    import backend.gateway.storage as storage_module
 
     engine, repository, provider = build_engine(
         tmp_path, script=[("extract", FULL_EXTRACTION)]

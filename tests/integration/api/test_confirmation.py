@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from gateway.schemas import KnowledgeAnswer
+from backend.gateway.schemas import KnowledgeAnswer
 from tests.integration.support.api import read_session
 from tests.integration.support.confirmation import (
     LOW_SUMMARY,

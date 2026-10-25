@@ -8,9 +8,9 @@ from typing import Callable
 
 import httpx
 
-from gateway.config import ServiceProfile, SpeechProfile, TextProfile
-from gateway.providers.client import OpenAICompatibleProvider
-from gateway.schemas import ExtractionContext, KnowledgeContext, KnowledgeRecord, Slots
+from backend.gateway.config import ServiceProfile, SpeechProfile, TextProfile
+from backend.gateway.providers.client import OpenAICompatibleProvider
+from backend.gateway.schemas import ExtractionContext, KnowledgeContext, KnowledgeRecord, Slots
 
 
 ROLES = ("llm", "rag", "stt", "tts")

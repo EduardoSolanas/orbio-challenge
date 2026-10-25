@@ -12,8 +12,8 @@ import json
 import httpx
 import pytest
 
-from gateway.errors import AppError
-from gateway.schemas import Extraction
+from backend.gateway.errors import AppError
+from backend.gateway.schemas import Extraction
 from tests.unit.gateway.providers.provider_support import (
     ANSWER_PAYLOAD,
     Clock,

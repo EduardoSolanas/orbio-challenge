@@ -9,8 +9,8 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from gateway.errors import AppError
-from gateway.storage import JsonSessionRepository
+from backend.gateway.errors import AppError
+from backend.gateway.storage import JsonSessionRepository
 from tests.support.unit_fakes import make_message, make_session, make_slots
 
 SESSION_ID = UUID("8b9dc0ee-1111-4a4a-8a8a-0123456789ab")
@@ -130,7 +130,7 @@ async def test_check_writable_probes_with_a_real_temporary_file(tmp_path):
 async def test_save_failure_leaves_previous_bytes_and_no_replay_side_effect(
     tmp_path, monkeypatch
 ):
-    import gateway.storage as storage_module
+    import backend.gateway.storage as storage_module
 
     repo = repository(tmp_path)
     first = make_session(session_id=SESSION_ID, revision=1)
@@ -159,7 +159,7 @@ async def test_save_failure_leaves_previous_bytes_and_no_replay_side_effect(
 async def test_save_stages_a_complete_replacement_in_the_session_directory(
     tmp_path, monkeypatch
 ):
-    import gateway.storage as storage_module
+    import backend.gateway.storage as storage_module
 
     repo = repository(tmp_path)
     session = make_session(session_id=SESSION_ID)
@@ -190,7 +190,7 @@ async def test_save_stages_a_complete_replacement_in_the_session_directory(
 async def test_save_fsyncs_the_complete_replacement_before_publishing(
     tmp_path, monkeypatch
 ):
-    import gateway.storage as storage_module
+    import backend.gateway.storage as storage_module
 
     repo = repository(tmp_path)
     session = make_session(session_id=SESSION_ID)
