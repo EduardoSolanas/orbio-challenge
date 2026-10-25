@@ -11,13 +11,13 @@ from __future__ import annotations
 
 import socket
 import threading
-import time
 from typing import Any
 
 import uvicorn
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from backend_api.main import OrderRecord, create_backend_api_app
+from tests.support.waiting import wait_until
 
 STARTUP_SECONDS = 10.0
 SHUTDOWN_JOIN_SECONDS = 10.0
@@ -83,18 +83,16 @@ class LocalBackendApiServer:
     def _wait_healthy(self) -> None:
         import urllib.request
 
-        deadline = time.monotonic() + STARTUP_SECONDS
-        while time.monotonic() < deadline:
+        def healthy() -> bool:
             if self._thread is None or not self._thread.is_alive():
                 raise AssertionError(f"backend API thread exited: {self._thread_error!r}")
             try:
                 with urllib.request.urlopen(f"{self.base_url}/health", timeout=1) as response:
-                    if response.status == 200:
-                        return
+                    return response.status == 200
             except OSError:
-                pass
-            time.sleep(0.05)
-        raise AssertionError(f"backend API /health did not answer within {STARTUP_SECONDS}s")
+                return False
+
+        wait_until(healthy, f"backend API /health within {STARTUP_SECONDS}s", STARTUP_SECONDS)
 
     def stop(self) -> None:
         server, thread = self._server, self._thread

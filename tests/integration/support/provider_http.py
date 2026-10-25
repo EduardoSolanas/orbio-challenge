@@ -22,6 +22,7 @@ from typing import Any
 
 from gateway.config import Settings
 from gateway.providers.client import Budget, OpenAICompatibleProvider
+from tests.support.waiting import poll
 
 CHAT_PATH = "/v1/chat/completions"
 SPEECH_PATH = "/v1/audio/speech"
@@ -166,12 +167,7 @@ class LocalProviderServer:
     def settle(self, path: str, timeout: float = 5.0) -> list[WireRequest]:
         """Wait until every response for ``path`` has finished or aborted."""
 
-        deadline = time.monotonic() + timeout
-        while time.monotonic() < deadline:
-            pending = [r for r in self.requests(path) if r.outcome == PENDING]
-            if not pending:
-                return self.requests(path)
-            time.sleep(0.02)
+        poll(lambda: not [r for r in self.requests(path) if r.outcome == PENDING], timeout)
         return self.requests(path)
 
     # -- handler ------------------------------------------------------------

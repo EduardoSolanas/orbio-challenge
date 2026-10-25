@@ -10,7 +10,6 @@ from __future__ import annotations
 import asyncio
 import socket
 import threading
-import time
 from uuid import UUID
 
 import pytest
@@ -23,6 +22,7 @@ from gateway.localization import text
 from gateway.main import create_app
 from backend_api.main import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
 from gateway.backend_client import BackendApiClient
+from tests.support.waiting import wait_until
 from tests.integration.order_verification.support import (
     ORDER_NUMBER_TEXT,
     ORDER_RESULT,
@@ -158,10 +158,9 @@ class _FaultyBackendApiServer:
         )
         self._thread = thread
         thread.start()
-        deadline = time.monotonic() + self.STARTUP_SECONDS
-        while not server.started and time.monotonic() < deadline:
-            time.sleep(0.02)
-        assert server.started, "faulty Backend API did not become ready"
+        wait_until(
+            lambda: server.started, "the faulty Backend API to become ready", self.STARTUP_SECONDS
+        )
 
     def stop(self) -> None:
         if self._server is not None:

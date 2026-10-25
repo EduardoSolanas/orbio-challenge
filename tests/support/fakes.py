@@ -29,6 +29,7 @@ from typing import Any, Callable, Iterable
 from gateway.errors import app_error
 from gateway.providers.client import SynthesizedAudio
 from gateway.schemas import Extraction, KnowledgeAnswer, Slots, ToolRequest
+from tests.support.waiting import await_until
 
 FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
 REPLY_MP3_PATH = FIXTURES_DIR / "reply.mp3"
@@ -147,11 +148,12 @@ class Gate:
 
     async def _hold(self) -> None:
         self._entered.set()
-        deadline = time.monotonic() + GATE_TIMEOUT_SECONDS
-        while not self._released.is_set():
-            if time.monotonic() > deadline:
-                raise AssertionError(f"gate {self.label!r} was never released")
-            await asyncio.sleep(0.01)
+        await await_until(
+            self._released.is_set,
+            f"gate {self.label!r} to be released",
+            GATE_TIMEOUT_SECONDS,
+            longest=0.05,
+        )
 
 
 # --------------------------------------------------------------------------- #

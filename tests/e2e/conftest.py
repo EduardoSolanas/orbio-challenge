@@ -42,6 +42,7 @@ from tests.e2e.hooks import (  # noqa: F401  (pytest registers these hook functi
     pytest_sessionfinish,
 )
 from tests.support.fakes import GREETING, E2EProvider
+from tests.support.waiting import wait_until
 
 EXPECT_TIMEOUT_MS = 10_000
 ACTION_TIMEOUT_MS = 15_000
@@ -407,18 +408,16 @@ class AppServer:
         self._wait_healthy()
 
     def _wait_healthy(self) -> None:
-        deadline = time.monotonic() + STARTUP_SECONDS
-        while time.monotonic() < deadline:
+        def healthy() -> bool:
             if not self.running:
                 raise AssertionError(f"server thread exited during startup: {self._thread_error!r}")
             try:
                 status, _, _ = self.request("GET", "/health", timeout=1.0)
             except OSError:
-                status = None
-            if status == 200:
-                return
-            time.sleep(0.05)
-        raise AssertionError(f"/health did not answer 200 within {STARTUP_SECONDS}s")
+                return False
+            return status == 200
+
+        wait_until(healthy, f"/health to answer 200 within {STARTUP_SECONDS}s", STARTUP_SECONDS)
 
     def start_backend_api(self) -> None:
         """Start the real private Backend API on a loopback socket, reusing its port."""
@@ -445,19 +444,18 @@ class AppServer:
             daemon=True,
         )
         self._order_thread.start()
-        deadline = time.monotonic() + STARTUP_SECONDS
-        while time.monotonic() < deadline:
+        def healthy() -> bool:
             try:
                 conn = http.client.HTTPConnection("127.0.0.1", self._order_port, timeout=1)
                 try:
                     conn.request("GET", "/health")
-                    if conn.getresponse().status == 200:
-                        return
+                    return conn.getresponse().status == 200
                 finally:
                     conn.close()
             except OSError:
-                time.sleep(0.05)
-        raise AssertionError("Backend API /health did not answer 200 during E2E startup")
+                return False
+
+        wait_until(healthy, "the Backend API /health to answer 200 during E2E startup", STARTUP_SECONDS)
 
     def stop_backend_api(self) -> None:
         """Stop the real Backend API while keeping its port for a same-origin restart."""
@@ -586,14 +584,6 @@ SESSION_ITEM = r"/api/sessions/[^/]+$"
 TRANSCRIPTIONS = r"/api/transcriptions$"
 
 
-def wait_until(condition: Callable[[], bool], what: str, timeout: float = 10.0) -> None:
-    """Bounded condition wait for non-DOM state (disk, ledgers)."""
-
-    deadline = time.monotonic() + timeout
-    while not condition():
-        if time.monotonic() > deadline:
-            raise AssertionError(f"timed out waiting for {what}")
-        time.sleep(0.02)
 
 
 def body_of(entry: dict[str, Any]) -> dict[str, Any]:
