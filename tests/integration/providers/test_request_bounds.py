@@ -21,6 +21,7 @@ import json
 import httpx
 import pytest
 
+from gateway import storage
 from gateway.main import create_app
 from gateway.providers.prompts import serialize_context
 from gateway.providers.client import REPAIR_LINE, SUCCESS_JSON_LIMIT
@@ -325,6 +326,14 @@ async def case_adapter_global_capacity_occupied(session_dir):
 
         gate.set()
         await asyncio.wait_for(held, timeout=5)
+
+
+# The cases named ``*_beyond2s`` wait out the repository lock deadline (2 s in production).
+# The behaviour is identical with a shorter deadline, so they run with 0.2 s.
+@pytest.fixture(autouse=True)
+def short_lock_deadline(request, monkeypatch):
+    if "beyond2s" in request.node.name:
+        monkeypatch.setattr(storage, "LOCK_ACQUISITION_TIMEOUT_SECONDS", 0.2)
 
 
 # get session while turn lock held beyond2s..second turn lock acquisition beyond2s: 2 s repository lock through the real routes ---------------

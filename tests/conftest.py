@@ -9,8 +9,28 @@ green run without changing any test.
 
 from __future__ import annotations
 
+import functools
 from typing import Any
+
+import pytest
 
 
 def pytest_collection_modifyitems(items: list[Any]) -> None:
     items.sort(key=lambda item: item.nodeid.startswith("tests/e2e/"))
+
+
+@pytest.fixture(scope="session", autouse=True)
+def share_one_tls_context() -> Any:
+    """Build httpx's TLS context once per run instead of once per client.
+
+    Every ``httpx`` client loads the CA bundle on construction, about 0.14 s each,
+    and one test builds five of them. The tests talk to loopback over plain HTTP,
+    so a single shared context changes nothing they check.
+    """
+
+    from httpx._transports import default
+
+    patch = pytest.MonkeyPatch()
+    patch.setattr(default, "create_ssl_context", functools.lru_cache(default.create_ssl_context))
+    yield
+    patch.undo()

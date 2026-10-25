@@ -18,6 +18,7 @@ import asyncio
 import json
 import time
 from contextlib import asynccontextmanager
+from unittest import mock
 from pathlib import Path
 from typing import Callable
 from uuid import uuid4
@@ -26,6 +27,7 @@ import httpx
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from gateway.conversation import engine as conversation_engine
 from gateway.main import create_app
 from gateway.providers.prompts import (
     ABSTENTION,
@@ -665,9 +667,10 @@ async def case_saved_answer_replay_after_restart_new_kb_version(settings, provid
 
 # extraction plus answer exhaust shared25s deadline: extraction and generation share one 25 s outer deadline -------------
 
-EXTRACT_DELAY = 12.0
-ANSWER_DELAY = 14.0
-SHARED_DEADLINE = 25.0
+# The real turn deadline is 25 s (12 s extraction + 14 s answer). Same shape, a tenth of the time.
+EXTRACT_DELAY = 1.2
+ANSWER_DELAY = 1.4
+SHARED_DEADLINE = 2.5
 
 
 class SleepyProvider:
@@ -708,6 +711,12 @@ class SleepyProvider:
 async def case_extraction_plus_answer_exhaust_shared25s_deadline(settings, provider, session_dir):
     sleepy = SleepyProvider()
     app = create_app(settings=settings, provider=sleepy)
+    deadline = mock.patch.object(conversation_engine, "TEXT_TURN_DEADLINE_SECONDS", SHARED_DEADLINE)
+    with deadline:
+        await _exhaust_the_shared_deadline(app, sleepy, settings, session_dir)
+
+
+async def _exhaust_the_shared_deadline(app, sleepy, settings, session_dir):
     async with running_client(app) as client:
         session_id = await start_session(client)
         before = snapshot(session_dir, session_id)
@@ -717,8 +726,8 @@ async def case_extraction_plus_answer_exhaust_shared25s_deadline(settings, provi
         elapsed = time.monotonic() - started
 
         assert_error(response, status=504, code="provider_timeout")
-        # 12 s extraction + 14 s generation would be 26 s: the second call is cut
-        # at the shared 25 s deadline instead of running to completion.
+        # Extraction plus generation would outlast the deadline: the second call is
+        # cut at the shared deadline instead of running to completion.
         assert SHARED_DEADLINE - 0.5 <= elapsed <= SHARED_DEADLINE + 2.5, elapsed
         assert sleepy.extract_calls == 1
         assert sleepy.answer_calls == 1
@@ -727,7 +736,7 @@ async def case_extraction_plus_answer_exhaust_shared25s_deadline(settings, provi
         assert snapshot(session_dir, session_id) == before
 
         # Nothing detached survives the timed-out request.
-        await asyncio.sleep(1.5)
+        await asyncio.sleep(0.5)
         assert snapshot(session_dir, session_id) == before
 
 
