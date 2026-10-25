@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 680" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <title id="t">Northstar architecture</title>
+  <desc id="d">The browser talks to an nginx web container, which serves the page and forwards the API to the gateway. The gateway calls the AI services and the private backend-api container. Both services import the shared models.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#8dbbff"/>
+    </marker>
+  </defs>
+  <style>
+    .bg{fill:#0b111b}
+    .box{fill:#111c2b;stroke:#2b3b50;stroke-width:1.5}
+    .cont{fill:none;stroke:#83e0b9;stroke-width:1.6;stroke-dasharray:7 5}
+    .ext{fill:#111c2b;stroke:#edc58a;stroke-width:1.5}
+    .store{fill:#162338;stroke:#8dbbff;stroke-width:1.5}
+    .shared{fill:none;stroke:#aabbd0;stroke-width:1.4;stroke-dasharray:3 5}
+    .line{stroke:#8dbbff;stroke-width:1.8;fill:none}
+    .dot{stroke:#aabbd0;stroke-width:1.3;stroke-dasharray:3 4;fill:none}
+    .h{fill:#edf3fb;font-size:14px;font-weight:700}
+    .c{fill:#83e0b9;font-size:12.5px;font-weight:700}
+    .t{fill:#edf3fb;font-size:12.5px}
+    .m{fill:#aabbd0;font-size:11.5px}
+    .l{fill:#8dbbff;font-size:11.5px}
+    .a{fill:#edc58a;font-size:12.5px;font-weight:700}
+  </style>
+  <rect class="bg" width="1000" height="680" rx="14"/>
+
+  <!-- Browser -->
+  <rect class="box" x="40" y="30" width="300" height="70" rx="10"/>
+  <text class="h" x="56" y="58">Browser</text>
+  <text class="m" x="56" y="78">chat + voice UI · plain ES modules (web/js)</text>
+  <path class="line" d="M190 100 V150" marker-end="url(#arrow)"/>
+  <text class="l" x="200" y="130">HTTP</text>
+
+  <!-- web container -->
+  <rect class="cont" x="30" y="150" width="320" height="150" rx="12"/>
+  <text class="c" x="46" y="172">CONTAINER web · nginx</text>
+  <text class="m" x="46" y="190">the only published port: 127.0.0.1:8000</text>
+  <rect class="box" x="46" y="204" width="288" height="80" rx="8"/>
+  <text class="t" x="60" y="226">serves  /  and  /static/*  (no-cache)</text>
+  <text class="t" x="60" y="246">forwards  /api/*  and  /health  to the gateway</text>
+  <text class="m" x="60" y="268">anything else → 404 (the backend is never routed)</text>
+
+  <path class="line" d="M350 225 H400" marker-end="url(#arrow)"/>
+  <text class="l" x="352" y="216">/api</text>
+
+  <!-- gateway container -->
+  <rect class="cont" x="400" y="60" width="330" height="400" rx="12"/>
+  <text class="c" x="416" y="82">CONTAINER gateway · FastAPI :8000 (internal)</text>
+  <rect class="box" x="416" y="96" width="298" height="46" rx="8"/>
+  <text class="h" x="428" y="116">routes</text>
+  <text class="m" x="428" y="133">sessions · turns · speech · transcriptions · locales</text>
+  <rect class="box" x="416" y="154" width="298" height="58" rx="8"/>
+  <text class="h" x="428" y="174">conversation engine</text>
+  <text class="m" x="428" y="191">state machine · validators · reply templates</text>
+  <text class="m" x="428" y="205">the model proposes, the code decides</text>
+  <rect class="box" x="416" y="224" width="298" height="46" rx="8"/>
+  <text class="h" x="428" y="244">provider adapter</text>
+  <text class="m" x="428" y="261">one OpenAI-compatible client · timeouts · retries</text>
+  <rect class="box" x="416" y="282" width="298" height="46" rx="8"/>
+  <text class="h" x="428" y="302">knowledge retrieval (RAG)</text>
+  <text class="m" x="428" y="319">embeddings, keyword fallback · checked citations</text>
+  <rect class="store" x="416" y="340" width="298" height="46" rx="8"/>
+  <text class="h" x="428" y="360">JSON session store</text>
+  <text class="m" x="428" y="377">one file per session · atomic writes · volume sessions</text>
+  <rect class="box" x="416" y="398" width="298" height="46" rx="8"/>
+  <text class="h" x="428" y="418">Backend API client</text>
+  <text class="m" x="428" y="435">verification · installation · availability · booking</text>
+
+  <!-- AI services -->
+  <text class="a" x="768" y="52">External AI services</text>
+  <rect class="ext" x="768" y="66" width="200" height="54" rx="8"/>
+  <text class="h" x="780" y="88">LLM</text>
+  <text class="m" x="780" y="106">extraction · RAG answers</text>
+  <rect class="ext" x="768" y="136" width="200" height="54" rx="8"/>
+  <text class="h" x="780" y="158">Speech-to-text</text>
+  <text class="m" x="780" y="176">voice upload → draft</text>
+  <rect class="ext" x="768" y="206" width="200" height="54" rx="8"/>
+  <text class="h" x="780" y="228">Text-to-speech</text>
+  <text class="m" x="780" y="246">play a saved reply</text>
+  <rect class="ext" x="768" y="276" width="200" height="54" rx="8"/>
+  <text class="h" x="780" y="298">Embeddings</text>
+  <text class="m" x="780" y="316">optional · semantic FAQ search</text>
+  <path class="line" d="M714 247 H740 V93 H768" marker-end="url(#arrow)"/>
+  <path class="line" d="M740 163 H768" marker-end="url(#arrow)"/>
+  <path class="line" d="M740 233 H768" marker-end="url(#arrow)"/>
+  <path class="line" d="M714 305 H768" marker-end="url(#arrow)"/>
+  <text class="m" x="768" y="350">any OpenAI-compatible server,</text>
+  <text class="m" x="768" y="365">configured per role in .env</text>
+
+  <!-- Backend API -->
+  <path class="line" d="M565 444 V500" marker-end="url(#arrow)"/>
+  <text class="l" x="575" y="478">HTTP /internal/v1 (private)</text>
+  <rect class="cont" x="400" y="500" width="330" height="160" rx="12"/>
+  <text class="c" x="416" y="522">CONTAINER backend-api · FastAPI :8001 (internal)</text>
+  <text class="m" x="416" y="539">no host port · reachable only by the gateway</text>
+  <rect class="box" x="416" y="550" width="298" height="46" rx="8"/>
+  <text class="h" x="428" y="570">account check · installation status</text>
+  <text class="m" x="428" y="587">availability · bookings (one visit per account)</text>
+  <rect class="store" x="416" y="606" width="298" height="40" rx="8"/>
+  <text class="h" x="428" y="624">SQLite  bookings.db</text>
+  <text class="m" x="428" y="639">volume backend-data · windows from availability.json</text>
+
+  <!-- shared -->
+  <rect class="shared" x="30" y="500" width="320" height="86" rx="12"/>
+  <text class="h" x="46" y="526">shared/</text>
+  <text class="m" x="46" y="546">request/response models and error codes</text>
+  <text class="m" x="46" y="562">imported by both services, so neither imports the other</text>
+  <path class="dot" d="M350 530 H380 V420 H400"/>
+  <path class="dot" d="M380 530 V570 H400"/>
+
+  <!-- footer -->
+  <text class="m" x="30" y="614">Compose start order: backend-api → gateway → web,</text>
+  <text class="m" x="30" y="630">each waiting for a healthy /health.</text>
+  <text class="m" x="30" y="652">Solid arrows: runtime calls · dotted: imports</text>
+  <text class="m" x="30" y="668">Dashed frames: containers</text>
+</svg>

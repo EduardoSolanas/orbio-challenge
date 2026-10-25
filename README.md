@@ -65,19 +65,9 @@ synthesis), at roughly 0.5–1.7 s each.
 
 ## Architecture
 
-```
-Browser (static chat + voice UI)
-   │  HTTP
-   ▼
-web (nginx): serves the page, forwards /api and /health
-   │
-   ▼
-Gateway (FastAPI) ── conversation engine ── validators ── JSON session store (atomic writes)
-   │                 │
-   │                 ├── provider adapter ──► LLM / STT / TTS / embedding services
-   │                 └── knowledge base retrieval
-   └── Backend API client ──► private Backend API (fictional accounts, bookings; internal network only)
-```
+![Architecture: browser, web (nginx), gateway, backend-api, shared models and the AI services](docs/architecture.svg)
+
+The same diagram, with the request flow, is in [`docs/architecture.html`](docs/architecture.html).
 
 The page and each service live in their own folder, with their own Dockerfile:
 

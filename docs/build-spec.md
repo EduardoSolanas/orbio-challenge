@@ -240,7 +240,7 @@ RAG is mandatory under [rag-contract.md](rag-contract.md), with requirement R13 
 
 ## 13. Startup and deployment addendum
 
-See [startup.md](startup.md) for prerequisites, configuration, Compose and local-development commands, runtime dependencies, and startup acceptance checks. See [architecture.html](architecture.html) for the interactive component and request-flow diagram.
+See [startup.md](startup.md) for prerequisites, configuration, Compose and local-development commands, runtime dependencies, and startup acceptance checks. See [architecture.html](architecture.html) for the container diagram and request flow.
 
 Deploy the core as one Compose `app` service with exactly one Uvicorn worker, host loopback port 8000, and a named `sessions` volume mounted at `/data`. The app binds `0.0.0.0` inside the container; Compose restricts the published host port to `127.0.0.1`. FastAPI serves the static UI and API together. External extraction, transcription and speech are provider capabilities, not local containers. Deployment templates live in `docs/deployment/`; they build the checkout's `app/` with pinned `requirements.txt`; host tests use `requirements-dev.txt`.
 

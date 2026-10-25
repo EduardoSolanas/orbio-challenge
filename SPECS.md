@@ -19,4 +19,4 @@ Strict TDD is mandatory at each layer. Write and run failing tests before produc
 
 Credentials/account access, a resolved dependency set, current provider availability, actual Docker execution and live model quality remain external/runtime verification gates. Do not fabricate secrets, logs, test results, video URLs, mutant kills or approval. No hosted model or TTS shutdown date is hardcoded in the generic adapter; compatibility is verified per configured backend.
 
-Use the [HTML architecture guide](docs/architecture.html) to inspect wiring, component dependencies, startup, and TDD/mutation gates. It is an explanatory view of the contracts above.
+Use the [HTML architecture guide](docs/architecture.html) to see the three containers, what each owns and how one customer turn flows through them. It is an explanatory view of the contracts above.
