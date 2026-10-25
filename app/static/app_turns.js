@@ -247,6 +247,63 @@
     await submitConfirmationCommand(command);
   }
 
+  async function onBookSlot(slot) {
+    if (!state.sessionId || state.pending || state.createPending) return;
+    const gen = state.generation;
+    state.pending = true;
+    app.updateControls();
+    clearAlert();
+    try {
+      const response = await fetchWithDeadline(
+        `/api/sessions/${state.sessionId}/bookings`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            request_id: newRequestId(),
+            expected_revision: state.revision,
+            starts_at: slot.starts_at,
+          }),
+        },
+        DEADLINE_TURN_MS
+      );
+      if (gen !== state.generation) return;
+      if (!response.ok) {
+        const err = await parseError(response);
+        showAlert(err.message);
+        if (err.code === "slot_unavailable") {
+          state.slotOptions = [];
+          app.renderSlots();
+        }
+        return;
+      }
+      const data = await response.json();
+      if (gen !== state.generation) return;
+      await app.applyTurnResponse(data, null, null, gen);
+      // Re-sync so the transcript matches the stored messages.
+      try {
+        const refreshed = await app.getSession(state.sessionId, { generation: gen });
+        if (gen === state.generation && !refreshed.stale && refreshed.response.ok) {
+          const view = await refreshed.response.json();
+          if (gen === state.generation) await app.applySessionView(view, { generation: gen });
+        }
+      } catch (_) {
+        /* booking response already applied */
+      }
+    } catch (e) {
+      if (gen !== state.generation) return;
+      showAlert(transportMessage(e));
+    } finally {
+      if (gen === state.generation) {
+        state.pending = false;
+        app.updateControls();
+      }
+    }
+  }
+
   async function onVerifyOrder() {
     if (
       !state.sessionId ||
@@ -321,6 +378,7 @@
     onSend,
     submitConfirmationCommand,
     onConfirm,
+    onBookSlot,
     onVerifyOrder,
   });
 })();

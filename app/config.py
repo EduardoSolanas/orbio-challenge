@@ -19,8 +19,8 @@ DEFAULT_LLM_OUTPUT_MODE = "json_schema"
 DEFAULT_PROVIDER_MAX_CONCURRENCY = 4
 DEFAULT_TTS_AUDIO_FORMAT = "mp3"
 DEFAULT_TTS_MAX_INPUT_CHARS = 4000
-DEFAULT_ORDER_API_TIMEOUT_SECONDS = 5.0
-MAX_ORDER_API_TIMEOUT_SECONDS = 60.0
+DEFAULT_BACKEND_API_TIMEOUT_SECONDS = 5.0
+MAX_BACKEND_API_TIMEOUT_SECONDS = 60.0
 MIN_TTS_MAX_INPUT_CHARS = 1
 MAX_TTS_MAX_INPUT_CHARS = 4000
 AUDIO_FORMATS = ("mp3", "wav")
@@ -31,6 +31,8 @@ REASONING_EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
 MAX_MODEL_LENGTH = 200
 MAX_API_KEY_LENGTH = 4096
 RAG_FIELDS = ("BASE_URL", "MODEL", "AUTH_MODE", "API_KEY", "OUTPUT_MODE")
+EMBED_FIELDS = ("BASE_URL", "MODEL", "AUTH_MODE", "API_KEY")
+DEFAULT_EMBED_MIN_SIMILARITY = 0.25
 TTS_ES_FIELDS = (
     "BASE_URL",
     "MODEL",
@@ -144,17 +146,49 @@ def _tts_max_input_chars(raw: str) -> int:
     return value
 
 
-def _order_api_timeout(raw: str) -> float:
+def _backend_api_timeout(raw: str) -> float:
     """Positive seconds up to the bounded maximum; empty keeps the 5 s default."""
 
     text = raw.strip()
     if text == "":
-        return DEFAULT_ORDER_API_TIMEOUT_SECONDS
+        return DEFAULT_BACKEND_API_TIMEOUT_SECONDS
     try:
         value = float(text)
     except ValueError:
         _fail()
-    if not 0 < value <= MAX_ORDER_API_TIMEOUT_SECONDS:
+    if not 0 < value <= MAX_BACKEND_API_TIMEOUT_SECONDS:
+        _fail()
+    return value
+
+
+def _embed(env: Mapping[str, str]) -> ServiceProfile | None:
+    """Optional embedding service: all blank (keyword retrieval) or one complete profile."""
+
+    values = {field: env.get(f"EMBED_{field}", "") for field in EMBED_FIELDS}
+    if all(value == "" for value in values.values()):
+        return None
+    if any(values[field] == "" for field in ("BASE_URL", "MODEL", "AUTH_MODE")):
+        _fail()
+    _auth(values["AUTH_MODE"], values["API_KEY"])
+    return ServiceProfile(
+        base_url=_base_url(values["BASE_URL"]),
+        model=_model(values["MODEL"]),
+        auth_mode=values["AUTH_MODE"],
+        api_key=_api_key(values["API_KEY"]),
+    )
+
+
+def _min_similarity(raw: str) -> float:
+    """Cosine floor in (0, 1); empty keeps the default."""
+
+    text = raw.strip()
+    if text == "":
+        return DEFAULT_EMBED_MIN_SIMILARITY
+    try:
+        value = float(text)
+    except ValueError:
+        _fail()
+    if not 0 < value < 1:
         _fail()
     return value
 
@@ -220,9 +254,11 @@ class Settings:
     tts: SpeechProfile
     session_dir: Path
     provider_max_concurrency: int
-    order_api_base_url: str
-    order_api_timeout_seconds: float
+    backend_api_base_url: str
+    backend_api_timeout_seconds: float
     tts_es: SpeechProfile | None = None
+    embed: ServiceProfile | None = None
+    embed_min_similarity: float = DEFAULT_EMBED_MIN_SIMILARITY
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> Settings:
@@ -305,9 +341,11 @@ class Settings:
             provider_max_concurrency=_concurrency(
                 env.get("PROVIDER_MAX_CONCURRENCY", "")
             ),
-            order_api_base_url=_base_url(env.get("ORDER_API_BASE_URL", "")),
-            order_api_timeout_seconds=_order_api_timeout(
-                env.get("ORDER_API_TIMEOUT_SECONDS", "")
+            backend_api_base_url=_base_url(env.get("BACKEND_API_BASE_URL", "")),
+            backend_api_timeout_seconds=_backend_api_timeout(
+                env.get("BACKEND_API_TIMEOUT_SECONDS", "")
             ),
             tts_es=_tts_es(env),
+            embed=_embed(env),
+            embed_min_similarity=_min_similarity(env.get("EMBED_MIN_SIMILARITY", "")),
         )

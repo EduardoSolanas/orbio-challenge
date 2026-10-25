@@ -28,7 +28,7 @@ import uvicorn
 from playwright.sync_api import Locator, Page, Response, expect
 
 from app.config import Settings
-from app.order_api import create_order_api_app
+from app.backend_api import create_backend_api_app
 from app.errors import app_error
 from app.main import create_app
 from tests.e2e.hooks import (  # noqa: F401  (pytest registers these hook functions)
@@ -288,7 +288,7 @@ class ObservedApp:
 # --------------------------------------------------------------------------- #
 
 
-def build_settings(session_dir: Path, order_api_base_url: str) -> Settings:
+def build_settings(session_dir: Path, backend_api_base_url: str) -> Settings:
     """Complete isolated auth=none environment; no developer configuration is read."""
 
     return Settings.from_env(
@@ -307,7 +307,7 @@ def build_settings(session_dir: Path, order_api_base_url: str) -> Settings:
             "TTS_VOICE": "e2e-voice",
             "SESSION_DIR": str(session_dir),
             "PROVIDER_MAX_CONCURRENCY": "4",
-            "ORDER_API_BASE_URL": order_api_base_url,
+            "BACKEND_API_BASE_URL": backend_api_base_url,
         }
     )
 
@@ -343,7 +343,7 @@ class AppServer:
         return self._thread is not None and self._thread.is_alive()
 
     def start(self) -> None:
-        self.start_order_api()
+        self.start_backend_api()
         self.settings = build_settings(
             self.session_dir, f"http://127.0.0.1:{self._order_port}"
         )
@@ -393,8 +393,8 @@ class AppServer:
             time.sleep(0.05)
         raise AssertionError(f"/health did not answer 200 within {STARTUP_SECONDS}s")
 
-    def start_order_api(self) -> None:
-        """Start the real private Order API on a loopback socket, reusing its port."""
+    def start_backend_api(self) -> None:
+        """Start the real private Backend API on a loopback socket, reusing its port."""
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -404,7 +404,7 @@ class AppServer:
         self._order_socket = sock
         order_server = uvicorn.Server(
             uvicorn.Config(
-                create_order_api_app(),
+                create_backend_api_app(),
                 log_level="warning",
                 lifespan="on",
                 access_log=False,
@@ -414,7 +414,7 @@ class AppServer:
         self._order_server = order_server
         self._order_thread = threading.Thread(
             target=lambda: order_server.run(sockets=[sock]),
-            name=f"e2e-order-api-{self._order_port}",
+            name=f"e2e-backend-api-{self._order_port}",
             daemon=True,
         )
         self._order_thread.start()
@@ -430,10 +430,10 @@ class AppServer:
                     conn.close()
             except OSError:
                 time.sleep(0.05)
-        raise AssertionError("Order API /health did not answer 200 during E2E startup")
+        raise AssertionError("Backend API /health did not answer 200 during E2E startup")
 
-    def stop_order_api(self) -> None:
-        """Stop the real Order API while keeping its port for a same-origin restart."""
+    def stop_backend_api(self) -> None:
+        """Stop the real Backend API while keeping its port for a same-origin restart."""
 
         order_server, order_thread = self._order_server, self._order_thread
         if order_server is not None and order_thread is not None:
@@ -441,7 +441,7 @@ class AppServer:
             order_thread.join(SHUTDOWN_JOIN_SECONDS)
             if order_thread.is_alive():
                 raise AssertionError(
-                    f"Order API thread still alive {SHUTDOWN_JOIN_SECONDS}s after should_exit"
+                    f"Backend API thread still alive {SHUTDOWN_JOIN_SECONDS}s after should_exit"
                 )
         if self._order_socket is not None:
             self._order_socket.close()
@@ -461,7 +461,7 @@ class AppServer:
         if self._socket is not None:
             self._socket.close()
         self._server = self._thread = self._socket = None
-        self.stop_order_api()
+        self.stop_backend_api()
 
     def restart(self) -> None:
         """Stop and recreate the app on the same origin against the same SESSION_DIR."""

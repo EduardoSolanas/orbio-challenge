@@ -36,6 +36,7 @@ from app.provider_wire import (
     REPAIR_LINE,
     SCHEMA_INSTRUCTION,
     InvalidContent,
+    parse_embeddings,
     parse_extraction,
     parse_knowledge_answer,
     parse_transcription,
@@ -71,11 +72,13 @@ __all__ = [
 Role = str
 ROLES: tuple[Role, ...] = ("llm", "rag", "stt", "tts")
 SPANISH_SPEECH_ROLE: Role = "tts_es"
+EMBED_ROLE: Role = "embed"
 SPEECH_ROLE_BY_LANGUAGE: dict[str, Role] = {"en": "tts", "es": SPANISH_SPEECH_ROLE}
 
 CHAT_COMPLETIONS_SUFFIX = "/chat/completions"
 TRANSCRIPTIONS_SUFFIX = "/audio/transcriptions"
 SPEECH_SUFFIX = "/audio/speech"
+EMBEDDINGS_SUFFIX = "/embeddings"
 
 EXTRACTION_MAX_TOKENS = 1200
 KNOWLEDGE_MAX_TOKENS = 700
@@ -125,6 +128,7 @@ ROLE_BUDGETS: dict[Role, Budget] = {
     "stt": STT_BUDGET,
     "tts": TTS_BUDGET,
     SPANISH_SPEECH_ROLE: TTS_BUDGET,
+    EMBED_ROLE: TEXT_BUDGET,
 }
 
 
@@ -208,6 +212,8 @@ class OpenAICompatibleProvider:
         self._profiles = {role: profiles[role] for role in ROLES}
         if SPANISH_SPEECH_ROLE in profiles:
             self._profiles[SPANISH_SPEECH_ROLE] = profiles[SPANISH_SPEECH_ROLE]
+        if EMBED_ROLE in profiles:
+            self._profiles[EMBED_ROLE] = profiles[EMBED_ROLE]
         self._sleep = sleep if sleep is not None else asyncio.sleep
         self._clock = clock if clock is not None else time.monotonic
         self._capacity = capacity
@@ -282,6 +288,30 @@ class OpenAICompatibleProvider:
                 build,
                 lambda body: parse_knowledge_answer(body, context),
                 TEXT_BUDGET,
+            )
+        finally:
+            self._release()
+
+    async def embed(self, texts: list[str]) -> list[list[float]]:
+        """One vector per text, in order; needs the optional ``embed`` profile."""
+
+        self._acquire()
+        try:
+            profile = self._profiles.get(EMBED_ROLE)
+            if profile is None:
+                raise app_error("provider_configuration")
+            url = _join(profile.base_url, EMBEDDINGS_SUFFIX)
+            payload = {"model": profile.model, "input": texts}
+            deadline = self._clock() + TEXT_BUDGET.total_deadline
+            client = self._clients[EMBED_ROLE]
+
+            async def attempt(repair: bool) -> list[list[float]]:
+                async with client.stream("POST", url, json=payload) as response:
+                    body = await _success_json_body(response)
+                return parse_embeddings(body, len(texts))
+
+            return await self._retry(
+                TEXT_BUDGET, deadline, attempt, repair_on_invalid=False
             )
         finally:
             self._release()

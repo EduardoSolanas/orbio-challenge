@@ -43,6 +43,8 @@ Intent = Literal[
     "gratitude",
     "start_intake",
     "capability",
+    "installation_status",
+    "book_technician",
 ]
 ClarificationCode = Literal["invalid", "ambiguous", "conflict"]
 RequestInputMode = Literal["text", "transcript"]
@@ -184,6 +186,21 @@ class ConfirmRequest(ContractModel):
     review_revision: NonNegativeInt
 
 
+class BookingRequest(ContractModel):
+    """Booking one offered window; the order comes from the verified grant."""
+
+    request_id: CanonicalUUID
+    expected_revision: NonNegativeInt
+    starts_at: Annotated[StrictStr, Field(max_length=32)]
+
+
+class SlotOption(ContractModel):
+    """One offered technician window, wall-clock local time without a zone."""
+
+    starts_at: StrictStr
+    ends_at: StrictStr
+
+
 class OrderVerificationRequest(ContractModel):
     """Dedicated verification body; credentials never enter a TurnRequest."""
 
@@ -262,6 +279,7 @@ class TurnResponse(ContractModel):
     summary: StrictStr | None
     citations: list[Citation] = Field(default_factory=list)
     order_verification_required: StrictBool = False
+    slot_options: list[SlotOption] = Field(default_factory=list)
 
 
 class Confirmation(ContractModel):

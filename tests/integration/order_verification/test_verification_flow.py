@@ -1,9 +1,9 @@
-"""Integration tests for order verification over the real Order API.
+"""Integration tests for order verification over the real Backend API.
 
 The gateway app, lifespan, routes, engine and JSON repository run against an
 isolated temp store; only the external AI provider is scripted. The shipped
-Order API is served by real Uvicorn on a loopback port, so every verification
-and lookup crosses a genuine TCP/HTTP boundary through `OrderApiClient`: test verification flow."""
+Backend API is served by real Uvicorn on a loopback port, so every verification
+and lookup crosses a genuine TCP/HTTP boundary through `BackendApiClient`: test verification flow."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import json
 from uuid import UUID
 
 from app.localization import text
-from app.order_api import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
+from app.backend_api import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
 from app.verification import MAX_VERIFICATION_ATTEMPTS, VERIFICATION_TTL_SECONDS
 from tests.integration.order_verification.support import (
     ORDER_NUMBER_PROMPT,
@@ -53,7 +53,7 @@ async def test_order_status_without_order_number_asks_for_it_without_auth_or_rag
 
 
 async def test_valid_order_prompts_verification_and_wrong_code_changes_nothing(
-    client, provider, verification, order_api, session_dir
+    client, provider, verification, backend_api, session_dir
 ):
     session_id = await create_session(client)
     provider.script_extraction(order_lookup())
@@ -77,14 +77,14 @@ async def test_valid_order_prompts_verification_and_wrong_code_changes_nothing(
     assert wrong.json() == {"verified": False, "error": "verification_failed"}
     assert (session_dir / f"{session_id}.json").read_bytes() == saved_bytes
     assert verification.grant(UUID(session_id)) is None
-    assert order_api.order_gets() == []
+    assert backend_api.order_gets() == []
     assert FIXTURE_POSTCODE not in wrong.text
     assert WRONG_CODE not in wrong.text
     assert "Casey" not in wrong.text
 
 
 async def test_wrong_postcode_and_unknown_order_share_the_same_public_error(
-    client, provider, verification, order_api
+    client, provider, verification, backend_api
 ):
     session_id = await create_session(client)
     provider.script_extraction(order_lookup())
@@ -108,11 +108,11 @@ async def test_wrong_postcode_and_unknown_order_share_the_same_public_error(
         "verified": False,
         "error": "verification_failed",
     }
-    assert order_api.order_gets() == []
+    assert backend_api.order_gets() == []
 
 
 async def test_normalized_postcode_and_demo_code_grant_one_allowlisted_lookup(
-    client, provider, verification, order_api, session_dir
+    client, provider, verification, backend_api, session_dir
 ):
     session_id = await create_session(client)
     provider.script_extraction(order_lookup())
@@ -137,7 +137,7 @@ async def test_normalized_postcode_and_demo_code_grant_one_allowlisted_lookup(
     body = lookup.json()
     assert body["reply"] == ORDER_RESULT
     assert body["order_verification_required"] is False
-    assert order_api.order_gets() == [FIXTURE_ORDER_NUMBER]
+    assert backend_api.order_gets() == [FIXTURE_ORDER_NUMBER]
     assert provider.methods() == ["extract", "extract", "extract"]
     assert "answer_knowledge" not in provider.methods()
     assert FIXTURE_POSTCODE not in lookup.text
@@ -153,7 +153,7 @@ async def test_normalized_postcode_and_demo_code_grant_one_allowlisted_lookup(
 
 
 async def test_tool_request_before_verification_is_refused(
-    client, provider, order_api
+    client, provider, backend_api
 ):
     session_id = await create_session(client)
     provider.script_extraction(
@@ -166,13 +166,13 @@ async def test_tool_request_before_verification_is_refused(
     body = response.json()
     assert body["reply"] == VERIFICATION_PROMPT
     assert body["order_verification_required"] is True
-    assert order_api.order_gets() == []
+    assert backend_api.order_gets() == []
     assert "Casey" not in response.text
     assert "Electricity and gas supply" not in response.text
 
 
 async def test_tool_request_for_another_order_is_rejected(
-    client, provider, verification, order_api
+    client, provider, verification, backend_api
 ):
     session_id = await create_session(client)
     provider.script_extraction(order_lookup())
@@ -189,14 +189,14 @@ async def test_tool_request_for_another_order_is_rejected(
     body = response.json()
     assert body["reply"] == VERIFICATION_PROMPT
     assert body["order_verification_required"] is True
-    assert order_api.order_gets() == []
+    assert backend_api.order_gets() == []
     assert verification.grant(UUID(session_id)) is None
     assert verification.pending_order(UUID(session_id)) == OTHER_ORDER
     assert "Casey" not in response.text
 
 
 async def test_expired_grant_denies_lookup_until_reverified(
-    client, provider, verification, order_api, clock
+    client, provider, verification, backend_api, clock
 ):
     session_id = await create_session(client)
     provider.script_extraction(order_lookup())
@@ -214,7 +214,7 @@ async def test_expired_grant_denies_lookup_until_reverified(
     assert response.status_code == 200
     assert response.json()["order_verification_required"] is True
     assert response.json()["reply"] == VERIFICATION_PROMPT
-    assert order_api.order_gets() == []
+    assert backend_api.order_gets() == []
     assert verification.grant(UUID(session_id)) is None
 
 

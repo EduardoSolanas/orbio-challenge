@@ -46,7 +46,7 @@ DEFAULT_ENV = {
     "TTS_API_KEY": "tts-token",
     "TTS_VOICE": "voice-1",
     "PROVIDER_MAX_CONCURRENCY": "4",
-    "ORDER_API_BASE_URL": "http://order-api.test",
+    "BACKEND_API_BASE_URL": "http://backend-api.test",
 }
 
 ENV_KEYS = sorted(

@@ -23,11 +23,14 @@ from tests.support.fakes import (
     GREETING,
     HIGH,
     MIXED_PART,
+    BOOK_Q,
+    INSTALLATION_Q,
     ORDER_STATUS_Q,
     RECEIPT_TEMPLATE,
     THANKS,
     STANDING_CHARGE_ANSWER_TEXT,
     standing_charge_answer,
+    extraction,
     review_reply,
     summary_text,
     x_category,
@@ -254,23 +257,23 @@ def test_complete_intake(case_id, ui, server, provider):
     }
     assert len(ui.verification_posts()) == 1
 
-    # the Order API is a separate private process. Stop it, submit valid
+    # the Backend API is a separate private process. Stop it, submit valid
     # credentials and assert the gateway returns the fixed safe error without
     # changing the pending order; restart on the same origin and recover.
-    server.stop_order_api()
+    server.stop_backend_api()
     outage = ui.verify_order("SW1A 1AA", "246810")
     assert outage.status == 503
     expect(ui.verification_error).to_have_text(
-        text("errors.order_api_unavailable", "en")
+        text("errors.backend_api_unavailable", "en")
     )
     expect(ui.verification).to_be_visible()
     expect(ui.verification_status).to_be_hidden()
     expect(ui.message).to_be_editable()
     assert ui.disk(new_sid)["slots"]["order_number"] == "NS-000123"
     assert len(ui.verification_posts()) == 2
-    ui.cp("complete_intake.order-api-outage-safe-error")
+    ui.cp("complete_intake.backend-api-outage-safe-error")
 
-    server.start_order_api()
+    server.start_backend_api()
     correct = ui.verify_order(" sw1a 1aa ", "246810")
     assert correct.status == 200
     assert json.loads(correct.text()) == {"verified": True, "error": None}
@@ -301,6 +304,26 @@ def test_complete_intake(case_id, ui, server, provider):
     assert ui.last_assistant(new_sid)["text"] == AUTH_ORDER_RESULT
     assert ui.disk(new_sid)["slots"]["order_number"] == "NS-000123"
     ui.cp("complete_intake.verified-allowlisted-order-summary")
+
+    # Installation status and technician booking reuse the same verified grant.
+    provider.script_extract(INSTALLATION_Q, extraction(intent="installation_status"))
+    assert ui.send(INSTALLATION_Q).status == 200
+    expect(ui.log).to_contain_text("waiting for a technician visit")
+    ui.cp("complete_intake.installation-status-needs-visit")
+
+    provider.script_extract(BOOK_Q, extraction(intent="book_technician"))
+    assert ui.send(BOOK_Q).status == 200
+    windows = ui.page.locator("#slot-picker button")
+    expect(windows).to_have_count(6)
+    first_day = windows.first.get_attribute("data-starts-at")[:10]
+    ui.cp("complete_intake.technician-windows-offered")
+
+    windows.first.click()
+    expect(ui.log).to_contain_text(f"Booked: a technician will visit on {first_day}")
+    expect(ui.page.locator("#slot-picker")).to_be_hidden()
+    assert ui.last_assistant(new_sid)["text"].startswith("Booked: a technician will visit on")
+    assert ui.disk(new_sid)["slots"]["order_number"] == "NS-000123"
+    ui.cp("complete_intake.technician-visit-booked")
 
     # A FAQ after the protected result returns to the still-pending issue step.
     provider.script_extract(GREETING_STANDING_CHARGE_Q, x_question())
@@ -348,7 +371,7 @@ def test_complete_intake(case_id, ui, server, provider):
     expect(ui.log).to_contain_text(review_reply(summary_text(
         "NS-000123", "damaged_item", "My order arrived broken", "high"
     )))
-    assert ui.disk(new_sid)["pending_review_revision"] == 8
+    assert ui.disk(new_sid)["pending_review_revision"] == 11
     ui.cp("complete_intake.verified-order-review")
 
     assert ui.confirm().status == 200
@@ -370,7 +393,7 @@ def test_complete_intake(case_id, ui, server, provider):
         '"verified_order_number"',
     ):
         assert secret not in serialized
-    assert len(provider.calls("extract")) == 12
+    assert len(provider.calls("extract")) == 14
     ui.cp("complete_intake.verified-order-confirmed")
 
     provider.assert_consumed()

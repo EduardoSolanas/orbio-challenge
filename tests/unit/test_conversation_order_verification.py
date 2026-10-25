@@ -1,8 +1,8 @@
 """Unit tests for the engine's order-verification endpoint path.
 
 The gateway keeps no catalog and no demo code: the engine delegates to
-``OrderApiClient`` and only records the grant or the failure. A protocol-faithful
-``httpx.MockTransport`` stands in for the external Order API so the real client,
+``BackendApiClient`` and only records the grant or the failure. A protocol-faithful
+``httpx.MockTransport`` stands in for the external Backend API so the real client,
 response models and registry run without a network.
 """
 
@@ -14,7 +14,7 @@ import httpx
 import pytest
 
 from app.conversation import ConversationEngine
-from app.order_client import OrderApiClient
+from app.backend_client import BackendApiClient
 from app.schemas import OrderVerificationRequest
 from app.storage import JsonSessionRepository
 from app.verification import VerificationRegistry
@@ -80,8 +80,8 @@ async def test_successful_verification_records_the_grant_through_the_client(tmp_
         seen.append(http_request)
         return httpx.Response(200, json={"verified": True, "error": None})
 
-    client = OrderApiClient(
-        "http://order-api.test", timeout_seconds=1.0, transport=httpx.MockTransport(handler)
+    client = BackendApiClient(
+        "http://backend-api.test", timeout_seconds=1.0, transport=httpx.MockTransport(handler)
     )
     engine, repository = build_engine(tmp_path, customer_data=client)
     session = make_session(slots=make_slots(order_number=ORDER))
@@ -94,7 +94,7 @@ async def test_successful_verification_records_the_grant_through_the_client(tmp_
     assert engine.verification.grant(session.session_id) == ORDER
     assert engine.verification.failures(session.session_id) == 0
     assert [str(request.url) for request in seen] == [
-        "http://order-api.test/internal/v1/order-verifications"
+        "http://backend-api.test/internal/v1/order-verifications"
     ]
 
 

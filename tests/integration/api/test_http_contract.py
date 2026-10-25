@@ -53,6 +53,7 @@ TURN_RESPONSE_KEYS = {
     "summary",
     "citations",
     "order_verification_required",
+    "slot_options",
 }
 
 MESSAGE_VIEW_KEYS = {

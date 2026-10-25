@@ -160,7 +160,7 @@ def build_settings(session_dir: Path, server: LocalProviderServer, **overrides: 
         "TTS_MAX_INPUT_CHARS": "200",
         "SESSION_DIR": str(session_dir),
         "PROVIDER_MAX_CONCURRENCY": "4",
-        "ORDER_API_BASE_URL": "http://order-api.test",
+        "BACKEND_API_BASE_URL": "http://backend-api.test",
     }
     values.update(overrides)
     return Settings.from_env(values)

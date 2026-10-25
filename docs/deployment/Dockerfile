@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
-RUN useradd --create-home --uid 10001 appuser && mkdir -p /data/sessions && chown -R appuser:appuser /data
+RUN useradd --create-home --uid 10001 appuser && mkdir -p /data/sessions /data/backend && chown -R appuser:appuser /data
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 COPY --chown=appuser:appuser app ./app

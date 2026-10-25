@@ -78,7 +78,7 @@ def build_settings(tmp_path: Path) -> Settings:
             "TTS_VOICE": "alloy",
             "SESSION_DIR": str(tmp_path),
             "PROVIDER_MAX_CONCURRENCY": "2",
-            "ORDER_API_BASE_URL": "http://order-api.test",
+            "BACKEND_API_BASE_URL": "http://backend-api.test",
         }
     )
 

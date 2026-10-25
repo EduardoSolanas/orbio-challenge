@@ -151,3 +151,23 @@ def parse_transcription(body: str) -> str:
     if len(trimmed) > MAX_TRANSCRIPT_CHARS:
         raise app_error("transcript_too_long")
     return trimmed
+
+
+def parse_embeddings(body: str, expected: int) -> list[list[float]]:
+    """Vectors in input order; every vector is a non-empty list of numbers, same length."""
+
+    payload = _loads(body)
+    items = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(items, list) or len(items) != expected:
+        raise InvalidContent
+    vectors: list[list[float]] = []
+    for item in sorted(items, key=lambda entry: entry.get("index", 0) if isinstance(entry, dict) else 0):
+        vector = item.get("embedding") if isinstance(item, dict) else None
+        if not isinstance(vector, list) or not vector:
+            raise InvalidContent
+        if any(isinstance(x, bool) or not isinstance(x, (int, float)) for x in vector):
+            raise InvalidContent
+        vectors.append([float(x) for x in vector])
+    if len({len(vector) for vector in vectors}) != 1:
+        raise InvalidContent
+    return vectors

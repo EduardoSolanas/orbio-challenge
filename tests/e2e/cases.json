@@ -29,9 +29,12 @@
         "complete_intake.issue-reported-without-verification",
         "complete_intake.verification-form-demo-notice",
         "complete_intake.wrong-code-localized-error",
-        "complete_intake.order-api-outage-safe-error",
+        "complete_intake.backend-api-outage-safe-error",
         "complete_intake.demo-code-success-enables-composer",
         "complete_intake.verified-allowlisted-order-summary",
+        "complete_intake.installation-status-needs-visit",
+        "complete_intake.technician-windows-offered",
+        "complete_intake.technician-visit-booked",
         "complete_intake.verified-order-still-collects-issue-fields",
         "complete_intake.verified-order-review",
         "complete_intake.verified-order-confirmed"

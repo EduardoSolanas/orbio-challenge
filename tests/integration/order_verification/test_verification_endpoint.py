@@ -1,9 +1,9 @@
-"""Integration tests for order verification over the real Order API.
+"""Integration tests for order verification over the real Backend API.
 
 The gateway app, lifespan, routes, engine and JSON repository run against an
 isolated temp store; only the external AI provider is scripted. The shipped
-Order API is served by real Uvicorn on a loopback port, so every verification
-and lookup crosses a genuine TCP/HTTP boundary through `OrderApiClient`: test verification endpoint."""
+Backend API is served by real Uvicorn on a loopback port, so every verification
+and lookup crosses a genuine TCP/HTTP boundary through `BackendApiClient`: test verification endpoint."""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ import json
 from uuid import UUID, uuid4
 
 from app.main import create_app
-from app.order_api import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
-from app.order_client import OrderApiClient
+from app.backend_api import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
+from app.backend_client import BackendApiClient
 from app.verification import VerificationRegistry
 from tests.integration.order_verification.support import (
     ORDER_NUMBER_TEXT,
@@ -27,7 +27,7 @@ from tests.integration.order_verification.support import (
     verify,
 )
 from tests.integration.support.api import read_session, running_client
-from tests.integration.support.order_api import LocalOrderApiServer
+from tests.integration.support.backend_api import LocalBackendApiServer
 
 
 async def test_completed_session_verification_is_rejected(client, provider):
@@ -120,13 +120,13 @@ async def test_postcode_code_and_verified_credentials_are_never_persisted_or_log
 
 
 async def test_restart_clears_the_verification_grant(
-    settings, provider, session_dir, verification, order_api
+    settings, provider, session_dir, verification, backend_api
 ):
     first_app = create_app(
         settings=settings,
         provider=provider,
         verification_registry=verification,
-        order_api_client=OrderApiClient(order_api.base_url),
+        backend_api_client=BackendApiClient(backend_api.base_url),
     )
     async with running_client(first_app) as first_client:
         session_id = await create_session(first_client)
@@ -137,14 +137,14 @@ async def test_restart_clears_the_verification_grant(
         assert (await verify(first_client, session_id)).json()["verified"] is True
 
     fresh_verification = VerificationRegistry(clock=FakeClock())
-    fresh_api = LocalOrderApiServer()
+    fresh_api = LocalBackendApiServer()
     fresh_api.start()
     try:
         second_app = create_app(
             settings=settings,
             provider=provider,
             verification_registry=fresh_verification,
-            order_api_client=OrderApiClient(fresh_api.base_url),
+            backend_api_client=BackendApiClient(fresh_api.base_url),
         )
         async with running_client(second_app) as second_client:
             provider.script_extraction(

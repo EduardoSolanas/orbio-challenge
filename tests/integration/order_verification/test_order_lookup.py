@@ -1,9 +1,9 @@
-"""Integration tests for order verification over the real Order API.
+"""Integration tests for order verification over the real Backend API.
 
 The gateway app, lifespan, routes, engine and JSON repository run against an
 isolated temp store; only the external AI provider is scripted. The shipped
-Order API is served by real Uvicorn on a loopback port, so every verification
-and lookup crosses a genuine TCP/HTTP boundary through `OrderApiClient`: test order lookup."""
+Backend API is served by real Uvicorn on a loopback port, so every verification
+and lookup crosses a genuine TCP/HTTP boundary through `BackendApiClient`: test order lookup."""
 
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ from uuid import UUID
 
 from app.localization import build_summary, render, text
 from app.main import create_app
-from app.order_api import FIXTURE_ORDER_NUMBER
-from app.order_client import OrderApiClient
+from app.backend_api import FIXTURE_ORDER_NUMBER
+from app.backend_client import BackendApiClient
 from app.schemas import KnowledgeAnswer, Slots
 from app.verification import VerificationRegistry
 from tests.integration.order_verification.support import (
@@ -36,7 +36,7 @@ from tests.integration.support.api import (
     persisted_response,
     running_client,
 )
-from tests.integration.support.order_api import LocalOrderApiServer
+from tests.integration.support.backend_api import LocalBackendApiServer
 
 
 async def test_spanish_order_lookup_prompts_in_spanish(
@@ -123,7 +123,7 @@ async def test_pending_order_is_reused_when_a_followup_omits_the_number(
 
 
 async def test_verified_order_without_a_tool_request_does_not_call_the_api(
-    client, provider, order_api
+    client, provider, backend_api
 ):
     session_id = await create_session(client)
     provider.script_extraction(order_lookup())
@@ -139,11 +139,11 @@ async def test_verified_order_without_a_tool_request_does_not_call_the_api(
     body = response.json()
     assert body["reply"] == text("auth.verified", "en")
     assert body["order_verification_required"] is False
-    assert order_api.order_gets() == []
+    assert backend_api.order_gets() == []
 
 
 async def test_policy_faq_between_verification_and_lookup_preserves_grant(
-    client, provider, verification, order_api
+    client, provider, verification, backend_api
 ):
     session_id = await create_session(client)
     provider.script_extraction(order_lookup())
@@ -167,7 +167,7 @@ async def test_policy_faq_between_verification_and_lookup_preserves_grant(
     ]
     assert faq.json()["order_verification_required"] is False
     assert verification.grant(UUID(session_id)) == FIXTURE_ORDER_NUMBER
-    assert order_api.order_gets() == []
+    assert backend_api.order_gets() == []
 
     provider.script_extraction(
         order_lookup(order_number=FIXTURE_ORDER_NUMBER, tool=True)
@@ -176,7 +176,7 @@ async def test_policy_faq_between_verification_and_lookup_preserves_grant(
 
     assert lookup.status_code == 200
     assert lookup.json()["reply"] == ORDER_RESULT
-    assert order_api.order_gets() == [FIXTURE_ORDER_NUMBER]
+    assert backend_api.order_gets() == [FIXTURE_ORDER_NUMBER]
 
 
 async def test_lookup_during_review_preserves_summary_and_token(
@@ -219,14 +219,14 @@ async def test_missing_fixture_record_clears_the_grant_and_fails_generically(
     settings, provider
 ):
     empty_registry = VerificationRegistry(clock=FakeClock())
-    empty_api = LocalOrderApiServer(orders={})
+    empty_api = LocalBackendApiServer(orders={})
     empty_api.start()
     try:
         app = create_app(
             settings=settings,
             provider=provider,
             verification_registry=empty_registry,
-            order_api_client=OrderApiClient(empty_api.base_url),
+            backend_api_client=BackendApiClient(empty_api.base_url),
         )
         async with running_client(app) as client:
             session_id = await create_session(client)
@@ -347,14 +347,14 @@ async def test_spanish_missing_fixture_record_uses_spanish_failure(
     settings, provider
 ):
     empty_registry = VerificationRegistry(clock=FakeClock())
-    empty_api = LocalOrderApiServer(orders={})
+    empty_api = LocalBackendApiServer(orders={})
     empty_api.start()
     try:
         app = create_app(
             settings=settings,
             provider=provider,
             verification_registry=empty_registry,
-            order_api_client=OrderApiClient(empty_api.base_url),
+            backend_api_client=BackendApiClient(empty_api.base_url),
         )
         async with running_client(app) as client:
             session_id = await create_session(client)

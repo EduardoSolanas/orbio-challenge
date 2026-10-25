@@ -11,9 +11,9 @@ services:
       - .env
     environment:
       SESSION_DIR: /data/sessions
-      ORDER_API_BASE_URL: http://order-api:8001
+      BACKEND_API_BASE_URL: http://backend-api:8001
     depends_on:
-      order-api:
+      backend-api:
         condition: service_healthy
     command:
       - python
@@ -40,7 +40,7 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
-  order-api:
+  backend-api:
     build:
       context: .
       dockerfile: docs/deployment/Dockerfile
@@ -48,13 +48,17 @@ services:
       - python
       - -m
       - uvicorn
-      - app.order_api:app
+      - app.backend_api:app
       - --host
       - "0.0.0.0"
       - --port
       - "8001"
       - --workers
       - "1"
+    environment:
+      BACKEND_DATA_PATH: /data/backend/bookings.json
+    volumes:
+      - backend-data:/data/backend
     # Internal network only: no `ports:` entry, so the browser cannot reach it.
     expose:
       - "8001"
@@ -67,3 +71,4 @@ services:
       start_period: 5s
 volumes:
   sessions:
+  backend-data:

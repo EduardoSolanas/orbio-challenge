@@ -1,6 +1,6 @@
 """Unit tests for the gateway-side verification registry.
 
-The Order API owns the credential rule and fixture (`tests/unit/test_order_api.py`).
+The Backend API owns the credential rule and fixture (`tests/unit/test_backend_api.py`).
 This registry only tracks the pending order, failure count and 15-minute grant per
 session; these tests pin binding, expiry, lockout and every reset path.
 """
@@ -339,7 +339,7 @@ def test_verification_request_is_strict_about_shape() -> None:
     )
     assert command.delivery_postcode == "SW1A 1AA"
 
-    # Empty strings are accepted by the wire model and rejected by the Order API
+    # Empty strings are accepted by the wire model and rejected by the Backend API
     # with the same generic error, so shape and credential errors stay distinct.
     assert OrderVerificationRequest(
         delivery_postcode="", verification_code=""
@@ -383,9 +383,9 @@ def test_localized_auth_strings_are_exact_in_english_and_spanish() -> None:
     assert text("auth.status_active", "es") == "Activa"
     assert text("errors.too_many_verification_attempts", "en")
     assert text("errors.too_many_verification_attempts", "es")
-    assert text("errors.order_api_unavailable", "en") == (
-        "The order service is unavailable. Please retry."
+    assert text("errors.backend_api_unavailable", "en") == (
+        "The backend service is unavailable. Please retry."
     )
-    assert text("errors.order_api_timeout", "es") == (
-        "El servicio de pedidos agotó el tiempo de espera. Inténtalo de nuevo."
+    assert text("errors.backend_api_timeout", "es") == (
+        "El servicio interno agotó el tiempo de espera. Inténtalo de nuevo."
     )

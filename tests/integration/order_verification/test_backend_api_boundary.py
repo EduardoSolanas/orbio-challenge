@@ -1,9 +1,9 @@
-"""Integration tests for order verification over the real Order API.
+"""Integration tests for order verification over the real Backend API.
 
 The gateway app, lifespan, routes, engine and JSON repository run against an
 isolated temp store; only the external AI provider is scripted. The shipped
-Order API is served by real Uvicorn on a loopback port, so every verification
-and lookup crosses a genuine TCP/HTTP boundary through `OrderApiClient`: test order api boundary."""
+Backend API is served by real Uvicorn on a loopback port, so every verification
+and lookup crosses a genuine TCP/HTTP boundary through `BackendApiClient`."""
 
 from __future__ import annotations
 
@@ -18,11 +18,11 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-from app.errors import INVALID_ORDER_API_RESPONSE, ORDER_API_TIMEOUT
+from app.errors import INVALID_BACKEND_API_RESPONSE, BACKEND_API_TIMEOUT
 from app.localization import text
 from app.main import create_app
-from app.order_api import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
-from app.order_client import OrderApiClient
+from app.backend_api import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
+from app.backend_client import BackendApiClient
 from tests.integration.order_verification.support import (
     ORDER_NUMBER_TEXT,
     ORDER_RESULT,
@@ -35,8 +35,8 @@ from tests.integration.order_verification.support import (
 from tests.integration.support.api import running_client
 
 
-async def test_order_api_outage_during_verification_is_safe_and_recovers(
-    client, provider, verification, order_api, session_dir
+async def test_backend_api_outage_during_verification_is_safe_and_recovers(
+    client, provider, verification, backend_api, session_dir
 ):
     session_id = await create_session(client)
     provider.script_extraction(order_lookup())
@@ -45,12 +45,12 @@ async def test_order_api_outage_during_verification_is_safe_and_recovers(
     assert (await send_turn(client, session_id, ORDER_NUMBER_TEXT, 1)).status_code == 200
     before = (session_dir / f"{session_id}.json").read_bytes()
 
-    order_api.stop()
+    backend_api.stop()
     down = await verify(client, session_id)
 
     assert down.status_code == 503
-    assert down.json()["error"]["code"] == "order_api_unavailable"
-    assert down.json()["error"]["message"] == text("errors.order_api_unavailable", "en")
+    assert down.json()["error"]["code"] == "backend_api_unavailable"
+    assert down.json()["error"]["message"] == text("errors.backend_api_unavailable", "en")
     assert down.json()["error"]["retryable"] is True
     assert (session_dir / f"{session_id}.json").read_bytes() == before
     assert verification.grant(UUID(session_id)) is None
@@ -58,21 +58,21 @@ async def test_order_api_outage_during_verification_is_safe_and_recovers(
     assert FIXTURE_POSTCODE not in down.text
     assert DEMO_VERIFICATION_CODE not in down.text
 
-    order_api.restart()
+    backend_api.restart()
     recovered = await verify(client, session_id)
 
     assert recovered.status_code == 200
     assert recovered.json() == {"verified": True, "error": None}
     assert verification.grant(UUID(session_id)) == FIXTURE_ORDER_NUMBER
-    assert order_api.verification_posts()[-1] == {
+    assert backend_api.verification_posts()[-1] == {
         "order_number": FIXTURE_ORDER_NUMBER,
         "delivery_postcode": FIXTURE_POSTCODE,
         "verification_code": DEMO_VERIFICATION_CODE,
     }
 
 
-async def test_order_api_outage_during_lookup_preserves_the_grant_and_recovers(
-    client, provider, verification, order_api, session_dir
+async def test_backend_api_outage_during_lookup_preserves_the_grant_and_recovers(
+    client, provider, verification, backend_api, session_dir
 ):
     session_id = await create_session(client)
     provider.script_extraction(order_lookup())
@@ -82,20 +82,20 @@ async def test_order_api_outage_during_lookup_preserves_the_grant_and_recovers(
     assert (await verify(client, session_id)).json()["verified"] is True
     before = (session_dir / f"{session_id}.json").read_bytes()
 
-    order_api.stop()
+    backend_api.stop()
     provider.script_extraction(
         order_lookup(order_number=FIXTURE_ORDER_NUMBER, tool=True)
     )
     down = await send_turn(client, session_id, ORDER_STATUS_Q, 2)
 
     assert down.status_code == 503
-    assert down.json()["error"]["code"] == "order_api_unavailable"
-    assert down.json()["error"]["message"] == text("errors.order_api_unavailable", "en")
+    assert down.json()["error"]["code"] == "backend_api_unavailable"
+    assert down.json()["error"]["message"] == text("errors.backend_api_unavailable", "en")
     assert (session_dir / f"{session_id}.json").read_bytes() == before
     assert verification.grant(UUID(session_id)) == FIXTURE_ORDER_NUMBER
     assert "Casey" not in down.text
 
-    order_api.restart()
+    backend_api.restart()
     provider.script_extraction(
         order_lookup(order_number=FIXTURE_ORDER_NUMBER, tool=True)
     )
@@ -104,10 +104,10 @@ async def test_order_api_outage_during_lookup_preserves_the_grant_and_recovers(
     assert recovered.status_code == 200
     assert recovered.json()["reply"] == ORDER_RESULT
     assert recovered.json()["order_verification_required"] is False
-    assert order_api.order_gets() == [FIXTURE_ORDER_NUMBER]
+    assert backend_api.order_gets() == [FIXTURE_ORDER_NUMBER]
 
 
-async def test_gateway_origin_does_not_expose_the_private_order_api(client):
+async def test_gateway_origin_does_not_expose_the_private_backend_api(client):
     for method, path in (
         ("POST", "/internal/v1/order-verifications"),
         ("GET", f"/internal/v1/orders/{FIXTURE_ORDER_NUMBER}"),
@@ -120,8 +120,8 @@ async def test_gateway_origin_does_not_expose_the_private_order_api(client):
         assert "Electricity and gas supply" not in response.text
 
 
-class _FaultyOrderApiServer:
-    """Real loopback Order API that stalls or returns unusable bodies (OA-I07)."""
+class _FaultyBackendApiServer:
+    """Real loopback Backend API that stalls or returns unusable bodies (OA-I07)."""
 
     SLOW_SECONDS = 2.0
     STARTUP_SECONDS = 10.0
@@ -153,7 +153,7 @@ class _FaultyOrderApiServer:
         self._server = server
         thread = threading.Thread(
             target=lambda: server.run(sockets=[sock]),
-            name=f"faulty-order-api-{self.port}",
+            name=f"faulty-backend-api-{self.port}",
             daemon=True,
         )
         self._thread = thread
@@ -161,14 +161,14 @@ class _FaultyOrderApiServer:
         deadline = time.monotonic() + self.STARTUP_SECONDS
         while not server.started and time.monotonic() < deadline:
             time.sleep(0.02)
-        assert server.started, "faulty Order API did not become ready"
+        assert server.started, "faulty Backend API did not become ready"
 
     def stop(self) -> None:
         if self._server is not None:
             self._server.should_exit = True
         if self._thread is not None:
             self._thread.join(self.SHUTDOWN_JOIN_SECONDS)
-            assert not self._thread.is_alive(), "faulty Order API thread survived shutdown"
+            assert not self._thread.is_alive(), "faulty Backend API thread survived shutdown"
         if self._socket is not None:
             self._socket.close()
 
@@ -193,8 +193,8 @@ class _FaultyOrderApiServer:
 
 
 @pytest.fixture
-def faulty_order_api():
-    server = _FaultyOrderApiServer()
+def faulty_backend_api():
+    server = _FaultyBackendApiServer()
     server.start()
     try:
         yield server
@@ -205,29 +205,29 @@ def faulty_order_api():
 @pytest.mark.parametrize(
     "mode,status,code",
     [
-        pytest.param("slow", 504, ORDER_API_TIMEOUT, id="OA-I07-timeout"),
-        pytest.param("malformed", 502, INVALID_ORDER_API_RESPONSE, id="OA-I07-malformed"),
-        pytest.param("server_error", 502, INVALID_ORDER_API_RESPONSE, id="OA-I07-5xx"),
+        pytest.param("slow", 504, BACKEND_API_TIMEOUT, id="OA-I07-timeout"),
+        pytest.param("malformed", 502, INVALID_BACKEND_API_RESPONSE, id="OA-I07-malformed"),
+        pytest.param("server_error", 502, INVALID_BACKEND_API_RESPONSE, id="OA-I07-5xx"),
     ],
 )
-async def test_unusable_order_api_replies_map_to_fixed_safe_errors(
+async def test_unusable_backend_api_replies_map_to_fixed_safe_errors(
     mode,
     status,
     code,
-    faulty_order_api,
+    faulty_backend_api,
     settings,
     provider,
     verification,
     session_dir,
 ):
-    """OA-I07: slow/malformed/5xx Order API replies never reach the browser raw."""
+    """OA-I07: slow/malformed/5xx Backend API replies never reach the browser raw."""
 
-    faulty_order_api.mode = mode
+    faulty_backend_api.mode = mode
     app = create_app(
         settings=settings,
         provider=provider,
         verification_registry=verification,
-        order_api_client=OrderApiClient(faulty_order_api.base_url, timeout_seconds=0.2),
+        backend_api_client=BackendApiClient(faulty_backend_api.base_url, timeout_seconds=0.2),
     )
     async with running_client(app) as client:
         session_id = await create_session(client)
@@ -248,9 +248,9 @@ async def test_unusable_order_api_replies_map_to_fixed_safe_errors(
         assert verification.grant(UUID(session_id)) is None
         assert verification.failures(UUID(session_id)) == 0
         for leaked in (
-            faulty_order_api.base_url,
+            faulty_backend_api.base_url,
             "127.0.0.1",
-            str(faulty_order_api.port),
+            str(faulty_backend_api.port),
             FIXTURE_POSTCODE,
             DEMO_VERIFICATION_CODE,
             "internal detail",

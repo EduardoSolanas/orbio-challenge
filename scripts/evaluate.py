@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""Operator-invoked live evaluation of intent detection and FAQ retrieval.
+
+Runs the labelled utterances in ``tests/eval/utterances.json`` against the
+services in the process environment (a ``.env`` file in the repository root is
+read for any variable not already set). It is never part of the automatic test
+run: it calls the real LLM and, when ``EMBED_*`` is configured, the embedding
+model.
+
+* ``intents``: one extraction per utterance; reports accuracy per intent and every miss.
+* ``retrieval``: the best two records per question, from embeddings (when
+  configured) and from keyword matching; reports hit rate, correct abstentions
+  and every miss.
+
+It writes ``reports/evaluation.json`` and exits 0 whatever the score: it measures,
+it does not gate.
+
+Usage:
+    python scripts/evaluate.py [intents|retrieval|all] [--cases PATH]
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import json
+import os
+import sys
+from collections import defaultdict
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from app.config import Settings  # noqa: E402
+from app.main import DEFAULT_KNOWLEDGE_PATH, _build_provider  # noqa: E402
+from app.retrieval import load_knowledge  # noqa: E402
+from app.schemas import ExtractionContext, Slots  # noqa: E402
+from app.semantic import SemanticIndex  # noqa: E402
+
+DEFAULT_CASES = REPO_ROOT / "tests" / "eval" / "utterances.json"
+DEFAULT_REPORT = REPO_ROOT / "reports" / "evaluation.json"
+
+
+def load_dotenv() -> None:
+    env_file = REPO_ROOT / ".env"
+    if not env_file.is_file():
+        return
+    for line in env_file.read_text(encoding="utf-8").splitlines():
+        if line and not line.startswith("#") and "=" in line:
+            key, _, value = line.partition("=")
+            os.environ.setdefault(key, value)
+    # Compose supplies these two; a local run does not need them to be real.
+    os.environ.setdefault("SESSION_DIR", str(REPO_ROOT / "reports" / "evaluation-sessions"))
+    os.environ.setdefault("BACKEND_API_BASE_URL", "http://127.0.0.1:8001")
+
+
+def context_for(text: str) -> ExtractionContext:
+    return ExtractionContext(
+        slots=Slots(order_number=None, category=None, description=None, urgency=None),
+        pending_clarifications={},
+        recent_messages=[],
+        current_message=text,
+        status="collecting",
+        intake_started=False,
+        frustration_active=False,
+    )
+
+
+async def evaluate_intents(provider, cases: list[dict]) -> dict:
+    totals: dict[str, list[int]] = defaultdict(lambda: [0, 0])
+    misses = []
+    for case in cases:
+        try:
+            got = (await provider.extract(context_for(case["text"]))).intent
+        except Exception as error:  # noqa: BLE001 - one bad call must not stop the run
+            got = f"error:{getattr(error, 'code', type(error).__name__)}"
+        totals[case["intent"]][1] += 1
+        if got == case["intent"]:
+            totals[case["intent"]][0] += 1
+        else:
+            misses.append({"text": case["text"], "expected": case["intent"], "got": got})
+    correct = sum(right for right, _ in totals.values())
+    count = sum(total for _, total in totals.values())
+    print(f"\nIntent detection: {correct}/{count} ({100 * correct / count:.0f}%)")
+    for intent, (right, total) in sorted(totals.items()):
+        print(f"  {intent:20} {right}/{total}")
+    for miss in misses:
+        print(f"  miss: {miss['text']!r} expected {miss['expected']}, got {miss['got']}")
+    return {"correct": correct, "total": count, "misses": misses}
+
+
+def score(name: str, results: list[tuple[dict, list[str]]]) -> dict:
+    found = [(c, ids) for c, ids in results if c["record"] is not None]
+    abstain = [(c, ids) for c, ids in results if c["record"] is None]
+    hits = sum(1 for c, ids in found if c["record"] in ids)
+    top1 = sum(1 for c, ids in found if ids and ids[0] == c["record"])
+    abstained = sum(1 for _, ids in abstain if not ids)
+    print(
+        f"  {name:10} right record in top 2: {hits}/{len(found)}  first: {top1}/{len(found)}  "
+        f"abstained correctly: {abstained}/{len(abstain)}"
+    )
+    misses = [
+        {"text": c["text"], "expected": c["record"], "got": ids}
+        for c, ids in results
+        if (c["record"] is None and ids) or (c["record"] is not None and c["record"] not in ids)
+    ]
+    for miss in misses:
+        print(f"    miss: {miss['text']!r} expected {miss['expected']}, got {miss['got']}")
+    return {"hits": hits, "top1": top1, "abstained": abstained, "misses": misses}
+
+
+async def evaluate_retrieval(settings: Settings, provider, cases: list[dict], label: str) -> dict:
+    knowledge = load_knowledge(DEFAULT_KNOWLEDGE_PATH)
+    print(f"\nRetrieval, {label} ({len(knowledge.records)} records):")
+    report = {
+        "keyword": score(
+            "keyword",
+            [(c, [r.id for r in knowledge.retrieve(c["text"])]) for c in cases],
+        )
+    }
+    if settings.embed is None:
+        print("  embedding  skipped: EMBED_* is not configured")
+        return report
+    index = SemanticIndex(
+        knowledge.records, provider.embed, min_similarity=settings.embed_min_similarity
+    )
+    results = []
+    for case in cases:
+        try:
+            ids = [r.id for r in await index.retrieve(case["text"])]
+        except Exception as error:  # noqa: BLE001
+            ids = [f"error:{getattr(error, 'code', type(error).__name__)}"]
+        results.append((case, ids))
+    report["embedding"] = score(f"embedding", results)
+    report["embedding"]["min_similarity"] = settings.embed_min_similarity
+    return report
+
+
+async def main(mode: str, cases_path: Path) -> None:
+    load_dotenv()
+    settings = Settings.from_env()
+    cases = json.loads(cases_path.read_text(encoding="utf-8"))
+    provider = _build_provider(settings)
+    report: dict = {}
+    try:
+        if mode in ("intents", "all"):
+            report["intents"] = await evaluate_intents(provider, cases["intents"])
+        if mode in ("retrieval", "all"):
+            # The floor was tuned on "retrieval"; "retrieval_holdout" was written
+            # before any score was seen and is the fair comparison.
+            for key, label in (
+                ("retrieval", "tuning set"),
+                ("retrieval_holdout", "held-out set"),
+            ):
+                report[key] = await evaluate_retrieval(settings, provider, cases[key], label)
+    finally:
+        await provider.close()
+    DEFAULT_REPORT.parent.mkdir(parents=True, exist_ok=True)
+    DEFAULT_REPORT.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", "utf-8")
+    print(f"\nWrote {DEFAULT_REPORT.relative_to(REPO_ROOT)}")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("mode", nargs="?", choices=("intents", "retrieval", "all"), default="all")
+    parser.add_argument("--cases", type=Path, default=DEFAULT_CASES)
+    arguments = parser.parse_args()
+    asyncio.run(main(arguments.mode, arguments.cases))

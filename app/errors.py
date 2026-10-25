@@ -37,9 +37,12 @@ STORAGE_UNAVAILABLE = "storage_unavailable"
 STORAGE_CORRUPT = "storage_corrupt"
 PROVIDER_TIMEOUT = "provider_timeout"
 TOO_MANY_VERIFICATION_ATTEMPTS = "too_many_verification_attempts"
-ORDER_API_UNAVAILABLE = "order_api_unavailable"
-ORDER_API_TIMEOUT = "order_api_timeout"
-INVALID_ORDER_API_RESPONSE = "invalid_order_api_response"
+BACKEND_API_UNAVAILABLE = "backend_api_unavailable"
+BACKEND_API_TIMEOUT = "backend_api_timeout"
+INVALID_BACKEND_API_RESPONSE = "invalid_backend_api_response"
+SLOT_UNAVAILABLE = "slot_unavailable"
+ALREADY_BOOKED = "already_booked"
+VERIFICATION_REQUIRED = "verification_required"
 INTERNAL_ERROR = "internal_error"
 
 CONFIGURATION_INVALID_MESSAGE = (
@@ -188,22 +191,30 @@ ERRORS: dict[str, ErrorSpec] = {
             True,
         ),
         ErrorSpec(
-            ORDER_API_UNAVAILABLE,
-            text("errors.order_api_unavailable", "en"),
+            BACKEND_API_UNAVAILABLE,
+            text("errors.backend_api_unavailable", "en"),
             503,
             True,
         ),
         ErrorSpec(
-            ORDER_API_TIMEOUT,
-            text("errors.order_api_timeout", "en"),
+            BACKEND_API_TIMEOUT,
+            text("errors.backend_api_timeout", "en"),
             504,
             True,
         ),
         ErrorSpec(
-            INVALID_ORDER_API_RESPONSE,
-            text("errors.invalid_order_api_response", "en"),
+            INVALID_BACKEND_API_RESPONSE,
+            text("errors.invalid_backend_api_response", "en"),
             502,
             True,
+        ),
+        ErrorSpec(SLOT_UNAVAILABLE, text("errors.slot_unavailable", "en"), 409, False),
+        ErrorSpec(ALREADY_BOOKED, text("errors.already_booked", "en"), 409, False),
+        ErrorSpec(
+            VERIFICATION_REQUIRED,
+            text("errors.verification_required", "en"),
+            403,
+            False,
         ),
         ErrorSpec(INTERNAL_ERROR, text("errors.internal_error", "en"), 500, False),
     )

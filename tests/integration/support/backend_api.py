@@ -1,8 +1,8 @@
-"""Real loopback Order API service for gateway-boundary integration tests.
+"""Real loopback Backend API service for gateway-boundary integration tests.
 
-The shipped ``create_order_api_app`` is served by Uvicorn on an ephemeral
+The shipped ``create_backend_api_app`` is served by Uvicorn on an ephemeral
 loopback port, so every gateway verification/lookup crosses a genuine TCP/HTTP
-boundary through ``OrderApiClient`` (no transport double, no in-process fake).
+boundary through ``BackendApiClient`` (no transport double, no in-process fake).
 The server records each request, and can be stopped and restarted on the same
 port to prove outage and recovery behaviour.
 """
@@ -17,7 +17,7 @@ from typing import Any
 import uvicorn
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.order_api import OrderRecord, create_order_api_app
+from app.backend_api import OrderRecord, create_backend_api_app
 
 STARTUP_SECONDS = 10.0
 SHUTDOWN_JOIN_SECONDS = 10.0
@@ -26,7 +26,7 @@ SHUTDOWN_JOIN_SECONDS = 10.0
 class _RecordMiddleware(BaseHTTPMiddleware):
     """Record method, path and raw body without changing the response."""
 
-    def __init__(self, app, owner: "LocalOrderApiServer") -> None:
+    def __init__(self, app, owner: "LocalBackendApiServer") -> None:
         super().__init__(app)
         self.owner = owner
 
@@ -38,8 +38,8 @@ class _RecordMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-class LocalOrderApiServer:
-    """The real Order API on a loopback socket, with stop/restart on one port."""
+class LocalBackendApiServer:
+    """The real Backend API on a loopback socket, with stop/restart on one port."""
 
     def __init__(self, orders: dict[str, OrderRecord] | None = None) -> None:
         self._orders = orders
@@ -61,7 +61,7 @@ class LocalOrderApiServer:
         sock.listen(128)
         self.port = sock.getsockname()[1]
         self._socket = sock
-        app = create_order_api_app(self._orders)
+        app = create_backend_api_app(self._orders)
         app.add_middleware(_RecordMiddleware, owner=self)
         server = uvicorn.Server(
             uvicorn.Config(app, log_level="warning", lifespan="on", access_log=False)
@@ -75,7 +75,7 @@ class LocalOrderApiServer:
             except BaseException as exc:  # surfaced by the health wait
                 self._thread_error = exc
 
-        thread = threading.Thread(target=run, name=f"order-api-{self.port}", daemon=True)
+        thread = threading.Thread(target=run, name=f"backend-api-{self.port}", daemon=True)
         self._thread = thread
         thread.start()
         self._wait_healthy()
@@ -86,7 +86,7 @@ class LocalOrderApiServer:
         deadline = time.monotonic() + STARTUP_SECONDS
         while time.monotonic() < deadline:
             if self._thread is None or not self._thread.is_alive():
-                raise AssertionError(f"order API thread exited: {self._thread_error!r}")
+                raise AssertionError(f"backend API thread exited: {self._thread_error!r}")
             try:
                 with urllib.request.urlopen(f"{self.base_url}/health", timeout=1) as response:
                     if response.status == 200:
@@ -94,7 +94,7 @@ class LocalOrderApiServer:
             except OSError:
                 pass
             time.sleep(0.05)
-        raise AssertionError(f"order API /health did not answer within {STARTUP_SECONDS}s")
+        raise AssertionError(f"backend API /health did not answer within {STARTUP_SECONDS}s")
 
     def stop(self) -> None:
         server, thread = self._server, self._thread
@@ -104,7 +104,7 @@ class LocalOrderApiServer:
         thread.join(SHUTDOWN_JOIN_SECONDS)
         if thread.is_alive():
             raise AssertionError(
-                f"order API thread alive {SHUTDOWN_JOIN_SECONDS}s after should_exit"
+                f"backend API thread alive {SHUTDOWN_JOIN_SECONDS}s after should_exit"
             )
         if self._socket is not None:
             self._socket.close()
@@ -130,7 +130,7 @@ class LocalOrderApiServer:
             if request["method"] == "GET" and "/internal/v1/orders/" in request["path"]
         ]
 
-    def __enter__(self) -> "LocalOrderApiServer":
+    def __enter__(self) -> "LocalBackendApiServer":
         self.start()
         return self
 

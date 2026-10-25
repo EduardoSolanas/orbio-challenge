@@ -29,8 +29,8 @@ docker compose up --build -d --wait --wait-timeout 120
 
 Open http://127.0.0.1:8000. To try the verified-account flow, use the demo values
 shown in the page (fictional account `NS-000123`, postcode `SW1A 1AA`, code
-`246810`). Stop with `docker compose down`; add `--volumes` to also delete saved
-sessions.
+`246810`), then ask for the installation status or to book a technician. Stop with
+`docker compose down`; add `--volumes` to also delete saved sessions and bookings.
 
 ## How it meets the assignment
 
@@ -43,7 +43,8 @@ sessions.
 | Conversation context | Saved transcript plus accepted fields; sessions resume after a restart |
 | JSON storage and summary | `app/storage.py`, [`examples/session.example.json`](examples/session.example.json) |
 | Speech-to-text and text-to-speech | Upload or record audio, edit the transcript, play replies (`app/audio.py`, `app/providers.py`) |
-| RAG | Lexical retrieval over `app/knowledge/northstar-faq.json`, validated citations, abstention |
+| RAG | Embedding retrieval (or keyword matching when no embedding model is configured) over `app/knowledge/northstar-faq.json`, validated citations, abstention |
+| Account actions (extra) | After verifying the demo account: installation status and booking a technician from offered time windows (`app/backend_api.py`, `app/bookings.py`, `app/visits.py`) |
 | Sentiment (bonus) | The extraction call also labels sentiment and frustration; clear frustration hands off to a simulated agent |
 | Multiple languages (bonus) | English and Spanish |
 | Multi-turn memory (bonus) | Within a session |
@@ -57,6 +58,7 @@ All three services are configured independently in `.env`; nothing is hard-coded
 | LLM (extraction and RAG answers) | `DeepSeek-V4.1-Flash-1017` on a self-hosted server, JSON via `prompt_json` | Fast and cheap enough for one call per turn; works without provider-side structured output |
 | Speech-to-text | `whisper-large-v3-turbo` on Groq | Low latency transcription |
 | Text-to-speech | `canopylabs/orpheus-v1-english` on Groq, voice `troy`, WAV | Natural English voice; replies are split into chunks and joined |
+| Embeddings (optional) | `nvidia/nemotron-3-embed-1b:free` on OpenRouter, set in `EMBED_*`; any OpenAI-compatible `/v1/embeddings` model works | Semantic retrieval for the FAQ; handles Spanish questions. Free tier, so rate-limited |
 
 A live check (`scripts/check_backends.py`) against these exact services passed all
 five calls on 2026-10-24: extraction, a supported RAG question, an unsupported RAG
@@ -73,7 +75,7 @@ FastAPI app ── conversation engine ── validators ── JSON session sto
    │                 │
    │                 ├── provider adapter ──► LLM / STT / TTS services
    │                 └── knowledge base retrieval (local, lexical)
-   └── Order API client ──► private Order API (fictional accounts, internal network only)
+   └── Backend API client ──► private Backend API (fictional accounts, internal network only)
 ```
 
 - `app/main.py`, `app/routes.py`: app factory and startup wiring; the HTTP routes. `app/asgi_guards.py` and `app/http_support.py` hold the request-size guards, correlation IDs and request parsing.
@@ -82,7 +84,8 @@ FastAPI app ── conversation engine ── validators ── JSON session sto
 - `app/providers.py`: one OpenAI-compatible adapter for the four roles, with timeouts, retries and a shared concurrency limit. `app/provider_wire.py` builds requests and parses replies; `app/speech_wav.py` joins spoken chunks into one WAV.
 - `app/retrieval.py`: knowledge loading, retrieval and citation checks.
 - `app/storage.py`: one JSON file per session, replaced atomically.
-- `app/order_api.py`, `app/order_client.py`, `app/verification.py`: a separate private service for the fictional account check.
+- `app/backend_api.py`, `app/backend_client.py`, `app/verification.py`: the private Backend API, the single place for account data: the fictional account check, installation status, technician availability and booking. The gateway reaches it over the internal network only.
+- `app/bookings.py`, `app/availability.json`, `app/visits.py`: technician windows and bookings kept in one JSON file (hours and days offered are edited in `availability.json`) and the reply text for installation status and booking. After verification a customer can ask for installation status or to book a technician; the chat shows the open windows as buttons and a click books one.
 - `app/static/`: the chat page. `app_core.js` holds state and helpers, `app_view.js` renders, `app_session.js` handles the session lifecycle, `app_turns.js` sends turns and confirmations, `app_voice.js` handles recording and playback, and `app.js` wires events.
 
 ## Key design decisions
@@ -91,7 +94,7 @@ FastAPI app ── conversation engine ── validators ── JSON session sto
 - **Deterministic replies and summary.** Questions, the review and the summary come from templates, so the saved record always matches what the customer confirmed. Only RAG answers are generated.
 - **Explicit confirmation.** Nothing is saved as submitted until the customer confirms a specific review; a correction invalidates the earlier review.
 - **Safe failure.** A failed model call, storage write or invalid answer leaves the session untouched and can be retried. Repeated requests are de-duplicated.
-- **Simple, local storage.** One JSON file per session with atomic replacement. No database or vector store, which suits a single-process demo.
+- **Simple, local storage.** One JSON file per session with atomic replacement. Technician bookings use one JSON file in the Backend API. No database or vector store, which suits a single-process demo.
 - **Grounded answers.** The assistant answers only from the retrieved records, cites them, and says when it has no information. The app builds citations itself and never trusts model-supplied titles or links.
 - **Provider-agnostic.** Any OpenAI-compatible server can fill any role, so the models can be swapped without code changes.
 
@@ -124,8 +127,17 @@ assistant reply has an optional play button. Audio is never stored.
 
 ## Knowledge base
 
-The fictional corpus has five records. Retrieval is simple keyword matching, with no
-embeddings.
+The fictional corpus has five records. Two retrieval modes exist, chosen by configuration:
+
+- **Embeddings** (when `EMBED_*` is set in `.env`): the records are embedded once and
+  each question is matched by cosine similarity. The best two records at or above
+  `EMBED_MIN_SIMILARITY` go to the model; if none qualifies, the assistant abstains.
+  If the embedding service fails, that question falls back to keyword matching.
+- **Keywords** (default, no embedding model): each record is scored by the words it
+  shares with the question, and the best two go to the model.
+
+Either way the model only sees the retrieved records, and citations are built and
+checked by the app (`app/semantic.py`, `app/retrieval.py`).
 
 | ID | Title |
 |---|---|
@@ -145,19 +157,89 @@ python scripts/check_backends.py     # live check against the services in your e
 
 | Layer | What it covers | Result |
 |---|---|---|
-| Unit and integration | Validation, state machine, storage, HTTP routes, providers over a real socket, RAG, audio | 1713 unit and 370 integration tests passed on 2026-10-25, run as separate layers (`scripts/test.py unit`, then `integration`). Two wall-clock timeout tests can fail when both layers share one pytest process on a slow machine. |
+| Unit and integration | Validation, state machine, storage, HTTP routes, providers over a real socket, RAG, audio | 1769 unit and 385 integration tests passed on 2026-10-25, run as separate layers (`scripts/test.py unit`, then `integration`). Two wall-clock timeout tests can fail when both layers share one pytest process on a slow machine. |
 | Browser (Playwright) | Eleven tests in Chromium covering the user journeys, including voice and RAG | 11 passed on 2026-10-25 |
 | Browser scripts | JavaScript unit tests (`node --test tests/unit/*.test.js`) | 26 passed on 2026-10-25 |
-| Real Docker end-to-end | Deployed container against the real LLM, with an LLM judge for intent routing | 3 passed at an earlier full run; not repeated since |
+| Judge journeys | 25 browser tests with a scripted AI provider; each reply is graded against a written rule | 25 passed on 2026-10-25. The judge LLM was not available, so Claude graded the 23 recorded conversations by hand against the same rules: 23 of 23 pass. Replies there are mostly fixed templates, so this checks wording rules, not model behaviour. |
+| Real Docker end-to-end | Deployed containers against the real LLM, speech services and embeddings | 3 passed on 2026-10-25 (greeting; multi-turn RAG with citations; unsupported question abstains). Claude graded the replies by hand and the judge LLM was not used. The multi-turn test originally required the follow-up answer to differ from the first; both questions retrieve the same record and the model quotes it, so it now requires the same record and the 30-day answer. |
 | Live providers | `scripts/check_backends.py` | 5 of 5 passed (2026-10-24) |
+| Live evaluation | `scripts/evaluate.py`: intent detection and FAQ retrieval on labelled utterances | 89 of 89 intents (in-sample); FAQ retrieval on held-out questions: embeddings 9 of 10 vs keywords 3 of 10 (see Evaluation) |
 | Mutation testing | `mutmut` over `app/`, Linux only; runs in CI | Not re-run since the modules were split. An earlier run killed 2563 of 2677 mutants; the rest were reviewed as equivalent. CI re-runs it. |
+
+## Evaluation
+
+The scripted tests prove what the app does once it is told an intent. They cannot show
+whether the real model picks the right intent or the right FAQ record, so there is a
+separate, operator-run evaluation against the live services (it is not part of the
+automatic test run and gates nothing):
+
+```bash
+python scripts/evaluate.py            # also: intents, retrieval
+```
+
+It uses the labelled utterances in [`tests/eval/utterances.json`](tests/eval/utterances.json):
+89 English and Spanish messages for the ten context-free intents (confirm, reject and
+correction need an open review, so the scripted tests cover them) and two sets of FAQ
+questions (18 and 15, five of each should get no answer). Run on 2026-10-25 with `DeepSeek-V4.1-Flash-1017`
+and `nvidia/nemotron-3-embed-1b:free` on OpenRouter.
+
+### Intent detection
+
+| | Before | After |
+|---|---|---|
+| Correct intents | 85 of 89 (96%) | 89 of 89 (100%) |
+| `start_intake` | 5 of 8 | 8 of 8 |
+| `question` | 8 of 9 | 9 of 9 |
+| Every other intent | 9 of 9 | 9 of 9 |
+
+The first run missed four messages: "I want to report a problem", "Let me report a fault"
+and its Spanish equivalent were read as `provide_details`, and "What are the urgency
+levels?" was read as `capability`. The fix was in the prompt only: a rule that reporting
+a problem without saying what it is starts an intake, a rule that questions about how
+support works are policy questions, and three new examples (an English and a Spanish
+fault report, and a response-time question) worded differently from the test messages.
+The new intents `installation_status` and `book_technician` scored 9 of 9 each from the
+start. The score is on the same messages that exposed the misses, so read 100% as a
+regression baseline, not proof of general accuracy; new phrasings should be added to the
+file over time.
+
+### FAQ retrieval
+
+There are two question sets. The **tuning set** (13 questions with an answer, 5 without)
+was used to choose the similarity floor, so its scores are optimistic. The **held-out
+set** (10 and 5) was written before any score was seen and run once at the chosen floor,
+so it is the fair comparison.
+
+| Retrieval | Tuning set: right record in top two | Tuning set: correctly no answer | Held-out: right record in top two | Held-out: correctly no answer |
+|---|---|---|---|---|
+| Keywords | 11 of 13 | 4 of 5 | 3 of 10 | 5 of 5 |
+| Embeddings, floor 0.25 (default) | 12 of 13 | 5 of 5 | 9 of 10 | 5 of 5 |
+
+On the tuning set the two are close, because those questions happened to share words
+with the hand-written keywords. On fresh wordings keyword matching collapses ("I want my
+money back" or "how soon will it be shipped" share no keyword with the records), while
+embeddings still find the record. Both refuse the unrelated questions.
+
+How the floor was chosen, and its limits: the first guess of 0.35 was untested and
+dropped correct paraphrases (10 of 13 on the tuning set); 0.30 gave 11, 0.25 gave 12,
+and 0.20 found all 13 but let "Do you ship internationally?" through to the delivery
+record. 0.25 was picked on the tuning set, so treat it as a sensible value for this model
+and these 28 questions, not a proven optimum. The model matters: re-run
+`scripts/evaluate.py retrieval` after changing it. The remaining misses are questions
+the records barely cover, such as "My power meter has a cracked casing" (0.23 against
+the damaged-items record, which does not mention meters), so the fix there is the
+record's wording, not the model. Three free OpenRouter embedding models were compared on
+a first 16-question set; `nemotron-3-embed-1b`, `nemotron-3.5-embed-1b` and
+`lfm-2.5-embedding-350m` tied, and `nemotron-3.5-embed-8b` timed out on the free tier,
+so the first was kept.
 
 ## Limitations
 
 - **Single process, one worker.** Locks and de-duplication are in memory.
 - **No authentication.** Session IDs are not credentials. It is for local only use; a public deployment would need authentication, rate limiting, TLS and a retention policy.
 - Nothing is sent to a real support team, and "submitted" means saved locally.
-- Retrieval is keyword-based over five records. A cited answer can still be wrong.
+- Answers come from five FAQ records. Keyword matching can miss a differently worded question; embedding retrieval depends on `EMBED_MIN_SIMILARITY`, tuned here for one model on 18 questions (see Evaluation), so it needs re-tuning if the model changes. A citation shows which record the model used; it does not prove the model summarised it correctly.
+- Technician bookings are one JSON file: one visit per account, no cancelling or rescheduling, and the offered times disappear from the chat if the page is reloaded (ask again to see them).
 - Voice accepts PCM WAV only, with no streaming.
 - Frustration and sentiment come from one LLM call and can misclassify sarcasm or mixed feelings.
 - Stored category values are older identifiers (`delivery`, `damaged_item`, `wrong_item`, `return_refund`, `other`) that the UI shows as supply, equipment, meter, billing and other.
@@ -166,7 +248,7 @@ python scripts/check_backends.py     # live check against the services in your e
 ## Potential improvements
 
 - Authenticated sessions and a shared database, so it can run with several workers.
-- Embedding-based retrieval for a larger knowledge base.
+- A vector store and chunking for a larger knowledge base (the embeddings are held in memory today).
 - Streaming voice and barge-in.
 - Rename the stored category values to the energy vocabulary, with a migration.
 - Cross-session memory with identity and consent.

@@ -23,6 +23,7 @@ from app.http_support import (
     turn_payload,
 )
 from app.schemas import (
+    BookingRequest,
     ConfirmRequest,
     OrderVerificationRequest,
     OrderVerificationResponse,
@@ -98,6 +99,16 @@ async def confirm(session_id: str, request: Request):
     session_uuid = canonical_uuid(session_id)
     command: ConfirmRequest = parse_model(ConfirmRequest, json_body(await request.body()))
     response: TurnResponse = await request.app.state.engine.confirm(
+        session_uuid, command
+    )
+    return JSONResponse(turn_payload(response, request.app.state.speech_languages))
+
+
+@router.post("/api/sessions/{session_id}/bookings")
+async def book_technician(session_id: str, request: Request):
+    session_uuid = canonical_uuid(session_id)
+    command: BookingRequest = parse_model(BookingRequest, json_body(await request.body()))
+    response: TurnResponse = await request.app.state.engine.book_slot(
         session_uuid, command
     )
     return JSONResponse(turn_payload(response, request.app.state.speech_languages))

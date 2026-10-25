@@ -33,7 +33,7 @@ def env(**overrides):
         "TTS_VOICE": "troy",
         "SESSION_DIR": SESSION_DIR,
         "PROVIDER_MAX_CONCURRENCY": "4",
-        "ORDER_API_BASE_URL": "http://order-api.test",
+        "BACKEND_API_BASE_URL": "http://backend-api.test",
     }
     values.update(overrides)
     return values

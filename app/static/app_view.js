@@ -102,6 +102,9 @@
       clearAlert();
     }
 
+    els.slotPicker.querySelectorAll("button").forEach((button) => {
+      button.disabled = mutating || completed;
+    });
     renderVerification();
     if (state.sttPending) {
       els.chatPanel.setAttribute("aria-busy", "true");
@@ -126,6 +129,36 @@
       clearChildren(els.review);
       els.review.hidden = true;
     }
+  }
+
+  function slotLabel(slot) {
+    const start = new Date(slot.starts_at);
+    const end = new Date(slot.ends_at);
+    const day = new Intl.DateTimeFormat(state.language, {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    }).format(start);
+    const clock = new Intl.DateTimeFormat(state.language, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    return `${day}, ${clock.format(start)}–${clock.format(end)}`;
+  }
+
+  function renderSlots() {
+    clearChildren(els.slotPicker);
+    for (const slot of state.slotOptions) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "btn slot";
+      button.dataset.startsAt = slot.starts_at;
+      button.appendChild(textNode(slotLabel(slot)));
+      button.addEventListener("click", () => app.onBookSlot(slot));
+      els.slotPicker.appendChild(button);
+    }
+    els.slotPicker.hidden = state.slotOptions.length === 0;
   }
 
   function renderSources(container, citations) {
@@ -281,9 +314,11 @@
       speech_available: m.speech_available,
       citations: m.citations || [],
     }));
+    state.slotOptions = [];
     i18n.applyStaticLabels(state.language);
     renderTranscript();
     renderReview();
+    renderSlots();
     updateControls();
   }
 
@@ -321,15 +356,18 @@
       speech_available: response.speech_available,
       citations: response.citations || [],
     });
+    state.slotOptions = response.slot_options || [];
     i18n.applyStaticLabels(state.language);
     renderTranscript();
     renderReview();
+    renderSlots();
     updateControls();
   }
 
   Object.assign(app, {
     updateControls,
     renderReview,
+    renderSlots,
     renderSources,
     appendSpeakerIcon,
     speechIsPending,

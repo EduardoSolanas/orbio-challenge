@@ -30,9 +30,12 @@
     storage_corrupt: "errors.storage_corrupt",
     provider_timeout: "errors.provider_timeout",
     too_many_verification_attempts: "errors.too_many_verification_attempts",
-    order_api_unavailable: "errors.order_api_unavailable",
-    order_api_timeout: "errors.order_api_timeout",
-    invalid_order_api_response: "errors.invalid_order_api_response",
+    backend_api_unavailable: "errors.backend_api_unavailable",
+    backend_api_timeout: "errors.backend_api_timeout",
+    invalid_backend_api_response: "errors.invalid_backend_api_response",
+    slot_unavailable: "errors.slot_unavailable",
+    already_booked: "errors.already_booked",
+    verification_required: "errors.verification_required",
     internal_error: "errors.internal_error",
   });
 

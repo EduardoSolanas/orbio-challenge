@@ -53,7 +53,9 @@ button { color: inherit; }
 #review { border: 1px solid #b9d0bd; background: #edf5e9; color: #294439; white-space: pre-wrap; }
 #alert { border: 1px solid #e0b4ae; background: #f8e8e6; color: #7a1f1f; }
 #order-verification { display: flex; flex-direction: column; gap: 8px; border: 1px solid #d9e3d8; background: var(--paper); color: #30443a; }
-#order-verification[hidden], #review[hidden], #alert[hidden], #verification-error[hidden], #verification-status[hidden], .chat-actions [hidden], #transcribe-help[hidden], .chat-compose [hidden] { display: none !important; }
+.slots { flex: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 0 12px 8px; }
+.slots .slot { flex: 1 1 140px; }
+#slot-picker[hidden], #order-verification[hidden], #review[hidden], #alert[hidden], #verification-error[hidden], #verification-status[hidden], .chat-actions [hidden], #transcribe-help[hidden], .chat-compose [hidden] { display: none !important; }
 #verification-notice { margin: 0; padding: 8px; border-radius: 8px; background: #f5f0de; font-size: 11px; }
 .verification__label { font-weight: 700; }
 .verification__input { width: 100%; min-height: 42px; padding: 9px; border: 1px solid #d3ddd3; border-radius: 8px; font: inherit; }

@@ -375,6 +375,8 @@ THANKS = "Thanks."
 RESUME = "Continue my issue."
 
 ORDER_STATUS_Q = "What is the status of my energy account?"
+INSTALLATION_Q = "What is the status of my smart meter installation?"
+BOOK_Q = "I would like to book a technician."
 ORDER_NUMBER_TEXT = "My energy account reference is NS-000123."
 AUTH_ORDER_NUMBER_PROMPT = (
     "Please provide the order number you want to check, for example NS-123456."

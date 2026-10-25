@@ -29,8 +29,8 @@ from app.intent import (
     transition_frustration,
 )
 from app.localization import build_review_reply, build_summary, render, text
-from app.order_api import OrderRecord
-from app.order_client import OrderApiClient
+from app.backend_api import OrderRecord
+from app.backend_client import BackendApiClient
 from app.plans import (
     TurnPlan,
     choose_reply_language,
@@ -40,9 +40,11 @@ from app.plans import (
     unchanged_outcome,
     unsupported_plan,
 )
-from app.replay import confirm_digest, find_replay, turn_digest
+from app.replay import booking_digest, confirm_digest, find_replay, turn_digest
 from app.retrieval import validate_knowledge_answer
+from app.semantic import SemanticIndex
 from app.schemas import (
+    BookingRequest,
     Citation,
     Confirmation,
     ConfirmRequest,
@@ -75,6 +77,7 @@ from app.validation import (
     validate_field,
 )
 from app.verification import VERIFICATION_FAILED, VerificationRegistry
+from app.visits import booking_offer, installation_reply, visit_text, window_values
 
 if TYPE_CHECKING:
     from app.providers import AIProvider
@@ -88,6 +91,7 @@ __all__ = [
     "turn_digest",
 ]
 
+ACCOUNT_INTENTS = ("order_lookup", "installation_status", "book_technician")
 RECENT_MESSAGE_LIMIT = 12
 MAX_COLLECTION_TURNS = 50
 TEXT_TURN_DEADLINE_SECONDS = 25.0
@@ -233,9 +237,11 @@ class ConversationEngine:
         knowledge_base: KnowledgeBase,
         *,
         speech_languages: frozenset[str] = frozenset({"en"}),
-        customer_data: OrderApiClient | None = None,
+        customer_data: BackendApiClient | None = None,
         verification: VerificationRegistry | None = None,
+        semantic_index: SemanticIndex | None = None,
     ) -> None:
+        self.semantic_index = semantic_index
         self.repository = repository
         self.provider = provider
         self.knowledge_base = knowledge_base
@@ -382,8 +388,8 @@ class ConversationEngine:
                 handoff_plan(session, reply_language),
             )
 
-        if extraction.intent == "order_lookup":
-            # Lookup-only turns never start intake, accept slots or reach the
+        if extraction.intent in ACCOUNT_INTENTS:
+            # Account turns never start intake, accept slots or reach the
             # customer-data API without a matching grant.
             if at_limit:
                 raise app_error("turn_limit")
@@ -526,6 +532,81 @@ class ConversationEngine:
                 verified=result.verified, error=result.error
             )
 
+    async def book_slot(
+        self, session_id: UUID, command: BookingRequest
+    ) -> TurnResponse:
+        """Book one offered window for the verified account and record it in the chat."""
+
+        async with self.repository.locked(session_id):
+            session = await self.repository.load(session_id)
+            digest = booking_digest(session_id, command)
+            replayed = self._replayed(
+                session, command.request_id, digest, command.expected_revision
+            )
+            if replayed is not None:
+                return replayed
+            order_number = self.verification.grant(session_id)
+            if order_number is None or self.customer_data is None:
+                raise app_error("verification_required")
+            try:
+                appointment = await self.customer_data.book(order_number, command.starts_at)
+            except AppError as error:
+                # A lost response may already have booked this exact window.
+                if error.code != "already_booked":
+                    raise
+                record = await self.customer_data.installation(order_number)
+                appointment = None if record is None else record.appointment
+                if appointment is None or appointment.starts_at != command.starts_at:
+                    raise
+
+            now = _now()
+            language = session.reply_language
+            reply = visit_text("booking.confirmed", language, appointment)
+            window = window_values(appointment.starts_at, appointment.ends_at)
+            assistant_message = _message(
+                "assistant", reply, input_mode="system", created_at=now, language=language
+            )
+            new_revision = session.revision + 1
+            response = TurnResponse(
+                session_id=session_id,
+                revision=new_revision,
+                status=session.status,
+                reply_language=language,
+                frustration_active=session.frustration_active,
+                reply=reply,
+                message_id=assistant_message.id,
+                slots=session.slots,
+                pending_clarifications=session.pending_clarifications,
+                pending_review_revision=session.pending_review_revision,
+                summary=session.summary,
+            )
+            committed = session.model_copy(deep=True)
+            committed.revision = new_revision
+            committed.updated_at = now
+            committed.messages = [
+                *session.messages,
+                _message(
+                    "user",
+                    render(
+                        "booking.user_choice",
+                        language,
+                        {"date": window["date"], "start": window["start"]},
+                    ),
+                    input_mode="system",
+                    created_at=now,
+                    language=language,
+                ),
+                assistant_message,
+            ]
+            committed.requests = [
+                *session.requests,
+                ReplayRecord(
+                    request_id=command.request_id, input_digest=digest, response=response
+                ),
+            ]
+            await self.repository.save(committed)
+            return response
+
     def _pending_or_slot_order(self, session: Session) -> str | None:
         return (
             self.verification.pending_order(session.session_id)
@@ -551,6 +632,7 @@ class ConversationEngine:
         session_id = session.session_id
         order_number = self._lookup_order_number(session, extraction)
         required = False
+        slot_options: tuple[SlotOption, ...] = ()
         if extraction.candidates.order_number is not None and order_number is None:
             reply = text("intake.invalid_order", reply_language)
         elif order_number is None:
@@ -559,6 +641,14 @@ class ConversationEngine:
             self.verification.set_pending_order(session_id, order_number)
             reply = text("auth.verification_prompt", reply_language)
             required = True
+        elif extraction.intent == "installation_status":
+            reply = await installation_reply(
+                self.customer_data, order_number, reply_language
+            )
+        elif extraction.intent == "book_technician":
+            reply, slot_options = await booking_offer(
+                self.customer_data, order_number, reply_language
+            )
         elif extraction.tool_request is not None:
             order = await self.customer_data.lookup_order(order_number)
             if order is None:
@@ -575,6 +665,7 @@ class ConversationEngine:
             reply_language,
             frustration_active=next_active,
             order_verification_required=required,
+            slot_options=slot_options,
         )
 
     def _lookup_order_number(
@@ -738,10 +829,20 @@ class ConversationEngine:
             order_verification_required=verification_required,
         )
 
+    async def _retrieve(self, question: str) -> list[KnowledgeRecord]:
+        """Semantic retrieval when configured, keyword retrieval if it is unavailable."""
+
+        if self.semantic_index is not None:
+            try:
+                return await self.semantic_index.retrieve(question)
+            except (AppError, TimeoutError):
+                pass
+        return self.knowledge_base.retrieve(question)
+
     async def _answer_policy_question(
         self, question: str, reply_language: Language
     ) -> tuple[str, tuple[Citation, ...]]:
-        retrieved = self.knowledge_base.retrieve(question)
+        retrieved = await self._retrieve(question)
         if not retrieved:
             return text("abstention", reply_language), ()
         context = KnowledgeContext(
@@ -805,6 +906,7 @@ class ConversationEngine:
             summary=plan.summary,
             citations=list(plan.citations),
             order_verification_required=plan.order_verification_required,
+            slot_options=list(plan.slot_options),
         )
         if session.slots.order_number != outcome.slots.order_number:
             # An accepted order change invalidates any grant for the old order;

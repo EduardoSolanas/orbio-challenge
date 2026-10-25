@@ -40,6 +40,7 @@
   const els = {
     log: document.getElementById("transcript"),
     review: document.getElementById("review"),
+    slotPicker: document.getElementById("slot-picker"),
     alert: document.getElementById("alert"),
     verification: document.getElementById("order-verification"),
     verificationNotice: document.getElementById("verification-notice"),
@@ -91,6 +92,7 @@
     speechPending: null,
     orderVerificationRequired: false,
     verificationPending: false,
+    slotOptions: [],
   };
 
   const transcriptionGate = new window.OrbioRecording.AsyncGate();

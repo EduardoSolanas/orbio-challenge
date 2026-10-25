@@ -424,10 +424,11 @@ def test_intent_judge_frustration_hands_off(flow, ui, provider, judge_config, re
     assert view["status"] == "handed_off"
     assert view["frustration_active"] is True
     assert view["slots"] == before_slots
-    expect(ui.message).to_have_js_property("readOnly", True)
-    expect(ui.enabled_button("Send")).to_have_count(0)
-    expect(ui.verification).to_be_hidden()
-    expect(ui.review).to_be_hidden()
+    # Ids, not accessible names: the Spanish page labels these controls in Spanish.
+    expect(ui.page.locator("#message")).to_have_js_property("readOnly", True)
+    expect(ui.page.locator("#send")).to_be_disabled()
+    expect(ui.page.locator("#order-verification")).to_be_hidden()
+    expect(ui.page.locator("#review")).to_be_hidden()
     expect(ui.page.locator("#new-intake")).to_be_enabled()
     assert response_of(ui.turn_posts()[-1])["order_verification_required"] is False
     assert len(provider.calls("answer_knowledge")) == 0

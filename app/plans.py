@@ -9,7 +9,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.localization import missing_question, text
-from app.schemas import Citation, Clarification, Extraction, FieldName, Language, Session, Slots
+from app.schemas import (
+    Citation,
+    Clarification,
+    Extraction,
+    FieldName,
+    Language,
+    Session,
+    SlotOption,
+    Slots,
+)
 from app.validation import FIELD_ORDER, MergeOutcome
 
 
@@ -25,6 +34,7 @@ class TurnPlan:
     language: Language
     frustration_active: bool
     order_verification_required: bool = False
+    slot_options: tuple[SlotOption, ...] = ()
 
     @classmethod
     def keeping_state(
@@ -35,6 +45,7 @@ class TurnPlan:
         *,
         frustration_active: bool,
         order_verification_required: bool = False,
+        slot_options: tuple[SlotOption, ...] = (),
     ) -> TurnPlan:
         """A reply that leaves status, summary, review token and rejection as they are."""
 
@@ -49,6 +60,7 @@ class TurnPlan:
             language=language,
             frustration_active=frustration_active,
             order_verification_required=order_verification_required,
+            slot_options=slot_options,
         )
 
 

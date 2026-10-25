@@ -228,6 +228,8 @@
     state.inputMode = "text";
     state.orderVerificationRequired = false;
     state.verificationPending = false;
+    state.slotOptions = [];
+    app.renderSlots();
     resetVerificationForm();
     els.message.value = "";
     if (els.wav) els.wav.value = "";

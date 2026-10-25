@@ -1,9 +1,9 @@
-"""Integration tests for order verification over the real Order API.
+"""Integration tests for order verification over the real Backend API.
 
 The gateway app, lifespan, routes, engine and JSON repository run against an
 isolated temp store; only the external AI provider is scripted. The shipped
-Order API is served by real Uvicorn on a loopback port, so every verification
-and lookup crosses a genuine TCP/HTTP boundary through `OrderApiClient`: test verification with intake."""
+Backend API is served by real Uvicorn on a loopback port, so every verification
+and lookup crosses a genuine TCP/HTTP boundary through `BackendApiClient`: test verification with intake."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import json
 from uuid import UUID, uuid4
 
 from app.localization import build_review_reply, build_summary, text
-from app.order_api import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
+from app.backend_api import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
 from app.schemas import KnowledgeAnswer, Slots
 from tests.integration.order_verification.support import (
     ORDER_NUMBER_PROMPT,
@@ -161,7 +161,7 @@ async def test_verification_during_an_issue_intake_resumes_without_reasking_the_
 
 
 async def test_a_new_session_never_inherits_a_verification_grant(
-    client, provider, verification, order_api
+    client, provider, verification, backend_api
 ):
     first = await create_session(client)
     provider.script_extraction(order_lookup())
@@ -182,7 +182,7 @@ async def test_a_new_session_never_inherits_a_verification_grant(
     assert body["reply"] == VERIFICATION_PROMPT
     assert body["order_verification_required"] is True
     assert verification.grant(UUID(fresh)) is None
-    assert order_api.order_gets() == []
+    assert backend_api.order_gets() == []
 
 
 async def test_accepting_the_same_verified_order_into_intake_keeps_the_grant(
@@ -219,7 +219,7 @@ async def test_accepting_the_same_verified_order_into_intake_keeps_the_grant(
 
 
 async def test_accepting_a_different_order_clears_the_verified_grant(
-    client, provider, verification, order_api
+    client, provider, verification, backend_api
 ):
     session_id = await create_session(client)
     provider.script_extraction(order_lookup())
@@ -246,7 +246,7 @@ async def test_accepting_a_different_order_clears_the_verified_grant(
     assert denied.status_code == 200
     assert denied.json()["reply"] == VERIFICATION_PROMPT
     assert denied.json()["order_verification_required"] is True
-    assert order_api.order_gets() == []
+    assert backend_api.order_gets() == []
 
 
 async def test_policy_faq_with_an_unverified_order_in_slots_skips_verification(

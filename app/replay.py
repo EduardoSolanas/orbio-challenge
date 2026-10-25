@@ -6,10 +6,11 @@ import hashlib
 import json
 from uuid import UUID
 
-from app.schemas import ConfirmRequest, ReplayRecord, Session, TurnRequest
+from app.schemas import BookingRequest, ConfirmRequest, ReplayRecord, Session, TurnRequest
 
 TURN_ENDPOINT = "turn"
 CONFIRM_ENDPOINT = "confirm"
+BOOKING_ENDPOINT = "booking"
 
 
 def _digest(endpoint: str, session_id: UUID, body: dict) -> str:
@@ -43,6 +44,18 @@ def confirm_digest(session_id: UUID, command: ConfirmRequest) -> str:
             "request_id": str(command.request_id),
             "expected_revision": command.expected_revision,
             "review_revision": command.review_revision,
+        },
+    )
+
+
+def booking_digest(session_id: UUID, command: BookingRequest) -> str:
+    return _digest(
+        BOOKING_ENDPOINT,
+        session_id,
+        {
+            "request_id": str(command.request_id),
+            "expected_revision": command.expected_revision,
+            "starts_at": command.starts_at,
         },
     )
 

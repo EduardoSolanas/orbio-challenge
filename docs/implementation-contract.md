@@ -21,8 +21,8 @@ All packages have `__init__.py`. Use absolute imports rooted at `app`. App path 
 | File | What to implement |
 |---|---|
 | `app/main.py` | `create_app(settings=None, provider=None, knowledge_path=None)` app factory; `app = create_app()`; lifespan assembly, route handlers, middleware/error mapping; no state decisions |
-| `app/order_api.py` | Private Order API service: `create_order_api_app(orders=None)`, module-level `app`; fixed fictional catalog, demo code, credential rule, `POST /internal/v1/order-verifications`, `GET /internal/v1/orders/{order_number}`, private `GET /health`; docs/OpenAPI disabled |
-| `app/order_client.py` | `OrderApiClient` gateway boundary over real `httpx.AsyncClient`; exact internal request shapes, 404→`None`, fixed error mapping for connect/timeout/malformed/status failures |
+| `app/backend_api.py` | Private Backend API service: `create_backend_api_app(orders=None)`, module-level `app`; fixed fictional catalog, demo code, credential rule, `POST /internal/v1/order-verifications`, `GET /internal/v1/orders/{order_number}`, private `GET /health`; docs/OpenAPI disabled |
+| `app/backend_client.py` | `BackendApiClient` gateway boundary over real `httpx.AsyncClient`; exact internal request shapes, 404→`None`, fixed error mapping for connect/timeout/malformed/status failures |
 | `app/verification.py` | Gateway-only `VerificationRegistry`: pending order, failure count, 15-minute session/order grant; no catalog or demo code |
 | `app/config.py` | Frozen settings dataclass populated from process environment, explicit validation; no implicit dotenv load or paid boot request |
 | `app/schemas.py` | Strict Pydantic models below; UTC time and UUID serializers; no network/filesystem effects |
@@ -38,7 +38,7 @@ All packages have `__init__.py`. Use absolute imports rooted at `app`. App path 
 | `app/static/styles.css` | Responsive chat styling; no framework dependency |
 | `tests/unit/`, `tests/integration/`, `tests/e2e/`, `tests/live/` | Suites defined by testing contract; fakes under `tests/support/` |
 | `requirements.txt`, `requirements-dev.txt`, `pyproject.toml` | Exact dependency baseline/test/mutation settings specified below and in testing contract |
-| `compose.yaml`, `docs/deployment/Dockerfile` | Two services: public `app` gateway and private `order-api` (no host port, internal health check); one image, separate commands |
+| `compose.yaml`, `docs/deployment/Dockerfile` | Two services: public `app` gateway and private `backend-api` (no host port, internal health check); one image, separate commands |
 | `.github/workflows/quality.yml` | Unit/integration, browser, mutation and image-build jobs; no live secrets for PRs |
 | `README.md` | Setup, exact commands, architecture, limitations, accessible demo video URL and test evidence links |
 
@@ -71,7 +71,7 @@ class ConversationEngine:
     async def confirm(self, session_id: UUID, command: ConfirmRequest) -> TurnResponse: ...
     async def assistant_text(self, session_id: UUID, message_id: UUID) -> str: ...
 
-class OrderApiClient:
+class BackendApiClient:
     def __init__(self, base_url: str, *, timeout_seconds: float = 5.0,
                  transport: httpx.AsyncBaseTransport | None = None): ...
     async def verify_order(self, order_number: str | None, delivery_postcode: str,
@@ -80,7 +80,7 @@ class OrderApiClient:
     async def aclose(self) -> None: ...
 ```
 
-On lifespan start: parse/validate settings → create directory and probe writable access using a temporary file removed immediately → instantiate repository → instantiate provider (or use injected test fake) → load/validate immutable knowledge base → instantiate the gateway `OrderApiClient` from `ORDER_API_BASE_URL`/`ORDER_API_TIMEOUT_SECONDS` (or use the injected test client) → instantiate engine with repository/provider/knowledge_base/order client/verification registry → put these dependencies on `app.state`. No session files are loaded eagerly. Create/upload health has no paid request. On shutdown: close the Order API client and all four provider HTTP clients; allow existing bounded requests to finish within Uvicorn's configured graceful shutdown limit (40 seconds). Transport/config errors must not reveal secrets. Avoid module-global client, session, or lock singletons; app objects isolate tests.
+On lifespan start: parse/validate settings → create directory and probe writable access using a temporary file removed immediately → instantiate repository → instantiate provider (or use injected test fake) → load/validate immutable knowledge base → instantiate the gateway `BackendApiClient` from `BACKEND_API_BASE_URL`/`BACKEND_API_TIMEOUT_SECONDS` (or use the injected test client) → instantiate engine with repository/provider/knowledge_base/order client/verification registry → put these dependencies on `app.state`. No session files are loaded eagerly. Create/upload health has no paid request. On shutdown: close the Backend API client and all four provider HTTP clients; allow existing bounded requests to finish within Uvicorn's configured graceful shutdown limit (40 seconds). Transport/config errors must not reveal secrets. Avoid module-global client, session, or lock singletons; app objects isolate tests.
 
 Routes call the engine from `request.app.state.engine`. The transcription route calls `validate_wav` then provider `transcribe`. The speech route calls engine `assistant_text` then provider `synthesize`. These two routes do not call engine `turn` and never mutate sessions. Repository does not call the model; provider does not access files or accepted state.
 
@@ -401,7 +401,7 @@ Integration location: tests/integration/. E2E location: tests/e2e/. Shared test-
 
 Construction seams: define Settings.from_env(environ: Mapping[str,str] | None = None), using os.environ only when the argument is None; tests pass a complete isolated mapping. App factory is create_app(settings=None, provider=None, knowledge_path: Path | None=None). Default knowledge_path is the bundled fixed FAQ; tests may supply a temporary KB path, never an HTTP-controlled path. Real Settings validation runs in tests. OpenAICompatibleProvider(profiles, *, transports: Mapping[Role,httpx.AsyncBaseTransport] | None=None) uses normal real httpx clients, with optional per-role MockTransport only for adapter integration tests. Production default transports=None. All clients retain the exact auth/URL/timeout/identity/header/redirect settings in provider-compatibility.md. Do not monkeypatch extract/answer methods in serialization tests.
 
-ASGI integration uses the real app lifespan, routes, engine and JSON repository. AIProvider fake implements all four methods plus close, returns strict schema objects, logs expected context/method/outcome, raises on unexpected calls, and consumes an explicitly scripted result for each request. It does not normalize fields, choose replies, retrieve records or mutate sessions. To test invalid provider wire/schema responses use MockTransport, not a fake that implements alternate business rules. No in-memory replacement repository is accepted for persistence/transaction tests. The Order API boundary is exercised against the shipped `create_order_api_app` served by real Uvicorn on a loopback port, so gateway verification/lookup cross genuine TCP/HTTP through `OrderApiClient`; no in-process Order API double is accepted. Stop and restart that loopback server on the same origin to prove outage and recovery.
+ASGI integration uses the real app lifespan, routes, engine and JSON repository. AIProvider fake implements all four methods plus close, returns strict schema objects, logs expected context/method/outcome, raises on unexpected calls, and consumes an explicitly scripted result for each request. It does not normalize fields, choose replies, retrieve records or mutate sessions. To test invalid provider wire/schema responses use MockTransport, not a fake that implements alternate business rules. No in-memory replacement repository is accepted for persistence/transaction tests. The Backend API boundary is exercised against the shipped `create_backend_api_app` served by real Uvicorn on a loopback port, so gateway verification/lookup cross genuine TCP/HTTP through `BackendApiClient`; no in-process Backend API double is accepted. Stop and restart that loopback server on the same origin to prove outage and recovery.
 
 E2E uses real Uvicorn TCP plus Chromium and the actual static page/JavaScript. Test-only AIProvider replaces external intelligence; real retrieval and bundled/temporary KB remain. Create partial/review/completed states through UI helpers; never fill Session JSON directly to bypass the journey. Each journey has a fresh browser context/temp directory/server; only the same-journey restart deliberately reuses its temp data and origin. Use role/name selectors from section9, condition-based expectations and bounded event barriers, not arbitrary sleeps, page.route success mocks or automatic retries. The narrow failure fixtures enumerated below are allowed; they do not replace successful application routing.
 
@@ -707,7 +707,7 @@ These journeys protect actual user workflows and browser-to-server seams. Each r
 
 | ID | Complete user workflow | Required end-to-end checkpoints |
 |---|---|---|
-| complete_intake | Complete an intake: Fresh page→social thanks→greeting+facts→CATEGORY→HIGH→review→Confirm details→reload completed view→New intake→report issue→ask for account status→wrong verification code→FAQ during pending verification→Order API outage/restart→correct code→FAQ after verification but before lookup→verified allowlisted account summary→FAQ before resuming issue interview→confirm. | Fixed social acknowledgment has no RAG abstention or missing-field prompt; greeting+facts starts intake; natural prompts; exact four slots/summary/review; one local-only receipt; completed view read-only after reload; new ID/empty intake, old saved file unchanged. No provider call for dedicated confirm or GET. The verification form shows the demo-code notice and never puts code/postcode in the transcript; the message composer remains available during verification; a wrong code shows the localized inline error. A RAG FAQ while verification is pending answers with citation, preserves the challenge and intake slots, and returns `order_verification_required=true`; the same credentials can then be retried. After verification, another cited FAQ must not call or consume the Order API grant; the protected lookup must still succeed. A third FAQ after the account result must preserve the pending issue fields so the interview resumes at the category question. While the Order API is stopped, valid credentials show the fixed service-unavailable error and no state change; after restart on the same origin the existing client verifies with `246810`; exactly one allowlisted lookup returns the fixture summary. |
+| complete_intake | Complete an intake: Fresh page→social thanks→greeting+facts→CATEGORY→HIGH→review→Confirm details→reload completed view→New intake→report issue→ask for account status→wrong verification code→FAQ during pending verification→Backend API outage/restart→correct code→FAQ after verification but before lookup→verified allowlisted account summary→FAQ before resuming issue interview→confirm. | Fixed social acknowledgment has no RAG abstention or missing-field prompt; greeting+facts starts intake; natural prompts; exact four slots/summary/review; one local-only receipt; completed view read-only after reload; new ID/empty intake, old saved file unchanged. No provider call for dedicated confirm or GET. The verification form shows the demo-code notice and never puts code/postcode in the transcript; the message composer remains available during verification; a wrong code shows the localized inline error. A RAG FAQ while verification is pending answers with citation, preserves the challenge and intake slots, and returns `order_verification_required=true`; the same credentials can then be retried. After verification, another cited FAQ must not call or consume the Backend API grant; the protected lookup must still succeed. A third FAQ after the account result must preserve the pending issue fields so the interview resumes at the category question. While the Backend API is stopped, valid credentials show the fixed service-unavailable error and no state change; after restart on the same origin the existing client verifies with `246810`; exactly one allowlisted lookup returns the fixture summary. |
 | rejected_review_recovery | Correct and recover a rejected review: Fresh→invalid5-digit order plus valid problem→correct order→CATEGORY→HIGH→implicit order conflict→retain old order→NO→CHANGE→fresh review→later confirm. | Valid problem survives invalid order; conflict hides Confirm; explicit resolution restores review; rejection clears token/summary; valid correction recovers review but never completes same turn; later confirm saves expected low urgency. Other rejection/field permutations are IT02–IT04. |
 | resume_after_restart | Resume across refresh and restart: Create partial intake→capability/unrelated detours→reload GET503→Retry→restart server→reload→FAQ detour→explicitly resume same clarification→finish through review/confirm. | During the503, retain localStorage ID, show Retry, issue no replacement POST and do not overwrite saved data. Retry uses GET to the same ID and restores identical context. Restart/reload preserves history/revision; no model call on GET. After resume, the FAQ answers with its citation but does not replace the pending clarification, slots, or session; explicit resume still returns the exact clarification before issue collection and confirmation. API404/corruption/status permutations remain IT01/IT06; their client-only handling is not claimed covered by those Python tests. |
 | failed_request_retry | Recover one failed text request: Hold FULL extraction with event→check pending controls/draft→release with one recoverable failure→Retry succeeds→confirm. | One request despite rapid second click; Send/Confirm/Transcribe/New intake disabled and Message readonly while pending; failure retains exact draft and disk unchanged; Retry body/ID identical; one eventual pair/review/receipt, no duplicate success. Does not claim commit-then-lost-response semantics (IT07). |
@@ -718,7 +718,7 @@ These journeys protect actual user workflows and browser-to-server seams. Each r
 | keyboard_mobile | Use the always-open Northstar Energy support chat at 390×844: verify a single-screen chat with no launcher/close control and no page scrolling, then complete keyboard/mobile with safe content using a dedicated immutable hostile-KB fixture, literal customer markup→supported policy answer containing literal source/answer markup→open Sources by keyboard→complete intake/review/confirm. | Root opens directly into the API-backed chat; the chat occupies the viewport, cannot be closed, and only the transcript scrolls when needed. Real shipped DOM escapes customer/answer/source text; no injected elements/global sentinel execution; named controls/aria-live log and visible focus; visible error-role assertions are exercised in failed_request_retry/voice_failure; keyboard reaches Send/Play/Sources/Confirm; no document horizontal or vertical scrolling. This is the specified accessibility/rendering smoke, not a full WCAG/browser matrix. |
 | stale_voice_results | Ignore stale voice results: Start STT held by barrier→New intake→release old success/error (chosen one deterministic abort outcome); in new intake produce saved replies A/B, hold TTS A→Play B completes→late A completes; dispatch pagehide cleanup before navigation. | Old-generation STT cannot overwrite new draft/state or show stale error; TTS uses generation+latest token so only B owns audio; old URL/bytes discarded/revoked, actual pagehide handler pauses/revokes assigned audio. Send remains usable during playback; no audio action changes committed JSON. Client signal/state handling must run in real JavaScript, not be claimed covered by Python state tests. |
 
-Browser preparation/fault rules: new server/app/temp store per journey. Same-origin restart may explicitly rebind the previous released port. Normal path never mocks successful application endpoints or pre-fills session files. Fake AIProvider scripts all expected model results/calls. Allowed narrow environmental seams are bounded async event barriers, stopping/restarting the real gateway server or the real private Order API server, test-only pre-handler failure middleware, hostile immutable KB fixture, and passive media/object-URL spies that call original APIs. Only a media-policy failure check may stub play rejection; it must not replace the normal real-playback proof in voice_success. No arbitrary sleeps/force-clicking disabled controls or production test flags. Keep every client-generation/disabled-control/media assertion in a browser checkpoint; do not pretend a no-JavaScript Python test proves it.
+Browser preparation/fault rules: new server/app/temp store per journey. Same-origin restart may explicitly rebind the previous released port. Normal path never mocks successful application endpoints or pre-fills session files. Fake AIProvider scripts all expected model results/calls. Allowed narrow environmental seams are bounded async event barriers, stopping/restarting the real gateway server or the real private Backend API server, test-only pre-handler failure middleware, hostile immutable KB fixture, and passive media/object-URL spies that call original APIs. Only a media-policy failure check may stub play rejection; it must not replace the normal real-playback proof in voice_success. No arbitrary sleeps/force-clicking disabled controls or production test flags. Keep every client-generation/disabled-control/media assertion in a browser checkpoint; do not pretend a no-JavaScript Python test proves it.
 
 A browser network retry test must keep the app loaded: reloading while the server is stopped can replace it with the browser error page. failed_request_retry injects a provider failure into a live app. If testing connection loss additionally, fail an in-app fetch while it is already loaded, then restore server and explicitly retry. Actual deadlines stay in IT13; no35-second sleep is required in a browser test.
 
@@ -1179,7 +1179,7 @@ Handoff copy, including punctuation:
 
 On the first `present` label, this response takes precedence over every intent,
 including FAQ, order lookup, issue details, review confirmation, unrelated and
-language-only turns. Do not retrieve FAQ content, call Order API, request or
+language-only turns. Do not retrieve FAQ content, call Backend API, request or
 verify credentials, accept candidate slot changes, confirm a summary, or emit a
 normal workflow prompt on the triggering turn. Persist the user turn and fixed
 localized handoff response atomically; preserve the session's previously
@@ -1265,7 +1265,7 @@ Playwright judge cases JH01–JH06 must cover frustration during issue intake, a
 supported FAQ, pending verification, review, unrelated/off-topic input and
 Spanish input. Each asserts the exact localized disclosure, visible transcript,
 persisted `handed_off` status, unchanged previously accepted slots, composer/send
-lock, hidden review/verification controls, and no RAG/order API call. The judge
+lock, hidden review/verification controls, and no RAG/backend API call. The judge
 checks the visible response for empathy and explicit demo-only/no-live-agent/no-
 real-request wording. Keep the ten browser journeys as the ten core journeys; they do not replace
 these six browser scenarios. Mutmut challenges transition, status persistence,
@@ -1825,7 +1825,7 @@ to the demo deployment.
    function calling and grants the model no direct network/API access. All
    extraction examples and fakes return `tool_request: null` unless testing this
    exact request.
-6. The private Order API returns only the fixture fields needed to continue the
+6. The private Backend API returns only the fixture fields needed to continue the
    conversation: order number, customer first name, item names, fulfillment
    status, and dispatch/delivery date when present. Never return email, full
    address, postcode, payment data, or unrelated profile fields to the model or
@@ -1843,17 +1843,17 @@ to the demo deployment.
    not use conversation request IDs because they do not commit turns; repeating
    a successful request preserves its original 15-minute expiry.
 
-### Fixed demo fixture and private Order API boundary
+### Fixed demo fixture and private Backend API boundary
 
-Commit a clearly fictional fixture in the private Order API with account/order
+Commit a clearly fictional fixture in the private Backend API with account/order
 `NS-000123`, service postcode `SW1A 1AA`, customer first name `Casey`, item
 `Electricity and gas supply`, and account status `active` (no dispatch or
 delivery dates for an energy account). Use `246810` as the fixed demo success
 code and `123456` as the wrong-code test input. The code is a constant in the
-Order API, not a secret or environment variable. All record values are sample
+Backend API, not a secret or environment variable. All record values are sample
 data, not real policy or customer information.
 
-`app/order_api.py` is the private Order API service (`create_order_api_app`,
+`app/backend_api.py` is the private Backend API service (`create_backend_api_app`,
 module-level `app`). It is the only process that holds the fixture catalog, the
 demo code and the credential rule (`credentials_match`, `normalize_postcode`,
 `valid_verification_code`). It exposes exactly:
@@ -1869,21 +1869,21 @@ demo code and the credential rule (`credentials_match`, `normalize_postcode`,
   data or unrelated profile fields.
 - `GET /health`, returning `{"status":"ok"}` and no catalog write or model call.
 
-FastAPI docs, Redoc and OpenAPI are disabled on the Order API (`docs_url=None`,
+FastAPI docs, Redoc and OpenAPI are disabled on the Backend API (`docs_url=None`,
 `redoc_url=None`, `openapi_url=None`). Compose publishes **no host port** for the
-service; it is reachable only as `http://order-api:8001` on the internal network.
+service; it is reachable only as `http://backend-api:8001` on the internal network.
 The browser therefore cannot call the private API, and the gateway exposes no
 `/internal` route.
 
-`app/order_client.py` defines `OrderApiClient(base_url, timeout_seconds=5.0,
+`app/backend_client.py` defines `BackendApiClient(base_url, timeout_seconds=5.0,
 transport=None)` over a real `httpx.AsyncClient`. The gateway constructs one
-client per app instance from `ORDER_API_BASE_URL` (required, absolute http(s) URL
-validated at startup) and `ORDER_API_TIMEOUT_SECONDS` (default 5.0, maximum 60),
+client per app instance from `BACKEND_API_BASE_URL` (required, absolute http(s) URL
+validated at startup) and `BACKEND_API_TIMEOUT_SECONDS` (default 5.0, maximum 60),
 and closes it on lifespan shutdown. It maps transport and protocol failures to
 fixed safe application errors without leaking detail: connect errors and
-502/503 → `order_api_unavailable` (503, retryable); timeouts and 504 →
-`order_api_timeout` (504, retryable); malformed bodies, schema violations, other
-4xx/5xx and broken transports → `invalid_order_api_response` (502, retryable).
+502/503 → `backend_api_unavailable` (503, retryable); timeouts and 504 →
+`backend_api_timeout` (504, retryable); malformed bodies, schema violations, other
+4xx/5xx and broken transports → `invalid_backend_api_response` (502, retryable).
 A 404 on lookup maps to `None` so the gateway can clear the grant and return the
 generic localized verification failure.
 
@@ -1903,7 +1903,7 @@ response. The normal message composer and Send action remain available whenever
 the chat is not otherwise processing a request, even while this verification
 form is visible or showing a failed-attempt error. A user may ask any in-scope FAQ
 through the normal RAG path without entering verification details first. A pure
-FAQ response must not call the Order API, clear/change the pending order or grant,
+FAQ response must not call the Backend API, clear/change the pending order or grant,
 change intake slots/review state, or hide the verification form. It returns
 `order_verification_required=true` while that same order remains pending and
 unverified, then the same verification form remains usable. This also applies to
@@ -1914,9 +1914,9 @@ turn submissions while a request is in flight. Concrete response bodies are
 `{verified:false,error:"verification_failed"}` on any credential mismatch.
 Return 404 `session_not_found` for an unknown session, 422 `invalid_request` for
 malformed request shape, 409 `session_completed` for a completed session, and
-429 `too_many_verification_attempts` after five failed attempts. An Order API
-outage returns the fixed `order_api_unavailable`/`order_api_timeout`/
-`invalid_order_api_response` envelope without mutating session state. Protect
+429 `too_many_verification_attempts` after five failed attempts. An Backend API
+outage returns the fixed `backend_api_unavailable`/`backend_api_timeout`/
+`invalid_backend_api_response` envelope without mutating session state. Protect
 the endpoint with the same per-session lock and apply a bounded request-size
 limit.
 
@@ -1991,11 +1991,11 @@ Add these exact intent examples to the extraction prompt and its schema tests:
 
 - **Unit:** fixed-code success/failure, ASCII digit and exact length validation,
   postcode normalization/equality, expiry, five-attempt limit, reset on New
-  intake/order change, strict Order API fixture schema and allowlisted response
+  intake/order change, strict Backend API fixture schema and allowlisted response
   shape, disabled docs/OpenAPI and private route set, and the gateway client's
   protocol-faithful request shape plus every transport/status/malformed-body
-  mapping (`order_api_unavailable`, `order_api_timeout`,
-  `invalid_order_api_response`, 404→`None`).
+  mapping (`backend_api_unavailable`, `backend_api_timeout`,
+  `invalid_backend_api_response`, 404→`None`).
 - **Integration:** a valid order number causes the postcode/code prompt; unknown
   order, wrong postcode and wrong code have indistinguishable public errors;
   wrong code returns the exact localized error with zero model/tool calls and
@@ -2004,7 +2004,7 @@ Add these exact intent examples to the extraction prompt and its schema tests:
   attempts before verification are refused; code/postcode are absent
   from saved JSON, prompts, logs and public responses; restart/new intake clears
   verification; retries and request replay follow existing idempotency rules.
-  The gateway runs against the shipped Order API served by real Uvicorn on a
+  The gateway runs against the shipped Backend API served by real Uvicorn on a
   loopback port (real TCP/HTTP, no in-process fake). Stop and restart that server
   to prove outage and recovery: verification and lookup return the fixed safe
   error without mutating session state while it is down, and the same session
@@ -2012,8 +2012,8 @@ Add these exact intent examples to the extraction prompt and its schema tests:
   `/internal/v1/...`, proving the private API is unreachable from the browser.
 - **Playwright:** extend complete_intake (do not add a new full journey): report an issue,
   enter the fixture account reference and postcode, submit a wrong code and see
-  the error, stop the Order API and submit valid credentials to see the fixed
-  service-unavailable inline error, restart the Order API and retry with `246810`,
+  the error, stop the Backend API and submit valid credentials to see the fixed
+  service-unavailable inline error, restart the Backend API and retry with `246810`,
   then finish the normal issue interview and confirmation. In the same journey,
   ask for order status after verification and assert one allowlisted tool request
   returns the fixture summary. Verify no code or postcode appears in the
@@ -2022,7 +2022,7 @@ Add these exact intent examples to the extraction prompt and its schema tests:
 - **Security boundary:** this fixed-code flow is a demonstration only. Use only
   with the local fictional fixture; never expose it publicly or use it to
   authorize real customer data. Never describe it as secure authentication. The
-  Order API has no host port, no browser route and no public docs.
+  Backend API has no host port, no browser route and no public docs.
 
 Supplemental AUTH acceptance cases (additive to the existing IT01–IT14 inventory):
 
@@ -2031,7 +2031,7 @@ Supplemental AUTH acceptance cases (additive to the existing IT01–IT14 invento
 | AUTH-I01 | Fixture order, normalized matching postcode, code `246810` | Verification succeeds; grant is bound to that session/order and expires after 15 minutes. |
 | AUTH-I02 | Correct fixture order/postcode, wrong code `123456` | HTTP 200 `verification_failed`; localized inline error; no lookup/provider call or session mutation. |
 | AUTH-I03 | Unknown order or wrong postcode, with either code | Same public `verification_failed`; no order existence disclosure. |
-| AUTH-I04 | Unicode digits, non-six-digit, empty or non-string code | Same safe validation error; model and private Order API are not called. |
+| AUTH-I04 | Unicode digits, non-six-digit, empty or non-string code | Same safe validation error; model and private Backend API are not called. |
 | AUTH-I05 | Model requests lookup before verification | Server refuses tool; no fixture data in response. |
 | AUTH-I06 | Verified customer explicitly asks order status | Exactly one allowlisted lookup for the verified order; localized fixture summary; no second model request. |
 | AUTH-I07 | Expired grant, changed order, New intake or process restart | Lookup denied until that order is verified again. |
@@ -2040,14 +2040,14 @@ Supplemental AUTH acceptance cases (additive to the existing IT01–IT14 invento
 | AUTH-I10 | Valid verification during issue intake | Do not ask for verified order number again; still collect category, description and urgency and require review confirmation. |
 | AUTH-I11 | Customer asks for order status without supplying an order number | No RAG or customer API call; ask for the order number without starting an issue intake. |
 
-Supplemental private Order API boundary cases (additive, no renumbering):
+Supplemental private Backend API boundary cases (additive, no renumbering):
 
 | ID | Scenario | Required result |
 |---|---|---|
-| OA-I01 | Order API serves the shipped fixture and allowlisted record | `GET /internal/v1/orders/NS-000123` returns only the six allowlisted fields with the Energy fixture; unknown order returns 404 `not_found` with no record data. |
-| OA-I02 | Order API health and surface | Private `GET /health` returns `{"status":"ok"}`; docs, Redoc and OpenAPI routes are absent; the route set is exactly the two internal endpoints plus health. |
-| OA-I03 | Gateway browser surface | The public gateway returns 404 for `GET /internal/v1/orders/{order_number}` and `POST /internal/v1/order-verifications`; Compose publishes no host port for the Order API. |
-| OA-I04 | Verification while the Order API is down | Gateway returns 503 `order_api_unavailable` with the localized message; no grant, failure count, turn or session-file mutation. |
-| OA-I05 | Lookup while the Order API is down | Gateway returns 503 `order_api_unavailable` and preserves the verified grant and session bytes; the browser shows the safe alert, not transport detail. |
-| OA-I06 | Order API restart on the same origin | The existing gateway client recovers without restart: the same session verifies and performs one allowlisted lookup successfully. |
-| OA-I07 | Slow or malformed Order API responses | Timeout maps to 504 `order_api_timeout`; malformed/4xx/5xx bodies map to 502 `invalid_order_api_response`; no raw body, URL or credential reaches the browser. |
+| OA-I01 | Backend API serves the shipped fixture and allowlisted record | `GET /internal/v1/orders/NS-000123` returns only the six allowlisted fields with the Energy fixture; unknown order returns 404 `not_found` with no record data. |
+| OA-I02 | Backend API health and surface | Private `GET /health` returns `{"status":"ok"}`; docs, Redoc and OpenAPI routes are absent; the route set is exactly the two internal endpoints plus health. |
+| OA-I03 | Gateway browser surface | The public gateway returns 404 for `GET /internal/v1/orders/{order_number}` and `POST /internal/v1/order-verifications`; Compose publishes no host port for the Backend API. |
+| OA-I04 | Verification while the Backend API is down | Gateway returns 503 `backend_api_unavailable` with the localized message; no grant, failure count, turn or session-file mutation. |
+| OA-I05 | Lookup while the Backend API is down | Gateway returns 503 `backend_api_unavailable` and preserves the verified grant and session bytes; the browser shows the safe alert, not transport detail. |
+| OA-I06 | Backend API restart on the same origin | The existing gateway client recovers without restart: the same session verifies and performs one allowlisted lookup successfully. |
+| OA-I07 | Slow or malformed Backend API responses | Timeout maps to 504 `backend_api_timeout`; malformed/4xx/5xx bodies map to 502 `invalid_backend_api_response`; no raw body, URL or credential reaches the browser. |

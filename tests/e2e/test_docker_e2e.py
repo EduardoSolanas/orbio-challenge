@@ -116,7 +116,10 @@ def test_docker_multi_turn_rag_preserves_state_and_citations(docker_page: Page, 
     second_citations = second_body.get("citations", [])
     assert second_text.strip()
     assert isinstance(second_citations, list) and second_citations
-    assert second_citations != first_citations or second_text != first_text
+    # The follow-up is answered from the same record and gives the 30-day window.
+    # Both questions can legitimately retrieve one record and quote it identically.
+    assert {c["source_id"] for c in second_citations} == {"faq-returns"}
+    assert "30" in second_text
     assert second_body.get("revision", 0) > first_body.get("revision", -1)
     second_context = json.dumps(
         {

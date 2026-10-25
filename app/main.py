@@ -28,9 +28,10 @@ from app.errors import (
 )
 from app.http_support import error_payload, request_id_of
 from app.localization import LocalizationInvalid, load_locales
-from app.order_client import OrderApiClient
+from app.backend_client import BackendApiClient
 from app.providers import OpenAICompatibleProvider
 from app.retrieval import KnowledgeInvalid, load_knowledge
+from app.semantic import SemanticIndex
 from app.routes import STATIC_DIR, router
 from app.storage import JsonSessionRepository
 from app.verification import VerificationRegistry
@@ -49,6 +50,8 @@ def _build_provider(settings: Settings) -> OpenAICompatibleProvider:
     }
     if settings.tts_es is not None:
         profiles["tts_es"] = settings.tts_es
+    if settings.embed is not None:
+        profiles["embed"] = settings.embed
     return OpenAICompatibleProvider(
         profiles, capacity=settings.provider_max_concurrency
     )
@@ -77,7 +80,8 @@ def create_app(
     knowledge_path: Path | None = None,
     locales_dir: Path | None = None,
     verification_registry: VerificationRegistry | None = None,
-    order_api_client: OrderApiClient | None = None,
+    backend_api_client: BackendApiClient | None = None,
+    semantic_index: SemanticIndex | None = None,
 ) -> FastAPI:
     """Build the app; dependencies are assembled on lifespan start (IC §3)."""
 
@@ -111,13 +115,21 @@ def create_app(
             else VerificationRegistry()
         )
         customer_data = (
-            order_api_client
-            if order_api_client is not None
-            else OrderApiClient(
-                active_settings.order_api_base_url,
-                timeout_seconds=active_settings.order_api_timeout_seconds,
+            backend_api_client
+            if backend_api_client is not None
+            else BackendApiClient(
+                active_settings.backend_api_base_url,
+                timeout_seconds=active_settings.backend_api_timeout_seconds,
             )
         )
+
+        active_index = semantic_index
+        if active_index is None and active_settings.embed is not None:
+            active_index = SemanticIndex(
+                knowledge_base.records,
+                active_provider.embed,
+                min_similarity=active_settings.embed_min_similarity,
+            )
 
         app.state.settings = active_settings
         app.state.locales = locales
@@ -134,6 +146,7 @@ def create_app(
             speech_languages=speech_languages,
             customer_data=customer_data,
             verification=verification,
+            semantic_index=active_index,
         )
         app.state.ready = True
         try:

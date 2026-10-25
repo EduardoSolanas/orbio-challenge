@@ -1,7 +1,7 @@
 """Gateway-side per-session verification state.
 
-The Order API owns the fictional catalog, the demo code and the credential rule
-(`app.order_api`). This module keeps only what the gateway must remember per
+The Backend API owns the fictional catalog, the demo code and the credential rule
+(`app.backend_api`). This module keeps only what the gateway must remember per
 session: the pending order number, the failure count and a 15-minute grant bound
 to one session and one order. No postcode, code or grant is ever written to
 session JSON or logs.

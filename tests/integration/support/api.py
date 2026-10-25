@@ -73,7 +73,7 @@ def full_extraction() -> Extraction:
 
 
 def build_settings(
-    session_dir: Path, *, tts_es: bool = False, order_api_base_url: str = "http://127.0.0.1:9"
+    session_dir: Path, *, tts_es: bool = False, backend_api_base_url: str = "http://127.0.0.1:9"
 ) -> Settings:
     """A complete isolated auth=none environment; no developer configuration is read."""
 
@@ -92,7 +92,7 @@ def build_settings(
         "TTS_VOICE": "test-voice",
         "SESSION_DIR": str(session_dir),
         "PROVIDER_MAX_CONCURRENCY": "4",
-        "ORDER_API_BASE_URL": order_api_base_url,
+        "BACKEND_API_BASE_URL": backend_api_base_url,
     }
     if tts_es:
         environ.update(

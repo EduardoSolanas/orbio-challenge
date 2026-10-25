@@ -169,16 +169,16 @@ test("translateError maps canonical error codes to localized keys", () => {
     es["speech.unavailable"]
   );
   assert.equal(
-    i18n.translateError("order_api_unavailable", "en"),
-    en["errors.order_api_unavailable"]
+    i18n.translateError("backend_api_unavailable", "en"),
+    en["errors.backend_api_unavailable"]
   );
   assert.equal(
-    i18n.translateError("order_api_timeout", "es"),
-    es["errors.order_api_timeout"]
+    i18n.translateError("backend_api_timeout", "es"),
+    es["errors.backend_api_timeout"]
   );
   assert.equal(
-    i18n.translateError("invalid_order_api_response", "en"),
-    en["errors.invalid_order_api_response"]
+    i18n.translateError("invalid_backend_api_response", "en"),
+    en["errors.invalid_backend_api_response"]
   );
 });
 

@@ -90,16 +90,27 @@ EXPECTED = {
         429,
         True,
     ),
-    "order_api_unavailable": (
-        "The order service is unavailable. Please retry.",
+    "backend_api_unavailable": (
+        "The backend service is unavailable. Please retry.",
         503,
         True,
     ),
-    "order_api_timeout": ("The order service timed out. Please retry.", 504, True),
-    "invalid_order_api_response": (
-        "The order service returned an unusable response. Please retry.",
+    "backend_api_timeout": ("The backend service timed out. Please retry.", 504, True),
+    "invalid_backend_api_response": (
+        "The backend service returned an unusable response. Please retry.",
         502,
         True,
+    ),
+    "slot_unavailable": (
+        "That time was just taken. Ask for technician times again to see what is free.",
+        409,
+        False,
+    ),
+    "already_booked": ("This account already has a technician visit booked.", 409, False),
+    "verification_required": (
+        "Verify the energy account before booking a technician.",
+        403,
+        False,
     ),
     "internal_error": ("An internal error occurred.", 500, False),
 }
