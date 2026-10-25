@@ -34,8 +34,12 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from gateway.config import Settings  # noqa: E402
-from gateway.conversation.safety import rule_language  # noqa: E402
-from gateway.main import DEFAULT_KNOWLEDGE_PATH, _build_provider  # noqa: E402
+from gateway.conversation.safety import SafetyIndex, load_examples  # noqa: E402
+from gateway.main import (  # noqa: E402
+    DEFAULT_KNOWLEDGE_PATH,
+    DEFAULT_SAFETY_EXAMPLES_PATH,
+    _build_provider,
+)
 from gateway.knowledge.retrieval import load_knowledge  # noqa: E402
 from gateway.schemas import ExtractionContext, Slots  # noqa: E402
 from gateway.knowledge.semantic import SemanticIndex  # noqa: E402
@@ -92,39 +96,59 @@ async def evaluate_intents(provider, cases: list[dict]) -> dict:
     return {"correct": correct, "total": count, "misses": misses}
 
 
-async def evaluate_safety(provider, cases: list[dict]) -> dict:
-    """Recall and precision of the gas-safety triage: the rule, the model's flag, both."""
+async def evaluate_safety(provider, cases: list[dict], ordinary: list[dict]) -> dict:
+    """Recall and false alarms of the gas-safety triage: embedding check, model flag, both.
 
+    ``ordinary`` are everyday messages (the intent set) that must never raise the alarm.
+    """
+
+    index = SafetyIndex(load_examples(DEFAULT_SAFETY_EXAMPLES_PATH), provider.embed)
     rows = []
-    for case in cases:
-        rule = rule_language(case["text"]) is not None
+    for case in [*cases, *ordinary]:
+        try:
+            embedding = await index.concerning(case["text"])
+        except Exception:  # noqa: BLE001 - one bad call must not stop the run
+            embedding = False
         try:
             model = (await provider.extract(context_for(case["text"]))).safety_concern
-        except Exception:  # noqa: BLE001 - one bad call must not stop the run
+        except Exception:  # noqa: BLE001
             model = False
-        rows.append((case, rule, model))
+        rows.append((case, embedding, model))
     layers = {
-        "rule": lambda rule, model: rule,
-        "model flag": lambda rule, model: model,
-        "rule or model": lambda rule, model: rule or model,
+        "embedding": lambda embedding, model: embedding,
+        "model flag": lambda embedding, model: model,
+        "either": lambda embedding, model: embedding or model,
     }
+    labelled = [(c, e, m) for c, e, m in rows[: len(cases)]]
+    everyday = [(c, e, m) for c, e, m in rows[len(cases):]]
+    positives = sum(1 for c, _, _ in labelled if c["concern"])
+    lookalikes = len(labelled) - positives
     report = {}
     print("\nSafety triage (recall matters most):")
     for name, fires in layers.items():
-        caught = sum(1 for case, rule, model in rows if case["concern"] and fires(rule, model))
-        alarms = sum(1 for case, rule, model in rows if not case["concern"] and fires(rule, model))
-        positives = sum(1 for case, _, _ in rows if case["concern"])
-        negatives = len(rows) - positives
-        print(f"  {name:14} caught {caught}/{positives}, false alarms {alarms}/{negatives}")
-        report[name] = {"caught": caught, "positives": positives, "false_alarms": alarms, "negatives": negatives}
-    combined = layers["rule or model"]
+        caught = sum(1 for c, e, m in labelled if c["concern"] and fires(e, m))
+        alarms = sum(1 for c, e, m in labelled if not c["concern"] and fires(e, m))
+        everyday_alarms = sum(1 for _, e, m in everyday if fires(e, m))
+        print(
+            f"  {name:11} caught {caught}/{positives}, false alarms {alarms}/{lookalikes} "
+            f"look-alikes, {everyday_alarms}/{len(everyday)} everyday"
+        )
+        report[name] = {
+            "caught": caught, "positives": positives,
+            "false_alarms": alarms, "look_alikes": lookalikes,
+            "everyday_false_alarms": everyday_alarms, "everyday": len(everyday),
+        }
+    combined = layers["either"]
     misses = [
-        {"text": c["text"], "expected": c["concern"], "rule": r, "model": m}
-        for c, r, m in rows
-        if combined(r, m) != c["concern"]
+        {"text": c["text"], "expected": c.get("concern", False), "embedding": e, "model": m}
+        for c, e, m in rows
+        if combined(e, m) != c.get("concern", False)
     ]
     for miss in misses:
-        print(f"  miss: {miss['text']!r} expected {miss['expected']}, rule={miss['rule']} model={miss['model']}")
+        print(
+            f"  miss: {miss['text']!r} expected {miss['expected']}, "
+            f"embedding={miss['embedding']} model={miss['model']}"
+        )
     report["misses"] = misses
     return report
 
@@ -212,7 +236,7 @@ async def main(mode: str, cases_path: Path) -> None:
         if mode in ("intents", "all"):
             report["intents"] = await evaluate_intents(provider, cases["intents"])
         if mode in ("safety", "all"):
-            report["safety"] = await evaluate_safety(provider, cases["safety"])
+            report["safety"] = await evaluate_safety(provider, cases["safety"], cases["intents"])
         if mode in ("frustration", "all"):
             report["frustration"] = await evaluate_frustration(provider, cases["frustration"])
         if mode in ("retrieval", "all"):

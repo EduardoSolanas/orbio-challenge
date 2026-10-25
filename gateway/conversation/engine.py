@@ -20,9 +20,9 @@ from gateway.backend_client import BackendApiClient
 from gateway.errors import AppError, app_error
 from gateway.conversation.safety import (
     SAFETY_QUERY,
+    SafetyIndex,
     as_safety_question,
-    rule_extraction,
-    rule_language,
+    fallback_extraction,
 )
 from gateway.conversation.intent import (
     apply_transitions,
@@ -103,6 +103,8 @@ ACCOUNT_INTENTS = ("order_lookup", "installation_status", "book_technician")
 RECENT_MESSAGE_LIMIT = 12
 MAX_COLLECTION_TURNS = 50
 TEXT_TURN_DEADLINE_SECONDS = 25.0
+# A flagged turn does not wait long for a model that is not answering.
+SAFETY_EXTRACT_TIMEOUT_SECONDS = 8.0
 
 
 class KnowledgeBase(Protocol):
@@ -248,8 +250,10 @@ class ConversationEngine:
         customer_data: BackendApiClient | None = None,
         verification: VerificationRegistry | None = None,
         semantic_index: SemanticIndex | None = None,
+        safety_index: SafetyIndex | None = None,
     ) -> None:
         self.semantic_index = semantic_index
+        self.safety_index = safety_index
         self.repository = repository
         self.provider = provider
         self.knowledge_base = knowledge_base
@@ -368,22 +372,7 @@ class ConversationEngine:
     ) -> tuple[Extraction, MergeOutcome, TurnPlan]:
         """Extract, merge and choose the reply for one text turn."""
 
-        # Safety triage comes first. The rule needs no model call, so a gas report is
-        # answered even when the model is slow or down; the model's own flag covers
-        # wording the rule cannot know.
-        caught = rule_language(command.text)
-        if caught is not None:
-            extraction = rule_extraction(caught)
-        else:
-            extraction = await self.provider.extract(
-                build_extraction_context(
-                    session,
-                    command.text,
-                    verified_order_number=self.verification.grant(session.session_id),
-                )
-            )
-            if extraction.safety_concern:
-                extraction = as_safety_question(extraction)
+        extraction = await self._extract_with_safety_triage(session, command)
         reply_language = choose_reply_language(session, extraction)
 
         if extraction.detected_language == "unsupported" and not extraction.safety_concern:
@@ -447,6 +436,53 @@ class ConversationEngine:
             next_active=next_active,
         )
         return extraction, outcome, plan
+
+    async def _embedding_concern(self, message: str) -> bool:
+        """The embedding check; any failure means "no opinion", never a failed turn."""
+
+        if self.safety_index is None:
+            return False
+        try:
+            return await self.safety_index.concerning(message)
+        except (AppError, TimeoutError):
+            return False
+
+    async def _extract_with_safety_triage(
+        self, session: Session, command: TurnRequest
+    ) -> Extraction:
+        """Run the extraction and the embedding safety check side by side.
+
+        A turn is a safety turn if either the embedding check or the model's own
+        ``safety_concern`` flag says so. If the model cannot answer a flagged turn, the
+        customer still gets the safety record instead of an error.
+        """
+
+        extraction_call = asyncio.ensure_future(
+            self.provider.extract(
+                build_extraction_context(
+                    session,
+                    command.text,
+                    verified_order_number=self.verification.grant(session.session_id),
+                )
+            )
+        )
+        try:
+            concern = await self._embedding_concern(command.text)
+            try:
+                extraction = await asyncio.wait_for(
+                    extraction_call,
+                    SAFETY_EXTRACT_TIMEOUT_SECONDS if concern else None,
+                )
+            except (AppError, TimeoutError):
+                if not concern:
+                    raise
+                return fallback_extraction(session.reply_language)
+        finally:
+            if not extraction_call.done():
+                extraction_call.cancel()
+        if concern or extraction.safety_concern:
+            return as_safety_question(extraction)
+        return extraction
 
     async def confirm(self, session_id: UUID, command: ConfirmRequest) -> TurnResponse:
         async with self.repository.locked(session_id):

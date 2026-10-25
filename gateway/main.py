@@ -31,6 +31,7 @@ from gateway.localization import LocalizationInvalid, load_locales
 from gateway.providers.client import OpenAICompatibleProvider
 from gateway.knowledge.retrieval import KnowledgeInvalid, load_knowledge
 from gateway.routes.endpoints import router
+from gateway.conversation.safety import SafetyExamplesInvalid, SafetyIndex, load_examples
 from gateway.knowledge.semantic import SemanticIndex
 from gateway.storage import JsonSessionRepository
 from gateway.conversation.verification import VerificationRegistry
@@ -38,6 +39,7 @@ from gateway.conversation.verification import VerificationRegistry
 logger = logging.getLogger(__name__)
 
 DEFAULT_KNOWLEDGE_PATH = Path(__file__).parent / "knowledge" / "northstar-faq.json"
+DEFAULT_SAFETY_EXAMPLES_PATH = Path(__file__).parent / "knowledge" / "safety-examples.json"
 
 
 def _build_provider(settings: Settings) -> OpenAICompatibleProvider:
@@ -81,6 +83,7 @@ def create_app(
     verification_registry: VerificationRegistry | None = None,
     backend_api_client: BackendApiClient | None = None,
     semantic_index: SemanticIndex | None = None,
+    safety_index: SafetyIndex | None = None,
 ) -> FastAPI:
     """Build the app; dependencies are assembled on lifespan start (IC §3)."""
 
@@ -130,6 +133,17 @@ def create_app(
                 min_similarity=active_settings.embed_min_similarity,
             )
 
+        active_safety = safety_index
+        if active_safety is None and active_settings.embed is not None:
+            try:
+                active_safety = SafetyIndex(
+                    load_examples(DEFAULT_SAFETY_EXAMPLES_PATH), active_provider.embed
+                )
+            except SafetyExamplesInvalid:
+                await active_provider.close()
+                raise RuntimeError("The safety examples are missing or invalid.") from None
+            active_safety.warm()
+
         app.state.settings = active_settings
         app.state.locales = locales
         app.state.repository = repository
@@ -146,12 +160,15 @@ def create_app(
             customer_data=customer_data,
             verification=verification,
             semantic_index=active_index,
+            safety_index=active_safety,
         )
         app.state.ready = True
         try:
             yield
         finally:
             app.state.ready = False
+            if active_safety is not None:
+                await active_safety.aclose()
             await customer_data.aclose()
             await active_provider.close()
 
