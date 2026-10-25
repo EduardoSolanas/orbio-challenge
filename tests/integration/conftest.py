@@ -7,7 +7,11 @@ from pathlib import Path
 import pytest
 
 from app.main import create_app
-from tests.integration.support_api import ScriptedProvider, build_settings, running_client
+from tests.integration.support.api import (
+    ScriptedProvider,
+    build_settings,
+    running_client,
+)
 
 
 @pytest.fixture

@@ -15,19 +15,19 @@ from app.order_api import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_
 from app.order_client import OrderApiClient
 from app.verification import VerificationRegistry
 from tests.integration.order_verification.support import (
-    FakeClock,
     ORDER_NUMBER_TEXT,
     ORDER_STATUS_Q,
     VERIFICATION_PROMPT,
     WRONG_CODE,
+    FakeClock,
     create_session,
     full_intake,
     order_lookup,
     send_turn,
     verify,
 )
-from tests.integration.support_api import read_session, running_client
-from tests.integration.support_order_api import LocalOrderApiServer
+from tests.integration.support.api import read_session, running_client
+from tests.integration.support.order_api import LocalOrderApiServer
 
 
 async def test_completed_session_verification_is_rejected(client, provider):

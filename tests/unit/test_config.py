@@ -8,41 +8,12 @@ from pathlib import Path
 import pytest
 
 from app.config import ServiceProfile, Settings, SpeechProfile, TextProfile
-
-SESSION_DIR = "/tmp/orbio-sessions"
-
-
-def valid_environ():
-    return {
-        "AI_PROVIDER": "openai_compatible",
-        "LLM_BASE_URL": "http://host.docker.internal:8001/v1",
-        "LLM_MODEL": "extraction-model",
-        "LLM_AUTH_MODE": "none",
-        "LLM_API_KEY": "",
-        "LLM_OUTPUT_MODE": "json_schema",
-        "STT_BASE_URL": "http://host.docker.internal:8002/v1",
-        "STT_MODEL": "transcription-model",
-        "STT_AUTH_MODE": "none",
-        "STT_API_KEY": "",
-        "TTS_BASE_URL": "http://host.docker.internal:8003/v1",
-        "TTS_MODEL": "speech-model",
-        "TTS_AUTH_MODE": "none",
-        "TTS_API_KEY": "",
-        "TTS_VOICE": "alloy",
-        "SESSION_DIR": SESSION_DIR,
-        "PROVIDER_MAX_CONCURRENCY": "4",
-        "ORDER_API_BASE_URL": "http://order-api.test",
-    }
-
-
-def complete_rag_environ():
-    return {
-        "RAG_BASE_URL": "http://rag.internal:9001/v1",
-        "RAG_MODEL": "rag-model",
-        "RAG_AUTH_MODE": "none",
-        "RAG_API_KEY": "",
-        "RAG_OUTPUT_MODE": "json_object",
-    }
+from tests.unit.config_support import (
+    SESSION_DIR,
+    assert_configuration_invalid,
+    complete_rag_environ,
+    valid_environ,
+)
 
 
 def test_from_env_reads_every_role_profile():
@@ -226,17 +197,6 @@ def test_from_env_does_not_mutate_the_supplied_mapping():
 
 
 # --- Validation slice: exact startup RuntimeError and offline settings matrix ---
-
-CONFIGURATION_INVALID = (
-    "configuration_invalid: Check required provider and model settings."
-)
-
-
-def assert_configuration_invalid(environ):
-    with pytest.raises(RuntimeError) as excinfo:
-        Settings.from_env(environ)
-
-    assert str(excinfo.value) == CONFIGURATION_INVALID
 
 
 REQUIRED_VARIABLES = [

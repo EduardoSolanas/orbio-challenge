@@ -26,7 +26,7 @@ from tests.integration.order_verification.support import (
     send_turn,
     verify,
 )
-from tests.integration.support_api import make_extraction
+from tests.integration.support.api import make_extraction
 
 
 async def test_order_status_without_order_number_asks_for_it_without_auth_or_rag(

@@ -13,10 +13,10 @@ import threading
 import time
 from uuid import UUID
 
-from fastapi import FastAPI
-from fastapi.responses import JSONResponse
 import pytest
 import uvicorn
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 
 from app.errors import INVALID_ORDER_API_RESPONSE, ORDER_API_TIMEOUT
 from app.localization import text
@@ -32,7 +32,7 @@ from tests.integration.order_verification.support import (
     send_turn,
     verify,
 )
-from tests.integration.support_api import running_client
+from tests.integration.support.api import running_client
 
 
 async def test_order_api_outage_during_verification_is_safe_and_recovers(

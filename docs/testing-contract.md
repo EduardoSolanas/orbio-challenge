@@ -180,14 +180,14 @@ The inventory checker must validate each claimed test_nodeid against coverage co
 
 ## 13. Real provider HTTP integration layer
 
-Unit tests and the existing IT08/IT12/IT13 cases double the provider transport with `httpx.MockTransport`. This layer adds the layer between those and browser E2E: the shipped `OpenAICompatibleProvider` with its real `httpx.AsyncClient` talks over a real TCP socket to `tests/integration/support_provider_http.py::LocalProviderServer`, a threaded loopback HTTP service with per-path scripted responses. No provider object is injected into `create_app`; the lifespan builds the adapter from settings, so routes, schemas, engine, JSON repository, retriever, adapter and HTTP client all run as shipped. The harness is test-only; there is no production fake-provider mode.
+Unit tests and the existing IT08/IT12/IT13 cases double the provider transport with `httpx.MockTransport`. This layer adds the layer between those and browser E2E: the shipped `OpenAICompatibleProvider` with its real `httpx.AsyncClient` talks over a real TCP socket to `tests/integration/support/provider_http.py::LocalProviderServer`, a threaded loopback HTTP service with per-path scripted responses. No provider object is injected into `create_app`; the lifespan builds the adapter from settings, so routes, schemas, engine, JSON repository, retriever, adapter and HTTP client all run as shipped. The harness is test-only; there is no production fake-provider mode.
 
 The server records each request path, headers and raw body, and each response status/headers/outcome, including bytes written and client abort (`broken pipe`) on a chunked stream. Tests therefore assert exact wire requests, retry/repair counts, bounded response consumption and the absence of detached provider work after a timeout.
 
 | Boundary | Case |
 |----------|------|
-| Exact extraction/RAG requests, parsed results, per-role bearer auth, `Accept-Encoding: identity` | `test_provider_http.py::test_extraction_and_answer_requests_cross_the_real_socket_exactly`, `::test_role_tokens_never_cross_the_wire` |
-| `json_schema`, `json_object`, `prompt_json` payloads at the socket | `::test_all_three_output_modes_are_transported_on_the_wire` and `test_rag_http.py::test_output_mode_drives_a_real_turn_end_to_end` |
+| Exact extraction/RAG requests, parsed results, per-role bearer auth, `Accept-Encoding: identity` | `providers/test_provider_http.py::test_extraction_and_answer_requests_cross_the_real_socket_exactly`, `::test_role_tokens_never_cross_the_wire` |
+| `json_schema`, `json_object`, `prompt_json` payloads at the socket | `::test_all_three_output_modes_are_transported_on_the_wire` and `rag/test_rag_http.py::test_output_mode_drives_a_real_turn_end_to_end` |
 | Redirect not followed (302, one request, no target hit) | `::test_redirect_is_not_followed` |
 | 1 MiB raw success cap: exact limit accepted; 8 MiB chunked body aborted mid-stream and retried | `::test_success_body_exactly_at_the_limit_is_accepted`, `::test_oversized_chunked_success_is_bounded_and_retried` |
 | Compressed success rejected without decompression | `::test_gzip_encoded_success_is_rejected_without_decompression` |
@@ -195,13 +195,13 @@ The server records each request path, headers and raw body, and each response st
 | 503 retried then `provider_unavailable`; 400 not retried | `::test_provider_503_is_retried_then_unavailable`, `::test_provider_400_is_not_retried_and_maps_to_configuration` |
 | Read timeout is bounded, exactly two scripted attempts occur, and no late result changes application state | `::test_read_timeout_is_bounded_and_leaves_no_detached_work` |
 | Connection refused maps to `provider_unavailable` | `::test_connection_refused_maps_to_unavailable` |
-| Shared extraction+generation deadline, 504, no partial write, and no late application request/state commit | `test_rag_http.py::test_it10_12_shared_deadline_cuts_generation_without_detached_work` |
+| Shared extraction+generation deadline, 504, no partial write, and no late application request/state commit | `rag/test_rag_http.py::test_it10_12_shared_deadline_cuts_generation_without_detached_work` |
 | Multi-turn RAG: slots/citations/revision after refresh-equivalent reload, old accepted fact outside the latest 12 messages | `::test_multi_turn_rag_keeps_state_and_old_facts_outside_the_window` |
 | Rollback after reload leaves persisted bytes untouched, same revision accepts a later turn | `::test_rollback_after_reload_leaves_the_persisted_session_untouched` |
 | Two application instances and sessions isolated (separate servers, directories, revisions, citations) | `::test_two_app_instances_and_sessions_are_isolated` |
 | Speech over real HTTP: exact synthesis request, saved-message-only, arbitrary text/unknown/user message rejected with no provider call and no session write | `::test_speech_synthesizes_only_a_saved_message_over_real_http`, `::test_speech_rejects_unsaved_or_arbitrary_input_without_provider_call` |
 
-IT10 matrix coverage: `test_rag.py` keeps IT10-01..IT10-16 at the scripted-AIProvider and `httpx.MockTransport` layers; `test_rag_http.py` re-proves the transport-dependent rows over the real socket (01 grounded answer, 02 no-match/no generation, 03 retrieved-but-unanswerable, 04 two ordered sources, 05 unknown citation, 06 duplicate citation, 07 unretrieved KB citation, 08 false-with-text, 11 outage rollback, 12 shared deadline). Rows 09, 10, 13, 14, 15 and 16 remain covered by their existing `test_rag.py` cases; the module docstring records the exact mapping.
+IT10 matrix coverage: `rag/test_rag.py` keeps IT10-01..IT10-16 at the scripted-AIProvider and `httpx.MockTransport` layers; `rag/test_rag_http.py` re-proves the transport-dependent rows over the real socket (01 grounded answer, 02 no-match/no generation, 03 retrieved-but-unanswerable, 04 two ordered sources, 05 unknown citation, 06 duplicate citation, 07 unretrieved KB citation, 08 false-with-text, 11 outage rollback, 12 shared deadline). Rows 09, 10, 13, 14, 15 and 16 remain covered by their existing `rag/test_rag.py` cases; the module docstring records the exact mapping.
 
 Timeout cases shorten the real adapter budget (`TEXT_BUDGET`/`ROLE_BUDGETS`) and the engine deadline before construction so wall-clock stays bounded; retry, repair, validation and commit/rollback logic are unchanged. Commands:
 
@@ -217,7 +217,7 @@ Existing suites remain authoritative for boundaries this layer does not re-prove
 
 ## 14. Private Order API boundary
 
-The gateway owns no catalog, demo code or credential rule. Verification and lookup cross a real HTTP boundary to the shipped `app.order_api:app` served by Uvicorn on a loopback port (`tests/integration/support_order_api.py::LocalOrderApiServer`); the same server can be stopped and restarted on the same origin to prove outage and recovery. `OrderApiClient` transport/status mapping is also pinned in `tests/unit/test_order_api.py` with a protocol-faithful `httpx.MockTransport`; an in-process Order API replacement is not accepted for integration coverage.
+The gateway owns no catalog, demo code or credential rule. Verification and lookup cross a real HTTP boundary to the shipped `app.order_api:app` served by Uvicorn on a loopback port (`tests/integration/support/order_api.py::LocalOrderApiServer`); the same server can be stopped and restarted on the same origin to prove outage and recovery. `OrderApiClient` transport/status mapping is also pinned in `tests/unit/test_order_api.py` with a protocol-faithful `httpx.MockTransport`; an in-process Order API replacement is not accepted for integration coverage.
 
 | Order API case | Test nodeids |
 |---|---|

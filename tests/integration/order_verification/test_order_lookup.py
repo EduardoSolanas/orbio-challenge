@@ -17,7 +17,6 @@ from app.order_client import OrderApiClient
 from app.schemas import KnowledgeAnswer, Slots
 from app.verification import VerificationRegistry
 from tests.integration.order_verification.support import (
-    FakeClock,
     ORDER_NUMBER_PROMPT,
     ORDER_NUMBER_TEXT,
     ORDER_RESULT,
@@ -25,18 +24,19 @@ from tests.integration.order_verification.support import (
     RETURN_ANSWER_TEXT,
     RETURN_Q,
     VERIFICATION_PROMPT,
+    FakeClock,
     create_session,
     full_intake,
     order_lookup,
     send_turn,
     verify,
 )
-from tests.integration.support_api import (
+from tests.integration.support.api import (
     make_extraction,
     persisted_response,
     running_client,
 )
-from tests.integration.support_order_api import LocalOrderApiServer
+from tests.integration.support.order_api import LocalOrderApiServer
 
 
 async def test_spanish_order_lookup_prompts_in_spanish(

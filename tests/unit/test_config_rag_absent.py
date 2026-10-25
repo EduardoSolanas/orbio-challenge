@@ -3,7 +3,7 @@
 import pytest
 
 from app.config import Settings
-from tests.unit.test_config import (
+from tests.unit.config_support import (
     assert_configuration_invalid,
     complete_rag_environ,
     valid_environ,

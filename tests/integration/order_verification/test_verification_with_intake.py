@@ -27,7 +27,7 @@ from tests.integration.order_verification.support import (
     send_turn,
     verify,
 )
-from tests.integration.support_api import make_extraction, read_session
+from tests.integration.support.api import make_extraction, read_session
 
 
 PART = "My order NS-000123 arrived broken."

@@ -8,8 +8,8 @@ from app.main import create_app
 from app.order_client import OrderApiClient
 from app.verification import VerificationRegistry
 from tests.integration.order_verification.support import FakeClock
-from tests.integration.support_api import running_client
-from tests.integration.support_order_api import LocalOrderApiServer
+from tests.integration.support.api import running_client
+from tests.integration.support.order_api import LocalOrderApiServer
 
 
 @pytest.fixture
