@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from unittest.mock import patch
 
+import pytest
+
 from tests.e2e.judge_config import JudgeConfig, judge, load_config
 
 
@@ -65,4 +67,27 @@ def test_judge_default_output_budget_handles_reasoning_models(tmp_path):
         encoding="utf-8",
     )
 
-    assert load_config(config_file).max_tokens == 1024
+    assert load_config(config_file).max_tokens == 4096
+
+
+class _Truncated(_Response):
+    def read(self) -> bytes:
+        return json.dumps(
+            {"choices": [{"finish_reason": "length", "message": {"content": ""}}]}
+        ).encode()
+
+
+def test_a_judge_that_runs_out_of_tokens_says_so_instead_of_reporting_bad_json():
+    config = JudgeConfig(
+        base_url="http://judge.local/v1",
+        model="local-model",
+        api_key=None,
+        timeout_seconds=5,
+        max_tokens=128,
+        temperature=0,
+        prompt_version="test-v1",
+    )
+    with patch("tests.e2e.judge_config.urllib.request.urlopen", return_value=_Truncated()):
+        with pytest.raises(AssertionError, match="ran out of tokens.*E2E_JUDGE_MAX_TOKENS"):
+            judge(config, "ASSISTANT Hello", "brief greeting")
+

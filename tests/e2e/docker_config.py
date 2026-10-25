@@ -154,7 +154,13 @@ def semantic_judge(config: JudgeConfig, user_turn: str, response: str, context: 
     try:
         with urllib.request.urlopen(request, timeout=config.timeout_seconds) as raw_response:
             raw = json.loads(raw_response.read().decode("utf-8"))
-        content = raw["choices"][0]["message"]["content"]
+        choice = raw["choices"][0]
+        content = choice["message"]["content"]
+        if not content and choice.get("finish_reason") == "length":
+            raise ValueError(
+                "the judge ran out of tokens before answering (a reasoning model spends them "
+                "thinking); raise E2E_JUDGE_MAX_TOKENS"
+            )
         verdict = validate_verdict(json.loads(content))
     except (OSError, urllib.error.URLError, TimeoutError, json.JSONDecodeError, KeyError, IndexError, TypeError, ValueError) as exc:
         raise AssertionError(f"Docker semantic judge failed: {exc}") from exc

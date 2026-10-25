@@ -100,6 +100,25 @@
     {"text": "Quiero abrir una incidencia", "intent": "start_intake", "language": "es"},
     {"text": "Continúa con mi incidencia", "intent": "start_intake", "language": "es"}
   ],
+  "frustration": [
+    {"text": "This is ridiculous, I'm so pissed off. I want to talk to a human right now!", "frustration": "present", "language": "en"},
+    {"text": "I'm furious, nobody is helping me and I've asked three times", "frustration": "present", "language": "en"},
+    {"text": "I'm sick of this useless bot, get me a real person", "frustration": "present", "language": "en"},
+    {"text": "This is the worst service ever, I'm absolutely livid", "frustration": "present", "language": "en"},
+    {"text": "I'm really angry about being charged twice and then ignored", "frustration": "present", "language": "en"},
+    {"text": "I am really frustrated. I want a human agent.", "frustration": "present", "language": "en"},
+    {"text": "Estoy muy enfadado, llevo tres días sin luz y nadie me ayuda", "frustration": "present", "language": "es"},
+    {"text": "Estoy harto de este bot, quiero hablar con una persona", "frustration": "present", "language": "es"},
+    {"text": "Esto es una vergüenza, estoy furioso", "frustration": "present", "language": "es"},
+    {"text": "I'm a bit nervous, my meter is showing a strange number", "frustration": "none", "language": "en"},
+    {"text": "I'm worried about my bill, could you help me check it?", "frustration": "none", "language": "en"},
+    {"text": "Thanks, that was helpful", "frustration": "none", "language": "en"},
+    {"text": "My meter is broken, can you help?", "frustration": "none", "language": "en"},
+    {"text": "I am not frustrated, I just need the policy", "frustration": "none", "language": "en"},
+    {"text": "Hello, how are you?", "frustration": "none", "language": "en"},
+    {"text": "Estoy preocupado por mi factura", "frustration": "none", "language": "es"},
+    {"text": "Gracias, muy amable", "frustration": "none", "language": "es"}
+  ],
   "retrieval": [
     {"text": "Can I return an unused item?", "record": "faq-returns"},
     {"text": "How do I get a refund?", "record": "faq-returns"},

@@ -27,7 +27,7 @@
   "booking.confirmed": "Booked: a technician will visit on {date} between {start} and {end}. Your booking reference is {reference}.",
   "booking.no_slots": "There are no technician times available right now. Please try again later.",
   "booking.user_choice": "I choose the technician visit on {date} at {start}.",
-  "capability": "I can answer energy questions, look up a demo account after verification, and help report a service issue. I cannot change a real account or contact an energy network.",
+  "capability": "I can't help with that, but I can answer energy questions, look up a demo account after verification, and help report a service issue. I cannot change a real account or contact an energy network.",
   "capability_reply": "I can answer questions about Northstar Energy bills, tariffs, meter readings, moving home, and supply issues.",
   "errors.empty_transcription": "No transcript was returned. Try another recording or type your message.",
   "errors.input_too_large": "The input exceeds the allowed size.",

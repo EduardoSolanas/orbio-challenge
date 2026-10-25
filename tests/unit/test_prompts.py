@@ -666,7 +666,7 @@ def test_policy_question_suffix_is_the_exact_contract_text() -> None:
         (REJECT_PROMPT, "What would you like to change?"),
         (
             CAPABILITY,
-            "I can answer energy questions, look up a demo account after verification, "
+            "I can't help with that, but I can answer energy questions, look up a demo account after verification, "
             "and help report a service issue. I cannot change a real account or contact an energy network.",
         ),
         (

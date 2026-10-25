@@ -113,7 +113,7 @@ async def test_unrelated_statement_without_facts_uses_capability_reply(tmp_path)
     assert response.pending_review_revision is None
     assert response.summary is None
     assert response.reply == (
-        "I can answer energy questions, look up a demo account after verification, "
+        "I can't help with that, but I can answer energy questions, look up a demo account after verification, "
         "and help report a service issue. I cannot change a real account or contact an energy network."
     )
     stored = await repository.load(created.session_id)
@@ -138,7 +138,7 @@ async def test_unrelated_statement_at_valid_review_preserves_summary_and_token(
     assert response.pending_review_revision == 1
     assert response.summary == SUMMARY
     assert response.reply == (
-        "I can answer energy questions, look up a demo account after verification, "
+        "I can't help with that, but I can answer energy questions, look up a demo account after verification, "
         "and help report a service issue. I cannot change a real account or contact an energy network."
     )
     provider.assert_exhausted()

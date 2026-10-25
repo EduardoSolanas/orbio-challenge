@@ -168,13 +168,13 @@ Run `python -m ruff format app` from the repository root to format the Python ap
 
 | Layer | What it covers | Result |
 |---|---|---|
-| Unit and integration | Validation, state machine, storage, HTTP routes, providers over a real socket, RAG, audio | 1771 unit and 385 integration tests passed on 2026-10-25, run as separate layers (`scripts/test.py unit`, then `integration`). Two wall-clock timeout tests can fail when both layers share one pytest process on a slow machine. |
+| Unit and integration | Validation, state machine, storage, HTTP routes, providers over a real socket, RAG, audio | 1773 unit and 385 integration tests passed on 2026-10-25, run as separate layers (`scripts/test.py unit`, then `integration`). Two wall-clock timeout tests can fail when both layers share one pytest process on a slow machine. |
 | Browser (Playwright) | Eleven tests in Chromium covering the user journeys, including voice and RAG | 11 passed on 2026-10-25 |
 | Browser scripts | JavaScript unit tests (`node --test tests/unit/*.test.js`) | 26 passed on 2026-10-25 |
-| Judge journeys | 26 browser tests with a scripted AI provider; each reply is graded against a written rule, including booking a technician before verifying | 26 passed on 2026-10-25. The judge LLM was not available, so Claude graded the 24 recorded conversations by hand against the same rules: 24 of 24 pass. Replies there are mostly fixed templates, so this checks wording rules, not model behaviour. |
-| Real Docker end-to-end | Deployed containers against the real LLM, speech services and embeddings | 4 passed on 2026-10-25 (greeting; multi-turn RAG with citations; unsupported question abstains; booking a technician asks for verification first, then books, with the real model routing every turn). Claude graded the replies by hand and the judge LLM was not used. The multi-turn test originally required the follow-up answer to differ from the first; both questions retrieve the same record and the model quotes it, so it now requires the same record and the 30-day answer. The booking test books the demo account's one visit, so a rerun reports that visit instead; reset with `docker compose down --volumes`. |
+| Judge journeys | 31 browser tests with a scripted AI provider; 29 record a conversation that a judge LLM grades against a written rule. They cover every intent, including account status, installation status and booking with verification first, and the hand-off of a frustrated customer | 31 passed on 2026-10-25 with `DeepSeek-V4.1-Flash-1017` as the judge: 29 of 29 conversations judged as pass. Replies there are mostly fixed templates, so this checks wording rules, not model behaviour. |
+| Real Docker end-to-end | 15 tests on the deployed containers against the real LLM, speech services and embeddings, graded by the judge LLM: greeting, gratitude, capability, off-topic, start of a report, a full intake with correction, rejection and confirmation, RAG with citations and abstention, order status, installation status and booking (each with verification first), angry customers in English and Spanish, an angry customer mid-intake, and a nervous one | 15 passed on 2026-10-25 with the same DeepSeek model as judge, so the model grades itself. The first full run passed 13: one failure was my rule being too narrow and one was real, the off-topic reply never said it would not help, which is now fixed. The booking test books the demo account's one visit, so a rerun reports that visit; reset with `docker compose down --volumes`. A reasoning judge needs `E2E_JUDGE_MAX_TOKENS=4096`: at 1024 it ran out of tokens thinking and returned nothing. |
 | Live providers | `scripts/check_backends.py` | 5 of 5 passed (2026-10-24) |
-| Live evaluation | `scripts/evaluate.py`: intent detection and FAQ retrieval on labelled utterances | 89 of 89 intents (in-sample); FAQ retrieval on held-out questions: embeddings 9 of 10 vs keywords 3 of 10 (see Evaluation) |
+| Live evaluation | `scripts/evaluate.py`: intent detection, frustration hand-off and FAQ retrieval on labelled utterances | 89 of 89 intents (in-sample); frustration: 9 of 9 angry handed off, 8 of 8 calm or nervous kept; FAQ retrieval on held-out questions: embeddings 9 of 10 vs keywords 3 of 10 (see Evaluation) |
 | Mutation testing | `mutmut` over `app/`, Linux only; runs in CI | Not re-run since the modules were split. An earlier run killed 2563 of 2677 mutants; the rest were reviewed as equivalent. CI re-runs it. |
 
 ## Evaluation
@@ -213,6 +213,18 @@ The new intents `installation_status` and `book_technician` scored 9 of 9 each f
 start. The score is on the same messages that exposed the misses, so read 100% as a
 regression baseline, not proof of general accuracy; new phrasings should be added to the
 file over time.
+
+### Frustration hand-off
+
+The app hands a customer to a simulated human agent on the first message the model
+labels as clearly frustrated; a calm or merely anxious message stays in the chat. On 17
+labelled messages in English and Spanish, the real model handed off 9 of 9 angry ones
+("I'm so pissed off, I want to talk to a human", "I'm furious", "Estoy harto de este
+bot") and kept 8 of 8 calm or nervous ones ("I'm a bit nervous, my meter shows a strange
+number", "I'm worried about my bill"). The messages were written by one author and the
+model labels each message alone, so a milder or sarcastic complaint may be judged
+differently; the Docker tests above check the hand-off end to end, including an angry
+customer mid-intake and a nervous one who must not be handed off.
 
 ### FAQ retrieval
 

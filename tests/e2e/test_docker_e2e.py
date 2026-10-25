@@ -175,7 +175,7 @@ def test_docker_booking_asks_for_verification_first_then_books(docker_page: Page
     assert first["slot_options"] == []
     expect(docker_page.locator("#order-verification")).to_be_visible()
     expect(slots).to_have_count(0)
-    _judge(docker_config, request, turn, _assistant_text(first), "booking requested before verification; the assistant must ask for the service postcode and verification code and offer or confirm no appointment time")
+    _judge(docker_config, request, turn, _assistant_text(first), "the customer asked to book a technician but is not verified yet; a correct reply asks for the service postcode and verification code and does not offer, state or confirm any appointment time")
 
     assert _verify(docker_page, "SW1A 1AA", "123456") == {"verified": False, "error": "verification_failed"}
     expect(docker_page.locator("#order-verification")).to_be_visible()
@@ -194,9 +194,127 @@ def test_docker_booking_asks_for_verification_first_then_books(docker_page: Page
     expect(slots).to_have_count(len(second["slot_options"]))
     _judge(docker_config, request, turn, reply, "verified customer asked to book a technician; the assistant must say that times are available to choose from and must not state or invent any specific time")
     chosen = slots.first.get_attribute("data-starts-at")
+    clicked = slots.first.inner_text()
     with docker_page.expect_response(lambda response: response.request.method == "POST" and response.url.endswith("/bookings")) as pending:
         slots.first.click()
     assert pending.value.status == 200
     confirmation = _assistant_text(pending.value.json())
     assert confirmation.startswith(f"Booked: a technician will visit on {chosen[:10]}")
-    _judge(docker_config, request, f"chose {chosen}", confirmation, f"confirmation of the technician visit the customer chose ({chosen}); it must match that time and include a booking reference")
+    _judge(docker_config, request, f"clicked the time button labelled '{clicked}' (window starting {chosen})", confirmation, f"the customer clicked the button '{clicked}' for the window starting {chosen}; the confirmation must give that same window, including its end time as shown on the button, and a booking reference")
+
+
+SINGLE_TURN_INTENTS = [
+    ("gratitude", "Thank you so much, that was really helpful.", "the customer is thanking the assistant; a correct reply is a brief polite acknowledgement that does not ask for issue details or verification and does not give a policy answer"),
+    ("capability", "What can you help me with?", "the customer asks what the assistant can do; a correct reply describes what it can help with, such as energy questions, a verified demo account or reporting a service issue, and does not start collecting issue details"),
+    ("unrelated", "Tell me a joke about pizza.", "the customer makes an off-topic request; a correct reply says it cannot help with that request, restates what the assistant can help with and does not tell a joke"),
+    ("start_intake", "I want to report a problem.", "the customer wants to report a problem without saying what it is; a correct reply starts collecting by asking for one detail, such as the account reference or what happened, and does not ask for verification codes or give a policy answer"),
+]
+
+
+@pytest.mark.parametrize(("name", "turn", "rule"), SINGLE_TURN_INTENTS, ids=[case[0] for case in SINGLE_TURN_INTENTS])
+def test_docker_single_turn_intents(docker_page: Page, docker_config: DockerE2EConfig, request: pytest.FixtureRequest, name: str, turn: str, rule: str) -> None:
+    _, body = _send(docker_page, turn)
+    reply = _assistant_text(body)
+    assert reply.strip()
+    assert body["status"] == "collecting"
+    assert body["order_verification_required"] is False
+    _judge(docker_config, request, turn, reply, rule)
+
+
+def test_docker_intake_correction_rejection_and_confirmation(docker_page: Page, docker_config: DockerE2EConfig, request: pytest.FixtureRequest) -> None:
+    turn = "My account NS-000123 has a cracked smart meter casing. It is an equipment issue and the urgency is high."
+    _, body = _send(docker_page, turn)
+    assert body["status"] == "awaiting_confirmation", body["reply"]
+    assert body["slots"]["order_number"] == "NS-000123" and body["slots"]["urgency"] == "high"
+    _judge(docker_config, request, turn, _assistant_text(body), "a review of the collected details: it must show account reference NS-000123, an equipment issue, a cracked smart meter casing and high urgency, and ask the customer to confirm or change them")
+
+    turn = "Actually, make the urgency low."
+    _, body = _send(docker_page, turn)
+    assert body["status"] == "awaiting_confirmation" and body["slots"]["urgency"] == "low", body["reply"]
+    _judge(docker_config, request, turn, _assistant_text(body), "the customer changed the urgency to low; the updated review must show low urgency, keep the other details and ask to confirm or change")
+
+    turn = "No."
+    _, body = _send(docker_page, turn)
+    assert body["status"] == "collecting"
+    _judge(docker_config, request, turn, _assistant_text(body), "the customer rejected the review; a correct reply asks what they would like to change and does nothing else")
+
+    turn = "Make the urgency normal."
+    _, body = _send(docker_page, turn)
+    assert body["status"] == "awaiting_confirmation" and body["slots"]["urgency"] == "normal", body["reply"]
+    _judge(docker_config, request, turn, _assistant_text(body), "the customer corrected the urgency to normal after rejecting; the new review must show normal urgency with the other details unchanged")
+
+    with docker_page.expect_response(lambda response: response.request.method == "POST" and response.url.endswith("/confirm")) as pending:
+        docker_page.get_by_role("button", name="Confirm details").click()
+    assert pending.value.status == 200
+    confirmed = pending.value.json()
+    assert confirmed["status"] == "completed"
+    _judge(docker_config, request, "confirmed the review with the Confirm button", _assistant_text(confirmed), "the customer confirmed; a correct reply says the details were saved locally and that no request was sent to a real support team, and does not claim a real ticket or agent")
+
+
+def test_docker_order_status_asks_for_verification_first(docker_page: Page, docker_config: DockerE2EConfig, request: pytest.FixtureRequest) -> None:
+    turn = "What is the status of my account NS-000123?"
+    _, first = _send(docker_page, turn)
+    assert first["order_verification_required"] is True
+    reply = _assistant_text(first)
+    assert "Casey" not in reply and "Active" not in reply
+    _judge(docker_config, request, turn, reply, "the customer asked for account status but is not verified yet; a correct reply asks for the service postcode and verification code and reveals no account details")
+    assert _verify(docker_page, "SW1A 1AA", "123456") == {"verified": False, "error": "verification_failed"}
+    assert _verify(docker_page, "SW1A 1AA", "246810") == {"verified": True, "error": None}
+
+    turn = "Please show me the details of my account."
+    _, second = _send(docker_page, turn)
+    reply = _assistant_text(second)
+    assert "NS-000123" in reply and "Casey" in reply, reply
+    _judge(docker_config, request, turn, reply, "a verified customer asked for their account details; a correct reply gives the account reference NS-000123, the first name Casey, the service and the status, and no other customer data such as a postcode, verification code, email or address")
+
+
+def test_docker_installation_status_asks_for_verification_first(docker_page: Page, docker_config: DockerE2EConfig, request: pytest.FixtureRequest) -> None:
+    turn = "What is the status of my smart meter installation for account NS-000123?"
+    _, first = _send(docker_page, turn)
+    assert first["order_verification_required"] is True
+    reply = _assistant_text(first)
+    assert "technician visit" not in reply.lower()
+    _judge(docker_config, request, turn, reply, "the customer asked for installation status but is not verified yet; a correct reply asks for the service postcode and verification code and reveals no installation details")
+    assert _verify(docker_page, "SW1A 1AA", "246810") == {"verified": True, "error": None}
+
+    turn = "Any update on my installation now?"
+    _, second = _send(docker_page, turn)
+    reply = _assistant_text(second)
+    assert "technician visit" in reply.lower(), reply
+    _judge(docker_config, request, turn, reply, "a verified customer asked about their installation; a correct reply reports either that the installation is approved and waiting for a technician visit, with a hint to book one, or the booked visit with its date, two-hour window and BK- reference; the account reference NS-000123 and these booking details are expected and not invented")
+
+
+ANGRY_CUSTOMERS = [
+    ("english", "This is ridiculous, I'm so pissed off. I want to talk to a human right now!", "simulates a transfer"),
+    ("spanish", "Estoy harto de este bot, quiero hablar con una persona.", "simula la transferencia"),
+]
+
+
+@pytest.mark.parametrize(("name", "turn", "marker"), ANGRY_CUSTOMERS, ids=[case[0] for case in ANGRY_CUSTOMERS])
+def test_docker_angry_customer_is_handed_to_a_simulated_agent(docker_page: Page, docker_config: DockerE2EConfig, request: pytest.FixtureRequest, name: str, turn: str, marker: str) -> None:
+    _, body = _send(docker_page, turn)
+    reply = _assistant_text(body)
+    assert body["status"] == "handed_off", reply
+    assert marker in reply
+    expect(docker_page.locator("#message")).to_have_js_property("readOnly", True)
+    _judge(docker_config, request, turn, reply, "the customer is angry and asks for a human; a correct reply shows empathy and clearly says the human handoff is simulated, that no live agent is connected and that no real support request was sent; it does not keep collecting details or claim a real transfer happened")
+
+
+def test_docker_angry_customer_in_the_middle_of_an_intake_is_handed_off(docker_page: Page, docker_config: DockerE2EConfig, request: pytest.FixtureRequest) -> None:
+    _, first = _send(docker_page, "My account NS-000123 has a cracked smart meter casing.")
+    assert first["status"] == "collecting"
+    turn = "I have asked three times and nobody helps me. I'm furious, get me a real person!"
+    _, body = _send(docker_page, turn)
+    reply = _assistant_text(body)
+    assert body["status"] == "handed_off", reply
+    assert "simulates a transfer" in reply
+    _judge(docker_config, request, turn, reply, "the customer was in the middle of reporting an issue and became furious; a correct reply shows empathy and clearly says the human handoff is simulated, no live agent is connected and no real request was sent; it does not ask for more issue details")
+
+
+def test_docker_nervous_customer_stays_in_the_chat(docker_page: Page, docker_config: DockerE2EConfig, request: pytest.FixtureRequest) -> None:
+    turn = "I'm a bit nervous, my meter is showing a strange number."
+    _, body = _send(docker_page, turn)
+    reply = _assistant_text(body)
+    assert body["status"] != "handed_off", reply
+    assert "simulates a transfer" not in reply
+    _judge(docker_config, request, turn, reply, "the customer is nervous but not angry; a correct reply stays calm and helpful, for example by asking one detail to start a report or offering help, and does not hand the customer to a human agent or claim a transfer")

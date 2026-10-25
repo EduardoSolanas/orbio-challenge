@@ -16,7 +16,7 @@ It writes ``reports/evaluation.json`` and exits 0 whatever the score: it measure
 it does not gate.
 
 Usage:
-    python scripts/evaluate.py [intents|retrieval|all] [--cases PATH]
+    python scripts/evaluate.py [intents|frustration|retrieval|all] [--cases PATH]
 """
 
 from __future__ import annotations
@@ -91,6 +91,32 @@ async def evaluate_intents(provider, cases: list[dict]) -> dict:
     return {"correct": correct, "total": count, "misses": misses}
 
 
+async def evaluate_frustration(provider, cases: list[dict]) -> dict:
+    """A clear 'present' label hands the customer to a simulated agent; 'uncertain' never does."""
+
+    outcomes: dict[str, list[str]] = defaultdict(list)
+    misses = []
+    for case in cases:
+        try:
+            got = (await provider.extract(context_for(case["text"]))).frustration
+        except Exception as error:  # noqa: BLE001
+            got = f"error:{getattr(error, 'code', type(error).__name__)}"
+        outcomes[case["frustration"]].append(got)
+        if (got == "present") != (case["frustration"] == "present"):
+            misses.append({"text": case["text"], "expected": case["frustration"], "got": got})
+    handed_off = sum(1 for got in outcomes["present"] if got == "present")
+    calm_ok = sum(1 for got in outcomes["none"] if got != "present")
+    print(
+        f"\nFrustration hand-off: angry messages handed off {handed_off}/{len(outcomes['present'])}, "
+        f"calm or anxious messages kept in the chat {calm_ok}/{len(outcomes['none'])}"
+    )
+    for label, gots in sorted(outcomes.items()):
+        print(f"  expected {label:8} labels returned: {dict(sorted((g, gots.count(g)) for g in set(gots)))}")
+    for miss in misses:
+        print(f"  miss: {miss['text']!r} expected {miss['expected']}, got {miss['got']}")
+    return {"handed_off": handed_off, "kept": calm_ok, "misses": misses}
+
+
 def score(name: str, results: list[tuple[dict, list[str]]]) -> dict:
     found = [(c, ids) for c, ids in results if c["record"] is not None]
     abstain = [(c, ids) for c, ids in results if c["record"] is None]
@@ -147,6 +173,8 @@ async def main(mode: str, cases_path: Path) -> None:
     try:
         if mode in ("intents", "all"):
             report["intents"] = await evaluate_intents(provider, cases["intents"])
+        if mode in ("frustration", "all"):
+            report["frustration"] = await evaluate_frustration(provider, cases["frustration"])
         if mode in ("retrieval", "all"):
             # The floor was tuned on "retrieval"; "retrieval_holdout" was written
             # before any score was seen and is the fair comparison.
@@ -164,7 +192,7 @@ async def main(mode: str, cases_path: Path) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("mode", nargs="?", choices=("intents", "retrieval", "all"), default="all")
+    parser.add_argument("mode", nargs="?", choices=("intents", "frustration", "retrieval", "all"), default="all")
     parser.add_argument("--cases", type=Path, default=DEFAULT_CASES)
     arguments = parser.parse_args()
     asyncio.run(main(arguments.mode, arguments.cases))

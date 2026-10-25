@@ -54,7 +54,7 @@ def load_config(path: Path | None = None) -> JudgeConfig:
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise ValueError("E2E_JUDGE_BASE_URL must be an absolute http(s) URL")
     timeout = float(values.get("E2E_JUDGE_TIMEOUT_SECONDS", "30"))
-    max_tokens = int(values.get("E2E_JUDGE_MAX_TOKENS", "1024"))
+    max_tokens = int(values.get("E2E_JUDGE_MAX_TOKENS", "4096"))
     temperature = float(values.get("E2E_JUDGE_TEMPERATURE", "0"))
     prompt_version = values.get("E2E_JUDGE_PROMPT_VERSION", PROMPT_VERSION)
     if timeout <= 0 or timeout > 120:
@@ -115,7 +115,13 @@ def judge(config: JudgeConfig, conversation: str, rule: str) -> dict[str, Any]:
     except (OSError, urllib.error.URLError, TimeoutError) as exc:
         raise AssertionError(f"intent judge request failed: {exc}") from exc
     try:
-        content = raw["choices"][0]["message"]["content"]
+        choice = raw["choices"][0]
+        content = choice["message"]["content"]
+        if not content and choice.get("finish_reason") == "length":
+            raise ValueError(
+                "the judge ran out of tokens before answering (a reasoning model spends them "
+                "thinking); raise E2E_JUDGE_MAX_TOKENS"
+            )
         verdict = validate_verdict(json.loads(content))
     except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
         raise AssertionError(f"intent judge returned invalid structured JSON: {exc}") from exc

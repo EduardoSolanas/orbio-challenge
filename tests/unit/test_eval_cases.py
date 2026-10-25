@@ -46,3 +46,14 @@ def test_the_held_out_questions_are_not_in_the_tuning_set() -> None:
     tuning = {c["text"] for c in CASES["retrieval"]}
 
     assert not tuning & {c["text"] for c in CASES["retrieval_holdout"]}
+
+
+def test_frustration_cases_cover_angry_and_calm_messages_in_both_languages() -> None:
+    cases = CASES["frustration"]
+    counts = Counter((c["frustration"], c["language"]) for c in cases)
+
+    assert {c["frustration"] for c in cases} == {"present", "none"}
+    for label in ("present", "none"):
+        assert counts[(label, "en")] >= 4
+        assert counts[(label, "es")] >= 2
+    assert len({c["text"] for c in cases}) == len(cases)

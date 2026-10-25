@@ -13,9 +13,21 @@ from tests.e2e.judge_config import JudgeConfig, judge, load_config, validate_ver
 from tests.support.fakes import (
     ABSTENTION,
     ASK_CATEGORY,
+    AUTH_ORDER_RESULT,
     AUTH_VERIFICATION_PROMPT,
     BOOK_Q,
     CAPABILITY_Q,
+    CHANGE,
+    INSTALLATION_Q,
+    RECEIPT_TEMPLATE,
+    UNRELATED,
+    WHAT_TO_CHANGE,
+    YES,
+    review_reply,
+    summary_text,
+    x_change,
+    x_unrelated,
+    x_yes,
     GREETING_STANDING_CHARGE_Q,
     MIXED_PART,
     PAYMENT_Q,
@@ -68,12 +80,50 @@ JUDGE_RULES = {
         "FAQ, makes no unsupported policy claim, and gives no citation. Ignore earlier "
         "workflow prompts; judge the final response only."
     ),
+    "unrelated": (
+        "unrelated: politely decline by restating what the assistant can help with (energy "
+        "questions, a verified demo account, reporting a service issue). It must not tell a "
+        "joke or answer the off-topic request, start intake, or retrieve a policy answer."
+    ),
+    "correction_confirm": (
+        "The customer corrects one detail of a review, then confirms. After the correction the "
+        "assistant shows the updated review with only that detail changed and asks to confirm. "
+        "After the confirmation it says the details were saved locally and that no request was "
+        "sent to a real support team. It must not claim a real ticket, agent or follow-up."
+    ),
+    "reject_correct": (
+        "After the customer says no to a review, the assistant asks only what to change. After "
+        "the customer states the change, it shows the updated review with only that detail "
+        "changed. It must not confirm, save, hand off or ask for unrelated details."
+    ),
+    "order_status_requires_verification": (
+        "The conversation ends with a note of what the customer did in the separate "
+        "verification form, which is outside the chat because credentials never enter chat. "
+        "The customer asks for their account status before verifying. The first assistant "
+        "response must ask for the service postcode and verification code and reveal no "
+        "account data. After verification and a repeated request, the assistant reports the "
+        "account reference, first name, service and status. It must not reveal account data "
+        "before verification or which verification detail failed."
+    ),
+    "installation_status_requires_verification": (
+        "The conversation ends with a note of what the customer did in the separate "
+        "verification form, which is outside the chat because credentials never enter chat. "
+        "The customer asks for their smart meter installation status before verifying. The "
+        "first assistant response must ask for the service postcode and verification code and "
+        "reveal no installation details. After verification and a repeated request, the "
+        "assistant reports that the installation is approved and waiting for a technician "
+        "visit and says how to book one. It must not reveal details before verification or "
+        "invent a date."
+    ),
     "booking_requires_verification": (
+        "The conversation ends with a note of what the customer did in the separate "
+        "verification form, which is outside the chat because credentials never enter chat. "
         "The customer asks to book a technician before verifying the account. The first "
         "assistant response must ask for the service postcode and verification code and "
         "must not offer or confirm any time. After the account is verified and the request "
         "is repeated, the assistant says technician times are available to choose from, and "
-        "once one is chosen it confirms a booking with a reference. It must not reveal which "
+        "once one is chosen it confirms the window the customer clicked, as shown on the "
+        "button including its end time, with a booking reference. It must not reveal which "
         "verification detail failed, offer or confirm a booking before verification, or "
         "invent a time that was not chosen."
     ),
@@ -93,6 +143,19 @@ FRUSTRATION_HANDOFF_FLOWS = [
     "while_off_topic",
     "in_spanish",
 ]
+
+
+def _with_form_events(transcript: str, events: str) -> str:
+    """The verification form is outside the chat, so the judge is told what happened there."""
+
+    return f"{transcript}\n[Outside the chat, in the separate verification form: {events}]"
+
+
+FORM_EVENTS = (
+    "first the customer submitted a wrong code and the form rejected it with a generic "
+    "message that does not say which detail was wrong; then the customer submitted the "
+    "correct code and the account was verified"
+)
 
 
 @pytest.fixture(scope="session")
@@ -474,6 +537,8 @@ def test_intent_judge_booking_requires_verification_first(ui, provider, judge_co
     assert ui.send(BOOK_Q).status == 200
     expect(slots).to_have_count(6)
     chosen = slots.first.get_attribute("data-starts-at")
+    labels = [label.strip() for label in slots.all_inner_texts()]
+    clicked = labels[0]
     with ui.page.expect_response(
         lambda r: r.request.method == "POST" and r.url.endswith("/bookings")
     ) as pending:
@@ -482,4 +547,107 @@ def test_intent_judge_booking_requires_verification_first(ui, provider, judge_co
     expect(ui.log).to_contain_text(f"Booked: a technician will visit on {chosen[:10]}")
     expect(slots).to_have_count(0)
     provider.assert_consumed()
-    _record_and_judge(judge_config, request, ui.transcript_text(), "booking_requires_verification")
+    _record_and_judge(
+        judge_config, request,
+        _with_form_events(
+            ui.transcript_text(),
+            f"{FORM_EVENTS}; after the request was repeated the page showed these time buttons: "
+            f"{labels}; the customer clicked '{clicked}', the first one",
+        ),
+        "booking_requires_verification",
+    )
+
+
+@pytest.mark.intent_judge
+def test_intent_judge_unrelated_is_redirected(ui, provider, judge_config, request):
+    provider.script_extract(UNRELATED, x_unrelated())
+    ui.open()
+    assert ui.send(UNRELATED).status == 200
+    expect(ui.log).to_contain_text("I cannot change a real account or contact an energy network")
+    assert len(provider.calls("answer_knowledge")) == 0
+    expect(ui.page.locator("#review")).to_be_hidden()
+    provider.assert_consumed()
+    _record_and_judge(judge_config, request, ui.transcript_text(), "unrelated")
+
+
+@pytest.mark.intent_judge
+def test_intent_judge_correction_then_confirm(ui, provider, judge_config, request):
+    provider.script_extract(FULL, x_full())
+    provider.script_extract(CHANGE, x_change())
+    provider.script_extract(YES, x_yes())
+    ui.open()
+    sid = ui.current_session_id()
+    assert ui.send(FULL).status == 200
+    first = summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
+    expect(ui.log).to_contain_text(review_reply(first))
+    assert ui.send(CHANGE).status == 200
+    low = summary_text("NS-000123", "damaged_item", "My order arrived broken", "low")
+    expect(ui.log).to_contain_text(review_reply(low))
+    assert ui.disk(sid)["slots"]["urgency"] == "low"
+    assert ui.send(YES).status == 200
+    expect(ui.log).to_contain_text(RECEIPT_TEMPLATE.format(session_id=sid))
+    assert ui.disk(sid)["status"] == "completed"
+    provider.assert_consumed()
+    _record_and_judge(judge_config, request, ui.transcript_text(), "correction_confirm")
+
+
+@pytest.mark.intent_judge
+def test_intent_judge_reject_then_correct(ui, provider, judge_config, request):
+    change = "Make it normal urgency."
+    provider.script_extract(FULL, x_full())
+    provider.script_extract(NO, x_no())
+    provider.script_extract(
+        change, make_extraction(intent="correction", urgency="normal", explicit_corrections=["urgency"])
+    )
+    ui.open()
+    sid = ui.current_session_id()
+    assert ui.send(FULL).status == 200
+    assert ui.send(NO).status == 200
+    expect(ui.log).to_contain_text(WHAT_TO_CHANGE)
+    assert ui.send(change).status == 200
+    normal = summary_text("NS-000123", "damaged_item", "My order arrived broken", "normal")
+    expect(ui.log).to_contain_text(review_reply(normal))
+    assert ui.disk(sid)["status"] == "awaiting_confirmation"
+    provider.assert_consumed()
+    _record_and_judge(judge_config, request, ui.transcript_text(), "reject_correct")
+
+
+def _verify_after_asking(ui, first_question):
+    """Ask while unverified, fail the form once, then verify."""
+
+    ui.open()
+    assert ui.send(first_question).status == 200
+    expect(ui.log).to_contain_text(AUTH_VERIFICATION_PROMPT)
+    expect(ui.page.locator("#order-verification")).to_be_visible()
+    assert json.loads(ui.verify_order("SW1A 1AA", "123456").text())["verified"] is False
+    expect(ui.page.locator("#verification-error")).to_have_text(AUTH_VERIFICATION_FAILED)
+    assert json.loads(ui.verify_order("SW1A 1AA", "246810").text())["verified"] is True
+    expect(ui.page.locator("#order-verification")).to_be_hidden()
+
+
+@pytest.mark.intent_judge
+def test_intent_judge_order_status_requires_verification(ui, provider, judge_config, request):
+    provider.script_extract(ORDER_STATUS_Q, x_order_lookup(order_number="NS-000123"))
+    provider.script_extract(ORDER_STATUS_Q, x_order_lookup(order_number="NS-000123", tool=True))
+    _verify_after_asking(ui, ORDER_STATUS_Q)
+    assert ui.send(ORDER_STATUS_Q).status == 200
+    expect(ui.log).to_contain_text(AUTH_ORDER_RESULT)
+    provider.assert_consumed()
+    _record_and_judge(
+        judge_config, request, _with_form_events(ui.transcript_text(), FORM_EVENTS),
+        "order_status_requires_verification",
+    )
+
+
+@pytest.mark.intent_judge
+def test_intent_judge_installation_status_requires_verification(ui, provider, judge_config, request):
+    provider.script_extract(INSTALLATION_Q, make_extraction(intent="installation_status", order_number="NS-000123"))
+    provider.script_extract(INSTALLATION_Q, make_extraction(intent="installation_status"))
+    _verify_after_asking(ui, INSTALLATION_Q)
+    assert ui.send(INSTALLATION_Q).status == 200
+    expect(ui.log).to_contain_text("waiting for a technician visit")
+    provider.assert_consumed()
+    _record_and_judge(
+        judge_config, request, _with_form_events(ui.transcript_text(), FORM_EVENTS),
+        "installation_status_requires_verification",
+    )
