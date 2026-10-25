@@ -29,7 +29,9 @@ class InvalidContent(Exception):
 
 
 def _schema_instruction(schema: type[BaseModel]) -> str:
-    return SCHEMA_INSTRUCTION + json.dumps(schema.model_json_schema(), ensure_ascii=False)
+    return SCHEMA_INSTRUCTION + json.dumps(
+        schema.model_json_schema(), ensure_ascii=False
+    )
 
 
 def text_payload(
@@ -123,7 +125,9 @@ def parse_knowledge_answer(body: str, context: KnowledgeContext) -> KnowledgeAns
     return answer
 
 
-def _validate_answer(answer: KnowledgeAnswer, sources: Sequence[KnowledgeRecord]) -> None:
+def _validate_answer(
+    answer: KnowledgeAnswer, sources: Sequence[KnowledgeRecord]
+) -> None:
     """RAG section 4 citation rules, checked inside the bounded operation."""
 
     if not answer.answerable:
@@ -161,7 +165,9 @@ def parse_embeddings(body: str, expected: int) -> list[list[float]]:
     if not isinstance(items, list) or len(items) != expected:
         raise InvalidContent
     vectors: list[list[float]] = []
-    for item in sorted(items, key=lambda entry: entry.get("index", 0) if isinstance(entry, dict) else 0):
+    for item in sorted(
+        items, key=lambda entry: entry.get("index", 0) if isinstance(entry, dict) else 0
+    ):
         vector = item.get("embedding") if isinstance(item, dict) else None
         if not isinstance(vector, list) or not vector:
             raise InvalidContent

@@ -43,7 +43,9 @@ class BookingStore:
         self._clock = clock
         self._slots: dict[str, dict] = {}
         if self._path is not None and self._path.exists():
-            self._slots = {s["starts_at"]: s for s in json.loads(self._path.read_text("utf-8"))}
+            self._slots = {
+                s["starts_at"]: s for s in json.loads(self._path.read_text("utf-8"))
+            }
         self._seed()
         self._save()
 
@@ -74,7 +76,10 @@ class BookingStore:
             return
         self._path.parent.mkdir(parents=True, exist_ok=True)
         temporary = self._path.with_suffix(".tmp")
-        temporary.write_text(json.dumps(sorted(self._slots.values(), key=lambda s: s["starts_at"])), "utf-8")
+        temporary.write_text(
+            json.dumps(sorted(self._slots.values(), key=lambda s: s["starts_at"])),
+            "utf-8",
+        )
         os.replace(temporary, self._path)
 
     def open_slots(self) -> list[dict[str, str]]:
@@ -85,7 +90,8 @@ class BookingStore:
             s for s in self._slots if self._slots[s]["order_number"] is None and s > now
         )
         return [
-            {"starts_at": s, "ends_at": self._slots[s]["ends_at"]} for s in free[:OFFER_LIMIT]
+            {"starts_at": s, "ends_at": self._slots[s]["ends_at"]}
+            for s in free[:OFFER_LIMIT]
         ]
 
     def appointment(self, order_number: str) -> dict[str, str] | None:
@@ -100,7 +106,11 @@ class BookingStore:
         if self.appointment(order_number) is not None:
             raise BookingRefused(ALREADY_BOOKED)
         slot = self._slots.get(starts_at)
-        if slot is None or slot["order_number"] is not None or starts_at <= self._clock().strftime(TIME_FORMAT):
+        if (
+            slot is None
+            or slot["order_number"] is not None
+            or starts_at <= self._clock().strftime(TIME_FORMAT)
+        ):
             raise BookingRefused(SLOT_UNAVAILABLE)
         slot["order_number"] = order_number
         slot["reference"] = f"BK-{uuid4().hex[:8].upper()}"

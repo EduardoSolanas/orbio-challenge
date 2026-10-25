@@ -13,6 +13,8 @@ from tests.e2e.judge_config import JudgeConfig, judge, load_config, validate_ver
 from tests.support.fakes import (
     ABSTENTION,
     ASK_CATEGORY,
+    AUTH_VERIFICATION_PROMPT,
+    BOOK_Q,
     CAPABILITY_Q,
     GREETING_STANDING_CHARGE_Q,
     MIXED_PART,
@@ -65,6 +67,15 @@ JUDGE_RULES = {
         "The final assistant response safely abstains from the unsupported payment-method "
         "FAQ, makes no unsupported policy claim, and gives no citation. Ignore earlier "
         "workflow prompts; judge the final response only."
+    ),
+    "booking_requires_verification": (
+        "The customer asks to book a technician before verifying the account. The first "
+        "assistant response must ask for the service postcode and verification code and "
+        "must not offer or confirm any time. After the account is verified and the request "
+        "is repeated, the assistant says technician times are available to choose from, and "
+        "once one is chosen it confirms a booking with a reference. It must not reveal which "
+        "verification detail failed, offer or confirm a booking before verification, or "
+        "invent a time that was not chosen."
     ),
     "frustration_handoff": (
         "The final assistant response must empathize and clearly indicate the "
@@ -435,3 +446,40 @@ def test_intent_judge_frustration_hands_off(flow, ui, provider, judge_config, re
     provider.assert_consumed()
     expect(ui.log).to_contain_text(response["text"])
     _record_and_judge(judge_config, request, ui.transcript_text(), "frustration_handoff")
+
+
+@pytest.mark.intent_judge
+def test_intent_judge_booking_requires_verification_first(ui, provider, judge_config, request):
+    slots = ui.page.locator("#slot-picker button")
+    provider.script_extract(BOOK_Q, make_extraction(intent="book_technician", order_number="NS-000123"))
+    provider.script_extract(BOOK_Q, make_extraction(intent="book_technician"))
+    ui.open()
+
+    # Unverified: the form is asked for and no time is offered.
+    assert ui.send(BOOK_Q).status == 200
+    expect(ui.log).to_contain_text(AUTH_VERIFICATION_PROMPT)
+    expect(ui.page.locator("#order-verification")).to_be_visible()
+    expect(slots).to_have_count(0)
+
+    # A wrong code keeps the form open, says nothing about which detail failed, offers no time.
+    wrong = ui.verify_order("SW1A 1AA", "123456")
+    assert json.loads(wrong.text()) == {"verified": False, "error": "verification_failed"}
+    expect(ui.page.locator("#verification-error")).to_have_text(AUTH_VERIFICATION_FAILED)
+    expect(ui.page.locator("#order-verification")).to_be_visible()
+    expect(slots).to_have_count(0)
+
+    # Verified: repeating the request offers six windows; choosing one books exactly that one.
+    assert json.loads(ui.verify_order("SW1A 1AA", "246810").text()) == {"verified": True, "error": None}
+    expect(ui.page.locator("#order-verification")).to_be_hidden()
+    assert ui.send(BOOK_Q).status == 200
+    expect(slots).to_have_count(6)
+    chosen = slots.first.get_attribute("data-starts-at")
+    with ui.page.expect_response(
+        lambda r: r.request.method == "POST" and r.url.endswith("/bookings")
+    ) as pending:
+        slots.first.click()
+    assert pending.value.status == 200
+    expect(ui.log).to_contain_text(f"Booked: a technician will visit on {chosen[:10]}")
+    expect(slots).to_have_count(0)
+    provider.assert_consumed()
+    _record_and_judge(judge_config, request, ui.transcript_text(), "booking_requires_verification")

@@ -127,7 +127,7 @@ assistant reply has an optional play button. Audio is never stored.
 
 ## Knowledge base
 
-The fictional corpus has five records. Two retrieval modes exist, chosen by configuration:
+The fictional corpus has twelve records. Two retrieval modes exist, chosen by configuration:
 
 - **Embeddings** (when `EMBED_*` is set in `.env`): the records are embedded once and
   each question is matched by cosine similarity. The best two records at or above
@@ -146,22 +146,33 @@ checked by the app (`app/semantic.py`, `app/retrieval.py`).
 | `faq-returns` | Returns and refunds |
 | `faq-urgency` | Urgency levels |
 | `faq-standing-charge` | Standing charges on an energy bill |
+| `faq-installation` | Smart meter installation |
+| `faq-meter-readings` | Submitting a meter reading |
+| `faq-moving-home` | Moving home |
+| `faq-bill-queries` | Questions about your statement |
+| `faq-power-cut` | Power cuts and loss of supply |
+| `faq-gas-safety` | If you smell gas |
+| `faq-account-reference` | Finding your account reference |
 
 ## Testing
 
 ```bash
 pip install -r requirements-dev.txt
+python -m ruff check app
+python -m ruff format --check app
 python scripts/test.py unit          # also: integration, e2e, coverage, mutation, all
 python scripts/check_backends.py     # live check against the services in your environment
 ```
 
+Run `python -m ruff format app` from the repository root to format the Python application code.
+
 | Layer | What it covers | Result |
 |---|---|---|
-| Unit and integration | Validation, state machine, storage, HTTP routes, providers over a real socket, RAG, audio | 1769 unit and 385 integration tests passed on 2026-10-25, run as separate layers (`scripts/test.py unit`, then `integration`). Two wall-clock timeout tests can fail when both layers share one pytest process on a slow machine. |
+| Unit and integration | Validation, state machine, storage, HTTP routes, providers over a real socket, RAG, audio | 1771 unit and 385 integration tests passed on 2026-10-25, run as separate layers (`scripts/test.py unit`, then `integration`). Two wall-clock timeout tests can fail when both layers share one pytest process on a slow machine. |
 | Browser (Playwright) | Eleven tests in Chromium covering the user journeys, including voice and RAG | 11 passed on 2026-10-25 |
 | Browser scripts | JavaScript unit tests (`node --test tests/unit/*.test.js`) | 26 passed on 2026-10-25 |
-| Judge journeys | 25 browser tests with a scripted AI provider; each reply is graded against a written rule | 25 passed on 2026-10-25. The judge LLM was not available, so Claude graded the 23 recorded conversations by hand against the same rules: 23 of 23 pass. Replies there are mostly fixed templates, so this checks wording rules, not model behaviour. |
-| Real Docker end-to-end | Deployed containers against the real LLM, speech services and embeddings | 3 passed on 2026-10-25 (greeting; multi-turn RAG with citations; unsupported question abstains). Claude graded the replies by hand and the judge LLM was not used. The multi-turn test originally required the follow-up answer to differ from the first; both questions retrieve the same record and the model quotes it, so it now requires the same record and the 30-day answer. |
+| Judge journeys | 26 browser tests with a scripted AI provider; each reply is graded against a written rule, including booking a technician before verifying | 26 passed on 2026-10-25. The judge LLM was not available, so Claude graded the 24 recorded conversations by hand against the same rules: 24 of 24 pass. Replies there are mostly fixed templates, so this checks wording rules, not model behaviour. |
+| Real Docker end-to-end | Deployed containers against the real LLM, speech services and embeddings | 4 passed on 2026-10-25 (greeting; multi-turn RAG with citations; unsupported question abstains; booking a technician asks for verification first, then books, with the real model routing every turn). Claude graded the replies by hand and the judge LLM was not used. The multi-turn test originally required the follow-up answer to differ from the first; both questions retrieve the same record and the model quotes it, so it now requires the same record and the 30-day answer. The booking test books the demo account's one visit, so a rerun reports that visit instead; reset with `docker compose down --volumes`. |
 | Live providers | `scripts/check_backends.py` | 5 of 5 passed (2026-10-24) |
 | Live evaluation | `scripts/evaluate.py`: intent detection and FAQ retrieval on labelled utterances | 89 of 89 intents (in-sample); FAQ retrieval on held-out questions: embeddings 9 of 10 vs keywords 3 of 10 (see Evaluation) |
 | Mutation testing | `mutmut` over `app/`, Linux only; runs in CI | Not re-run since the modules were split. An earlier run killed 2563 of 2677 mutants; the rest were reviewed as equivalent. CI re-runs it. |
@@ -180,7 +191,7 @@ python scripts/evaluate.py            # also: intents, retrieval
 It uses the labelled utterances in [`tests/eval/utterances.json`](tests/eval/utterances.json):
 89 English and Spanish messages for the ten context-free intents (confirm, reject and
 correction need an open review, so the scripted tests cover them) and two sets of FAQ
-questions (18 and 15, five of each should get no answer). Run on 2026-10-25 with `DeepSeek-V4.1-Flash-1017`
+questions (25 and 22; 4 and 5 of them should get no answer). Run on 2026-10-25 with `DeepSeek-V4.1-Flash-1017`
 and `nvidia/nemotron-3-embed-1b:free` on OpenRouter.
 
 ### Intent detection
@@ -205,40 +216,48 @@ file over time.
 
 ### FAQ retrieval
 
-There are two question sets. The **tuning set** (13 questions with an answer, 5 without)
-was used to choose the similarity floor, so its scores are optimistic. The **held-out
-set** (10 and 5) was written before any score was seen and run once at the chosen floor,
-so it is the fair comparison.
+There are two question sets. The **tuning set** was used to choose the similarity floor,
+so its scores are optimistic. The **held-out set** was run once at the chosen floor. The
+first ten of its questions were written before any score was seen; the last seven were
+added later, together with the new records they test, so they are not blind.
 
 | Retrieval | Tuning set: right record in top two | Tuning set: correctly no answer | Held-out: right record in top two | Held-out: correctly no answer |
 |---|---|---|---|---|
-| Keywords | 11 of 13 | 4 of 5 | 3 of 10 | 5 of 5 |
-| Embeddings, floor 0.25 (default) | 12 of 13 | 5 of 5 | 9 of 10 | 5 of 5 |
+| **5 records**, keywords | 11 of 13 | 4 of 5 | 3 of 10 | 5 of 5 |
+| **5 records**, embeddings, floor 0.25 | 12 of 13 | 5 of 5 | 9 of 10 | 5 of 5 |
+| **12 records**, keywords | 21 of 21 | 3 of 4 | 12 of 17 | 5 of 5 |
+| **12 records**, embeddings, floor 0.25 | 21 of 21 | 4 of 4 | 17 of 17 | 5 of 5 |
 
 On the tuning set the two are close, because those questions happened to share words
 with the hand-written keywords. On fresh wordings keyword matching collapses ("I want my
 money back" or "how soon will it be shipped" share no keyword with the records), while
-embeddings still find the record. Both refuse the unrelated questions.
+embeddings still find the record. Keywords also answered "Do you ship internationally?"
+with the delivery record; embeddings refused it.
 
-How the floor was chosen, and its limits: the first guess of 0.35 was untested and
-dropped correct paraphrases (10 of 13 on the tuning set); 0.30 gave 11, 0.25 gave 12,
-and 0.20 found all 13 but let "Do you ship internationally?" through to the delivery
-record. 0.25 was picked on the tuning set, so treat it as a sensible value for this model
-and these 28 questions, not a proven optimum. The model matters: re-run
-`scripts/evaluate.py retrieval` after changing it. The remaining misses are questions
-the records barely cover, such as "My power meter has a cracked casing" (0.23 against
-the damaged-items record, which does not mention meters), so the fix there is the
-record's wording, not the model. Three free OpenRouter embedding models were compared on
-a first 16-question set; `nemotron-3-embed-1b`, `nemotron-3.5-embed-1b` and
-`lfm-2.5-embedding-350m` tied, and `nemotron-3.5-embed-8b` timed out on the free tier,
-so the first was kept.
+The 12-record corpus fixed what the first round exposed. The original records still
+sounded like a shop, so the delivery and damaged-equipment records now speak about
+smart meters, the damaged record gained "cracked", "dented" and "faulty", and seven
+energy records were added (installation, meter readings, moving home, statements,
+power cuts, gas safety, account reference). The similarity floor was not retuned. Two
+cautions: the held-out misses that disappeared (such as "a dented meter box") were
+fixed after being seen, so that improvement is partly by construction; and the
+questions are still few and written by the same author as the records.
+
+How the floor was chosen: the first guess of 0.35 was untested and dropped correct
+paraphrases (10 of 13 on the 5-record tuning set); 0.30 gave 11, 0.25 gave 12, and 0.20
+found all 13 but let "Do you ship internationally?" through to the delivery record. 0.25
+was picked on that tuning set, so treat it as a sensible value for this model, not a
+proven optimum. The model matters: re-run `scripts/evaluate.py retrieval` after
+changing it. Three free OpenRouter embedding models were compared on a first 16-question
+set; `nemotron-3-embed-1b`, `nemotron-3.5-embed-1b` and `lfm-2.5-embedding-350m` tied,
+and `nemotron-3.5-embed-8b` timed out on the free tier, so the first was kept.
 
 ## Limitations
 
 - **Single process, one worker.** Locks and de-duplication are in memory.
 - **No authentication.** Session IDs are not credentials. It is for local only use; a public deployment would need authentication, rate limiting, TLS and a retention policy.
 - Nothing is sent to a real support team, and "submitted" means saved locally.
-- Answers come from five FAQ records. Keyword matching can miss a differently worded question; embedding retrieval depends on `EMBED_MIN_SIMILARITY`, tuned here for one model on 18 questions (see Evaluation), so it needs re-tuning if the model changes. A citation shows which record the model used; it does not prove the model summarised it correctly.
+- Answers come from twelve short, fictional FAQ records. Keyword matching can miss a differently worded question; embedding retrieval depends on `EMBED_MIN_SIMILARITY`, tuned here for one model on a small question set (see Evaluation), so it needs re-tuning if the model changes. The gas-safety record quotes the UK National Gas Emergency number from memory; check it before relying on it. A citation shows which record the model used; it does not prove the model summarised it correctly.
 - Technician bookings are one JSON file: one visit per account, no cancelling or rescheduling, and the offered times disappear from the chat if the page is reloaded (ask again to see them).
 - Voice accepts PCM WAV only, with no streaming.
 - Frustration and sentiment come from one LLM call and can misclassify sarcasm or mixed feelings.

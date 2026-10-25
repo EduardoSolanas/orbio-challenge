@@ -124,9 +124,7 @@ def _candidates_match(extraction: Extraction, slots: Slots) -> bool:
     return True
 
 
-def is_unambiguous_reaffirmation(
-    extraction: Extraction, outcome: MergeOutcome
-) -> bool:
+def is_unambiguous_reaffirmation(extraction: Extraction, outcome: MergeOutcome) -> bool:
     if extraction.intent != "confirm" or extraction.has_question:
         return False
     if extraction.explicit_corrections or extraction.ambiguous_fields:

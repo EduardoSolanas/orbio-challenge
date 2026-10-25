@@ -236,4 +236,3 @@ def select_reply(
         if getattr(slots, field) is None:
             return missing_question(field, language)
     return build_review_reply(slots, language)
-

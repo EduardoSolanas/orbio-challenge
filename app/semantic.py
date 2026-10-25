@@ -54,4 +54,8 @@ class SemanticIndex:
             ),
             key=lambda item: (-item[0], item[1]),
         )
-        return [record for score, _, record in ranked[:TOP_K] if score >= self._min_similarity]
+        return [
+            record
+            for score, _, record in ranked[:TOP_K]
+            if score >= self._min_similarity
+        ]

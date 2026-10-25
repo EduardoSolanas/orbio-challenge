@@ -143,9 +143,9 @@ def test_readme_lists_the_exact_command(command):
     assert command in _readme()
 
 
-def test_readme_documents_all_five_fictional_kb_records():
+def test_readme_documents_every_fictional_kb_record():
     kb = json.loads(KB_PATH.read_text(encoding="utf-8"))
-    assert len(kb["records"]) == 5
+    assert len(kb["records"]) == 12
     text = _readme()
     for record in kb["records"]:
         assert record["id"] in text

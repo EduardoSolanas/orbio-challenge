@@ -150,3 +150,53 @@ def test_docker_unsupported_question_abstains_without_citations(docker_page: Pag
     assert text.strip()
     assert body.get("citations") == []
     _judge(docker_config, request, turn, text, "unsupported policy question; clear abstention with no invented facts")
+
+
+def _verify(page: Page, postcode: str, code: str) -> dict[str, Any]:
+    page.locator("#delivery-postcode").fill(postcode)
+    page.locator("#verification-code").fill(code)
+    with page.expect_response(lambda response: response.request.method == "POST" and response.url.endswith("/order-verification")) as pending:
+        page.locator("#verify-order").click()
+    assert pending.value.status == 200
+    return pending.value.json()
+
+
+def test_docker_booking_asks_for_verification_first_then_books(docker_page: Page, docker_config: DockerE2EConfig, request: pytest.FixtureRequest) -> None:
+    """The real model must route booking requests, and the app must gate them on verification.
+
+    The demo account holds one visit in the Backend API volume. On a rerun the account already has
+    its visit, so the second request is answered with that visit instead of new times; reset with
+    ``docker compose down --volumes`` to book again.
+    """
+    slots = docker_page.locator("#slot-picker button")
+    turn = "I'd like to book a technician for account NS-000123."
+    _, first = _send(docker_page, turn)
+    assert first["order_verification_required"] is True
+    assert first["slot_options"] == []
+    expect(docker_page.locator("#order-verification")).to_be_visible()
+    expect(slots).to_have_count(0)
+    _judge(docker_config, request, turn, _assistant_text(first), "booking requested before verification; the assistant must ask for the service postcode and verification code and offer or confirm no appointment time")
+
+    assert _verify(docker_page, "SW1A 1AA", "123456") == {"verified": False, "error": "verification_failed"}
+    expect(docker_page.locator("#order-verification")).to_be_visible()
+    expect(slots).to_have_count(0)
+    assert _verify(docker_page, "SW1A 1AA", "246810") == {"verified": True, "error": None}
+    expect(docker_page.locator("#order-verification")).to_be_hidden()
+
+    turn = "Please book a technician for me now."
+    _, second = _send(docker_page, turn)
+    reply = _assistant_text(second)
+    if not second["slot_options"]:
+        assert "Booking reference: BK-" in reply, reply
+        _judge(docker_config, request, turn, reply, "the verified account already has a technician visit; the assistant must report that existing visit and its reference and offer no new times")
+        return
+    assert len(second["slot_options"]) >= 1
+    expect(slots).to_have_count(len(second["slot_options"]))
+    _judge(docker_config, request, turn, reply, "verified customer asked to book a technician; the assistant must say that times are available to choose from and must not state or invent any specific time")
+    chosen = slots.first.get_attribute("data-starts-at")
+    with docker_page.expect_response(lambda response: response.request.method == "POST" and response.url.endswith("/bookings")) as pending:
+        slots.first.click()
+    assert pending.value.status == 200
+    confirmation = _assistant_text(pending.value.json())
+    assert confirmation.startswith(f"Booked: a technician will visit on {chosen[:10]}")
+    _judge(docker_config, request, f"chose {chosen}", confirmation, f"confirmation of the technician visit the customer chose ({chosen}); it must match that time and include a booking reference")

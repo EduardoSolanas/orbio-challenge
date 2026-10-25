@@ -27,9 +27,7 @@ DEMO_VERIFICATION_CODE = "246810"
 FIXTURE_ORDER_NUMBER = "NS-000123"
 FIXTURE_POSTCODE = "SW1A 1AA"
 
-_ASCII_UPPER = str.maketrans(
-    "abcdefghijklmnopqrstuvwxyz", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-)
+_ASCII_UPPER = str.maketrans("abcdefghijklmnopqrstuvwxyz", "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 
 class OrderRecord(ContractModel):
@@ -116,7 +114,9 @@ def fixture_orders() -> dict[str, OrderRecord]:
     }
 
 
-def credentials_match(order_number: str | None, delivery_postcode: str, verification_code: str) -> bool:
+def credentials_match(
+    order_number: str | None, delivery_postcode: str, verification_code: str
+) -> bool:
     """All three demo values must match; every mismatch is indistinguishable."""
 
     return (
@@ -134,7 +134,9 @@ def create_backend_api_app(
     """Build the private Backend API; `orders` and `bookings` are test seams."""
 
     catalog = fixture_orders() if orders is None else orders
-    store = BookingStore(os.environ.get(DATA_PATH_ENV)) if bookings is None else bookings
+    store = (
+        BookingStore(os.environ.get(DATA_PATH_ENV)) if bookings is None else bookings
+    )
     app = FastAPI(
         title="Northstar backend API",
         docs_url=None,

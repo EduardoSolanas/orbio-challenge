@@ -13,7 +13,6 @@ from pydantic import BaseModel
 
 from app import localization
 from app.localization import build_review_reply, build_summary, text
-from app.schemas import Slots
 
 _FIELD_ORDER = ("order_number", "category", "description", "urgency")
 
@@ -520,7 +519,10 @@ EMOTION_EVALUATION_CASES: tuple[dict[str, object], ...] = (
         "id": "EV08",
         "message": "I am still frustrated, but thank you for explaining.",
         "recent_messages": (
-            {"role": "user", "text": "I have asked three times. This is really frustrating."},
+            {
+                "role": "user",
+                "text": "I have asked three times. This is really frustrating.",
+            },
             {
                 "role": "assistant",
                 "text": "I understand this is frustrating. Can you share the energy account reference?",
@@ -548,8 +550,10 @@ EMOTION_EVALUATION_CASES: tuple[dict[str, object], ...] = (
     },
 )
 
-EXTRACTION_SYSTEM_PROMPT = SYSTEM_INSTRUCTIONS + "\n\n" + json.dumps(
-    list(EXTRACTION_EXAMPLES), ensure_ascii=False, indent=2
+EXTRACTION_SYSTEM_PROMPT = (
+    SYSTEM_INSTRUCTIONS
+    + "\n\n"
+    + json.dumps(list(EXTRACTION_EXAMPLES), ensure_ascii=False, indent=2)
 )
 
 KNOWLEDGE_PROMPT = (

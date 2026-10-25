@@ -220,8 +220,8 @@ async def case_valid_health_probe(session_dir, monkeypatch):
             # The probe really wrote and removed its temporary file.
             assert list(session_dir.iterdir()) == []
             knowledge_base = app.state.knowledge_base
-            assert knowledge_base.version == "2026-10-22"
-            assert len(knowledge_base.records) == 5
+            assert knowledge_base.version == "2026-10-25"
+            assert len(knowledge_base.records) == 12
             assert app.state.provider._in_use == 0
 
     assert app.state.ready is False

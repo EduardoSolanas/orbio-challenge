@@ -51,7 +51,7 @@ RETURN_CITATION = {
         "calendar days of delivery. Refund eligibility requires a support review; this "
         "demo cannot approve or issue a refund."
     ),
-    "kb_version": "2026-10-22",
+    "kb_version": "2026-10-25",
 }
 
 

@@ -22,7 +22,9 @@ def visit_text(
     key: str, language: Language, appointment: Appointment, **extra: str
 ) -> str:
     values = window_values(appointment.starts_at, appointment.ends_at)
-    return render(key, language, {**values, "reference": appointment.reference, **extra})
+    return render(
+        key, language, {**values, "reference": appointment.reference, **extra}
+    )
 
 
 def installation_text(
@@ -33,14 +35,19 @@ def installation_text(
             "installation.awaiting_visit", language, {"order_number": order_number}
         )
     return visit_text(
-        "installation.visit_booked", language, record.appointment, order_number=order_number
+        "installation.visit_booked",
+        language,
+        record.appointment,
+        order_number=order_number,
     )
 
 
 async def installation_reply(
     client: BackendApiClient, order_number: str, language: Language
 ) -> str:
-    return installation_text(order_number, await client.installation(order_number), language)
+    return installation_text(
+        order_number, await client.installation(order_number), language
+    )
 
 
 async def booking_offer(

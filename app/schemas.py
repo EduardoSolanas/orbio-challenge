@@ -66,7 +66,9 @@ def _canonical_uuid(value: object) -> UUID:
     try:
         parsed = UUID(value)
     except (AttributeError, TypeError, ValueError):
-        raise ValueError("must be a UUID or a canonical lowercase UUID string") from None
+        raise ValueError(
+            "must be a UUID or a canonical lowercase UUID string"
+        ) from None
     if str(parsed) != value:
         raise ValueError("UUID string must be canonical lowercase")
     return parsed

@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Literal, Protocol, Sequence
 from uuid import UUID, uuid4
 
+from app.backend_api import OrderRecord
+from app.backend_client import BackendApiClient
 from app.errors import AppError, app_error
 from app.intent import (
     apply_transitions,
@@ -29,8 +31,6 @@ from app.intent import (
     transition_frustration,
 )
 from app.localization import build_review_reply, build_summary, render, text
-from app.backend_api import OrderRecord
-from app.backend_client import BackendApiClient
 from app.plans import (
     TurnPlan,
     choose_reply_language,
@@ -42,8 +42,8 @@ from app.plans import (
 )
 from app.replay import booking_digest, confirm_digest, find_replay, turn_digest
 from app.retrieval import validate_knowledge_answer
-from app.semantic import SemanticIndex
 from app.schemas import (
+    SESSION_SCHEMA_VERSION,
     BookingRequest,
     Citation,
     Confirmation,
@@ -62,12 +62,13 @@ from app.schemas import (
     ReplayRecord,
     Sentiment,
     Session,
-    SESSION_SCHEMA_VERSION,
     SessionView,
+    SlotOption,
     Slots,
     TurnRequest,
     TurnResponse,
 )
+from app.semantic import SemanticIndex
 from app.storage import JsonSessionRepository
 from app.validation import (
     FIELD_ORDER,
@@ -431,9 +432,7 @@ class ConversationEngine:
         )
         return extraction, outcome, plan
 
-    async def confirm(
-        self, session_id: UUID, command: ConfirmRequest
-    ) -> TurnResponse:
+    async def confirm(self, session_id: UUID, command: ConfirmRequest) -> TurnResponse:
         async with self.repository.locked(session_id):
             session = await self.repository.load(session_id)
             digest = confirm_digest(session_id, command)
@@ -456,7 +455,11 @@ class ConversationEngine:
             language = session.reply_language
             reply = render("receipt", language, {"session_id": session.session_id})
             assistant_message = _message(
-                "assistant", reply, input_mode="system", created_at=now, language=language
+                "assistant",
+                reply,
+                input_mode="system",
+                created_at=now,
+                language=language,
             )
             response = TurnResponse(
                 session_id=session.session_id,
@@ -549,7 +552,9 @@ class ConversationEngine:
             if order_number is None or self.customer_data is None:
                 raise app_error("verification_required")
             try:
-                appointment = await self.customer_data.book(order_number, command.starts_at)
+                appointment = await self.customer_data.book(
+                    order_number, command.starts_at
+                )
             except AppError as error:
                 # A lost response may already have booked this exact window.
                 if error.code != "already_booked":
@@ -564,7 +569,11 @@ class ConversationEngine:
             reply = visit_text("booking.confirmed", language, appointment)
             window = window_values(appointment.starts_at, appointment.ends_at)
             assistant_message = _message(
-                "assistant", reply, input_mode="system", created_at=now, language=language
+                "assistant",
+                reply,
+                input_mode="system",
+                created_at=now,
+                language=language,
             )
             new_revision = session.revision + 1
             response = TurnResponse(
@@ -601,7 +610,9 @@ class ConversationEngine:
             committed.requests = [
                 *session.requests,
                 ReplayRecord(
-                    request_id=command.request_id, input_digest=digest, response=response
+                    request_id=command.request_id,
+                    input_digest=digest,
+                    response=response,
                 ),
             ]
             await self.repository.save(committed)
@@ -718,14 +729,17 @@ class ConversationEngine:
         pure_capability = is_pure_capability(extraction) and not language_only
         pure_unrelated = is_pure_unrelated(extraction) and not language_only
         pure_question = is_pure_question(extraction)
-        pure_confirmation = is_pure_confirmation(
-            session,
-            extraction,
-            outcome,
-            review_rejected=review_rejected,
-            recovered_this_turn=recovered_this_turn,
-            current_review_valid=review_valid,
-        ) and not language_only
+        pure_confirmation = (
+            is_pure_confirmation(
+                session,
+                extraction,
+                outcome,
+                review_rejected=review_rejected,
+                recovered_this_turn=recovered_this_turn,
+                current_review_valid=review_valid,
+            )
+            and not language_only
+        )
 
         summary = session.summary
         review_revision = session.pending_review_revision
@@ -791,9 +805,7 @@ class ConversationEngine:
             status = "awaiting_confirmation"
             summary = build_summary(outcome.slots, reply_language)
             unchanged_valid_review = (
-                review_valid
-                and not outcome.accepted_fields
-                and not recovered_this_turn
+                review_valid and not outcome.accepted_fields and not recovered_this_turn
             )
             review_revision = (
                 session.pending_review_revision

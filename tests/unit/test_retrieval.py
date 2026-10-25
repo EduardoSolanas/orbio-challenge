@@ -42,13 +42,20 @@ def test_bundled_kb_is_byte_identical_to_the_contract_seed_corpus() -> None:
 
 def test_load_reads_the_bundled_seed_kb_immutably() -> None:
     kb = load_knowledge(SEED_KB)
-    assert kb.version == "2026-10-22"
+    assert kb.version == "2026-10-25"
     assert [record.id for record in kb.records] == [
         "faq-delivery",
         "faq-damaged",
         "faq-returns",
         "faq-urgency",
         "faq-standing-charge",
+        "faq-installation",
+        "faq-meter-readings",
+        "faq-moving-home",
+        "faq-bill-queries",
+        "faq-power-cut",
+        "faq-gas-safety",
+        "faq-account-reference",
     ]
     assert isinstance(kb.records, tuple)
     assert kb.records[0].keywords == ["delivery", "shipping", "ship", "arrive", "arrives"]
@@ -264,8 +271,9 @@ def test_retrieval_returns_a_fresh_list_that_cannot_mutate_the_index() -> None:
 
 
 DELIVERY_BODY = (
-    "Standard delivery takes 2 to 5 business days after dispatch. "
-    "This demo cannot check the status of an individual order."
+    "Standard delivery takes 2 to 5 business days after dispatch, "
+    "for equipment such as a smart meter. "
+    "This demo cannot check the status of an individual delivery."
 )
 
 
@@ -301,7 +309,7 @@ def test_citation_snapshot_uses_the_whole_record_body_title_and_kb_version() -> 
     assert citation.source_id == "faq-delivery"
     assert citation.title == "Delivery times"
     assert citation.excerpt == DELIVERY_BODY
-    assert citation.kb_version == "2026-10-22"
+    assert citation.kb_version == "2026-10-25"
 
 
 def test_two_unique_retrieved_ids_become_snapshots_in_cited_order() -> None:

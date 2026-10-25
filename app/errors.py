@@ -70,8 +70,12 @@ class ErrorSpec:
 ERRORS: dict[str, ErrorSpec] = {
     spec.code: spec
     for spec in (
-        ErrorSpec(SESSION_NOT_FOUND, text("errors.session_not_found", "en"), 404, False),
-        ErrorSpec(MESSAGE_NOT_FOUND, text("errors.message_not_found", "en"), 404, False),
+        ErrorSpec(
+            SESSION_NOT_FOUND, text("errors.session_not_found", "en"), 404, False
+        ),
+        ErrorSpec(
+            MESSAGE_NOT_FOUND, text("errors.message_not_found", "en"), 404, False
+        ),
         ErrorSpec(
             REVISION_CONFLICT,
             text("errors.revision_conflict", "en"),
@@ -115,7 +119,9 @@ ERRORS: dict[str, ErrorSpec] = {
             False,
         ),
         ErrorSpec(INPUT_TOO_LARGE, text("errors.input_too_large", "en"), 413, False),
-        ErrorSpec(UNSUPPORTED_AUDIO, text("errors.unsupported_audio", "en"), 415, False),
+        ErrorSpec(
+            UNSUPPORTED_AUDIO, text("errors.unsupported_audio", "en"), 415, False
+        ),
         ErrorSpec(
             INVALID_REQUEST,
             text("errors.invalid_request", "en"),

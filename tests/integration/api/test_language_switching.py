@@ -366,7 +366,7 @@ async def test_spanish_faq_answer_keeps_english_source_citations(client, provide
     assert [citation["source_id"] for citation in body["citations"]] == ["faq-delivery"]
     citation = body["citations"][0]
     assert citation["title"] == "Delivery times"
-    assert citation["kb_version"] == "2026-10-22"
+    assert citation["kb_version"] == "2026-10-25"
     assert "Standard delivery takes 2 to 5 business days" in citation["excerpt"]
 
     method, context = provider.calls[-1]

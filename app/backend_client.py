@@ -89,7 +89,9 @@ class BackendApiClient:
     async def availability(self) -> Availability:
         """The next free technician windows."""
 
-        return self._validated(Availability, await self._request("GET", AVAILABILITY_PATH))
+        return self._validated(
+            Availability, await self._request("GET", AVAILABILITY_PATH)
+        )
 
     async def book(self, order_number: str, starts_at: str) -> Appointment:
         """Reserve one window; a refused booking raises its fixed application error."""
@@ -106,7 +108,9 @@ class BackendApiClient:
             except (ValueError, KeyError, TypeError):
                 code = None
             raise app_error(
-                code if code in (SLOT_UNAVAILABLE, ALREADY_BOOKED) else INVALID_BACKEND_API_RESPONSE
+                code
+                if code in (SLOT_UNAVAILABLE, ALREADY_BOOKED)
+                else INVALID_BACKEND_API_RESPONSE
             )
         return self._validated(Appointment, response)
 

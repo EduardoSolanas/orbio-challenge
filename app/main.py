@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.asgi_guards import CorrelationIdMiddleware, JsonBodyGuardMiddleware
+from app.backend_client import BackendApiClient
 from app.config import Settings
 from app.conversation import ConversationEngine
 from app.errors import (
@@ -28,11 +29,10 @@ from app.errors import (
 )
 from app.http_support import error_payload, request_id_of
 from app.localization import LocalizationInvalid, load_locales
-from app.backend_client import BackendApiClient
 from app.providers import OpenAICompatibleProvider
 from app.retrieval import KnowledgeInvalid, load_knowledge
-from app.semantic import SemanticIndex
 from app.routes import STATIC_DIR, router
+from app.semantic import SemanticIndex
 from app.storage import JsonSessionRepository
 from app.verification import VerificationRegistry
 
@@ -159,7 +159,9 @@ def create_app(
     app = FastAPI(title="Northstar Energy Customer Support", lifespan=lifespan)
     app.add_middleware(JsonBodyGuardMiddleware)
     app.add_middleware(CorrelationIdMiddleware)
-    app.mount("/static", StaticFiles(directory=STATIC_DIR, check_dir=False), name="static")
+    app.mount(
+        "/static", StaticFiles(directory=STATIC_DIR, check_dir=False), name="static"
+    )
 
     @app.exception_handler(AppError)
     async def handle_app_error(request: Request, exc: AppError):

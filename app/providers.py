@@ -401,9 +401,7 @@ class OpenAICompatibleProvider:
             raise app_error("provider_timeout")
         try:
             async with asyncio.timeout(min(TTS_BUDGET.attempt_timeout, remaining)):
-                async with client.stream(
-                    "POST", url, json=payload
-                ) as response:
+                async with client.stream("POST", url, json=payload) as response:
                     if not 200 <= response.status_code < 300:
                         raise _status_error(response.status_code)
                     try:

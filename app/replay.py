@@ -6,7 +6,13 @@ import hashlib
 import json
 from uuid import UUID
 
-from app.schemas import BookingRequest, ConfirmRequest, ReplayRecord, Session, TurnRequest
+from app.schemas import (
+    BookingRequest,
+    ConfirmRequest,
+    ReplayRecord,
+    Session,
+    TurnRequest,
+)
 
 TURN_ENDPOINT = "turn"
 CONFIRM_ENDPOINT = "confirm"

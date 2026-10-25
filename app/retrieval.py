@@ -71,6 +71,30 @@ SPANISH_QUERY_TOKENS: dict[str, str] = {
     "urgencia": "urgency",
     "urgente": "urgency",
     "prioridad": "urgency",
+    "fijo": "standing",
+    "instalacion": "installation",
+    "instalar": "installation",
+    "instalado": "installation",
+    "tecnico": "technician",
+    "tecnicos": "technician",
+    "cita": "appointment",
+    "visita": "visit",
+    "lectura": "reading",
+    "lecturas": "reading",
+    "contador": "meter",
+    "contadores": "meter",
+    "mudanza": "moving",
+    "mudarme": "moving",
+    "mudo": "moving",
+    "apagon": "outage",
+    "apagones": "outage",
+    "fuga": "leak",
+    "fugas": "leak",
+    "huele": "smell",
+    "olor": "smell",
+    "referencia": "reference",
+    "estimada": "estimated",
+    "estimado": "estimated",
 }
 
 TOP_K = 2
@@ -99,7 +123,9 @@ def tokenize(text: str) -> set[str]:
     """NFKC normalise, casefold, split on ``[a-z0-9]+`` and drop the fixed stop words."""
 
     normalised = unicodedata.normalize("NFKC", text).casefold()
-    return {token for token in _TOKEN_PATTERN.findall(normalised) if token not in STOP_WORDS}
+    return {
+        token for token in _TOKEN_PATTERN.findall(normalised) if token not in STOP_WORDS
+    }
 
 
 def query_tokens(text: str) -> set[str]:
@@ -123,16 +149,24 @@ def _is_text(value: object, minimum: int, maximum: int) -> bool:
     return isinstance(value, str) and minimum <= len(value) <= maximum
 
 
-def _validate_document(document: object) -> tuple[str, tuple[ImmutableKnowledgeRecord, ...]]:
+def _validate_document(
+    document: object,
+) -> tuple[str, tuple[ImmutableKnowledgeRecord, ...]]:
     if not isinstance(document, dict) or set(document) != TOP_LEVEL_KEYS:
         raise KnowledgeInvalid(INVALID_DOCUMENT_REASON)
-    if not _is_int(document["schema_version"]) or document["schema_version"] != KB_SCHEMA_VERSION:
+    if (
+        not _is_int(document["schema_version"])
+        or document["schema_version"] != KB_SCHEMA_VERSION
+    ):
         raise KnowledgeInvalid(INVALID_DOCUMENT_REASON)
     version = document["version"]
     if not _is_text(version, 1, MAX_VERSION_CHARS):
         raise KnowledgeInvalid(INVALID_DOCUMENT_REASON)
     raw_records = document["records"]
-    if not isinstance(raw_records, list) or not MIN_RECORDS <= len(raw_records) <= MAX_RECORDS:
+    if (
+        not isinstance(raw_records, list)
+        or not MIN_RECORDS <= len(raw_records) <= MAX_RECORDS
+    ):
         raise KnowledgeInvalid(INVALID_DOCUMENT_REASON)
 
     records: list[ImmutableKnowledgeRecord] = []
@@ -176,12 +210,17 @@ def _validate_document(document: object) -> tuple[str, tuple[ImmutableKnowledgeR
 class KnowledgeBase:
     """Immutable knowledge base: one validated version and its frozen records."""
 
-    def __init__(self, version: str, records: tuple[ImmutableKnowledgeRecord, ...]) -> None:
+    def __init__(
+        self, version: str, records: tuple[ImmutableKnowledgeRecord, ...]
+    ) -> None:
         self.version = version
         self.records = tuple(records)
-        self._keywords = {record.id: frozenset(record.keywords) for record in self.records}
+        self._keywords = {
+            record.id: frozenset(record.keywords) for record in self.records
+        }
         self._text_tokens = {
-            record.id: tokenize(record.title + " " + record.body) for record in self.records
+            record.id: tokenize(record.title + " " + record.body)
+            for record in self.records
         }
 
     def retrieve(self, question: str) -> list[ImmutableKnowledgeRecord]:
@@ -193,7 +232,9 @@ class KnowledgeBase:
             keyword_hits = len(query & self._keywords[record.id])
             if keyword_hits == 0:
                 continue
-            score = KEYWORD_WEIGHT * keyword_hits + len(query & self._text_tokens[record.id])
+            score = KEYWORD_WEIGHT * keyword_hits + len(
+                query & self._text_tokens[record.id]
+            )
             ranked.append((score, record.id, record))
         ranked.sort(key=lambda item: (-item[0], item[1]))
         return [record for _, _, record in ranked[:TOP_K]]

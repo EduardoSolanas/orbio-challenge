@@ -8,7 +8,7 @@ User requirement, 22 October 2026: RAG is **core and mandatory**. RAG is core ra
 
 Use retrieval-augmented generation for fictional Northstar Energy help questions. A small versioned JSON knowledge base ships in the app image. Retrieve matching records locally, then pass only those records to the configured RAG text model in a **separate structured answer call**. The model generates a short grounded answer with source IDs. This is generation with retrieved context, not a keyword FAQ response presented as RAG.
 
-Use deterministic lexical retrieval, no embedding API, vector store, extra container, new provider credential or new runtime package. This is the chosen implementation for five short policy records. It is not a semantic/vector retrieval claim. Retrieval and response behavior must pass the fixed examples below; expansion to a large or multilingual KB requires a new design.
+Use deterministic lexical retrieval by default: no embedding API, vector store, extra container, new provider credential or new runtime package is needed. An optional embedding service (the EMBED_* settings) adds semantic retrieval, and any embedding failure falls back to the lexical path. The corpus is twelve short policy records. Retrieval and response behavior must pass the fixed examples below; expansion to a large or multilingual KB requires a new design.
 
 Files:
 
@@ -28,18 +28,25 @@ Engine constructor becomes `ConversationEngine(repository, provider, knowledge_b
 
 ## 2. Exact seed corpus
 
-Write the following UTF-8 JSON with these five fictional policy records. These policies are design fixtures, not real energy tariffs or service offers:
+Write the following UTF-8 JSON with these twelve fictional policy records. These policies are design fixtures, not real energy tariffs or service offers:
 
 ```json
 {
   "schema_version": 1,
-  "version": "2026-10-22",
+  "version": "2026-10-25",
   "records": [
-    {"id":"faq-delivery","title":"Delivery times","keywords":["delivery","shipping","ship","arrive","arrives"],"body":"Standard delivery takes 2 to 5 business days after dispatch. This demo cannot check the status of an individual order."},
-    {"id":"faq-damaged","title":"Damaged items","keywords":["damaged","broken","damage"],"body":"For a damaged item, keep the packaging and describe the damage when reporting the issue. A support review is required; this demo cannot approve a replacement or refund."},
+    {"id":"faq-delivery","title":"Delivery times","keywords":["delivery","shipping","ship","arrive","arrives"],"body":"Standard delivery takes 2 to 5 business days after dispatch, for equipment such as a smart meter. This demo cannot check the status of an individual delivery."},
+    {"id":"faq-damaged","title":"Damaged items","keywords":["damaged","broken","damage","faulty","cracked","dented","defective"],"body":"For damaged equipment such as a meter or an in-home display, keep the packaging and describe the damage when reporting the issue. A support review is required; this demo cannot approve a replacement or refund."},
     {"id":"faq-returns","title":"Returns and refunds","keywords":["return","returns","refund","refunds"],"body":"An unused item in its original packaging can be requested for return within 30 calendar days of delivery. Refund eligibility requires a support review; this demo cannot approve or issue a refund."},
     {"id":"faq-urgency","title":"Urgency levels","keywords":["urgency","priority","urgent"],"body":"Use low urgency when the issue can wait, normal for a routine issue, and high when prompt attention is needed. Urgency does not guarantee a response time in this demo."},
-    {"id":"faq-standing-charge","title":"Standing charges on an energy bill","keywords":["standing","charge","bill","electricity","gas","energy"],"body":"A standing charge is a fixed daily amount that helps cover the cost of supplying electricity or gas to your property. It is charged for each day your account is connected, even when you use little or no energy. This explanation is illustrative and is not a tariff or a quote."}
+    {"id":"faq-standing-charge","title":"Standing charges on an energy bill","keywords":["standing","charge","bill","electricity","gas","energy"],"body":"A standing charge is a fixed daily amount that helps cover the cost of supplying electricity or gas to your property. It is charged for each day your account is connected, even when you use little or no energy. This explanation is illustrative and is not a tariff or a quote."},
+    {"id":"faq-installation","title":"Smart meter installation","keywords":["installation","install","installed","installing","technician","technicians","engineer","appointment","visit","fitted","smart"],"body":"A smart meter installation is a short visit by a technician, usually under two hours. An adult needs to be at home and your supply is switched off briefly during the visit. Once you have verified your account, this assistant can show your installation status and offer technician visit times. These details are illustrative and are not a booking commitment."},
+    {"id":"faq-meter-readings","title":"Submitting a meter reading","keywords":["reading","readings","meter","meters","digits","display","submit"],"body":"Read the digits on your meter display from left to right and ignore any red digits or digits after a decimal point. Take a reading on or near the day your bill is produced. A connected smart meter sends readings automatically, so you only need to submit one if yours is not connected. This demo cannot record a reading."},
+    {"id":"faq-moving-home","title":"Moving home","keywords":["moving","move","moved","home","house","flat","tenant","landlord","address"],"body":"Tell us your moving date and take a final meter reading on that day. Your account is closed from the day you leave and the new occupants are billed from that date. This demo cannot close or transfer an account."},
+    {"id":"faq-bill-queries","title":"Questions about your statement","keywords":["statement","invoice","estimated","estimate","overcharged","overcharge","kwh","usage"],"body":"Your statement shows your usage in kilowatt hours, the unit rate, the standing charge and any adjustments. If it looks too high, compare it with your recent meter readings and report the issue with your account reference. An estimated statement can be corrected by submitting a new reading. This demo cannot change a statement."},
+    {"id":"faq-power-cut","title":"Power cuts and loss of supply","keywords":["outage","blackout","tripped","lights","cut","cuts","neighbours","neighbors","operator"],"body":"If your lights are out, check whether your neighbours also have no power and whether the trip switch on your consumer unit has tripped. A cut that affects an area is usually handled by your local network operator, not by your supplier. Report the issue here and choose high urgency if you rely on medical equipment. This demo cannot contact the network operator."},
+    {"id":"faq-gas-safety","title":"If you smell gas","keywords":["smell","smells","leak","leaks","leaking","carbon","monoxide","emergency","explosion"],"body":"If you smell gas or suspect a leak, do not use switches, naked flames or electrical devices, open doors and windows, leave the property if you feel unwell, and call the National Gas Emergency number on 0800 111 999 straight away. In an immediate danger to life call 999 or 112. This assistant is not an emergency service and cannot send an engineer."},
+    {"id":"faq-account-reference","title":"Finding your account reference","keywords":["reference","account","postcode","verify","verification","verified"],"body":"Your account reference starts with NS- followed by six digits and is shown at the top of your statements. To see account details in this demo you verify with the reference, your service postcode and a demo code shown on the page. No real customer data is used."}
   ]
 }
 ```

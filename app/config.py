@@ -289,9 +289,7 @@ class Settings:
                 auth_mode=env.get("RAG_AUTH_MODE", ""),
                 api_key=_api_key(env.get("RAG_API_KEY", "")),
                 output_mode=_output_mode(env.get("RAG_OUTPUT_MODE", "")),
-                reasoning_effort=_reasoning_effort(
-                    env.get("RAG_REASONING_EFFORT", "")
-                ),
+                reasoning_effort=_reasoning_effort(env.get("RAG_REASONING_EFFORT", "")),
             )
             _auth(rag.auth_mode, rag.api_key)
         else:

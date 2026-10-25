@@ -97,7 +97,9 @@ async def turn(session_id: str, request: Request):
 @router.post("/api/sessions/{session_id}/confirm")
 async def confirm(session_id: str, request: Request):
     session_uuid = canonical_uuid(session_id)
-    command: ConfirmRequest = parse_model(ConfirmRequest, json_body(await request.body()))
+    command: ConfirmRequest = parse_model(
+        ConfirmRequest, json_body(await request.body())
+    )
     response: TurnResponse = await request.app.state.engine.confirm(
         session_uuid, command
     )
@@ -107,7 +109,9 @@ async def confirm(session_id: str, request: Request):
 @router.post("/api/sessions/{session_id}/bookings")
 async def book_technician(session_id: str, request: Request):
     session_uuid = canonical_uuid(session_id)
-    command: BookingRequest = parse_model(BookingRequest, json_body(await request.body()))
+    command: BookingRequest = parse_model(
+        BookingRequest, json_body(await request.body())
+    )
     response: TurnResponse = await request.app.state.engine.book_slot(
         session_uuid, command
     )

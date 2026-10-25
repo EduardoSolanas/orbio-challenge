@@ -84,9 +84,7 @@ class LocaleCatalog:
     def text(self, key: str, language: str = DEFAULT_LANGUAGE) -> str:
         return self.mapping(language)[key]
 
-    def render(
-        self, key: str, language: str, values: Mapping[str, object]
-    ) -> str:
+    def render(self, key: str, language: str, values: Mapping[str, object]) -> str:
         template = self.text(key, language)
         names = _placeholders(template)
         if names != set(values):
@@ -106,8 +104,7 @@ def load_locales(directory: Path | None = None) -> LocaleCatalog:
     for language, table in dictionaries.items():
         if set(table) != set(reference):
             raise LocalizationInvalid(
-                f"key mismatch for {language}: "
-                f"{sorted(set(table) ^ set(reference))}"
+                f"key mismatch for {language}: {sorted(set(table) ^ set(reference))}"
             )
         for key, template in table.items():
             if _placeholders(template) != _placeholders(reference[key]):
