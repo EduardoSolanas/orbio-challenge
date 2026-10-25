@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from app.config import REASONING_EFFORTS
+
 PROMPT_VERSION = "intent-judge-v2"
 
 
@@ -23,6 +25,28 @@ class JudgeConfig:
     max_tokens: int
     temperature: float
     prompt_version: str
+    # Optional: ask a reasoning judge to think less (same values as LLM_REASONING_EFFORT).
+    reasoning_effort: str | None = None
+
+
+def parse_reasoning_effort(value: str | None) -> str | None:
+    if not value:
+        return None
+    if value not in REASONING_EFFORTS:
+        raise ValueError(f"E2E_JUDGE_REASONING_EFFORT must be one of {', '.join(REASONING_EFFORTS)}")
+    return value
+
+
+def judge_payload(config: JudgeConfig, messages: list[dict[str, str]]) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "model": config.model,
+        "messages": messages,
+        "temperature": config.temperature,
+        "max_tokens": config.max_tokens,
+    }
+    if config.reasoning_effort is not None:
+        payload["reasoning_effort"] = config.reasoning_effort
+    return payload
 
 
 def _dotenv(path: Path) -> dict[str, str]:
@@ -73,6 +97,7 @@ def load_config(path: Path | None = None) -> JudgeConfig:
         max_tokens=max_tokens,
         temperature=temperature,
         prompt_version=prompt_version,
+        reasoning_effort=parse_reasoning_effort(values.get("E2E_JUDGE_REASONING_EFFORT")),
     )
 
 
@@ -96,12 +121,9 @@ def judge(config: JudgeConfig, conversation: str, rule: str) -> dict[str, Any]:
         "Deterministic assertions check state preservation separately."
     )
     user = json.dumps({"conversation": conversation, "expected_rule": rule}, ensure_ascii=False)
-    payload = {
-        "model": config.model,
-        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-        "temperature": config.temperature,
-        "max_tokens": config.max_tokens,
-    }
+    payload = judge_payload(
+        config, [{"role": "system", "content": system}, {"role": "user", "content": user}]
+    )
     headers = {"Content-Type": "application/json"}
     if config.api_key and config.api_key != "no-key-required":
         headers["Authorization"] = f"Bearer {config.api_key}"

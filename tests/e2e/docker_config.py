@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from tests.e2e.judge_config import JudgeConfig, validate_verdict
+from tests.e2e.judge_config import JudgeConfig, judge_payload, parse_reasoning_effort, validate_verdict
 
 
 @dataclass(frozen=True)
@@ -107,6 +107,7 @@ def load_config(root: Path | None = None) -> DockerE2EConfig:
         max_tokens=max_tokens,
         temperature=temperature,
         prompt_version=prompt_version,
+        reasoning_effort=parse_reasoning_effort(judge_values.get("E2E_JUDGE_REASONING_EFFORT")),
     )
     return DockerE2EConfig(app_url=_url(app_url, "E2E_DOCKER_BASE_URL"), judge=judge)
 
@@ -138,15 +139,13 @@ def semantic_judge(config: JudgeConfig, user_turn: str, response: str, context: 
         "Return only JSON with exactly pass, intent, reason, violations. "
         "Judge relevance and grounding only; deterministic state and citation checks are external."
     )
-    payload = {
-        "model": config.model,
-        "messages": [
+    payload = judge_payload(
+        config,
+        [
             {"role": "system", "content": system},
             {"role": "user", "content": json.dumps({"user_turn": user_turn, "response": response, "context": context}, ensure_ascii=False)},
         ],
-        "temperature": config.temperature,
-        "max_tokens": config.max_tokens,
-    }
+    )
     headers = {"Content-Type": "application/json"}
     if config.api_key and config.api_key != "no-key-required":
         headers["Authorization"] = f"Bearer {config.api_key}"
