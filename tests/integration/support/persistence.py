@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 
 from httpx import ASGITransport, AsyncClient
 
-from app.main import create_app
+from gateway.main import create_app
 
 
 @asynccontextmanager

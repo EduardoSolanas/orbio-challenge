@@ -12,8 +12,8 @@ from datetime import datetime, timezone
 from typing import Iterable
 from uuid import UUID, uuid4
 
-from app.providers import SynthesizedAudio
-from app.schemas import (
+from gateway.providers.client import SynthesizedAudio
+from gateway.schemas import (
     Extraction,
     KnowledgeAnswer,
     KnowledgeRecord,

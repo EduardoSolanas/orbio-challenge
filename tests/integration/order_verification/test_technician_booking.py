@@ -11,8 +11,8 @@ from uuid import uuid4
 
 import pytest
 
-from app.backend_api import FIXTURE_ORDER_NUMBER
-from app.localization import render, text
+from backend.api import FIXTURE_ORDER_NUMBER
+from gateway.localization import render, text
 from tests.integration.order_verification.support import (
     VERIFICATION_PROMPT,
     create_session,

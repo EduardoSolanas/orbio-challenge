@@ -26,15 +26,15 @@ import httpx
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.main import create_app
-from app.prompts import (
+from gateway.main import create_app
+from gateway.providers.prompts import (
     ABSTENTION,
     KNOWLEDGE_PROMPT,
     POLICY_QUESTION_SUFFIX,
     SOCIAL_ACKNOWLEDGMENT,
 )
-from app.providers import REPAIR_LINE, OpenAICompatibleProvider
-from app.schemas import KnowledgeAnswer
+from gateway.providers.client import REPAIR_LINE, OpenAICompatibleProvider
+from gateway.schemas import KnowledgeAnswer
 from tests.integration.support.api import (
     ScriptedProvider,
     make_extraction,

@@ -12,7 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 from uuid import uuid4
 
-from app.schemas import KnowledgeAnswer
+from gateway.schemas import KnowledgeAnswer
 from tests.integration.support.api import (
     ScriptedProvider,
     make_extraction,

@@ -1,8 +1,8 @@
 /** @jest-environment node */
 import { describe, expect, test } from "@jest/globals";
 
-import { MAX_RECORD_SECONDS } from "../../app/static/js/config.js";
-import { AsyncGate, RecordingAccumulator, WavEncoder } from "../../app/static/js/recording.js";
+import { MAX_RECORD_SECONDS } from "../../gateway/static/js/config.js";
+import { AsyncGate, RecordingAccumulator, WavEncoder } from "../../gateway/static/js/recording.js";
 
 const SUPPORTED_SAMPLE_RATES = [16000, 24000, 44100, 48000];
 

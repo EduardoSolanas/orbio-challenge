@@ -10,10 +10,10 @@ from __future__ import annotations
 import json
 from uuid import UUID, uuid4
 
-from app.main import create_app
-from app.backend_api import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
-from app.backend_client import BackendApiClient
-from app.verification import VerificationRegistry
+from gateway.main import create_app
+from backend.api import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
+from gateway.backend_client import BackendApiClient
+from gateway.conversation.verification import VerificationRegistry
 from tests.integration.order_verification.support import (
     ORDER_NUMBER_TEXT,
     ORDER_STATUS_Q,

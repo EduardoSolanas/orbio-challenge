@@ -18,7 +18,8 @@ import subprocess
 from pathlib import Path
 
 GATED_INPUTS = (
-    "app",
+    "gateway",
+    "backend",
     "tests",
     "scripts",
     "pyproject.toml",

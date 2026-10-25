@@ -18,8 +18,8 @@ from typing import Any
 
 import pytest
 
-from app.config import Settings
-from app.main import create_app
+from gateway.config import Settings
+from gateway.main import create_app
 from tests.integration.support.api import running_client
 from tests.integration.support.transcription import snapshot
 from tests.support.fakes import make_streaming_wav, make_wav

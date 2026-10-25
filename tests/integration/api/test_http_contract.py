@@ -13,8 +13,8 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from app.errors import ERRORS
-from app.prompts import CAPABILITY, GREETING
+from gateway.errors import ERRORS
+from gateway.providers.prompts import CAPABILITY, GREETING
 from tests.integration.support.api import (
     ScriptedProvider,
     full_extraction,

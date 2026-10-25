@@ -18,15 +18,15 @@ from typing import Any
 
 import pytest
 
-from app.errors import AppError
-from app.prompts import EXTRACTION_SYSTEM_PROMPT, KNOWLEDGE_PROMPT
-from app.providers import (
+from gateway.errors import AppError
+from gateway.providers.prompts import EXTRACTION_SYSTEM_PROMPT, KNOWLEDGE_PROMPT
+from gateway.providers.client import (
     REPAIR_LINE,
     SCHEMA_INSTRUCTION,
     SUCCESS_JSON_LIMIT,
     OpenAICompatibleProvider,
 )
-from app.schemas import (
+from gateway.schemas import (
     Extraction,
     ExtractionContext,
     KnowledgeAnswer,

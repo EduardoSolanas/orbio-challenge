@@ -16,7 +16,7 @@ This file: starting or resuming intake, and confirm, reject or unrelated turns w
 
 from __future__ import annotations
 
-from app.prompts import (
+from gateway.providers.prompts import (
     CAPABILITY,
     MISSING_CATEGORY,
     MISSING_ORDER,

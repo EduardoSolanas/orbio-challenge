@@ -19,7 +19,7 @@ services:
       - python
       - -m
       - uvicorn
-      - app.main:app
+      - gateway.main:app
       - --host
       - "${APP_BIND_HOST}"
       - --port
@@ -48,7 +48,7 @@ services:
       - python
       - -m
       - uvicorn
-      - app.backend_api:app
+      - backend.api:app
       - --host
       - "0.0.0.0"
       - --port

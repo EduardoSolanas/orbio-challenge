@@ -21,10 +21,10 @@ import json
 import httpx
 import pytest
 
-from app.main import create_app
-from app.prompts import serialize_context
-from app.providers import REPAIR_LINE, SUCCESS_JSON_LIMIT
-from app.schemas import Extraction
+from gateway.main import create_app
+from gateway.providers.prompts import serialize_context
+from gateway.providers.client import REPAIR_LINE, SUCCESS_JSON_LIMIT
+from gateway.schemas import Extraction
 from tests.integration.support.adapter import (
     EXTRACTION_PAYLOAD,
     SleepRecorder,

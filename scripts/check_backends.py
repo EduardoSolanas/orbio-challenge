@@ -41,11 +41,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from app.config import ServiceProfile, Settings
-from app.errors import AppError
-from app.providers import OpenAICompatibleProvider
-from app.retrieval import load_knowledge
-from app.schemas import (
+from gateway.config import ServiceProfile, Settings
+from gateway.errors import AppError
+from gateway.providers.client import OpenAICompatibleProvider
+from gateway.knowledge.retrieval import load_knowledge
+from gateway.schemas import (
     Extraction,
     ExtractionContext,
     KnowledgeAnswer,
@@ -56,7 +56,7 @@ from app.schemas import (
 
 DEFAULT_REPORT = REPO_ROOT / "reports" / "backend-compatibility.json"
 DEFAULT_WAV = REPO_ROOT / "tests" / "fixtures" / "audio" / "spoken.wav"
-DEFAULT_KNOWLEDGE = REPO_ROOT / "app" / "knowledge" / "northstar-faq.json"
+DEFAULT_KNOWLEDGE = REPO_ROOT / "gateway" / "knowledge" / "northstar-faq.json"
 
 EXTRACTION_MESSAGE = (
     "My order NS-000123 arrived broken. It is a damaged item and high urgency."

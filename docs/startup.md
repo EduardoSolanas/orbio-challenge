@@ -6,7 +6,7 @@ Read [implementation-contract.md](implementation-contract.md) for exact wiring/m
 
 Model-service configuration is now independent by role: [provider-compatibility.md](provider-compatibility.md). Extraction, RAG answers, STT and TTS may use separate OpenAI-compatible servers. Hosted OpenAI is optional, no fixed model allowlist or universal TTS date cutoff applies, and local auth=none services need no OpenAI credential.
 
-RAG is mandatory: [rag-contract.md](rag-contract.md). The four-record FAQ ships inside app/knowledge and is loaded/validated at startup; a missing or invalid KB prevents readiness. Lexical retrieval adds no embedding API, vector service or container. The configured RAG text model generates grounded policy answers with citations.
+RAG is mandatory: [rag-contract.md](rag-contract.md). The four-record FAQ ships inside gateway/knowledge and is loaded/validated at startup; a missing or invalid KB prevents readiness. Lexical retrieval adds no embedding API, vector service or container. The configured RAG text model generates grounded policy answers with citations.
 
 ## Recommended runtime
 
@@ -22,7 +22,7 @@ No database, Redis, reverse proxy, GPU, Node runtime, or ffmpeg is required for 
 - Internet access for image/package downloads and provider API calls.
 - Running compatible model servers for all required roles, with valid model/voice IDs and role-specific credentials only where authentication is enabled. Hosted services may additionally require account access/billing.
 - A free local port 8000, browser, and short fictional PCM WAV recording for the voice smoke test.
-- Application source and pinned dependencies from this checkout; build context must include `app/` and `requirements.txt`.
+- Application source and pinned dependencies from this checkout; build context must include `gateway/`, `backend/` and `requirements.txt`.
 
 Python runtime dependencies (pins are in requirements.txt): `fastapi`, `uvicorn`, `pydantic`, `python-multipart` for uploads, and httpx for generic compatible-service transport. All pinned development dependencies in testing-contract.md are required, including pytest-asyncio, pytest-playwright, Playwright and Linux/WSL mutmut. Pin versions tested together during implementation; Docker base image should be pinned to a tested digest before reproducible delivery.
 

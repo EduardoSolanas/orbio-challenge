@@ -51,7 +51,7 @@ Use section13 for exact fixture seams, scripted inputs, journey actions/assertio
 
 The E2E manifest/evidence checker must read journey IDs the ten browser journeys from implementation-contract.md section13; no gate requires the retired100 IDs. Keep all185 concrete ITxx-yy IDs plus AUTH-I01–AUTH-I11 and OA-I01–OA-I07 collected/executed and mapped separately in the integration requirement mapping. Do not silently skip a journey or backend branch.
 
-The gateway-to-Backend-API boundary is real-boundary coverage: integration must serve the shipped `app.backend_api` app with real Uvicorn on a loopback port and drive it through `BackendApiClient`; stopping and restarting that server must prove the fixed safe outage errors and recovery. Unit tests may use a protocol-faithful `httpx.MockTransport` only for the client's transport/status mapping; an in-process Backend API replacement is not accepted as integration coverage. The gateway origin must be proven not to expose `/internal/v1/...`, and Compose must publish no host port for `backend-api`.
+The gateway-to-Backend-API boundary is real-boundary coverage: integration must serve the shipped `backend.api` app with real Uvicorn on a loopback port and drive it through `BackendApiClient`; stopping and restarting that server must prove the fixed safe outage errors and recovery. Unit tests may use a protocol-faithful `httpx.MockTransport` only for the client's transport/status mapping; an in-process Backend API replacement is not accepted as integration coverage. The gateway origin must be proven not to expose `/internal/v1/...`, and Compose must publish no host port for `backend-api`.
 
 The separate LLM semantic-judge suite is not a substitute for the ten journeys. It must contain 23 judge-asserted browser checks: seven baseline routing cases (greeting, thanks, social-prefaced facts, social-prefaced policy question, capability, unsupported question and memory-aware explicit resume after an issue, FAQ detour and page refresh), ten FAQ interruptions (partial issue intake, after category/before urgency, pending review, rejected review, pending verification, wrong verification code, verified/before protected lookup, after protected order result, partial intake after reload, and unsupported FAQ during verification), and six frustration-to-handoff cases (during issue intake, during a supported FAQ, during pending verification, at review, on an unrelated/off-topic turn, and in Spanish). Every FAQ case asserts deterministic response, citation/abstention, relevant UI state and `order_verification_required`; each handoff case asserts the fixed localized demo-only transfer disclosure, terminal `handed_off` status, preserved existing slots, locked composer and no RAG/order lookup. The resume judge case additionally verifies the original session ID, persisted transcript/slots/revision across refresh, and that the resumed model context includes prior issue and FAQ turns. The LLM judge assesses the visible final response only. Keep the rubric/prompt version in artifacts and do not count these as extra J journeys.
 
@@ -75,7 +75,7 @@ markers = ["live: paid provider smoke, requires explicit opt-in"]
 [tool.coverage.run]
 branch = true
 source = ["app"]
-omit = ["app/main.py", "app/routes.py", "app/http_support.py", "app/asgi_guards.py", "app/schemas.py", "app/prompts.py", "app/errors.py"]
+omit = ["gateway/main.py", "gateway/api/routes.py", "gateway/api/http_support.py", "gateway/api/asgi_guards.py", "gateway/schemas.py", "gateway/providers/prompts.py", "gateway/errors.py"]
 
 [tool.coverage.json]
 show_contexts = true
@@ -85,8 +85,8 @@ fail_under = 95
 show_missing = true
 
 [tool.mutmut]
-source_paths = ["app/"]
-do_not_mutate = ["app/__init__.py", "app/main.py", "app/routes.py", "app/http_support.py", "app/asgi_guards.py", "app/schemas.py", "app/prompts.py", "app/errors.py"]
+source_paths = ["gateway/", "backend/"]
+do_not_mutate = ["gateway/__init__.py", "gateway/main.py", "gateway/api/routes.py", "gateway/api/http_support.py", "gateway/api/asgi_guards.py", "gateway/schemas.py", "gateway/providers/prompts.py", "gateway/errors.py"]
 pytest_add_cli_args_test_selection = ["tests/unit", "tests/integration"]
 also_copy = ["tests/", "pyproject.toml"]
 mutate_only_covered_lines = false
@@ -166,7 +166,7 @@ Inventory checker CLI is exactly `python scripts/check_mutation_inventory.py --c
 
 ## 11. Mandatory RAG coverage
 
-[rag-contract.md](rag-contract.md) defines required R13 and AT17–AT19; implementation-contract section13 assigns visible RAG coverage to policy_questions and keyboard_mobile and backend cases to IT10–IT11. Extend unit/integration/Playwright/live cases, strict TDD evidence, provider fake and httpx HTTP transport mocks accordingly. Add app/retrieval.py to required mutation inventory and retain it in source_paths=app/ (not do_not_mutate). All seven concrete-module inventories must be checked. The real retriever and corpus run in E2E; only AI responses are faked.
+[rag-contract.md](rag-contract.md) defines required R13 and AT17–AT19; implementation-contract section13 assigns visible RAG coverage to policy_questions and keyboard_mobile and backend cases to IT10–IT11. Extend unit/integration/Playwright/live cases, strict TDD evidence, provider fake and httpx HTTP transport mocks accordingly. Add gateway/knowledge/retrieval.py to required mutation inventory and retain it in source_paths=app/ (not do_not_mutate). All seven concrete-module inventories must be checked. The real retriever and corpus run in E2E; only AI responses are faked.
 
 
 ## 12. Independent service backend compatibility
@@ -217,13 +217,13 @@ Existing suites remain authoritative for boundaries this layer does not re-prove
 
 ## 14. Private Backend API boundary
 
-The gateway owns no catalog, demo code or credential rule. Verification and lookup cross a real HTTP boundary to the shipped `app.backend_api:app` served by Uvicorn on a loopback port (`tests/integration/support/backend_api.py::LocalBackendApiServer`); the same server can be stopped and restarted on the same origin to prove outage and recovery. `BackendApiClient` transport/status mapping is also pinned in `tests/unit/test_backend_api.py` with a protocol-faithful `httpx.MockTransport`; an in-process Backend API replacement is not accepted for integration coverage.
+The gateway owns no catalog, demo code or credential rule. Verification and lookup cross a real HTTP boundary to the shipped `backend.api:app` served by Uvicorn on a loopback port (`tests/integration/support/backend_api.py::LocalBackendApiServer`); the same server can be stopped and restarted on the same origin to prove outage and recovery. `BackendApiClient` transport/status mapping is also pinned in `tests/unit/backend/test_backend_api.py` with a protocol-faithful `httpx.MockTransport`; an in-process Backend API replacement is not accepted for integration coverage.
 
 | Backend API case | Test nodeids |
 |---|---|
-| OA-I01 fixture and allowlisted record | `tests/unit/test_backend_api.py::test_fixture_record_is_exact_and_allowlisted`, `::test_unknown_order_returns_not_found_without_record_data`; over the real socket `tests/integration/order_verification/test_backend_api_boundary.py::test_normalized_postcode_and_demo_code_grant_one_allowlisted_lookup`, `::test_missing_fixture_record_clears_the_grant_and_fails_generically` |
-| OA-I02 health and private surface | `tests/unit/test_backend_api.py::test_health_is_private_and_minimal`, `::test_client_has_no_public_gateway_routes` |
-| OA-I03 gateway browser surface and no host port | `tests/integration/order_verification/test_backend_api_boundary.py::test_gateway_origin_does_not_expose_the_private_backend_api`, `tests/unit/test_compose_backend_api.py::test_backend_api_publishes_no_host_port_and_is_only_exposed_internally`, `::test_gateway_waits_for_a_healthy_backend_api_and_calls_it_by_service_dns` |
+| OA-I01 fixture and allowlisted record | `tests/unit/backend/test_backend_api.py::test_fixture_record_is_exact_and_allowlisted`, `::test_unknown_order_returns_not_found_without_record_data`; over the real socket `tests/integration/order_verification/test_backend_api_boundary.py::test_normalized_postcode_and_demo_code_grant_one_allowlisted_lookup`, `::test_missing_fixture_record_clears_the_grant_and_fails_generically` |
+| OA-I02 health and private surface | `tests/unit/backend/test_backend_api.py::test_health_is_private_and_minimal`, `::test_client_has_no_public_gateway_routes` |
+| OA-I03 gateway browser surface and no host port | `tests/integration/order_verification/test_backend_api_boundary.py::test_gateway_origin_does_not_expose_the_private_backend_api`, `tests/unit/tooling/test_compose_backend_api.py::test_backend_api_publishes_no_host_port_and_is_only_exposed_internally`, `::test_gateway_waits_for_a_healthy_backend_api_and_calls_it_by_service_dns` |
 | OA-I04 verification while the Backend API is down | `tests/integration/order_verification/test_backend_api_boundary.py::test_backend_api_outage_during_verification_is_safe_and_recovers` |
 | OA-I05 lookup while the Backend API is down | `::test_backend_api_outage_during_lookup_preserves_the_grant_and_recovers` |
 | OA-I06 restart on the same origin recovers without a gateway restart | the `LocalBackendApiServer.restart()` phase of both OA-I04/I05 tests |
@@ -232,6 +232,6 @@ The gateway owns no catalog, demo code or credential rule. Verification and look
 complete_intake carries the browser journey extension; the outage/recovery checkpoints are `complete_intake.backend-api-outage-safe-error` and `complete_intake.demo-code-success-enables-composer`, alongside the failed-verification checkpoint `complete_intake.wrong-code-localized-error` and the successful lookup checkpoints `complete_intake.verified-allowlisted-order-summary` and `complete_intake.verified-order-review`.
 
 ```bash
-.venv/bin/python -m pytest tests/integration/order_verification tests/unit/test_backend_api.py tests/unit/test_compose_backend_api.py -q
+.venv/bin/python -m pytest tests/integration/order_verification tests/unit/backend/test_backend_api.py tests/unit/tooling/test_compose_backend_api.py -q
 .venv/bin/python scripts/test.py e2e
 ```

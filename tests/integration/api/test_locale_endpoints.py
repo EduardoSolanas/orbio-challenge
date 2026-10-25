@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from app.errors import LOCALIZATION_INVALID_MESSAGE
-from app.localization import LOCALES_DIR, load_locales
-from app.main import create_app
+from gateway.errors import LOCALIZATION_INVALID_MESSAGE
+from gateway.localization import LOCALES_DIR, load_locales
+from gateway.main import create_app
 from tests.integration.support.api import (
     ScriptedProvider,
     build_settings,
@@ -192,7 +192,7 @@ async def test_missing_dictionary_file_fails_startup(tmp_path: Path):
 
 async def test_shipped_dictionaries_cover_every_error_code(client):
     body = (await client.get("/api/locales/en")).json()
-    from app.errors import ERRORS
+    from gateway.errors import ERRORS
 
     for code in ERRORS:
         assert body[f"errors.{code}"]

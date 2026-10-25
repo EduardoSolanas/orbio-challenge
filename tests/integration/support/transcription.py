@@ -11,9 +11,9 @@ from uuid import UUID
 import httpx
 from httpx import ASGITransport, AsyncClient
 
-from app.errors import ERRORS
-from app.main import create_app
-from app.providers import OpenAICompatibleProvider
+from gateway.errors import ERRORS
+from gateway.main import create_app
+from gateway.providers.client import OpenAICompatibleProvider
 
 
 async def no_sleep(delay: float) -> None:

@@ -18,8 +18,8 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
-from app.prompts import SOCIAL_ACKNOWLEDGMENT, serialize_context
-from app.schemas import KnowledgeRecord, RecentMessage
+from gateway.providers.prompts import SOCIAL_ACKNOWLEDGMENT, serialize_context
+from gateway.schemas import KnowledgeRecord, RecentMessage
 from tests.integration.support.api import (
     ScriptedProvider,
     make_extraction,

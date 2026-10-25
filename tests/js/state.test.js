@@ -1,7 +1,7 @@
 import { describe, expect, test } from "@jest/globals";
 
-import { SessionStore } from "../../app/static/js/session_store.js";
-import { ChatState } from "../../app/static/js/state.js";
+import { SessionStore } from "../../gateway/static/js/session_store.js";
+import { ChatState } from "../../gateway/static/js/state.js";
 
 describe("ChatState", () => {
   test("starts as an empty, idle English conversation", () => {

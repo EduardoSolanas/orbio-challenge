@@ -23,19 +23,20 @@ from typing import Any
 
 from evidence_revision import gated_input_revision
 
+# Dotted module paths from the repository root; each is also the prefix of its mutant ids.
 MODULES = (
-    "conversation",
-    "intent",
-    "plans",
-    "replay",
-    "validation",
-    "storage",
-    "audio",
-    "providers",
-    "provider_wire",
-    "speech_wav",
-    "config",
-    "retrieval",
+    "gateway.conversation.engine",
+    "gateway.conversation.intent",
+    "gateway.conversation.plans",
+    "gateway.conversation.replay",
+    "gateway.conversation.validation",
+    "gateway.storage",
+    "gateway.providers.audio",
+    "gateway.providers.client",
+    "gateway.providers.wire",
+    "gateway.providers.speech_wav",
+    "gateway.config",
+    "gateway.knowledge.retrieval",
 )
 CLASS_SEPARATOR = "\u01c1"
 ENTRY_FIELDS = {
@@ -181,14 +182,26 @@ def discover_module(path: Path, module_dotted: str, errors: list[str]) -> dict[s
     return found
 
 
+def module_file(source_root: Path, module: str) -> Path:
+    """The source file of a dotted module path, under ``source_root``."""
+
+    return source_root.joinpath(*module.split(".")).with_suffix(".py")
+
+
+def module_of(qualified_name: str) -> str:
+    """The module a qualified function name belongs to."""
+
+    return next(module for module in MODULES if qualified_name.startswith(f"{module}."))
+
+
 def discover_all(source_root: Path, errors: list[str]) -> dict[str, FunctionInfo]:
     discovered: dict[str, FunctionInfo] = {}
     for module in MODULES:
-        path = source_root / f"{module}.py"
+        path = module_file(source_root, module)
         if not path.is_file():
             errors.append(f"source: required module {path} is missing")
             continue
-        for name, info in discover_module(path, f"app.{module}", errors).items():
+        for name, info in discover_module(path, module, errors).items():
             if name in discovered:
                 errors.append(f"source: duplicate qualified name {name}")
             discovered[name] = info
@@ -317,7 +330,7 @@ def main(argv: list[str] | None = None) -> int:
     inventory_path = Path(args.inventory)
     review_path = Path(args.review)
 
-    discovered = discover_all(Path("app"), errors)
+    discovered = discover_all(Path("."), errors)
     files = load_coverage(coverage_path, errors)
     inventory_data = load_json(inventory_path, "inventory", errors)
 
@@ -448,7 +461,7 @@ def main(argv: list[str] | None = None) -> int:
                 errors.append(
                     f"inventory: {qualified_name} has mutant ids and a no_operator_reason"
                 )
-            prefix = f"app.{qualified_name.split('.')[1]}.{info.mangled_key}__mutmut_"
+            prefix = f"{module_of(qualified_name)}.{info.mangled_key}__mutmut_"
             for mutant_id in mutant_ids:
                 if not isinstance(mutant_id, str) or not mutant_id.startswith(prefix):
                     errors.append(

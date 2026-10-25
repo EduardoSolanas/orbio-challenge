@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from app.localization import render, text
-from app.backend_api import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
-from app.schemas import ToolRequest
+from gateway.localization import render, text
+from backend.api import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
+from gateway.schemas import ToolRequest
 from tests.integration.support.api import make_extraction
 
 

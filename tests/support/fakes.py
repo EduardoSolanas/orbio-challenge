@@ -26,9 +26,9 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
-from app.errors import app_error
-from app.providers import SynthesizedAudio
-from app.schemas import Extraction, KnowledgeAnswer, Slots, ToolRequest
+from gateway.errors import app_error
+from gateway.providers.client import SynthesizedAudio
+from gateway.schemas import Extraction, KnowledgeAnswer, Slots, ToolRequest
 
 FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
 REPLY_MP3_PATH = FIXTURES_DIR / "reply.mp3"

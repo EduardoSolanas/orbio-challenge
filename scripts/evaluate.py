@@ -33,11 +33,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from app.config import Settings  # noqa: E402
-from app.main import DEFAULT_KNOWLEDGE_PATH, _build_provider  # noqa: E402
-from app.retrieval import load_knowledge  # noqa: E402
-from app.schemas import ExtractionContext, Slots  # noqa: E402
-from app.semantic import SemanticIndex  # noqa: E402
+from gateway.config import Settings  # noqa: E402
+from gateway.main import DEFAULT_KNOWLEDGE_PATH, _build_provider  # noqa: E402
+from gateway.knowledge.retrieval import load_knowledge  # noqa: E402
+from gateway.schemas import ExtractionContext, Slots  # noqa: E402
+from gateway.knowledge.semantic import SemanticIndex  # noqa: E402
 
 DEFAULT_CASES = REPO_ROOT / "tests" / "eval" / "utterances.json"
 DEFAULT_REPORT = REPO_ROOT / "reports" / "evaluation.json"

@@ -27,10 +27,10 @@ import pytest
 import uvicorn
 from playwright.sync_api import Locator, Page, Response, expect
 
-from app.config import Settings
-from app.backend_api import create_backend_api_app
-from app.errors import app_error
-from app.main import create_app
+from gateway.config import Settings
+from backend.api import create_backend_api_app
+from gateway.errors import app_error
+from gateway.main import create_app
 from tests.e2e.hooks import (  # noqa: F401  (pytest registers these hook functions)
     pytest_collection_finish,
     pytest_collectreport,

@@ -10,12 +10,12 @@ from __future__ import annotations
 import json
 from uuid import UUID
 
-from app.localization import build_summary, render, text
-from app.main import create_app
-from app.backend_api import FIXTURE_ORDER_NUMBER
-from app.backend_client import BackendApiClient
-from app.schemas import KnowledgeAnswer, Slots
-from app.verification import VerificationRegistry
+from gateway.localization import build_summary, render, text
+from gateway.main import create_app
+from backend.api import FIXTURE_ORDER_NUMBER
+from gateway.backend_client import BackendApiClient
+from gateway.schemas import KnowledgeAnswer, Slots
+from gateway.conversation.verification import VerificationRegistry
 from tests.integration.order_verification.support import (
     ORDER_NUMBER_PROMPT,
     ORDER_NUMBER_TEXT,

@@ -1,7 +1,9 @@
 # Northstar Shop accessibility and mobile UX review
 
 **Review date:** 2026-10-24
-**Scope:** the served page at `/` (`app/static/index.html`, `styles.css`, `app.js`, `i18n.js`) and the existing the ten browser journeys Playwright journeys.
+**Scope:** the served page at `/` (`gateway/static/index.html`, `styles.css`, `app.js`, `i18n.js`) and the existing the ten browser journeys Playwright journeys.
+
+> Note: file and line references below describe the page as audited, before the frontend was rewritten into `gateway/static/js/` modules and `gateway/static/css/` (`app.js`, `i18n.js` and `styles.css` no longer exist). The findings still apply; the code that implements them now lives in those modules.
 **Method:** source/DOM-contract inspection, existing deterministic browser journeys, JavaScript unit tests, and a narrow mobile keyboard journey. No application behavior was changed by this review.
 
 ## Evidence and limits
@@ -25,7 +27,7 @@ These are defects confirmed by the current HTML/CSS/JavaScript or by a stated cu
 
 - **Priority:** high
 - **User impact / journeys:** A user who needs Spanish cannot choose it from the UI; language is only changed as a side effect of server conversation state. This affects intake, review, errors, confirmation, and speech controls in the ten browser journeys, especially Spanish users arriving before the first supported-language turn or needing to switch language.
-- **Location:** `/`; `app/static/index.html:11–43` (no language selector); `app/static/i18n.js:154–213` (`applyStaticLabels` only applies a language selected by session responses); `app/static/app.js:307–321,327–354`.
+- **Location:** `/`; `gateway/static/index.html:11–43` (no language selector); `gateway/static/i18n.js:154–213` (`applyStaticLabels` only applies a language selected by session responses); `gateway/static/app.js:307–321,327–354`.
 - **Current behavior:** `html[lang]` starts as `en` and is updated when a session view/turn response supplies `reply_language`. There is no `<select>`/button for language and no documented visible way to change language. The existing unit test proves programmatic label switching, not a user interaction.
 - **Expected behavior:** Provide a keyboard-operable, persistently named language control (for example `<label for="language">Language</label><select id="language">…</select>`) with English and Español options. Changing it must update `document.documentElement.lang`, all current static labels, error copy, review copy, and the speech availability state without translating historical message text silently.
 - **Proposed change:** Add a labeled native select near the page heading; use the existing `i18n` dictionary for labels and options; announce “Language changed to …” in a status region; keep message-language metadata and per-message playback language intact. Do not use a tooltip as the only language affordance.
@@ -36,7 +38,7 @@ These are defects confirmed by the current HTML/CSS/JavaScript or by a stated cu
 
 - **Priority:** high
 - **User impact / journeys:** During session creation/resume, send, retry, confirmation, transcription, and recording startup, users can see disabled controls but cannot tell what is happening, whether the request started, or whether a stalled request is still active. Screen-reader users receive no status. This affects complete_intake, resume_after_restart–voice_failure, and stale_voice_results.
-- **Location:** `/`; `app/static/index.html:13–42` (no status element); `app/static/app.js:156–210,381–535,623–716,738–798,882–934,968–1022`.
+- **Location:** `/`; `gateway/static/index.html:13–42` (no status element); `gateway/static/app.js:156–210,381–535,623–716,738–798,882–934,968–1022`.
 - **Current behavior:** `updateControls()` sets `disabled`, `readOnly`, and `hidden`, but no element gets `aria-busy`, a status message, or a “working” label. `alert` is used only after failures. A 35–45 second deadline can therefore look like a frozen page.
 - **Expected behavior:** The active surface exposes a concise, non-duplicated status such as “Sending message…”, “Loading saved intake…”, “Transcribing audio…”, “Confirming details…”, or “Recording”. The relevant region has `aria-busy="true"` during work and returns to false; status text is polite and does not interrupt typed input. Long operations provide a clear recovery path after timeout.
 - **Proposed change:** Add one `<p id="status" role="status" aria-live="polite" aria-atomic="true"></p>` and a scoped busy state on the composer/transcript region. Set status at each async transition and clear it on success/failure/stale completion. Use a CSS spinner only as supplemental decoration, with text always present.
@@ -47,7 +49,7 @@ These are defects confirmed by the current HTML/CSS/JavaScript or by a stated cu
 
 - **Priority:** high
 - **User impact / journeys:** A screen-reader user may hear the greeting and all prior turns repeatedly whenever a new turn arrives, language changes, or a session is refreshed. Long transcripts become difficult to navigate. This affects all conversational journeys and policy Sources in policy_questions and keyboard_mobile.
-- **Location:** `app/static/index.html:13`; `app/static/app.js:292–299,321–324,351–354`; `app/static/styles.css:53–63`.
+- **Location:** `gateway/static/index.html:13`; `gateway/static/app.js:292–299,321–324,351–354`; `gateway/static/styles.css:53–63`.
 - **Current behavior:** `#transcript` is `role="log" aria-live="polite" aria-relevant="additions"`, but `renderTranscript()` removes every child and appends every message again. The DOM mutation is not limited to the new message despite the `additions` value.
 - **Expected behavior:** Existing messages stay in the DOM; only genuinely new messages are appended to the log. A refresh/reconciliation that does not add a message must not announce the conversation again. The log has an accessible name and a navigable heading/landmark.
 - **Proposed change:** Key message elements by saved message ID (or use a stable append/update strategy); avoid `clearChildren` for ordinary additions. Give the log an explicit accessible name, e.g. `aria-label="Conversation"`, and keep review/status/errors outside the live log.
@@ -58,7 +60,7 @@ These are defects confirmed by the current HTML/CSS/JavaScript or by a stated cu
 
 - **Priority:** high
 - **User impact / journeys:** Character-limit and transcription guidance are visible, but a user of a screen reader does not reliably receive the relevant instruction when focusing Message. There is no invalid state or error association for the 4000-character limit.
-- **Location:** `app/static/index.html:20–22`; `app/static/app.js:168–209,1078–1087`; `app/static/styles.css:180–184`.
+- **Location:** `gateway/static/index.html:20–22`; `gateway/static/app.js:168–209,1078–1087`; `gateway/static/styles.css:180–184`.
 - **Current behavior:** `textarea#message` has a visible label and an extra identical `aria-label`, but no `aria-describedby`, `aria-invalid`, `maxlength`, or error ID. `#transcribe-help` is toggled independently and `#alert` is a global alert.
 - **Expected behavior:** The field announces its purpose, limits, current invalid state, and recovery instruction. Over-limit input is prevented or clearly rejected at the field; the user can recover by editing without guessing why Send is disabled.
 - **Proposed change:** Add `maxlength="4000"` (if the intended behavior is hard limit) or keep soft validation but add `aria-describedby="message-help message-error"`; add a persistent concise help sentence; toggle `aria-invalid="true"` and an inline `role="alert"`/`aria-live="polite"` error with `for`/ID association. Remove the redundant `aria-label` when the visible label is the accessible name source.
@@ -69,7 +71,7 @@ These are defects confirmed by the current HTML/CSS/JavaScript or by a stated cu
 
 - **Priority:** high
 - **User impact / journeys:** After a successful turn, a review region and Confirm details button appear below the current focus. After Retry, New intake, confirmation, or a failure, focus remains on a removed/disabled control or at an unpredictable point. Keyboard and screen-reader users must search the page to continue.
-- **Location:** `app/static/index.html:15,26–29`; `app/static/app.js:212–221,292–355,569–621,738–821`.
+- **Location:** `gateway/static/index.html:15,26–29`; `gateway/static/app.js:212–221,292–355,569–621,738–821`.
 - **Current behavior:** Rendering toggles `hidden` and appends nodes but never calls a deliberate focus target. New intake keeps the old transcript visible while the request is pending, then replaces it without focus management.
 - **Expected behavior:** On review creation, focus moves to the review heading or a concise status, then the user can reach Confirm. On an error, focus moves to the error summary/alert; on Retry completion, focus returns to the initiating control; on New intake completion, focus returns to Message. Do not steal focus while a user is typing.
 - **Proposed change:** Add a focusable (`tabindex="-1"`) heading inside review and a stable error/status target. Store the initiating element before async work, focus it only after the corresponding state transition, and guard stale generations. Announce review availability without duplicating the whole transcript.
@@ -80,7 +82,7 @@ These are defects confirmed by the current HTML/CSS/JavaScript or by a stated cu
 
 - **Priority:** high
 - **User impact / journeys:** A recording user has no visible elapsed-time limit, recording indicator, live state, or explicit instruction that recording has begun/stopped. Permission denial is only a global alert and focus does not move to it. This affects voice_success, voice_failure, and stale_voice_results.
-- **Location:** `app/static/index.html:31–37`; `app/static/app.js:968–1070`; `app/static/i18n.js:30–35,62–67`.
+- **Location:** `gateway/static/index.html:31–37`; `gateway/static/app.js:968–1070`; `gateway/static/i18n.js:30–35,62–67`.
 - **Current behavior:** Start/Stop visibility and disabled state change, but no status text or `aria-pressed`/`aria-label` state is exposed. The automatic 60-second cutoff is silent. A denial message is shown in `role="alert"`, but no recovery focus is specified.
 - **Expected behavior:** Start has a stable name; active recording exposes “Recording. Maximum 60 seconds. Stop recording.” and elapsed time where useful; Stop ends the state and announces that a take is ready for transcription. Permission failure says what happened and gives the nearby typed/upload alternatives, with focus on the recovery message or first alternative.
 - **Implemented behavior:** Keep Start/Stop as named buttons; Stop immediately transcribes the captured PCM WAV, then fills the editable Message draft without sending. While STT is pending, announce “Transcribing audio…” through a localized polite status, make Message readonly and disable every chat control to prevent duplicate actions. Failures show an alert and unlock controls. Catch `getUserMedia` failures with localized recovery copy and keep text/WAV alternatives available.
@@ -91,7 +93,7 @@ These are defects confirmed by the current HTML/CSS/JavaScript or by a stated cu
 
 - **Priority:** high
 - **User impact / journeys:** The real file input is clipped to 1×1 px while the styled `<label>` is not focusable. Keyboard users can encounter an invisible focus target; touch users get a small dashed label, and the selected filename/state is not surfaced. This affects voice_success/voice_failure and mobile users who cannot use a microphone.
-- **Location:** `app/static/index.html:35–36`; `app/static/styles.css:108–116,210–229`; `app/static/app.js:1072–1076`.
+- **Location:** `gateway/static/index.html:35–36`; `gateway/static/styles.css:108–116,210–229`; `gateway/static/app.js:1072–1076`.
 - **Implemented behavior:** A visible, keyboard-operable paperclip button opens a hidden WAV-only file input. Its localized accessible name is “Attach WAV audio”; selecting the file immediately transcribes it into the draft. The button is disabled while a draft exists or an STT request is pending.
 - **Expected behavior:** Keyboard focus is visibly on a usable upload control; the control says accepted format/size and exposes the selected file name or validation error. The control remains operable at 200% text size and on a narrow viewport.
 - **Proposed change:** Keep the native input in the tab order with a visually hidden technique that preserves a focus proxy, or use a real styled `<label>` with an adjacent status and a visible focus style on the label via `:focus-within`. Add `accept` guidance, filename status, and localized invalid/oversize recovery copy.
@@ -102,7 +104,7 @@ These are defects confirmed by the current HTML/CSS/JavaScript or by a stated cu
 
 - **Priority:** medium
 - **User impact / journeys:** `.btn` padding is approximately 36–38 px tall at the normal font size, and controls can be tightly packed by a `0.45rem` gap. This increases accidental activation and makes voice controls difficult to use one-handed. A 390 px no-overflow pass does not prove target size.
-- **Location:** `app/static/styles.css:186–203,210–217,248–256`.
+- **Location:** `gateway/static/styles.css:186–203,210–217,248–256`.
 - **Current behavior:** Buttons use `padding: 0.45rem 0.8rem`; the 420 px media rule reduces padding further to `0.4rem 0.65rem`. There is no minimum inline/block size or coarse-pointer adjustment.
 - **Expected behavior:** Primary controls meet at least 44×44 CSS px where practical, have at least 8 px spacing, and remain readable when zoomed. Text wrapping must not reduce the hit area.
 - **Proposed change:** Set `min-block-size: 44px` and suitable inline padding on buttons, file trigger, source summaries, and language control; use a coarse-pointer media query only if needed; allow action groups to stack on narrow screens.
@@ -113,7 +115,7 @@ These are defects confirmed by the current HTML/CSS/JavaScript or by a stated cu
 
 - **Priority:** medium
 - **User impact / journeys:** `overflow-x: hidden` can conceal clipped content or controls. The hostile long-token keyboard_mobile check passes at 390 px, but hidden overflow can mask future content, larger text, source titles, or inline speaker controls. This affects mobile and text-resize users.
-- **Location:** `app/static/styles.css:22–35,53–63,80–84,118–123,130–147`; `tests/e2e/test_keyboard_mobile.py:103,114`.
+- **Location:** `gateway/static/styles.css:22–35,53–63,80–84,118–123,130–147`; `tests/e2e/test_keyboard_mobile.py:103,114`.
 - **Current behavior:** The document globally hides horizontal overflow. Text uses aggressive `word-break: break-word`; no 320 px, 200% text, or 400% reflow check exists.
 - **Expected behavior:** Content naturally wraps or scrolls within the component that owns overflow; the document does not need to hide a layout defect. At 320 px and 400% equivalent reflow, every action and message remains reachable without two-dimensional scrolling except content that genuinely requires it.
 - **Proposed change:** Remove global `overflow-x:hidden` after fixing offending objects; use `overflow-wrap:anywhere` selectively; give transcript/source bodies local overflow only where needed; test inline speakers and long labels separately. Add responsive breakpoints based on content, not only `max-width:420px`.
@@ -124,7 +126,7 @@ These are defects confirmed by the current HTML/CSS/JavaScript or by a stated cu
 
 - **Priority:** medium
 - **User impact / journeys:** Native controls may be exposed inconsistently across browsers and screen readers, especially when several saved replies exist. Users are told “Voice is AI-generated” but not which reply the audio belongs to, whether it is loading, or why playback failed. This affects voice_success, voice_failure, keyboard_mobile, and stale_voice_results.
-- **Location:** `app/static/index.html:39–42`; `app/static/app.js:262–287,824–879`; `app/static/playback_labels.js`; `app/static/styles.css:231–245`.
+- **Location:** `gateway/static/index.html:39–42`; `gateway/static/app.js:262–287,824–879`; `gateway/static/playback_labels.js`; `gateway/static/styles.css:231–245`.
 - **Current behavior:** The shared audio element is programmatic and hidden from the accessibility tree; it has no native browser control bar. Each assistant reply has a numbered inline speaker button. Loading/playback state is not announced; TTS failure uses the global alert.
 - **Expected behavior:** Each inline speaker button has a localized accessible name that identifies its reply. Loading and failure status are announced without duplicate messages; failed playback leaves the visible text reply usable.
 - **Proposed change:** Keep the inline speaker action as the sole playback control, add a scoped status for loading/failure, and preserve visible reply text as the fallback. Do not introduce native browser controls or make autoplay the only way to start playback.
@@ -135,7 +137,7 @@ These are defects confirmed by the current HTML/CSS/JavaScript or by a stated cu
 
 - **Priority:** medium
 - **User impact / journeys:** Errors from resume, turn, STT, TTS, confirmation, timeout, and microphone paths all overwrite one global `role="alert"`. Users may miss a message far above the current control, hear repeated/competing errors, or not know which action fixes it. This affects resume_after_restart–voice_failure and stale_voice_results.
-- **Location:** `app/static/index.html:17`; `app/static/app.js:94–114,359–379,421–471,498–535,651–692,759–766,845–879,907–927,1062–1066`.
+- **Location:** `gateway/static/index.html:17`; `gateway/static/app.js:94–114,359–379,421–471,498–535,651–692,759–766,845–879,907–927,1062–1066`.
 - **Current behavior:** `showAlert()` replaces text and unhides the alert, but does not focus it, set `aria-atomic`, link it to the failed control, or prevent an old stale error from remaining visible. Some errors are hard-coded English (`app.js:1062–1064`) instead of using `i18n`.
 - **Expected behavior:** Errors identify the failed operation, state whether data was saved, and give the next action. Field errors are associated with fields; operation errors are scoped to the operation and have one live announcement. Stale callbacks cannot surface an old error. All copy is localized.
 - **Proposed change:** Add stable error IDs and `aria-describedby`/`aria-errormessage` where supported; use `role="alert"` only for urgent failures and `role="status"` for recoverable completion; focus the error summary after an operation fails; centralize all messages through `i18n` including WAV-limit failure.
@@ -146,7 +148,7 @@ These are defects confirmed by the current HTML/CSS/JavaScript or by a stated cu
 
 - **Priority:** medium
 - **User impact / journeys:** Users see an implementation identifier in the final confirmation, which is confusing and can disclose an internal correlation token. This affects complete_intake, resume_after_restart, voice_success–keyboard_mobile and the completed/reload path.
-- **Location:** the rendered transcript path `app/static/app.js:251–261,292–299`; server receipt contract used by `app/conversation.py:406` and `app/prompts.py:461`; expected by `tests/support/fakes.py:399` and complete_intake/resume_after_restart/failed_request_retry/two_tab_conflict/voice_success/voice_failure/policy_questions/keyboard_mobile.
+- **Location:** the rendered transcript path `gateway/static/app.js:251–261,292–299`; server receipt contract used by `gateway/conversation/engine.py:406` and `gateway/providers/prompts.py:461`; expected by `tests/support/fakes.py:399` and complete_intake/resume_after_restart/failed_request_retry/two_tab_conflict/voice_success/voice_failure/policy_questions/keyboard_mobile.
 - **Current behavior:** The frontend safely renders server text as a text node, but the receipt text includes `session_id`; the browser contract explicitly says the target UUID must not be visible text, accessible name, title, or tooltip.
 - **Expected behavior:** Show a human-facing confirmation/reference number that is intentionally designed and safe, or omit the internal UUID. Internal IDs remain only in API/local storage/private bindings.
 - **Proposed change:** Change receipt copy/contract to a non-sensitive reference (or “Your intake was confirmed”) and update UI/E2E assertions. Do not put the UUID into an ARIA label as a workaround.

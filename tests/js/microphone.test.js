@@ -5,8 +5,8 @@ import {
   MicrophoneRecording,
   SIGNAL_FLOOR,
   SILENCE_GRACE_MS,
-} from "../../app/static/js/microphone.js";
-import { RecordingAccumulator } from "../../app/static/js/recording.js";
+} from "../../gateway/static/js/microphone.js";
+import { RecordingAccumulator } from "../../gateway/static/js/recording.js";
 
 function build({ sampleRate = 16000 } = {}) {
   const track = { stop: jest.fn() };

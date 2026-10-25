@@ -22,8 +22,8 @@ from uuid import uuid4
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.main import create_app
-from app.schemas import Extraction
+from gateway.main import create_app
+from gateway.schemas import Extraction
 from tests.integration.support.api import (
     ScriptedProvider,
     persisted_response,

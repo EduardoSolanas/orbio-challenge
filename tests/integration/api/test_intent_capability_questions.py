@@ -16,8 +16,8 @@ This file: capability and policy questions."""
 
 from __future__ import annotations
 
-from app.prompts import ABSTENTION, CAPABILITY_REPLY, MISSING_CATEGORY
-from app.schemas import KnowledgeAnswer
+from gateway.providers.prompts import ABSTENTION, CAPABILITY_REPLY, MISSING_CATEGORY
+from gateway.schemas import KnowledgeAnswer
 from tests.integration.support.api import make_extraction, read_session
 from tests.integration.support.confirmation import (
     assert_ledger,

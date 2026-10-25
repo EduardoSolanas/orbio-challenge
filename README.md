@@ -36,15 +36,15 @@ shown in the page (fictional account `NS-000123`, postcode `SW1A 1AA`, code
 
 | Requirement | Where |
 |---|---|
-| Natural conversation, one question at a time, several answers per message | `app/conversation.py`, `app/prompts.py` |
-| Collect order/account reference, category, description, urgency | `app/validation.py`, `app/schemas.py` |
+| Natural conversation, one question at a time, several answers per message | `gateway/conversation/engine.py`, `gateway/providers/prompts.py` |
+| Collect order/account reference, category, description, urgency | `gateway/conversation/validation.py`, `gateway/schemas.py` |
 | Extract and validate into structured output | LLM extraction with strict schema, then deterministic validators |
 | Error handling and edge cases | Bounded retries, clear error codes, state never changes on a failed turn |
 | Conversation context | Saved transcript plus accepted fields; sessions resume after a restart |
-| JSON storage and summary | `app/storage.py`, [`examples/session.example.json`](examples/session.example.json) |
-| Speech-to-text and text-to-speech | Upload or record audio, edit the transcript, play replies (`app/audio.py`, `app/providers.py`) |
-| RAG | Embedding retrieval (or keyword matching when no embedding model is configured) over `app/knowledge/northstar-faq.json`, validated citations, abstention |
-| Account actions (extra) | After verifying the demo account: installation status and booking a technician from offered time windows (`app/backend_api.py`, `app/bookings.py`, `app/visits.py`) |
+| JSON storage and summary | `gateway/storage.py`, [`examples/session.example.json`](examples/session.example.json) |
+| Speech-to-text and text-to-speech | Upload or record audio, edit the transcript, play replies (`gateway/providers/audio.py`, `gateway/providers/client.py`) |
+| RAG | Embedding retrieval (or keyword matching when no embedding model is configured) over `gateway/knowledge/northstar-faq.json`, validated citations, abstention |
+| Account actions (extra) | After verifying the demo account: installation status and booking a technician from offered time windows (`backend/api.py`, `backend/bookings.py`, `gateway/conversation/visits.py`) |
 | Sentiment (bonus) | The extraction call also labels sentiment and frustration; clear frustration hands off to a simulated agent |
 | Multiple languages (bonus) | English and Spanish |
 | Multi-turn memory (bonus) | Within a session |
@@ -71,22 +71,30 @@ and speech synthesis. Latencies were roughly 0.5–1.7 s per call.
 Browser (static chat + voice UI)
    │  HTTP/JSON
    ▼
-FastAPI app ── conversation engine ── validators ── JSON session store (atomic writes)
+Gateway (FastAPI) ── conversation engine ── validators ── JSON session store (atomic writes)
    │                 │
    │                 ├── provider adapter ──► LLM / STT / TTS services
    │                 └── knowledge base retrieval (local, lexical)
    └── Backend API client ──► private Backend API (fictional accounts, internal network only)
 ```
 
-- `app/main.py`, `app/routes.py`: app factory and startup wiring; the HTTP routes. `app/asgi_guards.py` and `app/http_support.py` hold the request-size guards, correlation IDs and request parsing.
-- `app/conversation.py`: the turn transaction and state machine (`collecting` → `awaiting_confirmation` → `completed`). It uses `app/intent.py` (what an extraction means), `app/plans.py` (what to reply) and `app/replay.py` (duplicate-request handling).
-- `app/validation.py`, `app/schemas.py`: normalization and strict data models.
-- `app/providers.py`: one OpenAI-compatible adapter for the four roles, with timeouts, retries and a shared concurrency limit. `app/provider_wire.py` builds requests and parses replies; `app/speech_wav.py` joins spoken chunks into one WAV.
-- `app/retrieval.py`: knowledge loading, retrieval and citation checks.
-- `app/storage.py`: one JSON file per session, replaced atomically.
-- `app/backend_api.py`, `app/backend_client.py`, `app/verification.py`: the private Backend API, the single place for account data: the fictional account check, installation status, technician availability and booking. The gateway reaches it over the internal network only.
-- `app/bookings.py`, `app/availability.json`, `app/visits.py`: technician windows and bookings kept in one JSON file (hours and days offered are edited in `availability.json`) and the reply text for installation status and booking. After verification a customer can ask for installation status or to book a technician; the chat shows the open windows as buttons and a click books one.
-- `app/static/`: the chat page, with no build step. `js/` is plain ES modules, one class per concern: `ChatState` (what the page knows), `ChatView` (draws it), `ChatPresenter` (applies server responses), `SessionController`, `TurnController` and `VoiceController` (the user's actions), `ApiClient` and `DeadlineHttp` (requests), `I18n` (translations) and `App`, which wires them together. Everything a class needs is passed in, so the tests replace the network, storage and microphone. `css/` follows OOCSS: `objects.css` holds structure only (layout, size, shape), `skins.css` holds colour only, `base.css` the tokens, reset and utilities. No rule is tied to an id and each object looks the same wherever it is placed.
+Two services, two top-level packages, each split into modules by concern:
+
+```
+gateway/    chat service      api/  conversation/  providers/  knowledge/  static/  locales/
+backend/    Backend API       api.py  models.py  bookings.py  availability.json
+tests/      unit/{gateway,backend,tooling}  integration/  e2e/  js/
+```
+
+- `gateway/main.py`, `gateway/api/routes.py`: app factory and startup wiring; the HTTP routes. `gateway/api/asgi_guards.py` and `gateway/api/http_support.py` hold the request-size guards, correlation IDs and request parsing.
+- `gateway/conversation/engine.py`: the turn transaction and state machine (`collecting` → `awaiting_confirmation` → `completed`). It uses `gateway/conversation/intent.py` (what an extraction means), `gateway/conversation/plans.py` (what to reply) and `gateway/conversation/replay.py` (duplicate-request handling).
+- `gateway/conversation/validation.py`, `gateway/schemas.py`: normalization and strict data models.
+- `gateway/providers/client.py`: one OpenAI-compatible adapter for the four roles, with timeouts, retries and a shared concurrency limit. `gateway/providers/wire.py` builds requests and parses replies; `gateway/providers/speech_wav.py` joins spoken chunks into one WAV.
+- `gateway/knowledge/retrieval.py`: knowledge loading, retrieval and citation checks.
+- `gateway/storage.py`: one JSON file per session, replaced atomically.
+- `backend/api.py`, `gateway/backend_client.py`, `gateway/conversation/verification.py`: the private Backend API, the single place for account data: the fictional account check, installation status, technician availability and booking. The gateway reaches it over the internal network only.
+- `backend/bookings.py`, `backend/availability.json`, `gateway/conversation/visits.py`: technician windows and bookings kept in one JSON file (hours and days offered are edited in `availability.json`) and the reply text for installation status and booking. After verification a customer can ask for installation status or to book a technician; the chat shows the open windows as buttons and a click books one.
+- `gateway/static/`: the chat page, with no build step. `js/` is plain ES modules, one class per concern: `ChatState` (what the page knows), `ChatView` (draws it), `ChatPresenter` (applies server responses), `SessionController`, `TurnController` and `VoiceController` (the user's actions), `ApiClient` and `DeadlineHttp` (requests), `I18n` (translations) and `App`, which wires them together. Everything a class needs is passed in, so the tests replace the network, storage and microphone. `css/` follows OOCSS: `objects.css` holds structure only (layout, size, shape), `skins.css` holds colour only, `base.css` the tokens, reset and utilities. No rule is tied to an id and each object looks the same wherever it is placed.
 
 ## Key design decisions
 
@@ -137,7 +145,7 @@ The fictional corpus has twelve records. Two retrieval modes exist, chosen by co
   shares with the question, and the best two go to the model.
 
 Either way the model only sees the retrieved records, and citations are built and
-checked by the app (`app/semantic.py`, `app/retrieval.py`).
+checked by the app (`gateway/knowledge/semantic.py`, `gateway/knowledge/retrieval.py`).
 
 | ID | Title |
 |---|---|
@@ -176,7 +184,7 @@ Run `python -m ruff format app` from the repository root to format the Python ap
 | Real Docker end-to-end | 15 tests on the deployed containers against the real LLM, speech services and embeddings, graded by the judge LLM: greeting, gratitude, capability, off-topic, start of a report, a full intake with correction, rejection and confirmation, RAG with citations and abstention, order status, installation status and booking (each with verification first), angry customers in English and Spanish, an angry customer mid-intake, and a nervous one | 15 passed on 2026-10-25 with the same DeepSeek model as judge, so the model grades itself. The first full run passed 13: one failure was my rule being too narrow and one was real, the off-topic reply never said it would not help, which is now fixed. The booking test books the demo account's one visit, so a rerun reports that visit; reset with `docker compose down --volumes`. A reasoning judge needs `E2E_JUDGE_MAX_TOKENS=4096`: at 1024 it ran out of tokens thinking and returned nothing. |
 | Live providers | `scripts/check_backends.py` | 5 of 5 passed (2026-10-24) |
 | Live evaluation | `scripts/evaluate.py`: intent detection, frustration hand-off and FAQ retrieval on labelled utterances | 89 of 89 intents (in-sample); frustration: 9 of 9 angry handed off, 8 of 8 calm or nervous kept; FAQ retrieval on held-out questions: embeddings 9 of 10 vs keywords 3 of 10 (see Evaluation) |
-| Mutation testing | `mutmut` over `app/`, Linux only; runs in CI | Not re-run since the modules were split. An earlier run killed 2563 of 2677 mutants; the rest were reviewed as equivalent. CI re-runs it. |
+| Mutation testing | `mutmut` over `gateway/` and `backend/`, Linux only; runs in CI | Not re-run since the modules were split. An earlier run killed 2563 of 2677 mutants; the rest were reviewed as equivalent. CI re-runs it. |
 
 ## Evaluation
 

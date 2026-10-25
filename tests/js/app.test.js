@@ -1,6 +1,6 @@
 import { describe, expect, jest, test } from "@jest/globals";
 
-import { App } from "../../app/static/js/app.js";
+import { App } from "../../gateway/static/js/app.js";
 import {
   EN,
   ES,

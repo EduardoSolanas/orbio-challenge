@@ -6,9 +6,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
-from app.prompts import GREETING
-from app.schemas import Confirmation, Message, Session, Slots
-from app.storage import JsonSessionRepository
+from gateway.providers.prompts import GREETING
+from gateway.schemas import Confirmation, Message, Session, Slots
+from gateway.storage import JsonSessionRepository
 from tests.integration.support.intake import FULL_SLOTS
 
 

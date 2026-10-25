@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from app.main import create_app
-from app.backend_client import BackendApiClient
-from app.verification import VerificationRegistry
+from gateway.main import create_app
+from gateway.backend_client import BackendApiClient
+from gateway.conversation.verification import VerificationRegistry
 from tests.integration.order_verification.support import FakeClock
 from tests.integration.support.api import running_client
 from tests.integration.support.backend_api import LocalBackendApiServer

@@ -9,11 +9,11 @@ from typing import Callable
 
 import httpx
 
-from app.config import Settings
-from app.errors import ERRORS
-from app.main import create_app
-from app.providers import OpenAICompatibleProvider
-from app.schemas import ExtractionContext, Slots
+from gateway.config import Settings
+from gateway.errors import ERRORS
+from gateway.main import create_app
+from gateway.providers.client import OpenAICompatibleProvider
+from gateway.schemas import ExtractionContext, Slots
 from tests.integration.support.transcription import (
     RoleTransport,
     json_wire,

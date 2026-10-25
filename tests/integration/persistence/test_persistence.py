@@ -22,8 +22,8 @@ from uuid import uuid4
 
 import pytest
 
-from app.prompts import GREETING, INVALID_URGENCY, MISSING_URGENCY
-from app.schemas import Session
+from gateway.providers.prompts import GREETING, INVALID_URGENCY, MISSING_URGENCY
+from gateway.schemas import Session
 from tests.integration.support.api import (
     make_extraction,
     persisted_response,
@@ -243,7 +243,7 @@ async def case_scoped_os_replace_failure_during_turn_save(settings, provider, se
         provider.script_extraction(category_extraction())
         real_replace = os.replace
         with mock.patch(
-            "app.storage.os.replace",
+            "gateway.storage.os.replace",
             side_effect=scoped_replace_failure(target, real_replace),
         ):
             failed = await client.post(
@@ -291,7 +291,7 @@ async def case_scoped_create_write_replace_failure(settings, provider, session_d
 
         # Failed new-file create: no document, no false 201, nothing staged.
         with mock.patch(
-            "app.storage.tempfile.NamedTemporaryFile", side_effect=failing_create
+            "gateway.storage.tempfile.NamedTemporaryFile", side_effect=failing_create
         ):
             created = await client.post("/api/sessions", json={})
 
@@ -309,7 +309,7 @@ async def case_scoped_create_write_replace_failure(settings, provider, session_d
             raise OSError("scoped os.replace failure")
 
         # Failed replace after a complete staged write: temp cleaned, no file.
-        with mock.patch("app.storage.os.replace", side_effect=replace):
+        with mock.patch("gateway.storage.os.replace", side_effect=replace):
             created = await client.post("/api/sessions", json={})
 
         assert_error_envelope(

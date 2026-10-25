@@ -16,8 +16,8 @@ from pathlib import Path
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.main import create_app
-from app.schemas import Session
+from gateway.main import create_app
+from gateway.schemas import Session
 from tests.integration.support.api import make_extraction, session_files
 from tests.integration.support.intake import turn_body
 
@@ -213,7 +213,7 @@ async def test_successful_turn_after_migration_writes_a_version_two_document(
 async def test_failed_atomic_replace_preserves_the_original_version_one_file(
     settings, provider, session_dir, monkeypatch
 ):
-    import app.storage as storage_module
+    import gateway.storage as storage_module
 
     document = load_fixture("v1-collecting.json")
     session_dir.mkdir(parents=True, exist_ok=True)

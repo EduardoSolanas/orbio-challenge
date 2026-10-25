@@ -17,7 +17,7 @@ from typing import Any
 import uvicorn
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.backend_api import OrderRecord, create_backend_api_app
+from backend.api import OrderRecord, create_backend_api_app
 
 STARTUP_SECONDS = 10.0
 SHUTDOWN_JOIN_SECONDS = 10.0

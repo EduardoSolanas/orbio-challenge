@@ -20,11 +20,11 @@ from functools import partial
 import httpx
 import pytest
 
-from app.config import Settings
-from app.main import create_app
-from app.prompts import EXTRACTION_SYSTEM_PROMPT, KNOWLEDGE_PROMPT, serialize_context
-from app.providers import REPAIR_LINE, SCHEMA_INSTRUCTION
-from app.schemas import Extraction, KnowledgeAnswer, KnowledgeContext, KnowledgeRecord
+from gateway.config import Settings
+from gateway.main import create_app
+from gateway.providers.prompts import EXTRACTION_SYSTEM_PROMPT, KNOWLEDGE_PROMPT, serialize_context
+from gateway.providers.client import REPAIR_LINE, SCHEMA_INSTRUCTION
+from gateway.schemas import Extraction, KnowledgeAnswer, KnowledgeContext, KnowledgeRecord
 from tests.integration.support.adapter import (
     EXTRACTION_PAYLOAD,
     ROLES,

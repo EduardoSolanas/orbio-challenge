@@ -10,9 +10,9 @@ from __future__ import annotations
 import json
 from uuid import UUID
 
-from app.localization import text
-from app.backend_api import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
-from app.verification import MAX_VERIFICATION_ATTEMPTS, VERIFICATION_TTL_SECONDS
+from gateway.localization import text
+from backend.api import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
+from gateway.conversation.verification import MAX_VERIFICATION_ATTEMPTS, VERIFICATION_TTL_SECONDS
 from tests.integration.order_verification.support import (
     ORDER_NUMBER_PROMPT,
     ORDER_NUMBER_TEXT,

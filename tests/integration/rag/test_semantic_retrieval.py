@@ -9,11 +9,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.errors import app_error
-from app.main import DEFAULT_KNOWLEDGE_PATH, create_app
-from app.prompts import ABSTENTION
-from app.retrieval import load_knowledge
-from app.semantic import SemanticIndex
+from gateway.errors import app_error
+from gateway.main import DEFAULT_KNOWLEDGE_PATH, create_app
+from gateway.providers.prompts import ABSTENTION
+from gateway.knowledge.retrieval import load_knowledge
+from gateway.knowledge.semantic import SemanticIndex
 from tests.integration.support.api import running_client
 from tests.integration.support.intake import post_turn, start_session
 from tests.integration.support.rag import RETURN_Q, grounded, question_extraction

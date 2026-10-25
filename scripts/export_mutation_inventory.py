@@ -23,6 +23,7 @@ from check_mutation_inventory import (
     coverage_entry,
     discover_module,
     load_coverage,
+    module_file,
 )
 from evidence_revision import gated_input_revision
 
@@ -57,7 +58,7 @@ def main(argv: list[str] | None = None) -> int:
             "Read-only: never generates or applies mutants and never modifies source."
         )
     )
-    parser.add_argument("--source-root", default="app", help="directory with the seven modules")
+    parser.add_argument("--source-root", default=".", help="repository root holding the modules")
     parser.add_argument("--mutants", default="mutants", help="mutmut generated-state directory")
     parser.add_argument(
         "--coverage",
@@ -91,11 +92,11 @@ def main(argv: list[str] | None = None) -> int:
     coverage_files = load_coverage(Path(args.coverage), errors)
 
     for module in MODULES:
-        path = source_root / f"{module}.py"
+        path = module_file(source_root, module)
         if not path.is_file():
             errors.append(f"source: required module {path} is missing")
             continue
-        discovered = discover_module(path, f"app.{module}", errors)
+        discovered = discover_module(path, module, errors)
         state = load_framework_state(mutants_root / f"{path.as_posix()}.meta", errors)
         if state is None:
             continue
@@ -138,7 +139,7 @@ def main(argv: list[str] | None = None) -> int:
                     )
                     continue
                 else:
-                    prefix = f"app.{module}.{info.mangled_key}__mutmut_"
+                    prefix = f"{module}.{info.mangled_key}__mutmut_"
                     mutant_ids = sorted(
                         mutant_id
                         for mutant_id in exit_codes
