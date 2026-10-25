@@ -1,4 +1,4 @@
-"""Unit tests for the JSON-file technician availability and booking store."""
+"""Unit tests for the SQLite technician availability and booking store."""
 
 from __future__ import annotations
 
@@ -67,9 +67,10 @@ def test_an_account_can_hold_only_one_visit() -> None:
 @pytest.mark.parametrize(
     "starts_at", ["2026-11-02T09:00", "2026-11-07T09:00", "2026-11-02T10:00", "nonsense"]
 )
-def test_taken_missing_or_started_windows_are_refused(starts_at: str) -> None:
-    store = store_at(datetime(2026, 11, 2, 9, 30))
-    store._slots["2026-11-02T09:00"]["order_number"] = "NS-000999"
+def test_taken_missing_or_started_windows_are_refused(starts_at: str, tmp_path) -> None:
+    path = str(tmp_path / "bookings.db")
+    store_at(datetime(2026, 11, 2, 8, 0), path=path).book("NS-000999", FIRST_WINDOW)
+    store = store_at(datetime(2026, 11, 2, 9, 30), path=path)
 
     with pytest.raises(BookingRefused) as refused:
         store.book("NS-000123", starts_at)
@@ -78,7 +79,7 @@ def test_taken_missing_or_started_windows_are_refused(starts_at: str) -> None:
 
 
 def test_bookings_survive_a_restart_and_the_top_up_keeps_them(tmp_path) -> None:
-    path = str(tmp_path / "bookings.json")
+    path = str(tmp_path / "bookings.db")
     booked = store_at(path=path).book("NS-000123", FIRST_WINDOW)
 
     reopened = store_at(datetime(2026, 11, 3, 8, 0), path=path)
@@ -86,3 +87,14 @@ def test_bookings_survive_a_restart_and_the_top_up_keeps_them(tmp_path) -> None:
     assert reopened.appointment("NS-000123") == booked
     assert FIRST_WINDOW not in [slot["starts_at"] for slot in reopened.open_slots()]
     assert reopened.open_slots()[-1]["starts_at"] > "2026-11-03T11:00"
+
+
+def test_two_connections_to_one_file_cannot_take_the_same_window(tmp_path) -> None:
+    path = str(tmp_path / "bookings.db")
+    first, second = store_at(path=path), store_at(path=path)
+
+    first.book("NS-000123", FIRST_WINDOW)
+    with pytest.raises(BookingRefused) as refused:
+        second.book("NS-000999", FIRST_WINDOW)
+
+    assert refused.value.code == SLOT_UNAVAILABLE

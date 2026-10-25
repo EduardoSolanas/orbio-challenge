@@ -51,7 +51,7 @@ services:
       context: .
       dockerfile: backend_api/Dockerfile
     environment:
-      BACKEND_DATA_PATH: /data/backend/bookings.json
+      BACKEND_DATA_PATH: /data/backend/bookings.db
     volumes:
       - backend-data:/data/backend
     # Internal network only: no `ports:` entry, so the browser cannot reach it.

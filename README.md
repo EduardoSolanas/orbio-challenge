@@ -93,7 +93,7 @@ Docker runs three containers: `web` (nginx, the only published port: it serves t
 
 - `gateway/conversation/engine.py` is the turn transaction and state machine (`collecting` → `awaiting_confirmation` → `completed`); `intent.py`, `plans.py` and `replay.py` decide what an extraction means, what to reply and how duplicates are handled.
 - `gateway/providers/client.py` is one OpenAI-compatible adapter for every role, with timeouts, retries and a concurrency limit.
-- `backend_api/` is the only place that holds account data: the account check, installation status, technician windows (edited in `availability.json`) and bookings, kept in one JSON file. The gateway reaches it over the internal network only.
+- `backend_api/` is the only place that holds account data: the account check, installation status, technician windows (hours and days are edited in `availability.json`) and bookings, kept in one SQLite file. The gateway reaches it over the internal network only.
 - `web/` is the chat page with no build step: plain ES modules, one class per concern, everything injected so tests replace the network and microphone. CSS follows OOCSS: `objects.css` structure, `skins.css` colour, `base.css` tokens.
 
 ## Key design decisions
@@ -102,7 +102,7 @@ Docker runs three containers: `web` (nginx, the only published port: it serves t
 - **Deterministic replies and summary.** Questions, the review and the summary come from templates, so the saved record matches what the customer confirmed. Only RAG answers are generated.
 - **Explicit confirmation.** Nothing is saved as submitted until the customer confirms a specific review; a correction invalidates it.
 - **Safe failure.** A failed model call, write or invalid answer leaves the session untouched and can be retried; repeated requests are de-duplicated.
-- **Simple storage.** One JSON file per session with atomic replacement, one JSON file for bookings. No database or vector store.
+- **Simple storage.** One JSON file per session with atomic replacement, as the assignment asks. Technician bookings live in one SQLite file (standard library, no server); the database itself stops two customers taking the same window or one account holding two visits. No vector store.
 - **Grounded answers.** The assistant answers only from retrieved records, cites them, and says when it has no information. Citations are built by the app, never taken from the model.
 - **Provider-agnostic.** Any OpenAI-compatible server can fill any role.
 
@@ -222,7 +222,7 @@ so the first was kept.
 - **No authentication.** Session IDs are not credentials. It is for local only use; a public deployment would need authentication, rate limiting, TLS and a retention policy.
 - Nothing is sent to a real support team; "submitted" means saved locally.
 - Answers come from twelve short fictional records. Keyword matching can miss a differently worded question; embedding retrieval depends on `EMBED_MIN_SIMILARITY`, tuned for one model on a small set. The gas-safety record quotes the UK National Gas Emergency number from memory; check it before relying on it. A citation shows which record was used, not that the model summarised it correctly.
-- Bookings: one visit per account, no cancelling or rescheduling, and the offered times disappear if the page is reloaded (ask again).
+- Bookings (SQLite): one visit per account, no cancelling or rescheduling, and the offered times disappear if the page is reloaded (ask again).
 - Voice accepts PCM WAV only, with no streaming.
 - Frustration and sentiment come from one LLM call and can misread sarcasm or mixed feelings.
 - Stored category values are older identifiers (`delivery`, `damaged_item`, `wrong_item`, `return_refund`, `other`) that the UI shows as supply, equipment, meter, billing and other.
