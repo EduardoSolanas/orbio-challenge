@@ -36,8 +36,23 @@ _state: dict[str, Any] = {
 }
 
 
+JOURNEY_MODULES = (
+    "test_complete_intake",
+    "test_rejected_review_recovery",
+    "test_resume_after_restart",
+    "test_failed_request_retry",
+    "test_two_tab_conflict",
+    "test_voice_success",
+    "test_voice_failure",
+    "test_policy_questions",
+    "test_keyboard_mobile",
+    "test_stale_voice_results",
+)
+_JOURNEY_NODEID = re.compile(rf"tests/e2e/({'|'.join(JOURNEY_MODULES)})\.py::")
+
+
 def _is_e2e(nodeid: str) -> bool:
-    return bool(re.match(r"tests/e2e/test_j\d+_[^:]+::", nodeid))
+    return bool(_JOURNEY_NODEID.match(nodeid))
 
 
 def source_revision(root: Path) -> str:
