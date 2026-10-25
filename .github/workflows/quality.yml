@@ -84,6 +84,26 @@ jobs:
             reports/unit-integration.xml
             reports/logs/
 
+  frontend:
+    name: frontend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install pinned dependencies
+        run: npm ci
+
+      - name: Jest unit tests with coverage gate
+        run: npm run test:coverage
+
   e2e:
     name: e2e
     runs-on: ubuntu-24.04

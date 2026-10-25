@@ -1,0 +1,167 @@
+/*
+ * Skins: colour only. Any object can wear any skin. Interactive skins define their own
+ * hover and focus states so objects stay free of colour.
+ */
+
+/* ---- surfaces -------------------------------------------------------------------------- */
+
+.skin-paper {
+  background: var(--paper);
+}
+
+.skin-log {
+  background: #fbfcf7;
+}
+
+.skin-forest {
+  background: var(--forest);
+  color: #fff;
+}
+
+.skin-soft {
+  background: #edf3e8;
+  color: #30443a;
+}
+
+.skin-glass {
+  border-color: #ffffff32;
+  background: #ffffff20;
+}
+
+.skin-source {
+  border-color: #d7e1d8;
+  background: var(--paper);
+  color: #30443a;
+}
+
+.skin-review {
+  border-color: #b9d0bd;
+  background: #edf5e9;
+  color: #294439;
+}
+
+.skin-alert {
+  border-color: #e0b4ae;
+  background: #f8e8e6;
+  color: #7a1f1f;
+}
+
+.skin-form {
+  border-color: #d9e3d8;
+  background: var(--paper);
+  color: #30443a;
+}
+
+.skin-note {
+  background: #f5f0de;
+}
+
+/* ---- buttons ------------------------------------------------------------------------------ */
+
+.skin-solid {
+  background: var(--forest);
+  color: #fff;
+}
+
+.skin-solid:hover:not(:disabled) {
+  background: var(--forest-2);
+}
+
+.skin-outline {
+  border-color: #d5e1d7;
+  background: #fff;
+  color: #315544;
+}
+
+.skin-glass-button {
+  background: #ffffff1a;
+  color: #fff;
+}
+
+.skin-glass-button:hover:not(:disabled) {
+  background: #ffffff2a;
+}
+
+.skin-bare {
+  background: transparent;
+  color: #52665b;
+}
+
+.skin-bare:hover:not(:disabled) {
+  background: #edf3e8;
+  color: var(--forest);
+}
+
+.skin-mint {
+  background: #edf3e8;
+  color: #315544;
+}
+
+.skin-mint:hover:not(:disabled) {
+  background: #dceadf;
+  color: var(--forest);
+}
+
+.skin-bare:focus-visible,
+.skin-mint:focus-visible {
+  outline: 2px solid #78a682;
+  outline-offset: 2px;
+}
+
+.skin-danger-soft {
+  background: #f7e8e4;
+  color: #8a2925;
+}
+
+.skin-danger-soft:hover:not(:disabled) {
+  background: #eed5cf;
+  color: #70221f;
+}
+
+.skin-tint {
+  background: #dceadf;
+  color: var(--forest-2);
+}
+
+/* ---- form fields -------------------------------------------------------------------------- */
+
+.skin-field {
+  border-color: #d3ddd3;
+  background: #fff;
+  color: var(--ink);
+}
+
+.skin-field:focus {
+  border-color: #78a682;
+  outline: 2px solid #bdd9bf;
+}
+
+/* ---- text colours -------------------------------------------------------------------------- */
+
+.text-muted {
+  color: #748175;
+}
+
+.text-brand {
+  color: var(--forest-2);
+}
+
+.text-error {
+  color: #8a2925;
+}
+
+.text-warn {
+  color: #8a4f32;
+}
+
+.text-on-dark-soft {
+  color: #cdddcf;
+}
+
+.label--muted {
+  color: #748175;
+}
+
+.label--on-dark {
+  color: #d2e3d7;
+}

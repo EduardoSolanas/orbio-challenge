@@ -107,10 +107,22 @@ async def test_index_escapes_json_that_could_close_the_script_element(tmp_path: 
     assert json.loads(match.group(1)) == english
 
 
-async def test_static_assets_revalidate_after_deployment(client):
-    response = await client.get("/static/i18n.js")
+@pytest.mark.parametrize(
+    "path,media_type",
+    [
+        ("/static/js/main.js", "javascript"),
+        ("/static/js/app.js", "javascript"),
+        ("/static/css/base.css", "css"),
+        ("/static/css/objects.css", "css"),
+        ("/static/css/skins.css", "css"),
+    ],
+)
+async def test_static_assets_revalidate_after_deployment(client, path, media_type):
+    response = await client.get(path)
     assert response.status_code == 200
     assert response.headers["cache-control"] == "no-cache"
+    # Browsers refuse a module script that is not served with a JavaScript type.
+    assert media_type in response.headers["content-type"]
 
 
 @pytest.mark.parametrize(

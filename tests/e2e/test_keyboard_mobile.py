@@ -129,7 +129,7 @@ def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
     expect(page.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
     assert page.evaluate("document.documentElement.scrollHeight <= window.innerHeight")
     chat_box = page.locator("#support-chat").bounding_box()
-    compose_box = page.locator(".chat-compose").bounding_box()
+    compose_box = page.locator("#message-form").bounding_box()
     message_box = ui.message.bounding_box()
     assert chat_box is not None and chat_box["width"] == 390
     assert chat_box["height"] == 844
@@ -138,7 +138,7 @@ def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
     for viewport_width in (320, 390, 768, 802, 1440):
         page.set_viewport_size({"width": viewport_width, "height": 844})
         panel_box = page.locator("#support-chat").bounding_box()
-        form_box = page.locator(".chat-compose").bounding_box()
+        form_box = page.locator("#message-form").bounding_box()
         field_box = ui.message.bounding_box()
         assert panel_box is not None and panel_box["width"] == viewport_width
         assert panel_box["height"] == 844
@@ -232,7 +232,7 @@ def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
     expect(ui.button(en_catalog["actions.choose_wav"])).to_have_attribute(
         "aria-label", en_catalog["actions.choose_wav"]
     )
-    expect(ui.page.locator(".playback__disclosure")).to_have_text(
+    expect(ui.page.locator("#playback-disclosure")).to_have_text(
         f'{en_catalog["speech.disclosure"]} · {en_catalog["site.chat_privacy"]}'
     )
     expect(play).to_have_attribute("aria-label", "Play reply 5")
@@ -254,7 +254,7 @@ def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
         "aria-label", es_catalog["actions.choose_wav"]
     )
     expect(page.get_by_role("region", name=es_catalog["ui.review_region"])).to_be_visible()
-    expect(ui.page.locator(".playback__disclosure")).to_have_text(
+    expect(ui.page.locator("#playback-disclosure")).to_have_text(
         f'{es_catalog["speech.disclosure"]} · {es_catalog["site.chat_privacy"]}'
     )
     expect(ui.play_button(review["id"])).to_have_attribute(

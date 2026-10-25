@@ -1,0 +1,372 @@
+/*
+ * Objects: structure only (layout, sizing, shape, spacing). No colours and no ids;
+ * an object looks the same wherever it is placed. Colours come from skins.css.
+ * Modifiers (--name) change an object's shape, never its colour.
+ */
+
+/* ---- layout ------------------------------------------------------------------ */
+
+.shell {
+  width: 100%;
+  height: 100dvh;
+  margin: 0 auto;
+}
+
+.panel {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel[aria-busy="true"] {
+  cursor: progress;
+}
+
+.panel__scroll {
+  display: block;
+  min-height: 0;
+  flex: 1 1 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+  scroll-behavior: smooth;
+}
+
+.bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  padding: 10px;
+}
+
+.bar--header {
+  min-height: 68px;
+  gap: 10px;
+  padding: 12px 16px;
+}
+
+.bar--compose {
+  align-items: flex-end;
+  border-top: 1px solid var(--line);
+}
+
+.bar__body {
+  min-width: 0;
+}
+
+.bar__push {
+  margin-left: auto;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cluster {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cluster--loose {
+  gap: 8px;
+}
+
+.cluster--inset {
+  padding: 0 12px 8px;
+}
+
+.cluster--margin {
+  margin: 0 12px 8px;
+}
+
+.grow {
+  flex: 1 1 140px;
+}
+
+/* ---- buttons and icons ------------------------------------------------------------ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn--pill {
+  min-height: 34px;
+  padding: 7px 11px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.btn--round {
+  display: grid;
+  width: 38px;
+  height: 44px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.btn--square {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  place-items: center;
+  border-radius: 11px;
+  font-size: 18px;
+}
+
+.btn--mini {
+  display: inline-grid;
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  min-height: 28px;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.icon {
+  flex: none;
+  fill: currentColor;
+}
+
+.icon--s {
+  width: 16px;
+  height: 16px;
+}
+
+.icon--m {
+  width: 20px;
+  height: 20px;
+}
+
+.badge {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 12px;
+}
+
+/* ---- text -------------------------------------------------------------------------- */
+
+.title {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.subtitle {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.form-label {
+  font-weight: 700;
+}
+
+.caption {
+  font-size: 10px;
+}
+
+.wrap-text {
+  display: inline;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.text-flush {
+  margin: 0;
+}
+
+.hint {
+  flex: none;
+  margin: 0;
+  padding: 0 12px 8px;
+  font-size: 10px;
+}
+
+.hint--tight {
+  padding-top: 6px;
+}
+
+.note {
+  flex: none;
+  margin: 0;
+  padding: 4px 12px;
+  font-size: 11px;
+}
+
+/* ---- message bubble ---------------------------------------------------------------- */
+
+.bubble {
+  max-width: min(92%, 720px);
+  margin: 0 0 12px;
+  padding: 11px 13px;
+  border-radius: 15px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.bubble--start {
+  margin-right: auto;
+  border-bottom-left-radius: 4px;
+}
+
+.bubble--end {
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
+}
+
+.bubble--fit {
+  width: max-content;
+  min-width: 58px;
+}
+
+.inline-action {
+  display: inline-block;
+  margin: 0 0 0 4px;
+  vertical-align: middle;
+}
+
+.dots {
+  display: flex;
+  height: 16px;
+  align-items: center;
+  gap: 4px;
+}
+
+.dots__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: dots-pulse 1s ease-in-out infinite;
+}
+
+.dots__dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.dots__dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes dots-pulse {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dots__dot {
+    animation: none;
+  }
+}
+
+.disclosure {
+  margin-top: 8px;
+  padding: 9px 11px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+/* ---- boxes and form fields -------------------------------------------------------------- */
+
+.notice {
+  flex: none;
+  margin: 0 12px 8px;
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.notice--pre {
+  white-space: pre-wrap;
+}
+
+.callout {
+  margin: 0;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.field {
+  display: block;
+  width: 100%;
+  min-height: 42px;
+  padding: 9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.field--pill {
+  width: 0;
+  min-width: 0;
+  min-height: 44px;
+  max-height: 120px;
+  flex: 1 1 0;
+  resize: vertical;
+  padding: 10px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+@media (max-width: 479px) {
+  .panel__scroll {
+    padding: 12px 10px;
+  }
+
+  .bar--compose {
+    gap: 3px;
+    padding: 8px;
+  }
+
+  .btn--round {
+    width: 32px;
+  }
+}

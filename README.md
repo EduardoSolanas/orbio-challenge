@@ -86,7 +86,7 @@ FastAPI app ── conversation engine ── validators ── JSON session sto
 - `app/storage.py`: one JSON file per session, replaced atomically.
 - `app/backend_api.py`, `app/backend_client.py`, `app/verification.py`: the private Backend API, the single place for account data: the fictional account check, installation status, technician availability and booking. The gateway reaches it over the internal network only.
 - `app/bookings.py`, `app/availability.json`, `app/visits.py`: technician windows and bookings kept in one JSON file (hours and days offered are edited in `availability.json`) and the reply text for installation status and booking. After verification a customer can ask for installation status or to book a technician; the chat shows the open windows as buttons and a click books one.
-- `app/static/`: the chat page. `app_core.js` holds state and helpers, `app_view.js` renders, `app_session.js` handles the session lifecycle, `app_turns.js` sends turns and confirmations, `app_voice.js` handles recording and playback, and `app.js` wires events.
+- `app/static/`: the chat page, with no build step. `js/` is plain ES modules, one class per concern: `ChatState` (what the page knows), `ChatView` (draws it), `ChatPresenter` (applies server responses), `SessionController`, `TurnController` and `VoiceController` (the user's actions), `ApiClient` and `DeadlineHttp` (requests), `I18n` (translations) and `App`, which wires them together. Everything a class needs is passed in, so the tests replace the network, storage and microphone. `css/` follows OOCSS: `objects.css` holds structure only (layout, size, shape), `skins.css` holds colour only, `base.css` the tokens, reset and utilities. No rule is tied to an id and each object looks the same wherever it is placed.
 
 ## Key design decisions
 
@@ -162,15 +162,16 @@ python -m ruff check app
 python -m ruff format --check app
 python scripts/test.py unit          # also: integration, e2e, coverage, mutation, all
 python scripts/check_backends.py     # live check against the services in your environment
+npm ci && npm test                   # frontend unit tests (Jest)
 ```
 
 Run `python -m ruff format app` from the repository root to format the Python application code.
 
 | Layer | What it covers | Result |
 |---|---|---|
-| Unit and integration | Validation, state machine, storage, HTTP routes, providers over a real socket, RAG, audio | 1773 unit and 385 integration tests passed on 2026-10-25, run as separate layers (`scripts/test.py unit`, then `integration`). Two wall-clock timeout tests can fail when both layers share one pytest process on a slow machine. |
+| Unit and integration | Validation, state machine, storage, HTTP routes, providers over a real socket, RAG, audio | 1775 unit and 389 integration tests passed on 2026-10-25, run as separate layers (`scripts/test.py unit`, then `integration`). Two wall-clock timeout tests can fail when both layers share one pytest process on a slow machine. |
 | Browser (Playwright) | Eleven tests in Chromium covering the user journeys, including voice and RAG | 11 passed on 2026-10-25 |
-| Browser scripts | JavaScript unit tests (`node --test tests/unit/*.test.js`) | 26 passed on 2026-10-25 |
+| Frontend unit tests | Jest (`npm test`) over the page's classes in jsdom, using the real `index.html` | 280 passed on 2026-10-25; 97.6% statements, 91% branches (CI gate: 90% / 80%) |
 | Judge journeys | 31 browser tests with a scripted AI provider; 29 record a conversation that a judge LLM grades against a written rule. They cover every intent, including account status, installation status and booking with verification first, and the hand-off of a frustrated customer | 31 passed on 2026-10-25 with `DeepSeek-V4.1-Flash-1017` as the judge: 29 of 29 conversations judged as pass. Replies there are mostly fixed templates, so this checks wording rules, not model behaviour. |
 | Real Docker end-to-end | 15 tests on the deployed containers against the real LLM, speech services and embeddings, graded by the judge LLM: greeting, gratitude, capability, off-topic, start of a report, a full intake with correction, rejection and confirmation, RAG with citations and abstention, order status, installation status and booking (each with verification first), angry customers in English and Spanish, an angry customer mid-intake, and a nervous one | 15 passed on 2026-10-25 with the same DeepSeek model as judge, so the model grades itself. The first full run passed 13: one failure was my rule being too narrow and one was real, the off-topic reply never said it would not help, which is now fixed. The booking test books the demo account's one visit, so a rerun reports that visit; reset with `docker compose down --volumes`. A reasoning judge needs `E2E_JUDGE_MAX_TOKENS=4096`: at 1024 it ran out of tokens thinking and returned nothing. |
 | Live providers | `scripts/check_backends.py` | 5 of 5 passed (2026-10-24) |

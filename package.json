@@ -1,0 +1,40 @@
+{
+  "name": "northstar-chat-frontend",
+  "private": true,
+  "type": "module",
+  "description": "Unit tests for the Northstar chat page. The page itself ships as plain ES modules with no build step.",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "roots": [
+      "<rootDir>/tests/js"
+    ],
+    "testMatch": [
+      "**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "app/static/js/**/*.js",
+      "!app/static/js/main.js"
+    ],
+    "coverageDirectory": "reports/js-coverage",
+    "coverageReporters": [
+      "text-summary",
+      "lcov"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "statements": 90,
+        "branches": 80,
+        "functions": 90,
+        "lines": 90
+      }
+    }
+  },
+  "devDependencies": {
+    "jest": "29.7.0",
+    "jest-environment-jsdom": "29.7.0"
+  }
+}

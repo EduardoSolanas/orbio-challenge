@@ -41,7 +41,7 @@ def test_failed_request_retry(case_id, ui, server, provider):
     expect(ui.log).to_contain_text(FULL)
     thinking = ui.log.get_by_role("status", name="Northstar is thinking")
     expect(thinking).to_be_visible()
-    expect(thinking.locator(".msg__thinking-dots")).to_be_visible()
+    expect(thinking.locator(".dots")).to_be_visible()
     for name in ("Send", "Confirm details", "New conversation"):
         expect(ui.enabled_button(name)).to_have_count(0)
     expect(ui.file_input).to_be_disabled()

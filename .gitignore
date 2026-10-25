@@ -20,3 +20,4 @@ reports/e2e-docker/
 reports/*
 !reports/mutation-review.json
 .idea/
+node_modules/
