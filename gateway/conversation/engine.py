@@ -78,7 +78,6 @@ from gateway.schemas import (
     ConfirmRequest,
     Extraction,
     ExtractionContext,
-    FlowState,
     Frustration,
     KnowledgeAnswer,
     KnowledgeContext,
@@ -322,7 +321,6 @@ class ConversationEngine:
         verification: VerificationRegistry | None = None,
         semantic_index: SemanticIndex | None = None,
         safety_index: SafetyIndex | None = None,
-        flows: dict[str, FlowDefinition] | None = None,
     ) -> None:
         self.semantic_index = semantic_index
         self.safety_index = safety_index
@@ -331,7 +329,7 @@ class ConversationEngine:
         self.knowledge_base = knowledge_base
         self.speech_languages = speech_languages
         self.customer_data = customer_data
-        self.flows = load_flows() if flows is None else flows
+        self.flows = load_flows()
         self.support_flow = self.flows[SUPPORT_REQUEST]
         # Nothing starts the support request; it is what a turn falls back to.
         self._flow_by_intent = {
@@ -542,7 +540,6 @@ class ConversationEngine:
 
         started = self._flow_by_intent.get(extraction.intent)
         if started is not None:
-            session.flow = FlowState(name=started.name, step=started.steps[0])
             return started
         active = self.flows.get(session.flow.name) if session.flow is not None else None
         if active is not None and only_account_number(extraction):
@@ -1038,7 +1035,7 @@ class ConversationEngine:
         return self.knowledge_base.retrieve(question)
 
     async def _answer_policy_question(
-        self, question: str, reply_language: Language, *, urgent: bool = False
+        self, question: str, reply_language: Language, *, urgent: bool
     ) -> tuple[str, tuple[Citation, ...]]:
         retrieved = await self._retrieve(question)
         if not retrieved:

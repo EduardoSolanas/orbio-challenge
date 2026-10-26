@@ -148,6 +148,9 @@ NEEDS = {
     "offer_windows": "verify_account",
 }
 
+# A flow has to end on a step that says something, or a customer could be left without a reply.
+ENDING_STEPS = {"show_installation", "offer_windows", "review_details"}
+
 STEPS: dict[str, Callable[[FlowContext], Awaitable[StepResult]]] = {
     "collect_details": collect_details,
     "review_details": review_details,
@@ -182,6 +185,8 @@ def load_flows(path: Path = DEFAULT_FLOWS_PATH) -> dict[str, FlowDefinition]:
         unknown = [step for step in steps if step not in STEPS]
         if unknown:
             raise FlowsInvalid(f"flow {name!r} uses unknown steps {unknown}")
+        if steps[-1] not in ENDING_STEPS:
+            raise FlowsInvalid(f"flow {name!r} must end with a step that replies")
         for index, step in enumerate(steps):
             if step in NEEDS and NEEDS[step] not in steps[:index]:
                 raise FlowsInvalid(

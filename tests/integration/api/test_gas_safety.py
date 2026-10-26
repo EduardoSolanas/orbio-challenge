@@ -7,6 +7,9 @@ emergency example.
 
 from __future__ import annotations
 
+import asyncio
+
+import gateway.conversation.engine as engine_module
 from gateway.conversation.safety import SafetyExamples, SafetyIndex
 from gateway.errors import app_error
 from gateway.main import create_app
@@ -43,6 +46,28 @@ class ModelDown(ScriptedProvider):
     async def answer_knowledge(self, context):
         self.calls.append(("answer_knowledge", context))
         raise app_error("provider_unavailable")
+
+
+class HangingModel(ModelDown):
+    """The model never answers an extraction; it notes when it is cancelled."""
+
+    cancelled = False
+
+    async def extract(self, context):
+        self.calls.append(("extract", context))
+        try:
+            await asyncio.sleep(30)
+        except asyncio.CancelledError:
+            self.cancelled = True
+            raise
+
+
+class SlowModel(ScriptedProvider):
+    """The model answers, but later than a flagged turn is willing to wait."""
+
+    async def extract(self, context):
+        await asyncio.sleep(0.2)
+        return await super().extract(context)
 
 
 async def turn(settings, provider, embed, text, *, expect=200):
@@ -167,3 +192,35 @@ async def test_without_any_safety_index_the_model_flag_is_the_only_check(
 
     assert response.status_code == 200, response.text
     assert provider.methods() == ["extract"]
+
+
+async def test_a_flagged_turn_does_not_wait_for_a_model_that_hangs(
+    settings, monkeypatch
+):
+    monkeypatch.setattr(engine_module, "SAFETY_EXTRACT_TIMEOUT_SECONDS", 0.05)
+    provider = HangingModel()
+
+    body, _ = await turn(settings, provider, smell_embed, "something smells strange")
+
+    assert body["reply"] == SEED_RECORDS["faq-gas-safety"]["body"]
+    assert provider.cancelled
+
+
+async def test_an_ordinary_turn_still_waits_for_a_slow_model(settings, monkeypatch):
+    monkeypatch.setattr(engine_module, "SAFETY_EXTRACT_TIMEOUT_SECONDS", 0.05)
+    provider = SlowModel()
+    provider.script_extraction(make_extraction(intent="start_intake"))
+
+    body, _ = await turn(settings, provider, smell_embed, "what is my balance")
+
+    assert provider.methods() == ["extract"] and body["citations"] == []
+
+
+async def test_with_the_embedding_service_down_an_ordinary_message_is_a_normal_turn(
+    settings, provider
+):
+    provider.script_extraction(make_extraction(intent="start_intake"))
+
+    body, _ = await turn(settings, provider, embedding_down, "my bill is high")
+
+    assert provider.methods() == ["extract"] and body["citations"] == []

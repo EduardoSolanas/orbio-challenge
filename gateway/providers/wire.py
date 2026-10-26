@@ -47,7 +47,7 @@ def text_payload(
     schema: type[BaseModel],
     schema_name: str,
     *,
-    repair: bool = False,
+    repair: bool,
 ) -> dict[str, object]:
     system = system_prompt
     mode = profile.output_mode

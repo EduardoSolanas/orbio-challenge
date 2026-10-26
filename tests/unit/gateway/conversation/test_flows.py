@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
@@ -15,6 +16,7 @@ from gateway.conversation.flows import (
     STEPS,
     SUPPORT_REQUEST,
     FlowContext,
+    FlowDefinition,
     FlowOutcome,
     FlowsInvalid,
     flow_state_after,
@@ -65,62 +67,76 @@ def test_the_shipped_flows_load_and_only_use_known_steps() -> None:
     assert flows[SUPPORT_REQUEST].steps == ("collect_details", "review_details")
 
 
+SUPPORT = {"intent": "start_intake", "steps": ["collect_details", "review_details"]}
+BOOKING = {
+    "intent": "book_technician",
+    "steps": ["ask_account", "verify_account", "offer_windows"],
+}
+
+
+def with_support(**flows):
+    return {**flows, SUPPORT_REQUEST: SUPPORT}
+
+
 @pytest.mark.parametrize(
-    "content",
+    ("content", "reason"),
     [
-        None,
-        "{not json",
-        [],
-        {},
-        {"f": {"intent": "book_technician"}},
-        {"f": {"intent": "nonsense", "steps": ["ask_account"]}},
-        {"f": {"intent": "book_technician", "steps": []}},
-        {"f": {"intent": "book_technician", "steps": ["ask_account", "ask_account"]}},
-        {"f": {"intent": "book_technician", "steps": ["no_such_step"]}},
-        {"f": {"intent": "book_technician", "steps": ["ask_account"], "extra": 1}},
-        {
-            "f": {
-                "intent": "book_technician",
-                "steps": ["ask_account", "review_details"],
-            }
-        },
-        {"f": {"intent": "book_technician", "steps": ["ask_account"]}},
-        {
-            "f": {"intent": "book_technician", "steps": ["verify_account"]},
-            SUPPORT_REQUEST: {
-                "intent": "start_intake",
-                "steps": ["collect_details", "review_details"],
-            },
-        },
-        {
-            "f": {
-                "intent": "book_technician",
-                "steps": ["ask_account", "offer_windows"],
-            },
-            SUPPORT_REQUEST: {
-                "intent": "start_intake",
-                "steps": ["collect_details", "review_details"],
-            },
-        },
-        {
-            "f": {
-                "intent": "book_technician",
-                "steps": ["verify_account", "ask_account", "offer_windows"],
-            },
-            SUPPORT_REQUEST: {
-                "intent": "start_intake",
-                "steps": ["collect_details", "review_details"],
-            },
-        },
-        {
-            "a": {"intent": "book_technician", "steps": ["ask_account"]},
-            "b": {"intent": "book_technician", "steps": ["ask_account"]},
-            SUPPORT_REQUEST: {"intent": "start_intake", "steps": ["collect_details"]},
-        },
+        (None, "cannot read flows"),
+        ("{not json", "cannot read flows"),
+        ([], "non-empty object"),
+        ([1], "non-empty object"),
+        ('"a string"', "non-empty object"),
+        ({}, "non-empty object"),
+        (
+            with_support(f={"intent": "book_technician"}),
+            "needs exactly an intent and steps",
+        ),
+        (with_support(f={**BOOKING, "extra": 1}), "needs exactly an intent and steps"),
+        (with_support(f={**BOOKING, "intent": "nonsense"}), "unknown intent"),
+        (with_support(f={**BOOKING, "steps": []}), "distinct steps"),
+        (with_support(f={**BOOKING, "steps": "ask_account"}), "distinct steps"),
+        (
+            with_support(
+                f={**BOOKING, "steps": ["ask_account", "ask_account", "offer_windows"]}
+            ),
+            "distinct steps",
+        ),
+        (with_support(f={**BOOKING, "steps": ["no_such_step"]}), "unknown steps"),
+        (
+            with_support(f={**BOOKING, "steps": ["ask_account", "review_details"]}),
+            "mixes account steps",
+        ),
+        (
+            with_support(f={**BOOKING, "steps": ["verify_account", "offer_windows"]}),
+            "needs ask_account",
+        ),
+        (
+            with_support(f={**BOOKING, "steps": ["ask_account", "offer_windows"]}),
+            "needs verify_account",
+        ),
+        (
+            with_support(
+                f={
+                    **BOOKING,
+                    "steps": ["verify_account", "ask_account", "offer_windows"],
+                }
+            ),
+            "needs ask_account",
+        ),
+        (
+            with_support(f={**BOOKING, "steps": ["ask_account"]}),
+            "must end with a step that replies",
+        ),
+        (
+            with_support(f={**BOOKING, "steps": ["ask_account", "verify_account"]}),
+            "must end with a step that replies",
+        ),
+        ({"f": BOOKING}, "must define 'support_request'"),
+        (with_support(a=BOOKING, b=BOOKING), "same intent"),
     ],
 )
 def test_a_missing_or_unrunnable_flows_file_is_rejected(
-    tmp_path: Path, content
+    tmp_path: Path, content, reason
 ) -> None:
     path = tmp_path / "flows.json"
     if content is not None:
@@ -128,7 +144,7 @@ def test_a_missing_or_unrunnable_flows_file_is_rejected(
             content if isinstance(content, str) else json.dumps(content), "utf-8"
         )
 
-    with pytest.raises(FlowsInvalid):
+    with pytest.raises(FlowsInvalid, match=reason):
         load_flows(path)
 
 
@@ -146,6 +162,33 @@ async def test_a_flow_without_an_account_asks_for_it() -> None:
 
     assert outcome.reply == text("auth.order_number_prompt", "en")
     assert outcome.step == "ask_account"
+
+
+async def test_the_account_questions_come_in_the_customers_language() -> None:
+    flow = load_flows()["book_technician"]
+    spanish = replace(context(order=None), language="es")
+
+    asked = await run_flow(flow, spanish)
+    corrected = await run_flow(flow, replace(spanish, order_invalid=True))
+
+    assert (
+        asked.reply
+        == text("auth.order_number_prompt", "es")
+        != text("auth.order_number_prompt", "en")
+    )
+    assert (
+        corrected.reply
+        == text("intake.invalid_order", "es")
+        != text("intake.invalid_order", "en")
+    )
+
+
+async def test_a_definition_whose_steps_all_pass_quietly_replies_with_nothing() -> None:
+    quiet = FlowDefinition("quiet", "book_technician", ("ask_account",))
+
+    outcome = await run_flow(quiet, context())
+
+    assert outcome == FlowOutcome(None, None)
 
 
 async def test_a_malformed_account_is_corrected_not_accepted() -> None:

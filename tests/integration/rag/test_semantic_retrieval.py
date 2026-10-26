@@ -12,9 +12,10 @@ from pathlib import Path
 from gateway.errors import app_error
 from gateway.knowledge.retrieval import load_knowledge
 from gateway.knowledge.semantic import SemanticIndex
+from gateway.localization import text
 from gateway.main import DEFAULT_KNOWLEDGE_PATH, create_app
 from gateway.providers.prompts import ABSTENTION
-from tests.integration.support.api import running_client
+from tests.integration.support.api import make_extraction, running_client
 from tests.integration.support.intake import post_turn, start_session
 from tests.integration.support.rag import RETURN_Q, grounded, question_extraction
 
@@ -111,3 +112,48 @@ async def test_an_embedding_outage_falls_back_to_keyword_retrieval(settings, pro
 
     assert "faq-returns" in sources_of(provider)
     assert [citation["source_id"] for citation in body["citations"]] == ["faq-returns"]
+
+
+async def test_the_customers_question_is_what_gets_embedded(settings, provider):
+    seen: list[list[str]] = []
+    near = embed_near("faq-damaged")
+
+    async def embed(texts):
+        seen.append(texts)
+        return await near(texts)
+
+    async with running_client(app_with(settings, provider, embed)) as client:
+        session_id = await start_session(client)
+        provider.script_answer(grounded(ANSWER, ["faq-damaged"]))
+        await post_turn(
+            client,
+            provider,
+            session_id,
+            text=METER_Q,
+            revision=0,
+            extraction=question_extraction(),
+        )
+
+    assert [METER_Q] in seen
+
+
+async def test_a_question_close_to_nothing_abstains_in_the_customers_language(
+    settings, provider
+):
+    spanish = make_extraction(
+        intent="question", has_question=True, detected_language="es"
+    )
+    async with running_client(app_with(settings, provider, embed_near(None))) as client:
+        session_id = await start_session(client)
+
+        _, body = await post_turn(
+            client,
+            provider,
+            session_id,
+            text="¿Cuántas estrellas hay?",
+            revision=0,
+            extraction=spanish,
+        )
+
+    assert body["reply"].startswith(text("abstention", "es"))
+    assert text("abstention", "es") != text("abstention", "en")

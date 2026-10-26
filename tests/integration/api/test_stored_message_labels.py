@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from tests.integration.order_verification.support import create_session, send_turn
 from tests.integration.support.api import make_extraction, read_session
 
@@ -50,3 +52,23 @@ async def test_an_unsupported_language_message_gets_uncertain_labels_and_the_ses
 
     assert message["language"] == "en"
     assert (message["sentiment"], message["frustration"]) == ("uncertain", "uncertain")
+
+
+@pytest.mark.parametrize(
+    ("detected", "requested", "saved"),
+    [("en", "es", "en"), ("es", "en", "es")],
+    ids=["english_message_asking_for_spanish", "spanish_message_asking_for_english"],
+)
+async def test_the_saved_language_is_the_one_the_customer_wrote_in_not_the_reply_language(
+    client, provider, session_dir, detected, requested, saved
+):
+    message = await saved_customer_message(
+        client,
+        provider,
+        session_dir,
+        make_extraction(
+            intent="social", detected_language=detected, requested_language=requested
+        ),
+    )
+
+    assert message["language"] == saved

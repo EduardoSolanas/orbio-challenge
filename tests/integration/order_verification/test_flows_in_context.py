@@ -104,6 +104,8 @@ async def test_the_whole_booking_flow_answers_in_spanish(client, provider):
         ("unrelated", "capability"),
         ("confirm", "nothing_to_confirm"),
         ("reject", "no_review_to_reject"),
+        ("social", "social_acknowledgment"),
+        ("gratitude", "gratitude_acknowledgment"),
     ],
 )
 async def test_fixed_replies_come_in_spanish(client, provider, intent, key):
@@ -211,3 +213,31 @@ async def test_a_hand_off_forgets_the_pending_account(client, provider, app):
 
     assert handoff["status"] == "handed_off"
     assert registry.pending_order(UUID(session_id)) is None
+
+
+# --- verification and booking lock the customer's own session ---------------------------------
+
+
+async def test_verification_and_booking_lock_the_session_they_belong_to(
+    client, provider, app, monkeypatch
+):
+    locked: list[UUID] = []
+    repository = app.state.engine.repository
+    original = repository.locked
+
+    def spy(session_id):
+        locked.append(session_id)
+        return original(session_id)
+
+    monkeypatch.setattr(repository, "locked", spy)
+    session_id = await create_session(client)
+    provider.script_extraction(booking(order_number=FIXTURE_ORDER_NUMBER))
+    await send_turn(client, session_id, "Book a technician", 0)
+    locked.clear()
+
+    turn = (await verify(client, session_id)).json()["turn"]
+    await book(
+        client, session_id, turn["revision"], turn["slot_options"][0]["starts_at"]
+    )
+
+    assert locked == [UUID(session_id), UUID(session_id)]

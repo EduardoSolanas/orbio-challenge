@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -99,7 +100,7 @@ def test_a_missing_malformed_or_one_sided_file_is_rejected(
             content if isinstance(content, str) else json.dumps(content), "utf-8"
         )
 
-    with pytest.raises(SafetyExamplesInvalid):
+    with pytest.raises(SafetyExamplesInvalid, match=re.escape(str(path))):
         load_examples(path)
 
 

@@ -156,3 +156,27 @@ def test_windows_are_seeded_for_every_weekday_of_the_configured_days_ahead(
 
     assert seeded == expected
     assert windows == len(expected) * len(config["windows"])
+
+
+def test_the_database_folder_is_created_when_it_does_not_exist(
+    store_at, tmp_path
+) -> None:
+    path = tmp_path / "nested" / "deeper" / "bookings.db"
+
+    store_at(path=str(path))
+
+    assert path.exists()
+
+
+def test_a_second_visit_that_gets_past_the_check_is_still_refused_by_the_database(
+    store_at, tmp_path
+) -> None:
+    store = store_at(path=str(tmp_path / "bookings.db"))
+    store.book("NS-000123", FIRST_WINDOW)
+    # a competing request that did not see the first booking yet
+    store.appointment = lambda order_number: None
+
+    with pytest.raises(BookingRefused) as refused:
+        store.book("NS-000123", "2026-11-02T11:00")
+
+    assert refused.value.code == ALREADY_BOOKED
