@@ -17,6 +17,7 @@ export const ELEMENT_IDS = Object.freeze({
   retry: "retry",
   confirm: "confirm",
   newIntake: "new-intake",
+  clearStorage: "clear-storage",
   startRecording: "start-recording",
   stopRecording: "stop-recording",
   wav: "wav-recording",

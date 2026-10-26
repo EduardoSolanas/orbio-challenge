@@ -14,6 +14,7 @@
   "demo.postcode": "Service postcode",
   "demo.code": "Verification code",
   "demo.footer": "Demo data only. Nothing is sent to a real person.",
+  "demo.clear": "Clear local storage",
   "auth.demo_code_notice": "Demo account NS-000123, postcode SW1A 1AA, code 246810. Email delivery is simulated; no email is sent.",
   "auth.order_number_prompt": "Please provide your energy account reference, for example NS-123456.",
   "auth.order_result": "I found the Northstar Energy account {order_number} for {first_name}: {item_names}. Account status: {status}.",

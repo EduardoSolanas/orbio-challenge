@@ -82,6 +82,7 @@ export class App {
     dom.retry.addEventListener("click", () => this.session.onRetry());
     dom.confirm.addEventListener("click", () => this.turns.onConfirm());
     dom.newIntake.addEventListener("click", () => this.session.startNewIntake());
+    dom.clearStorage.addEventListener("click", () => this.onClearStorage());
     dom.startRecording.addEventListener("click", () => this.voice.startRecording());
     dom.stopRecording.addEventListener("click", () => this.voice.stopRecording());
     dom.wavAttach.addEventListener("click", () => {
@@ -99,6 +100,16 @@ export class App {
     });
     dom.message.addEventListener("input", () => this.onMessageInput());
     win.addEventListener("pagehide", () => this.onPageHide());
+  }
+
+  /** The test card's reset: forget everything this page stored in the browser, then start afresh. */
+  onClearStorage() {
+    try {
+      this.window.localStorage.clear();
+    } catch (_) {
+      /* storage blocked: the new conversation still starts */
+    }
+    return this.session.startNewIntake();
   }
 
   onMessageInput() {

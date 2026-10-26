@@ -14,6 +14,7 @@
   "demo.postcode": "Código postal del suministro",
   "demo.code": "Código de verificación",
   "demo.footer": "Solo datos de demostración. No se envía nada a una persona real.",
+  "demo.clear": "Borrar almacenamiento local",
   "auth.demo_code_notice": "Cuenta de demostración NS-000123, código postal SW1A 1AA, código 246810. El envío de correo es simulado; no se envía ningún correo.",
   "auth.order_number_prompt": "Indica tu referencia de cuenta de energía, por ejemplo NS-123456.",
   "auth.order_result": "Encontré la cuenta de Northstar Energy {order_number} de {first_name}: {item_names}. Estado de la cuenta: {status}.",

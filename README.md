@@ -154,7 +154,7 @@ npm ci && npm test                   # frontend unit tests (Jest)
 |---|---|---|
 | Unit and integration | Validation, state machine, storage, HTTP routes, providers over a real socket, RAG, audio | 1816 unit and 394 integration passed, run as separate layers. Two wall-clock timeout tests can fail when both share one pytest process on a slow machine. |
 | Browser (Playwright) | Eleven Chromium tests of the user journeys, including voice and RAG | 11 passed |
-| Frontend (Jest) | The page's classes in jsdom, using the real `index.html` | 303 passed; 97.8% statements, 92% branches (CI gate 90% / 80%) |
+| Frontend (Jest) | The page's classes in jsdom, using the real `index.html` | 305 passed; 97.7% statements, 92% branches (CI gate 90% / 80%) |
 | Judge journeys | 31 browser tests with a scripted provider; 29 record a conversation that a judge LLM grades against a written rule. Every intent, including verification before account actions, and frustration hand-off | 31 passed; 29 of 29 judged pass. Replies are mostly templates, so this checks wording rules, not model behaviour. |
 | Real Docker end-to-end | 15 tests on the deployed containers against the real LLM, speech services and embeddings, graded by the judge LLM: every intent, a full intake, RAG with abstention, account actions, angry and nervous customers in both languages | 15 passed, with the same DeepSeek model as judge, so it grades itself. The booking test uses the demo account's one visit; reset with `docker compose down --volumes`. A reasoning judge needs `E2E_JUDGE_MAX_TOKENS=4096`. |
 | Live providers | `scripts/check_backends.py` | 5 of 5 (2026-10-24) |

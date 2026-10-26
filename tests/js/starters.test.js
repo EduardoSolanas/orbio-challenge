@@ -178,6 +178,32 @@ describe("pressing a starter button", () => {
   });
 });
 
+describe("clearing local storage from the test card", () => {
+  test("empties the browser storage and opens a new conversation", async () => {
+    const { app, http } = await running();
+    app.window.localStorage.setItem("something-else", "x");
+    http.on("POST", SESSIONS, ok(sessionView({ session_id: SECOND_SESSION_ID })));
+
+    await app.onClearStorage();
+
+    expect(app.window.localStorage.getItem("something-else")).toBeNull();
+    expect(app.state.sessionId).toBe(SECOND_SESSION_ID);
+    expect(app.store.load()).toBe(SECOND_SESSION_ID);
+  });
+
+  test("still starts a new conversation when the browser refuses the clear", async () => {
+    const { app, http } = await running();
+    http.on("POST", SESSIONS, ok(sessionView({ session_id: SECOND_SESSION_ID })));
+    app.window.localStorage.clear = () => {
+      throw new Error("blocked");
+    };
+
+    await app.onClearStorage();
+
+    expect(app.state.sessionId).toBe(SECOND_SESSION_ID);
+  });
+});
+
 describe("after a saved request", () => {
   async function completed() {
     const { app, http } = await running();
