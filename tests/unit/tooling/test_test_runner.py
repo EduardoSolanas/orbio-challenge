@@ -327,6 +327,7 @@ def test_docker_e2e_runs_only_the_real_docker_suite(tmp_path):
     command = recorder.calls[0]
     joined = " ".join(command)
     assert "tests/e2e/test_docker_e2e.py" in command
+    assert "tests/e2e/test_docker_flows.py" in command
     assert "docker_e2e" in joined
     assert "browser_e2e" not in joined
     assert "tests/support/fakes" not in joined

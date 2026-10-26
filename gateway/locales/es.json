@@ -21,7 +21,7 @@
   "auth.postcode_label": "Código postal del suministro",
   "auth.status_active": "Activa",
   "auth.verification_failed": "No pudimos verificar esos datos. Comprueba el código postal y el código e inténtalo de nuevo.",
-  "auth.verification_prompt": "Introduce el código postal del suministro y el código de demostración de esta cuenta de energía.",
+  "auth.verification_prompt": "Introduce el código postal del suministro y el código de verificación de demostración de esta cuenta de energía.",
   "auth.verification_region": "Verificación de cuenta de energía",
   "auth.verified": "Cuenta de energía verificada para esta demostración.",
   "auth.verify_action": "Verificar cuenta",

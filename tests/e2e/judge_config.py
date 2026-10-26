@@ -49,7 +49,7 @@ def judge_payload(config: JudgeConfig, messages: list[dict[str, str]]) -> dict[s
     return payload
 
 
-def _dotenv(path: Path) -> dict[str, str]:
+def read_dotenv(path: Path) -> dict[str, str]:
     if not path.exists():
         return {}
     values: dict[str, str] = {}
@@ -63,7 +63,7 @@ def _dotenv(path: Path) -> dict[str, str]:
 
 
 def load_config(path: Path | None = None) -> JudgeConfig:
-    values = _dotenv(path or Path(__file__).with_name(".env.judge"))
+    values = read_dotenv(path or Path(__file__).with_name(".env.judge"))
     values.update({key: value for key, value in os.environ.items() if key.startswith("E2E_JUDGE_")})
     required = ("E2E_JUDGE_BASE_URL", "E2E_JUDGE_MODEL")
     missing = [key for key in required if not values.get(key)]
@@ -113,16 +113,15 @@ def validate_verdict(value: Any) -> dict[str, Any]:
     return value
 
 
-def judge(config: JudgeConfig, conversation: str, rule: str) -> dict[str, Any]:
-    system = (
-        "You are a strict intent-routing evaluator. Return only JSON with exactly these keys: "
-        'pass (boolean), intent (string), reason (string), violations (array of strings). '
-        "Judge visible response quality only; do not infer hidden state or require the assistant to narrate it. "
-        "Deterministic assertions check state preservation separately."
-    )
-    user = json.dumps({"conversation": conversation, "expected_rule": rule}, ensure_ascii=False)
+def ask_judge(config: JudgeConfig, system: str, user: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    """One call to the judge model: the raw answer and the checked verdict."""
+
     payload = judge_payload(
-        config, [{"role": "system", "content": system}, {"role": "user", "content": user}]
+        config,
+        [
+            {"role": "system", "content": system},
+            {"role": "user", "content": json.dumps(user, ensure_ascii=False)},
+        ],
     )
     headers = {"Content-Type": "application/json"}
     if config.api_key and config.api_key != "no-key-required":
@@ -135,7 +134,7 @@ def judge(config: JudgeConfig, conversation: str, rule: str) -> dict[str, Any]:
         with urllib.request.urlopen(request, timeout=config.timeout_seconds) as response:
             raw = json.loads(response.read().decode("utf-8"))
     except (OSError, urllib.error.URLError, TimeoutError) as exc:
-        raise AssertionError(f"intent judge request failed: {exc}") from exc
+        raise AssertionError(f"judge request failed: {exc}") from exc
     try:
         choice = raw["choices"][0]
         content = choice["message"]["content"]
@@ -146,5 +145,26 @@ def judge(config: JudgeConfig, conversation: str, rule: str) -> dict[str, Any]:
             )
         verdict = validate_verdict(json.loads(content))
     except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
-        raise AssertionError(f"intent judge returned invalid structured JSON: {exc}") from exc
+        raise AssertionError(f"judge returned invalid structured JSON: {exc}") from exc
+    return content, verdict
+
+
+def write_artifact(directory: Path, node_id: str, artifact: dict[str, Any]) -> None:
+    """Keep what the judge saw and said, one JSON file per test node."""
+
+    path = directory / (re.sub(r"[^A-Za-z0-9_.-]+", "_", node_id) + ".json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(artifact, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def judge(config: JudgeConfig, conversation: str, rule: str) -> dict[str, Any]:
+    """Grade a whole conversation against one written rule (the controlled-provider journeys)."""
+
+    system = (
+        "You are a strict intent-routing evaluator. Return only JSON with exactly these keys: "
+        'pass (boolean), intent (string), reason (string), violations (array of strings). '
+        "Judge visible response quality only; do not infer hidden state or require the assistant to narrate it. "
+        "Deterministic assertions check state preservation separately."
+    )
+    content, verdict = ask_judge(config, system, {"conversation": conversation, "expected_rule": rule})
     return {"model": config.model, "prompt_version": config.prompt_version, "output": content, "verdict": verdict}

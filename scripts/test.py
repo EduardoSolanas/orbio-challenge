@@ -93,7 +93,7 @@ LAYER_INFO: dict[str, LayerInfo] = {
         reports="reports/junit/judge.xml, reports/playwright/judge/, reports/e2e-judge/",
     ),
     "docker-e2e": LayerInfo(
-        summary="Real Docker E2E against a deployed stack and real provider (tests/e2e/test_docker_e2e.py, marker docker_e2e).",
+        summary="Real Docker E2E against a deployed stack and real provider (tests/e2e/test_docker_e2e.py and test_docker_flows.py, marker docker_e2e).",
         proves="The shipped UI and HTTP routes against a real deployment and a real provider, judged semantically.",
         does_not_prove="Production configuration, multi-worker behaviour or data retention policy.",
         prerequisites="tests/e2e/.env.docker with E2E_DOCKER_BASE_URL, a complete tests/e2e/.env.judge, a reachable deployment and judge. --compose starts the local Compose stack explicitly; it is never a fallback to the controlled-provider suite.",
@@ -231,7 +231,7 @@ def build_commands(
             commands.append(["docker", "compose", "up", "--build", "-d"])
         commands.append(
             pytest_command(
-                ["tests/e2e/test_docker_e2e.py"],
+                ["tests/e2e/test_docker_e2e.py", "tests/e2e/test_docker_flows.py"],
                 passthrough,
                 junit="reports/junit/docker.xml",
                 extra=[

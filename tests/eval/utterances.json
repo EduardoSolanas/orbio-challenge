@@ -209,7 +209,12 @@
     {"text": "Mi factura de gas es muy alta", "concern": false, "language": "es"},
     {"text": "Quiero cambiar mi tarifa de gas", "concern": false, "language": "es"},
     {"text": "¿Cómo envío la lectura de mi contador?", "concern": false, "language": "es"},
-    {"text": "El medidor de luz está roto", "concern": false, "language": "es"}
+    {"text": "El medidor de luz está roto", "concern": false, "language": "es"},
+    {"text": "Tell me a joke about pizza.", "concern": false, "language": "en"},
+    {"text": "Can you recommend a good recipe for dinner?", "concern": false, "language": "en"},
+    {"text": "Who won the football match last night?", "concern": false, "language": "en"},
+    {"text": "Write me a poem about the sea.", "concern": false, "language": "en"},
+    {"text": "Cuéntame un chiste sobre la pizza.", "concern": false, "language": "es"}
   ],
   "category": [
     {"text": "I was overcharged on my last bill", "category": "return_refund", "language": "en"},

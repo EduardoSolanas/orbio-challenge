@@ -45,7 +45,7 @@ def main() -> int:
     commands: list[list[str]] = []
     if args.with_deterministic:
         commands.append([sys.executable, "-m", "pytest", "tests/e2e", "-q", "-m", "browser_e2e", "--browser", "chromium", "--junitxml=reports/e2e-docker/deterministic.xml"])
-    commands.append([sys.executable, "-m", "pytest", "tests/e2e/test_docker_e2e.py", "--browser", "chromium", "--tracing", "retain-on-failure", "--screenshot", "only-on-failure", "--video", "retain-on-failure", "--output", "reports/e2e-docker/playwright", "--junitxml=reports/e2e-docker/docker.xml"])
+    commands.append([sys.executable, "-m", "pytest", "tests/e2e/test_docker_e2e.py", "tests/e2e/test_docker_flows.py", "--browser", "chromium", "--tracing", "retain-on-failure", "--screenshot", "only-on-failure", "--video", "retain-on-failure", "--output", "reports/e2e-docker/playwright", "--junitxml=reports/e2e-docker/docker.xml"])
     for command in commands:
         completed = subprocess.run(command, cwd=ROOT, check=False)
         if completed.returncode:

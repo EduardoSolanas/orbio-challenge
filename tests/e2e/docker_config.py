@@ -11,25 +11,13 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from tests.e2e.judge_config import JudgeConfig, judge_payload, parse_reasoning_effort, validate_verdict
+from tests.e2e.judge_config import JudgeConfig, ask_judge, parse_reasoning_effort, read_dotenv
 
 
 @dataclass(frozen=True)
 class DockerE2EConfig:
     app_url: str
     judge: JudgeConfig
-
-
-def _dotenv(path: Path) -> dict[str, str]:
-    if not path.is_file():
-        return {}
-    values: dict[str, str] = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if line and not line.startswith("#") and "=" in line:
-            key, value = line.split("=", 1)
-            values[key.strip()] = value.strip().strip("\"'")
-    return values
 
 
 def _url(value: str, name: str) -> str:
@@ -54,7 +42,7 @@ def _endpoint(value: str, name: str) -> str:
 
 def load_config(root: Path | None = None) -> DockerE2EConfig:
     root = root or Path(__file__).resolve().parents[2]
-    docker_values = _dotenv(root / "tests/e2e/.env.docker")
+    docker_values = read_dotenv(root / "tests/e2e/.env.docker")
     app_url = docker_values.get("E2E_DOCKER_BASE_URL") or os.environ.get("E2E_DOCKER_BASE_URL")
     if not app_url:
         raise RuntimeError(
@@ -62,7 +50,7 @@ def load_config(root: Path | None = None) -> DockerE2EConfig:
             "tests/e2e/.env.docker (see .env.docker.example)."
         )
 
-    judge_values = _dotenv(root / "tests/e2e/.env.judge")
+    judge_values = read_dotenv(root / "tests/e2e/.env.judge")
     judge_values.update(
         {key: value for key, value in os.environ.items() if key.startswith("E2E_JUDGE_")}
     )
@@ -134,33 +122,12 @@ def probe(config: DockerE2EConfig) -> None:
 
 
 def semantic_judge(config: JudgeConfig, user_turn: str, response: str, context: str) -> dict[str, Any]:
+    """Grade one reply against a written rule (the real-provider journeys)."""
+
     system = (
         "You are a strict semantic evaluator for a customer-support RAG UI. "
         "Return only JSON with exactly pass, intent, reason, violations. "
         "Judge relevance and grounding only; deterministic state and citation checks are external."
     )
-    payload = judge_payload(
-        config,
-        [
-            {"role": "system", "content": system},
-            {"role": "user", "content": json.dumps({"user_turn": user_turn, "response": response, "context": context}, ensure_ascii=False)},
-        ],
-    )
-    headers = {"Content-Type": "application/json"}
-    if config.api_key and config.api_key != "no-key-required":
-        headers["Authorization"] = f"Bearer {config.api_key}"
-    request = urllib.request.Request(f"{config.base_url}/chat/completions", data=json.dumps(payload).encode(), headers=headers, method="POST")
-    try:
-        with urllib.request.urlopen(request, timeout=config.timeout_seconds) as raw_response:
-            raw = json.loads(raw_response.read().decode("utf-8"))
-        choice = raw["choices"][0]
-        content = choice["message"]["content"]
-        if not content and choice.get("finish_reason") == "length":
-            raise ValueError(
-                "the judge ran out of tokens before answering (a reasoning model spends them "
-                "thinking); raise E2E_JUDGE_MAX_TOKENS"
-            )
-        verdict = validate_verdict(json.loads(content))
-    except (OSError, urllib.error.URLError, TimeoutError, json.JSONDecodeError, KeyError, IndexError, TypeError, ValueError) as exc:
-        raise AssertionError(f"Docker semantic judge failed: {exc}") from exc
+    content, verdict = ask_judge(config, system, {"user_turn": user_turn, "response": response, "context": context})
     return {"model": config.model, "prompt_version": config.prompt_version, "raw_output": content, "verdict": verdict}

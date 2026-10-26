@@ -31,6 +31,10 @@ SAFETY_QUERY = "I smell gas or suspect a gas leak"
 
 EMBED_BATCH = 32
 EMBED_DEADLINE_SECONDS = 5.0
+# A message must be at least this similar to an emergency example. Unrelated text (a joke, a
+# recipe) is far from everything, and "nearest" alone would flag it by a hair. Chosen from
+# scripts/evaluate.py safety: real emergencies score 0.47 or more, unrelated messages 0.22 or less.
+EMERGENCY_FLOOR = 0.35
 
 
 class SafetyExamplesInvalid(Exception):
@@ -62,10 +66,18 @@ def load_examples(path: Path) -> SafetyExamples:
 class SafetyIndex:
     """Is a message nearer to an emergency example than to an ordinary one?"""
 
-    def __init__(self, examples: SafetyExamples, embed: Embed, *, margin: float = 0.0) -> None:
+    def __init__(
+        self,
+        examples: SafetyExamples,
+        embed: Embed,
+        *,
+        margin: float = 0.0,
+        floor: float = EMERGENCY_FLOOR,
+    ) -> None:
         self._examples = examples
         self._embed = embed
         self._margin = margin
+        self._floor = floor
         self._vectors: asyncio.Future[tuple[list[list[float]], list[list[float]]]] | None = None
 
     def warm(self) -> None:
@@ -100,7 +112,8 @@ class SafetyIndex:
             # Shielded: giving up on this message must not cancel the shared warm-up.
             emergency, ordinary = await asyncio.shield(self._ensure())
             (query,) = await self._embed([message])
-        return _nearest(query, emergency) > _nearest(query, ordinary) + self._margin
+        nearest = _nearest(query, emergency)
+        return nearest >= self._floor and nearest > _nearest(query, ordinary) + self._margin
 
 
 def _nearest(query: Sequence[float], examples: Sequence[Sequence[float]]) -> float:

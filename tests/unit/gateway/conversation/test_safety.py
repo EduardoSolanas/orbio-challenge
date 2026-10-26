@@ -160,6 +160,18 @@ async def test_the_margin_makes_the_check_less_eager() -> None:
     assert await SafetyIndex(EXAMPLES, embed, margin=0.5).concerning("ambiguous") is False
 
 
+async def test_a_message_far_from_every_example_is_not_flagged_by_a_hair() -> None:
+    async def embed(texts: list[str]) -> list[list[float]]:
+        # The odd message is a little nearer the emergency example, but near neither.
+        return [
+            {"gas smell here": [1.0, 0.0, 0.0], "my bill is high": [0.0, 1.0, 0.0]}.get(text, [0.2, 0.1, 1.0])
+            for text in texts
+        ]
+
+    assert await SafetyIndex(EXAMPLES, embed, floor=0.0).concerning("tell me a joke") is True
+    assert await SafetyIndex(EXAMPLES, embed).concerning("tell me a joke") is False
+
+
 async def test_warm_up_starts_early_and_close_cancels_it() -> None:
     started = asyncio.Event()
 

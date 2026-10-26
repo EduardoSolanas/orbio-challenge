@@ -9,7 +9,7 @@ import pytest
 from playwright.sync_api import expect
 
 from tests.e2e.conftest import response_of, wait_until
-from tests.e2e.judge_config import JudgeConfig, judge, load_config, validate_verdict
+from tests.e2e.judge_config import JudgeConfig, judge, load_config, validate_verdict, write_artifact
 from tests.support.fakes import (
     ABSTENTION,
     ASK_CATEGORY,
@@ -171,17 +171,12 @@ def _record_and_judge(config: JudgeConfig, request: pytest.FixtureRequest, conve
         "expected_rule": JUDGE_RULES[key],
     }
     try:
-        result = judge(config, conversation, JUDGE_RULES[key])
-        artifact.update(result)
+        artifact.update(judge(config, conversation, JUDGE_RULES[key]))
     except Exception as exc:
         artifact.update({"verdict": {"pass": False, "intent": "judge_failure", "reason": str(exc), "violations": [str(exc)]}})
-        path = Path("reports/e2e-judge") / (re.sub(r"[^A-Za-z0-9_.-]+", "_", request.node.nodeid) + ".json")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(artifact, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        write_artifact(Path("reports/e2e-judge"), request.node.nodeid, artifact)
         raise
-    path = Path("reports/e2e-judge") / (re.sub(r"[^A-Za-z0-9_.-]+", "_", request.node.nodeid) + ".json")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(artifact, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    write_artifact(Path("reports/e2e-judge"), request.node.nodeid, artifact)
     assert artifact["verdict"]["pass"], f"LLM intent judge failed: {json.dumps(artifact, ensure_ascii=False)}"
 
 

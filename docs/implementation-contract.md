@@ -1966,7 +1966,7 @@ visible or announced string in the flow:
 
 | Key | English | Spanish |
 |---|---|---|
-| auth.verification_prompt | Enter the service postcode and demo verification code for this energy account. | Introduce el código postal del suministro y el código de demostración de esta cuenta de energía. |
+| auth.verification_prompt | Enter the service postcode and demo verification code for this energy account. | Introduce el código postal del suministro y el código de verificación de demostración de esta cuenta de energía. |
 | auth.demo_code_notice | Demo account NS-000123, postcode SW1A 1AA, code 246810. Email delivery is simulated; no email is sent. | Cuenta de demostración NS-000123, código postal SW1A 1AA, código 246810. El envío de correo es simulado; no se envía ningún correo. |
 | auth.verification_failed | We couldn't verify those details. Check the postcode and code and try again. | No pudimos verificar esos datos. Comprueba el código postal y el código e inténtalo de nuevo. |
 | auth.verified | Energy account verified for this demo. | Cuenta de energía verificada para esta demostración. |
