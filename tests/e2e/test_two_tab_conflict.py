@@ -139,7 +139,7 @@ def test_two_tab_conflict(case_id, ui, server, provider):
     expect(page_a.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
     expect(ui.log).to_contain_text(receipt)
     expect(ui.log).to_contain_text("Account reference: NS-000999")
-    expect(ui.message).not_to_be_editable()
+    expect(ui.message).to_be_editable()  # typing stays open after a saved request
     expect(ui.enabled_button("Confirm details")).to_have_count(0)
     saved = ui.disk(sid)
     assert saved["status"] == "completed" and saved["revision"] == 7

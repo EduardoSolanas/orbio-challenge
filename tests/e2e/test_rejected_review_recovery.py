@@ -156,7 +156,7 @@ def test_rejected_review_recovery(case_id, ui, server, provider):
     assert saved["slots"]["urgency"] == "low"
     assert saved["summary"] == LOW_SUMMARY
     assert saved["confirmation"]["review_revision"] == 8
-    expect(ui.message).not_to_be_editable()
+    expect(ui.message).to_be_editable()  # typing stays open after a saved request
     assert provider.methods() == ["extract"] * 8
     provider.assert_consumed()
     ui.cp("rejected_review_recovery.later-confirm-saves-low")
