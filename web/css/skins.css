@@ -78,6 +78,21 @@
   color: #315544;
 }
 
+.icon__done,
+.is-copied .icon__copy {
+  display: none;
+}
+
+.is-copied .icon__done {
+  display: inline;
+}
+
+.skin-outline.is-copied {
+  border-color: #78a682;
+  background: #edf3e8;
+  color: var(--forest);
+}
+
 .skin-glass-button {
   background: #ffffff1a;
   color: #fff;

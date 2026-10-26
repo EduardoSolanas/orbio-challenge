@@ -168,6 +168,24 @@
   flex: 1 1 140px;
 }
 
+/* Technician times: equal columns, two on a phone and three beside it, so six times never fill the screen. */
+.slots {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+@media (min-width: 560px) {
+  .slots {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.slots .btn {
+  /* a long time wraps in two even halves, never after the dash */
+  text-wrap: balance;
+}
+
 /* ---- buttons and icons ------------------------------------------------------------ */
 
 .btn {

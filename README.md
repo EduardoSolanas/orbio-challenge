@@ -113,7 +113,7 @@ confirmation and the completed summary.
 
 Upload a WAV file or record in the page. The audio is checked (PCM WAV, up to 60 s
 and 10 MB) before transcription. The transcript appears as an editable draft and is
-only sent when the customer presses send. Each assistant reply has an optional play
+only sent when the customer presses send. Recording or uploading again replaces a dictated draft; text the customer typed is never overwritten, so it blocks both. Each assistant reply has an optional play
 button. Audio is never stored.
 
 ## Knowledge base

@@ -227,6 +227,24 @@ describe("transcription", () => {
     expect(app.state.sttAbort).toBeNull();
   });
 
+  test("a new file replaces the transcript already in the box", async () => {
+    const { app, http } = await running();
+    http.on("POST", TRANSCRIBE, ok({ text: "first take" }));
+    choose(app, wavFile());
+    await flush();
+    await flush();
+    expect(app.dom.message.value).toBe("first take");
+
+    http.on("POST", TRANSCRIBE, ok({ text: "second take" }));
+    choose(app, wavFile());
+    await flush();
+    await flush();
+
+    expect(http.to("POST", TRANSCRIBE)).toHaveLength(2);
+    expect(app.dom.message.value).toBe("second take");
+    expect(app.state.inputMode).toBe("transcript");
+  });
+
   test("the panel is locked while the file is being transcribed", async () => {
     const { app, http } = await running();
     const response = deferred();
@@ -609,6 +627,18 @@ describe("recording", () => {
     expect(track.stop).toHaveBeenCalled();
     expect(contexts[0].closed).toBe(true);
     expect(app.state.recording).toBeNull();
+  });
+
+  test("a transcript in the box does not block a new recording", async () => {
+    const { app } = await running();
+    installMicrophone();
+    app.dom.message.value = "dictated text";
+    app.state.inputMode = "transcript";
+
+    await app.voice.startRecording();
+
+    expect(getUserMedia).toHaveBeenCalledTimes(1);
+    expect(app.state.recording).not.toBeNull();
   });
 
   test("typing a draft or an ongoing transcription blocks recording", async () => {

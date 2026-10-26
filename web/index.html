@@ -16,9 +16,9 @@
   <h2 id="demo-title" class="side__title" data-i18n="demo.title"></h2>
   <p class="side__text" data-i18n="demo.intro"></p>
   <dl class="side__list">
-    <dt data-i18n="demo.account"></dt><dd><span id="demo-account">NS-000123</span><button type="button" class="btn btn--mini skin-outline" data-copy="demo-account" data-i18n-aria-label="demo.copy_account"><svg class="icon icon--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4v14h2V3h10V1zm4 4H8v18h12V5zm-2 16h-8V7h8v14z"/></svg></button></dd>
-    <dt data-i18n="demo.postcode"></dt><dd><span id="demo-postcode">SW1A 1AA</span><button type="button" class="btn btn--mini skin-outline" data-copy="demo-postcode" data-i18n-aria-label="demo.copy_postcode"><svg class="icon icon--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4v14h2V3h10V1zm4 4H8v18h12V5zm-2 16h-8V7h8v14z"/></svg></button></dd>
-    <dt data-i18n="demo.code"></dt><dd><span id="demo-code">246810</span><button type="button" class="btn btn--mini skin-outline" data-copy="demo-code" data-i18n-aria-label="demo.copy_code"><svg class="icon icon--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4v14h2V3h10V1zm4 4H8v18h12V5zm-2 16h-8V7h8v14z"/></svg></button></dd>
+    <dt data-i18n="demo.account"></dt><dd><span id="demo-account">NS-000123</span><button type="button" class="btn btn--mini skin-outline" data-copy="demo-account" data-i18n-aria-label="demo.copy_account"><svg class="icon icon--s" viewBox="0 0 24 24" aria-hidden="true"><path class="icon__copy" d="M16 1H4v14h2V3h10V1zm4 4H8v18h12V5zm-2 16h-8V7h8v14z"/><path class="icon__done" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></button></dd>
+    <dt data-i18n="demo.postcode"></dt><dd><span id="demo-postcode">SW1A 1AA</span><button type="button" class="btn btn--mini skin-outline" data-copy="demo-postcode" data-i18n-aria-label="demo.copy_postcode"><svg class="icon icon--s" viewBox="0 0 24 24" aria-hidden="true"><path class="icon__copy" d="M16 1H4v14h2V3h10V1zm4 4H8v18h12V5zm-2 16h-8V7h8v14z"/><path class="icon__done" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></button></dd>
+    <dt data-i18n="demo.code"></dt><dd><span id="demo-code">246810</span><button type="button" class="btn btn--mini skin-outline" data-copy="demo-code" data-i18n-aria-label="demo.copy_code"><svg class="icon icon--s" viewBox="0 0 24 24" aria-hidden="true"><path class="icon__copy" d="M16 1H4v14h2V3h10V1zm4 4H8v18h12V5zm-2 16h-8V7h8v14z"/><path class="icon__done" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></button></dd>
   </dl>
   <p id="demo-copy-status" class="side__text" role="status" hidden></p>
   <p class="side__text text-muted" data-i18n="demo.footer"></p>
@@ -33,7 +33,7 @@
     </header>
     <div id="transcript" class="panel__scroll skin-log" role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversation" data-i18n-aria-label="site.chat_log"></div>
     <section id="review" class="notice notice--pre skin-review" role="region" aria-label="Review details" data-i18n-aria-label="ui.review_region" hidden></section>
-    <section id="slot-picker" class="cluster cluster--loose cluster--margin" role="region" aria-label="Available technician times" data-i18n-aria-label="ui.slots_region" hidden></section>
+    <section id="slot-picker" class="slots cluster--margin" role="region" aria-label="Available technician times" data-i18n-aria-label="ui.slots_region" hidden></section>
     <section id="starters" class="cluster cluster--loose cluster--margin" role="region" aria-label="Quick options" data-i18n-aria-label="starters.region" hidden></section>
     <div id="alert" class="notice skin-alert" role="alert" hidden></div>
     <section id="order-verification" class="notice stack skin-form" role="region" aria-label="Account verification" data-i18n-aria-label="auth.verification_region" aria-describedby="verification-notice" hidden>

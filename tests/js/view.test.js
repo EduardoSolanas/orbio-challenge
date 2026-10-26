@@ -203,6 +203,16 @@ describe("updateControls", () => {
     expect(dom.stopRecording.disabled).toBe(false);
   });
 
+  test("a transcript draft leaves recording and upload open so a new take can replace it", () => {
+    state.sessionId = "s";
+    dom.message.value = "my meter is broken";
+    state.inputMode = "transcript";
+    view.updateControls();
+
+    expect(dom.startRecording.disabled).toBe(false);
+    expect(dom.wav.disabled).toBe(false);
+  });
+
   test("transcription locks every control and restores them afterwards", () => {
     state.sessionId = "s";
     dom.message.value = "";

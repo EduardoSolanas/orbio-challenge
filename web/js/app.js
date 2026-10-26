@@ -12,6 +12,9 @@ import { TurnController } from "./turn_controller.js";
 import { ChatView } from "./view.js";
 import { VoiceController } from "./voice_controller.js";
 
+/** How long a copy button shows its tick. */
+const COPIED_MS = 1500;
+
 /** Builds the page's objects, connects the DOM events to them and starts the conversation. */
 export class App {
   /** ``http`` and ``newRequestId`` can be injected; by default they use the browser's. */
@@ -132,11 +135,23 @@ export class App {
       }
       // Success is announced to screen readers only; a failure has to be seen.
       status.classList.add("u-sr-only");
+      this.markCopied(button);
       status.textContent = this.i18n.t(this.state.language, "demo.copied", { value });
     } catch (_) {
       status.classList.remove("u-sr-only");
+      button.classList.remove("is-copied");
       status.textContent = this.i18n.t(this.state.language, "demo.copy_failed");
     }
+  }
+
+  /** The pressed copy button shows a tick for a moment; only one shows it at a time. */
+  markCopied(button) {
+    for (const other of this.window.document.querySelectorAll("[data-copy]")) {
+      other.classList.remove("is-copied");
+    }
+    button.classList.add("is-copied");
+    this.window.clearTimeout(this.copiedTimer);
+    this.copiedTimer = this.window.setTimeout(() => button.classList.remove("is-copied"), COPIED_MS);
   }
 
   /** The test card's reset: forget everything this page stored in the browser, then start afresh. */

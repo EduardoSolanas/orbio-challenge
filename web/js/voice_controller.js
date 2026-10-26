@@ -86,7 +86,7 @@ export class VoiceController extends Controller {
 
   async onTranscribe() {
     const { state, view, api, gate } = this;
-    if (state.sttPending || !state.audioBlob || view.draftNonempty()) return;
+    if (state.sttPending || !state.audioBlob || view.draftBlocksVoice()) return;
     if (!gate.tryAcquire()) return;
     const gen = state.generation;
     const controller = new AbortController();
@@ -132,7 +132,7 @@ export class VoiceController extends Controller {
 
   async startRecording() {
     const { state, view } = this;
-    if (state.recording || state.recordingPending || state.sttPending || view.draftNonempty()) return;
+    if (state.recording || state.recordingPending || state.sttPending || view.draftBlocksVoice()) return;
     view.clearAlert();
     const mediaDevices = this.window.navigator.mediaDevices;
     if (!mediaDevices || !mediaDevices.getUserMedia) {

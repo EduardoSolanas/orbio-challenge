@@ -3,6 +3,7 @@ import { afterEach, describe, expect, jest, test } from "@jest/globals";
 import { EN, ES, buildApp, flush } from "./support/page.js";
 
 afterEach(() => {
+  jest.restoreAllMocks();
   delete window.navigator.clipboard;
   delete document.execCommand;
 });
@@ -65,6 +66,46 @@ describe("copying test customer details", () => {
     await flush();
 
     expect(document.getElementById("demo-copy-status").textContent).toBe(EN["demo.copy_failed"]);
+  });
+
+  test("the pressed button shows a tick for a moment, one at a time", async () => {
+    Object.defineProperty(window.navigator, "clipboard", {
+      value: { writeText: jest.fn().mockResolvedValue(undefined) }, configurable: true,
+    });
+    const app = setup();
+    const timers = [];
+    const realSetTimeout = window.setTimeout.bind(window);
+    jest.spyOn(window, "setTimeout").mockImplementation((callback, delay) => {
+      if (delay > 0) timers.push(callback);
+      return realSetTimeout(callback, delay);
+    });
+    const [first, second] = document.querySelectorAll("[data-copy]");
+
+    first.click();
+    await flush();
+    expect(first.classList.contains("is-copied")).toBe(true);
+
+    second.click();
+    await flush();
+    expect(first.classList.contains("is-copied")).toBe(false);
+    expect(second.classList.contains("is-copied")).toBe(true);
+
+    timers.at(-1)();
+    expect(second.classList.contains("is-copied")).toBe(false);
+  });
+
+  test("a failed copy shows no tick", async () => {
+    Object.defineProperty(window.navigator, "clipboard", {
+      value: { writeText: jest.fn().mockRejectedValue(new Error("Denied")) }, configurable: true,
+    });
+    setup();
+    const button = document.querySelector("[data-copy]");
+    button.classList.add("is-copied");
+
+    button.click();
+    await flush();
+
+    expect(button.classList.contains("is-copied")).toBe(false);
   });
 
   test("uses Spanish labels and confirmation", async () => {

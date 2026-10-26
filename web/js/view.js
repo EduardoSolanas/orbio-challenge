@@ -47,6 +47,11 @@ export class ChatView {
     return this.draftValue().length > 0;
   }
 
+  /** Typed text blocks recording and upload; a transcript draft does not, a new take replaces it. */
+  draftBlocksVoice() {
+    return this.draftNonempty() && this.state.inputMode !== "transcript";
+  }
+
   // ---- alert and verification form -------------------------------------------
 
   showAlert(message) {
@@ -103,7 +108,7 @@ export class ChatView {
     const closed = state.isClosed();
     const busy = state.isBusy();
     const verificationBlocked = state.orderVerificationRequired;
-    const draftPresent = this.draftNonempty();
+    const voiceBlocked = this.draftBlocksVoice();
 
     // After a saved request the receipt asks "anything else?", so typing stays open (it starts a new conversation).
     const locked = state.status === "handed_off";
@@ -133,13 +138,13 @@ export class ChatView {
     dom.startRecording.disabled =
       !!state.recording ||
       state.recordingPending ||
-      draftPresent ||
+      voiceBlocked ||
       busy ||
       closed ||
       verificationBlocked;
     dom.stopRecording.hidden = !state.recording;
     dom.stopRecording.disabled = !state.recording || state.sttPending;
-    dom.wav.disabled = draftPresent || busy || closed || verificationBlocked;
+    dom.wav.disabled = voiceBlocked || busy || closed || verificationBlocked;
     dom.wavAttach.disabled = dom.wav.disabled;
     dom.retry.disabled = state.sttPending;
 
@@ -219,7 +224,7 @@ export class ChatView {
     for (const slot of this.state.slotOptions) {
       const button = this.document.createElement("button");
       button.type = "button";
-      button.className = "btn btn--pill btn--large skin-outline grow";
+      button.className = "btn btn--pill btn--large skin-outline";
       button.dataset.startsAt = slot.starts_at;
       button.textContent = this.slotLabel(slot);
       button.addEventListener("click", () => this.handlers.bookSlot(slot));
