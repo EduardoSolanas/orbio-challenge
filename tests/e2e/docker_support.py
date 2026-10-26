@@ -85,12 +85,33 @@ def _compose(project: str, *args: str) -> str:
     return completed.stdout.strip()
 
 
+LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
+WILDCARD_HOSTS = {"0.0.0.0", "::", ""}
+
+
+def is_published_at(app_url: str, published: str) -> bool:
+    """Does ``app_url`` name this machine's published address (``host:port`` from ``compose port``)?
+
+    Only a loopback origin can be this machine's own deployment, and it has to be on the port the
+    project publishes, on loopback or on every interface. A remote host on the same port is not.
+    """
+    target = urlparse(app_url)
+    host, _, port = published.strip().rpartition(":")
+    if (
+        target.hostname not in LOOPBACK_HOSTS
+        or target.port is None
+        or str(target.port) != port
+    ):
+        return False
+    return host.strip("[]") in LOOPBACK_HOSTS | WILDCARD_HOSTS
+
+
 def reset_demo_bookings(app_url: str) -> None:
     """Free every technician window, in the dedicated test deployment and nowhere else.
 
-    The reset empties every account's booking, so it only runs against a Compose project whose
-    name ends in ``-e2e`` (``E2E_COMPOSE_PROJECT``) and whose published page is the very origin
-    under test. Anything else stops the test instead of touching someone's demo data.
+    The reset empties every account's booking, so it only runs against a loopback origin served by a
+    Compose project whose name ends in ``-e2e`` (``E2E_COMPOSE_PROJECT``) and whose published address
+    is that origin. A remote origin, or any other project, stops the test before anything is touched.
     """
     project = os.environ.get("E2E_COMPOSE_PROJECT", "")
     if not project.endswith("-e2e"):
@@ -98,9 +119,13 @@ def reset_demo_bookings(app_url: str) -> None:
             "booking journeys reset the booking store, so they need a dedicated deployment: set "
             "E2E_COMPOSE_PROJECT to a Compose project named like northstar-e2e (see docs/docker-e2e.md)"
         )
+    if urlparse(app_url).hostname not in LOOPBACK_HOSTS:
+        pytest.fail(
+            f"booking journeys only reset a deployment on this machine; {app_url} is not a loopback origin"
+        )
     try:
         published = _compose(project, "port", "web", "8080")
-        if published.rsplit(":", 1)[-1] != str(urlparse(app_url).port):
+        if not is_published_at(app_url, published):
             pytest.fail(
                 f"compose project {project} publishes {published}, which is not the origin under test {app_url}"
             )
