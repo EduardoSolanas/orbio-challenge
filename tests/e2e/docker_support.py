@@ -181,8 +181,8 @@ def assistant_text(body: dict[str, Any]) -> str:
     return body["reply"]
 
 
-def verify(page: Page, postcode: str, code: str) -> dict[str, Any]:
-    """Fill the verification form and submit it; the body may carry the request that was waiting."""
+def try_verify(page: Page, postcode: str, code: str) -> tuple[int, dict[str, Any]]:
+    """Fill the verification form and submit it; returns the status as well, for refused attempts."""
     page.locator("#delivery-postcode").fill(postcode)
     page.locator("#verification-code").fill(code)
     with page.expect_response(
@@ -192,5 +192,11 @@ def verify(page: Page, postcode: str, code: str) -> dict[str, Any]:
         )
     ) as pending:
         page.locator("#verify-order").click()
-    assert pending.value.status == 200
-    return pending.value.json()
+    return pending.value.status, pending.value.json()
+
+
+def verify(page: Page, postcode: str, code: str) -> dict[str, Any]:
+    """Verify with the form; the body may carry the request that was waiting."""
+    status, body = try_verify(page, postcode, code)
+    assert status == 200
+    return body

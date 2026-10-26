@@ -70,6 +70,7 @@ def main() -> int:
             "pytest",
             "tests/e2e/test_docker_e2e.py",
             "tests/e2e/test_docker_flows.py",
+            "tests/e2e/test_docker_scenarios.py",
             "--browser",
             "chromium",
             "--tracing",
