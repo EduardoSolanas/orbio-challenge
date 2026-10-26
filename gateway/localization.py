@@ -216,3 +216,9 @@ def build_summary(slots: Slots, language: str = DEFAULT_LANGUAGE) -> str:
 
 def build_review_reply(slots: Slots, language: str = DEFAULT_LANGUAGE) -> str:
     return build_summary(slots, language) + text("review_suffix", language)
+
+
+def request_reference(session_id: object) -> str:
+    """The short reference shown on a receipt: REQ- and the first eight characters of the id."""
+
+    return "REQ-" + str(session_id).replace("-", "")[:8].upper()

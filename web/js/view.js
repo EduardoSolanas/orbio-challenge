@@ -151,7 +151,7 @@ export class ChatView {
       button.disabled = busy || closed;
     });
     dom.starters.querySelectorAll("button").forEach((button) => {
-      button.disabled = busy || closed;
+      button.disabled = busy;
     });
     this.renderVerification();
 
@@ -232,12 +232,14 @@ export class ChatView {
     return [this.ui("capability_reply"), this.ui("capability")].includes(message.text);
   }
 
-  /** Starter buttons show on a fresh conversation and under the "what I can do" replies. */
+  /** Starter buttons show on a fresh conversation, under the "what I can do" replies and after a saved request. */
   startersVisible() {
     const { state } = this;
-    if (!state.sessionId || state.isClosed() || state.turnPending || state.pendingTurnMessage) {
+    if (!state.sessionId || state.status === "handed_off" || state.turnPending || state.pendingTurnMessage) {
       return false;
     }
+    // After a saved request the receipt asks if there is anything else: offer the options again.
+    if (state.status === "completed") return true;
     if (state.slotOptions.length || state.orderVerificationRequired || state.canConfirm()) {
       return false;
     }

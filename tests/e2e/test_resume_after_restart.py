@@ -16,7 +16,7 @@ from tests.support.fakes import (
     GREETING_STANDING_CHARGE_Q,
     HIGH,
     PART,
-    RECEIPT_TEMPLATE,
+    receipt_for,
     RESUME,
     STANDING_CHARGE_ANSWER_TEXT,
     UNRELATED,
@@ -158,7 +158,7 @@ def test_resume_after_restart(case_id, ui, server, provider):
     saved = ui.disk(sid)
     assert saved["revision"] == 7 and saved["pending_review_revision"] == 7
     assert ui.confirm().status == 200
-    expect(ui.log).to_contain_text(RECEIPT_TEMPLATE.format(session_id=sid))
+    expect(ui.log).to_contain_text(receipt_for(sid))
     saved = ui.disk(sid)
     assert saved["status"] == "completed" and saved["revision"] == 8
     assert saved["summary"] == SUMMARY and saved["confirmation"]["review_revision"] == 7

@@ -87,7 +87,7 @@
   "no_review_to_reject": "Todavía no hay datos que cambiar. Describe el problema con el que necesitas ayuda.",
   "nothing_to_confirm": "Todavía no hay nada listo para confirmar. Describe el problema con el que necesitas ayuda.",
   "policy_question_suffix": "Haz tu pregunta sobre políticas en un mensaje aparte.",
-  "receipt": "Guardado localmente como {session_id}. No se ha enviado ninguna solicitud a un equipo de soporte real.",
+  "receipt": "Guardado localmente como {reference}. No se ha enviado ninguna solicitud a un equipo de soporte real. ¿Hay algo más en lo que pueda ayudarte?",
   "reject_prompt": "¿Qué te gustaría cambiar?",
   "review.confirmed": "Confirmar estos datos",
   "review_suffix": "\nConfirma estos datos o dime qué cambiar.",

@@ -6,6 +6,7 @@ from __future__ import annotations
 from pathlib import Path
 from uuid import uuid4
 
+from gateway.localization import request_reference
 from tests.integration.support.api import (
     ScriptedProvider,
     make_extraction,
@@ -55,7 +56,7 @@ AMBIGUOUS_URGENCY = "Please clarify your urgency."
 
 
 def receipt_for(session_id: str) -> str:
-    return f"Saved locally as {session_id}. No request has been sent to a real support team."
+    return f"Saved locally as {request_reference(session_id)}. No request has been sent to a real support team. Is there anything else I can help with?"
 
 
 def reject_extraction():

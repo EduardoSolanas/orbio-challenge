@@ -153,6 +153,31 @@ async def evaluate_safety(provider, cases: list[dict], ordinary: list[dict]) -> 
     return report
 
 
+async def evaluate_category(provider, cases: list[dict]) -> dict:
+    """Does the stored support area match what the customer described?"""
+
+    totals: dict[str, list[int]] = defaultdict(lambda: [0, 0])
+    misses = []
+    for case in cases:
+        try:
+            got = (await provider.extract(context_for(case["text"]))).candidates.category
+        except Exception as error:  # noqa: BLE001 - one bad call must not stop the run
+            got = f"error:{getattr(error, 'code', type(error).__name__)}"
+        totals[case["category"]][1] += 1
+        if got == case["category"]:
+            totals[case["category"]][0] += 1
+        else:
+            misses.append({"text": case["text"], "expected": case["category"], "got": got})
+    correct = sum(right for right, _ in totals.values())
+    count = sum(total for _, total in totals.values())
+    print(f"\nSupport area: {correct}/{count} ({100 * correct / count:.0f}%)")
+    for category, (right, total) in sorted(totals.items()):
+        print(f"  {category:14} {right}/{total}")
+    for miss in misses:
+        print(f"  miss: {miss['text']!r} expected {miss['expected']}, got {miss['got']}")
+    return {"correct": correct, "total": count, "misses": misses}
+
+
 async def evaluate_frustration(provider, cases: list[dict]) -> dict:
     """A clear 'present' label hands the customer to a simulated agent; 'uncertain' never does."""
 
@@ -235,6 +260,8 @@ async def main(mode: str, cases_path: Path) -> None:
     try:
         if mode in ("intents", "all"):
             report["intents"] = await evaluate_intents(provider, cases["intents"])
+        if mode in ("category", "all"):
+            report["category"] = await evaluate_category(provider, cases["category"])
         if mode in ("safety", "all"):
             report["safety"] = await evaluate_safety(provider, cases["safety"], cases["intents"])
         if mode in ("frustration", "all"):
@@ -256,7 +283,7 @@ async def main(mode: str, cases_path: Path) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("mode", nargs="?", choices=("intents", "frustration", "safety", "retrieval", "all"), default="all")
+    parser.add_argument("mode", nargs="?", choices=("intents", "category", "frustration", "safety", "retrieval", "all"), default="all")
     parser.add_argument("--cases", type=Path, default=DEFAULT_CASES)
     arguments = parser.parse_args()
     asyncio.run(main(arguments.mode, arguments.cases))

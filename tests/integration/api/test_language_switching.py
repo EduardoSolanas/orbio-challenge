@@ -16,6 +16,7 @@ from uuid import uuid4
 import pytest
 from httpx import AsyncClient
 
+from gateway.localization import request_reference
 from gateway.config import Settings
 from gateway.localization import build_review_reply, build_summary, text
 from gateway.main import create_app
@@ -208,12 +209,12 @@ async def test_language_switch_does_not_confirm_the_review(client, provider, ses
         },
     )
     assert confirmed.status_code == 200, confirmed.text
-    assert confirmed.json()["reply"] == text("receipt", "es").format(session_id=session_id)
+    assert confirmed.json()["reply"] == text("receipt", "es").format(reference=request_reference(session_id))
     assert confirmed.json()["reply_language"] == "es"
     stored_after = read_session(session_dir, session_id)
     assert stored_after["messages"][-2]["text"] == text("review.confirmed", "es")
     assert stored_after["messages"][-1]["text"] == text("receipt", "es").format(
-        session_id=session_id
+        reference=request_reference(session_id)
     )
 
 

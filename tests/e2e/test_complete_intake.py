@@ -26,7 +26,7 @@ from tests.support.fakes import (
     BOOK_Q,
     INSTALLATION_Q,
     ORDER_STATUS_Q,
-    RECEIPT_TEMPLATE,
+    receipt_for,
     THANKS,
     STANDING_CHARGE_ANSWER_TEXT,
     standing_charge_answer,
@@ -140,7 +140,7 @@ def test_complete_intake(case_id, ui, server, provider):
     # Confirm details: dedicated confirmation, one local-only receipt, no model call.
     response = ui.confirm()
     assert response.status == 200
-    receipt = RECEIPT_TEMPLATE.format(session_id=sid)
+    receipt = receipt_for(sid)
     expect(ui.log).to_contain_text(receipt)
     sent = ui.confirm_posts()
     assert len(sent) == 1 and sent[0]["status"] == 200
@@ -375,7 +375,7 @@ def test_complete_intake(case_id, ui, server, provider):
     ui.cp("complete_intake.verified-order-review")
 
     assert ui.confirm().status == 200
-    new_receipt = RECEIPT_TEMPLATE.format(session_id=new_sid)
+    new_receipt = receipt_for(new_sid)
     expect(ui.log).to_contain_text(new_receipt)
     completed = ui.disk(new_sid)
     assert completed["status"] == "completed"

@@ -12,7 +12,7 @@ from tests.support.fakes import (
     CONFLICT_ORDER,
     HIGH,
     PART,
-    RECEIPT_TEMPLATE,
+    receipt_for,
     USE_NEW,
     conflict_question,
     extraction,
@@ -126,7 +126,7 @@ def test_two_tab_conflict(case_id, ui, server, provider):
     ) as pending:
         page_b.get_by_role("button", name="Confirm details", exact=True).click()
     assert pending.value.status == 200
-    receipt = RECEIPT_TEMPLATE.format(session_id=sid)
+    receipt = receipt_for(sid)
     expect(log_b).to_contain_text(receipt)
     ui.cp("two_tab_conflict.tab-b-resolves-and-confirms")
 

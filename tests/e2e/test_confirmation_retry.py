@@ -6,7 +6,7 @@ import pytest
 from playwright.sync_api import expect
 
 from tests.e2e.conftest import body_of
-from tests.support.fakes import FULL, RECEIPT_TEMPLATE, summary_text, x_full
+from tests.support.fakes import FULL, receipt_for, summary_text, x_full
 
 pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
 
@@ -48,6 +48,6 @@ def test_confirmation_lost_response_retries_same_command(case_id, ui, server, pr
     assert body_of(confirms[0])["request_id"] == body_of(confirms[1])["request_id"]
     saved = ui.disk(sid)
     assert saved["status"] == "completed"
-    receipt = RECEIPT_TEMPLATE.format(session_id=sid)
+    receipt = receipt_for(sid)
     assert [m["text"] for m in saved["messages"]].count(receipt) == 1
     assert saved["summary"] == SUMMARY

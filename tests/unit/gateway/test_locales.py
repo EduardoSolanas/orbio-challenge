@@ -128,8 +128,8 @@ def test_render_substitutes_named_placeholders_as_plain_text():
         == "Versión de la base de conocimiento: 2026-10-22"
     )
     assert (
-        render("receipt", "en", {"session_id": "abc"})
-        == "Saved locally as abc. No request has been sent to a real support team."
+        render("receipt", "en", {"reference": "abc"})
+        == "Saved locally as abc. No request has been sent to a real support team. Is there anything else I can help with?"
     )
 
 
@@ -143,7 +143,7 @@ def test_render_rejects_missing_and_extra_arguments():
 
 
 def test_render_treats_braces_inside_values_as_literal_text():
-    rendered = render("receipt", "en", {"session_id": "{other.__class__}"})
+    rendered = render("receipt", "en", {"reference": "{other.__class__}"})
     assert "{other.__class__}" in rendered
     assert "Saved locally as {other.__class__}" in rendered
 
@@ -369,3 +369,15 @@ def test_incomplete_summary_error_is_explicit():
         )
 
     assert str(caught.value) == "summary requires all four fields"
+
+
+def test_the_request_reference_is_a_short_stable_code_from_the_session_id() -> None:
+    from uuid import UUID
+
+    from gateway.localization import request_reference
+
+    sid = "2b0737be-22fb-4146-adb6-8404c88ee527"
+
+    assert request_reference(sid) == "REQ-2B0737BE"
+    assert request_reference(UUID(sid)) == "REQ-2B0737BE"
+    assert request_reference(sid) == request_reference(sid)

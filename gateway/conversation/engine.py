@@ -36,7 +36,7 @@ from gateway.conversation.intent import (
     slots_complete,
     transition_frustration,
 )
-from gateway.localization import build_review_reply, build_summary, render, text
+from gateway.localization import build_review_reply, build_summary, render, text, request_reference
 from gateway.conversation.plans import (
     TurnPlan,
     choose_reply_language,
@@ -505,7 +505,7 @@ class ConversationEngine:
             now = _now()
             new_revision = session.revision + 1
             language = session.reply_language
-            reply = render("receipt", language, {"session_id": session.session_id})
+            reply = render("receipt", language, {"reference": request_reference(session.session_id)})
             assistant_message = _message(
                 "assistant",
                 reply,
@@ -826,7 +826,7 @@ class ConversationEngine:
             )
         elif pure_confirmation:
             reply = render(
-                "receipt", reply_language, {"session_id": session.session_id}
+                "receipt", reply_language, {"reference": request_reference(session.session_id)}
             )
             status = "completed"
             review_revision = None

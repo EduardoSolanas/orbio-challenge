@@ -137,12 +137,17 @@ export class TurnController extends Controller {
   /** A starter button: most send a ready-made message, the question one just opens the box. */
   async onStarter(key) {
     const { state, view, presenter } = this;
+    if (!state.sessionId || state.status === "handed_off") return;
+    if (state.pending || state.createPending || state.sttPending) return;
+    if (state.status === "completed") {
+      // A finished conversation is closed, so the choice opens a fresh one first.
+      await this.session.startNewIntake();
+      if (state.status === "completed") return; // it could not be created; the alert says why
+    }
     if (key === "question") {
       view.dom.message.focus();
       return;
     }
-    if (!state.sessionId || state.isClosed()) return;
-    if (state.pending || state.createPending || state.sttPending) return;
     presenter.clearRetry();
     const payload = {
       request_id: this.newRequestId(),

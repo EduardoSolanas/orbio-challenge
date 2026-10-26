@@ -12,7 +12,7 @@ from playwright.sync_api import expect
 
 from tests.e2e.conftest import DENY_MICROPHONE_JS, body_of
 from tests.support.fakes import (
-    RECEIPT_TEMPLATE,
+    receipt_for,
     STT_TEXT,
     Gate,
     make_wav,
@@ -212,7 +212,7 @@ def test_voice_success(case_id, ui, server, provider, tmp_path):
 
     # Confirmation still succeeds after voice input and playback.
     assert ui.confirm().status == 200
-    expect(ui.log).to_contain_text(RECEIPT_TEMPLATE.format(session_id=sid))
+    expect(ui.log).to_contain_text(receipt_for(sid))
     saved = ui.disk(sid)
     assert saved["status"] == "completed" and saved["revision"] == 2
     assert saved["confirmation"]["review_revision"] == 1

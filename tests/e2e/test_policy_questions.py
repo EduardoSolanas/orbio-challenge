@@ -18,7 +18,7 @@ from tests.support.fakes import (
     HIGH,
     PART,
     PAYMENT_Q,
-    RECEIPT_TEMPLATE,
+    receipt_for,
     STANDING_CHARGE_ANSWER_TEXT,
     standing_charge_answer,
     summary_text,
@@ -140,7 +140,7 @@ def test_policy_questions(case_id, ui, server, provider):
     assert len(sent) == 1
     assert body_of(sent[0])["expected_revision"] == 6
     assert body_of(sent[0])["review_revision"] == 5
-    receipt = RECEIPT_TEMPLATE.format(session_id=sid)
+    receipt = receipt_for(sid)
     expect(ui.log).to_contain_text(receipt)
     saved = ui.disk(sid)
     assert saved["status"] == "completed" and saved["revision"] == 7

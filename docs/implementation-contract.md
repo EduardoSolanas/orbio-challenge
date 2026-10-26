@@ -267,7 +267,8 @@ invalid urgency: Please choose low, normal, or high urgency.
 conflict: You previously gave {old}. Should I keep that or use {candidate} for {field label}?
 ambiguous: Please clarify your {field label}.
 capability: I can help with an order issue, look up a demo order after verification, and summarize the information. I cannot issue refunds or contact a support team.
-receipt: Saved locally as {session_id}. No request has been sent to a real support team.
+receipt: Saved locally as {reference}. No request has been sent to a real support team. Is there anything else I can help with?
+`{reference}` is `REQ-` plus the first eight characters of the session id, uppercased, so a customer has a short code to quote and the session file is easy to find.
 limit: This conversation has reached its message limit. You can confirm the current details or start a new conversation.
 ```
 

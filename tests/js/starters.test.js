@@ -4,8 +4,10 @@ import {
   EN,
   ES,
   ScriptedHttp,
+  SECOND_SESSION_ID,
   SESSION_ID,
   deferred,
+  failure,
   ok,
   sessionView,
   startApp,
@@ -14,6 +16,7 @@ import {
 
 const SESSIONS = "/api/sessions";
 const TURNS = `/api/sessions/${SESSION_ID}/turns`;
+const NEW_TURNS = `/api/sessions/${SECOND_SESSION_ID}/turns`;
 
 async function running(view = sessionView()) {
   const http = new ScriptedHttp().on("POST", SESSIONS, ok(view));
@@ -69,7 +72,7 @@ describe("showing the starter buttons", () => {
   });
 
   test.each([
-    ["the conversation is closed", (s) => (s.status = "completed")],
+    ["the conversation was handed to a person", (s) => (s.status = "handed_off")],
     ["the account must be verified", (s) => (s.orderVerificationRequired = true)],
     ["times are offered", (s) => (s.slotOptions = [{ starts_at: "2026-11-02T09:00", ends_at: "2026-11-02T11:00" }])],
     ["a review awaits confirmation", (s) => Object.assign(s, { status: "awaiting_confirmation", pendingReviewRevision: 1, summary: "x" })],
@@ -158,18 +161,87 @@ describe("pressing a starter button", () => {
     expect(app.dom.starters.hidden).toBe(false);
   });
 
-  test("nothing is sent without a session, while busy, or once the conversation is closed", async () => {
+  test("nothing is sent without a session, while busy, or after a hand-off", async () => {
     const { app, http } = await running();
 
     app.state.pending = true;
     await app.turns.onStarter("report");
     app.state.pending = false;
-    app.state.status = "completed";
+    app.state.status = "handed_off";
     await app.turns.onStarter("report");
     app.state.status = "collecting";
     app.state.sessionId = null;
     await app.turns.onStarter("report");
 
     expect(http.to("POST", TURNS)).toHaveLength(0);
+    expect(http.to("POST", SESSIONS)).toHaveLength(1);
+  });
+});
+
+describe("after a saved request", () => {
+  async function completed() {
+    const { app, http } = await running();
+    await app.presenter.applyTurnResponse(
+      turnResponse({ status: "completed", reply: "Saved. Is there anything else I can help with?", revision: 3 }),
+      "confirm",
+      "text"
+    );
+    return { app, http };
+  }
+
+  test("the four options are offered again and can be pressed", async () => {
+    const { app } = await completed();
+
+    expect(app.dom.starters.hidden).toBe(false);
+    expect(labels(app)).toHaveLength(4);
+    expect([...app.dom.starters.querySelectorAll("button")].every((b) => !b.disabled)).toBe(true);
+  });
+
+  test("pressing one opens a new conversation and sends that option there", async () => {
+    const { app, http } = await completed();
+    http
+      .on("POST", SESSIONS, ok(sessionView({ session_id: SECOND_SESSION_ID })))
+      .on("POST", NEW_TURNS, ok(turnResponse({ session_id: SECOND_SESSION_ID, revision: 1 })));
+
+    await app.turns.onStarter("booking");
+
+    expect(app.state.sessionId).toBe(SECOND_SESSION_ID);
+    expect(http.to("POST", SESSIONS)).toHaveLength(2);
+    expect(JSON.parse(http.to("POST", NEW_TURNS)[0].options.body)).toMatchObject({
+      text: EN["starters.booking_message"],
+      expected_revision: 0,
+    });
+    expect(http.to("POST", TURNS)).toHaveLength(0);
+  });
+
+  test("the question button opens a new conversation and then the message box", async () => {
+    const { app, http } = await completed();
+    http.on("POST", SESSIONS, ok(sessionView({ session_id: SECOND_SESSION_ID })));
+
+    await app.turns.onStarter("question");
+
+    expect(app.state.sessionId).toBe(SECOND_SESSION_ID);
+    expect(app.state.status).toBe("collecting");
+    expect(window.document.activeElement).toBe(app.dom.message);
+    expect(http.to("POST", NEW_TURNS)).toHaveLength(0);
+  });
+
+  test("if the new conversation cannot be created, nothing is sent", async () => {
+    const { app, http } = await completed();
+    http.on("POST", SESSIONS, failure("provider_unavailable", 503));
+
+    await app.turns.onStarter("report");
+
+    expect(app.state.sessionId).toBe(SESSION_ID);
+    expect(app.state.status).toBe("completed");
+    expect(http.to("POST", TURNS)).toHaveLength(0);
+    expect(http.to("POST", NEW_TURNS)).toHaveLength(0);
+  });
+
+  test("a hand-off offers no buttons", async () => {
+    const { app } = await running();
+    await app.presenter.applyTurnResponse(turnResponse({ status: "handed_off", reply: "A person will help." }), "angry", "text");
+
+    expect(app.dom.starters.hidden).toBe(true);
   });
 });

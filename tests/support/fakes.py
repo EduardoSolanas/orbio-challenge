@@ -26,6 +26,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
+from gateway.localization import request_reference
 from gateway.errors import app_error
 from gateway.providers.client import SynthesizedAudio
 from gateway.schemas import Extraction, KnowledgeAnswer, Slots, ToolRequest
@@ -416,9 +417,10 @@ ABSTENTION = (
     "I do not have that information in Northstar Energy's help guides. "
     "I can still help with your energy question or service issue."
 )
-RECEIPT_TEMPLATE = (
-    "Saved locally as {session_id}. No request has been sent to a real support team."
-)
+def receipt_for(session_id) -> str:
+    return f"Saved locally as {request_reference(session_id)}. No request has been sent to a real support team. Is there anything else I can help with?"
+
+
 RETURN_ANSWER_TEXT = (
     "You can request a return within 30 calendar days of delivery for an unused item in "
     "its original packaging. Refund eligibility requires support review."

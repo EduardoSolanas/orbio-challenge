@@ -162,8 +162,8 @@ describe("translation", () => {
   });
 
   test("t() treats placeholder values as literal text, never templates", () => {
-    expect(i18n.t("en", "receipt", { session_id: "{other.__class__}" })).toBe(
-      "Saved locally as {other.__class__}. No request has been sent to a real support team."
+    expect(i18n.t("en", "receipt", { reference: "{other.__class__}" })).toBe(
+      "Saved locally as {other.__class__}. No request has been sent to a real support team. Is there anything else I can help with?"
     );
     expect(i18n.t("en", "speech.play", { ordinal: "<b>&</b>" })).toBe("Play reply <b>&</b>");
   });

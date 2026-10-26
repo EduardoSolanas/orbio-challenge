@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 
+from gateway.localization import request_reference
 from gateway.providers.prompts import GREETING, RECEIPT_TEMPLATE, build_review_reply, build_summary
 from gateway.schemas import Session
 
@@ -89,7 +90,7 @@ def test_example_session_transcript_covers_intake_policy_question_and_confirmati
     assert "What is your energy account reference" not in policy_answer.text
     assert session.messages[5].text == "Confirm these details"
     assert session.messages[6].text == RECEIPT_TEMPLATE.format(
-        session_id=session.session_id
+        reference=request_reference(session.session_id)
     )
 
 

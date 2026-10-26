@@ -10,6 +10,7 @@ from uuid import uuid4
 
 import pytest
 
+from gateway.localization import request_reference
 from gateway.conversation.engine import ConversationEngine
 from gateway.errors import AppError
 from gateway.localization import build_review_reply, build_summary, render, text
@@ -458,7 +459,7 @@ async def test_confirmation_receipt_is_localized_in_the_session_language(tmp_pat
         ),
     )
 
-    assert response.reply == text("receipt", "es").format(session_id=session.session_id)
+    assert response.reply == text("receipt", "es").format(reference=request_reference(session.session_id))
     assert response.reply_language == "es"
 
     stored = await repository.load(session.session_id)

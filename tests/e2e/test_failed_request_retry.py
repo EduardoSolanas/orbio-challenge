@@ -8,7 +8,7 @@ from playwright.sync_api import expect
 from tests.e2e.conftest import body_of
 from tests.support.fakes import (
     FULL,
-    RECEIPT_TEMPLATE,
+    receipt_for,
     Gate,
     review_reply,
     summary_text,
@@ -90,7 +90,7 @@ def test_failed_request_retry(case_id, ui, server, provider):
 
     # Confirm: one eventual pair, one review, one receipt.
     assert ui.confirm().status == 200
-    receipt = RECEIPT_TEMPLATE.format(session_id=sid)
+    receipt = receipt_for(sid)
     expect(ui.log).to_contain_text(receipt)
     saved = ui.disk(sid)
     assert saved["status"] == "completed" and saved["revision"] == 2

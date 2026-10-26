@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from gateway.localization import request_reference
 from gateway.providers.prompts import CAPABILITY
 from tests.support.unit_fakes import make_extraction
 from tests.unit.gateway.conversation.conversation_support import (
@@ -56,7 +57,7 @@ async def test_reject_then_valid_correction_emits_fresh_review_then_confirm(
         repository, sid, fourth, revision=4, status="completed",
         rejected=False, token=None, summary=corrected_summary,
     )
-    assert fourth.reply == f"Saved locally as {sid}. No request has been sent to a real support team."
+    assert fourth.reply == f"Saved locally as {request_reference(sid)}. No request has been sent to a real support team. Is there anything else I can help with?"
     stored = await repository.load(sid)
     assert stored.collection_turn_count == 3
     assert stored.confirmation is not None

@@ -90,7 +90,7 @@
     {
       "id": "5c6d7e8f-9012-4c23-8e4f-6a7b8c9d0e1f",
       "role": "assistant",
-      "text": "Saved locally as 3f7c1c1e-0f0a-4a4e-9a5e-2b1d0f6c8a11. No request has been sent to a real support team.",
+      "text": "Saved locally as REQ-3F7C1C1E. No request has been sent to a real support team. Is there anything else I can help with?",
       "input_mode": "system",
       "created_at": "2026-10-22T12:02:30Z",
       "citations": [],
@@ -167,7 +167,7 @@
         "session_id": "3f7c1c1e-0f0a-4a4e-9a5e-2b1d0f6c8a11",
         "revision": 3,
         "status": "completed",
-        "reply": "Saved locally as 3f7c1c1e-0f0a-4a4e-9a5e-2b1d0f6c8a11. No request has been sent to a real support team.",
+        "reply": "Saved locally as REQ-3F7C1C1E. No request has been sent to a real support team. Is there anything else I can help with?",
         "message_id": "5c6d7e8f-9012-4c23-8e4f-6a7b8c9d0e1f",
         "slots": {
           "order_number": "NS-000123",

@@ -6,6 +6,7 @@ from uuid import uuid4
 
 import pytest
 
+from gateway.localization import request_reference
 from gateway.conversation.engine import ConversationEngine
 from gateway.errors import AppError
 from gateway.schemas import Citation, ConfirmRequest, KnowledgeAnswer
@@ -44,7 +45,7 @@ async def test_dedicated_confirmation_completes_with_receipt_and_no_provider_cal
     assert response.revision == 2
     assert response.status == "completed"
     assert response.reply == (
-        f"Saved locally as {sid}. No request has been sent to a real support team."
+        f"Saved locally as {request_reference(sid)}. No request has been sent to a real support team. Is there anything else I can help with?"
     )
     assert response.slots == FULL_SLOTS
     assert response.summary == SUMMARY

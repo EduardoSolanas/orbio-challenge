@@ -6,6 +6,7 @@ from uuid import uuid4
 
 import pytest
 
+from gateway.localization import request_reference
 from gateway.conversation.engine import ConversationEngine
 from gateway.errors import AppError
 from gateway.providers.prompts import ABSTENTION
@@ -78,7 +79,7 @@ async def test_dedicated_confirm_after_a_pure_question_at_review_completes(tmp_p
     assert response.status == "completed"
     assert response.revision == 3
     assert response.reply == (
-        f"Saved locally as {sid}. No request has been sent to a real support team."
+        f"Saved locally as {request_reference(sid)}. No request has been sent to a real support team. Is there anything else I can help with?"
     )
     assert response.slots == FULL_SLOTS
     assert response.summary == SUMMARY
@@ -115,7 +116,7 @@ async def test_natural_confirmation_after_a_pure_question_at_review_completes(
     assert response.status == "completed"
     assert response.revision == 3
     assert response.reply == (
-        f"Saved locally as {sid}. No request has been sent to a real support team."
+        f"Saved locally as {request_reference(sid)}. No request has been sent to a real support team. Is there anything else I can help with?"
     )
     assert response.slots == FULL_SLOTS
     assert response.summary == SUMMARY

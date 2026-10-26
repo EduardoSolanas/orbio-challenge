@@ -57,7 +57,7 @@ def test_no_example_is_an_evaluation_message() -> None:
     examples = load_examples(SHIPPED)
     used = {
         case["text"].casefold()
-        for key in ("safety", "intents", "frustration", "retrieval", "retrieval_holdout")
+        for key in ("safety", "intents", "category", "frustration", "retrieval", "retrieval_holdout")
         for case in EVAL_CASES[key]
     }
 

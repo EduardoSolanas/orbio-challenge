@@ -19,7 +19,7 @@ from tests.support.fakes import (
     CAPABILITY_Q,
     CHANGE,
     INSTALLATION_Q,
-    RECEIPT_TEMPLATE,
+    receipt_for,
     UNRELATED,
     WHAT_TO_CHANGE,
     YES,
@@ -585,7 +585,7 @@ def test_intent_judge_correction_then_confirm(ui, provider, judge_config, reques
     expect(ui.log).to_contain_text(review_reply(low))
     assert ui.disk(sid)["slots"]["urgency"] == "low"
     assert ui.send(YES).status == 200
-    expect(ui.log).to_contain_text(RECEIPT_TEMPLATE.format(session_id=sid))
+    expect(ui.log).to_contain_text(receipt_for(sid))
     assert ui.disk(sid)["status"] == "completed"
     provider.assert_consumed()
     _record_and_judge(judge_config, request, ui.transcript_text(), "correction_confirm")

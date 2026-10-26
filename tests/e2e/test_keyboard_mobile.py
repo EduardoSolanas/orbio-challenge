@@ -16,7 +16,7 @@ from tests.support.fakes import (
     CATEGORY,
     GREETING,
     HIGH,
-    RECEIPT_TEMPLATE,
+    receipt_for,
     extraction,
     review_reply,
     summary_text,
@@ -287,7 +287,7 @@ def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
     ) as pending:
         page.keyboard.press("Enter")
     assert pending.value.status == 200
-    expect(ui.log).to_contain_text(RECEIPT_TEMPLATE.format(session_id=sid))
+    expect(ui.log).to_contain_text(receipt_for(sid))
     assert_inert_dom()
     saved = ui.disk(sid)
     assert saved["status"] == "completed" and saved["revision"] == 7
