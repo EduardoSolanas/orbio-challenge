@@ -114,7 +114,7 @@ def test_docker_flow_booking_creates_a_reservation(
     )
 
 
-def test_docker_flow_booking_reports_an_existing_visit(
+def test_docker_flow_booking_reports_an_existing_visit_and_moves_it(
     docker_page: Page,
     docker_config: DockerE2EConfig,
     request: pytest.FixtureRequest,
@@ -129,16 +129,42 @@ def test_docker_flow_booking_reports_an_existing_visit(
 
     turn = verified["turn"]
     reply = assistant_text(turn)
-    assert (
-        turn["slot_options"] == [] and booked_visit[:10] in reply and "BK-" in reply
-    ), reply
-    expect(docker_page.locator("#slot-picker button")).to_have_count(0)
+    offered = [slot["starts_at"] for slot in turn["slot_options"]]
+    assert booked_visit[:10] in reply and "BK-" in reply, reply
+    assert offered and booked_visit not in offered, turn["slot_options"]
+    expect(docker_page.locator("#slot-picker button")).to_have_count(len(offered))
     judge_reply(
         docker_config,
         request,
         "verified the account after asking to book when a visit already exists",
         reply,
-        f"the verified account already has a technician visit on {booked_visit[:10]}; a correct reply reports that visit with its date, time window and BK- reference and offers no new times; the account reference NS-000123 and the booking details come from the booking system and are expected, not invented",
+        f"the verified account already has a technician visit on {booked_visit[:10]}; a correct reply reports that visit with its date, time window and BK- reference and says the customer can change the date by choosing another of the times offered below, or keep the visit; it does not state or invent any other specific time; the account reference NS-000123 and the booking details come from the booking system and are expected, not invented",
+    )
+
+    chosen = docker_page.locator("#slot-picker button").first.get_attribute(
+        "data-starts-at"
+    )
+    with docker_page.expect_response(
+        lambda response: (
+            response.request.method == "POST" and response.url.endswith("/bookings")
+        )
+    ) as pending:
+        docker_page.locator("#slot-picker button").first.click()
+    assert pending.value.status == 200
+    moved = assistant_text(pending.value.json())
+    assert chosen[:10] in moved and moved.endswith(ANYTHING_ELSE), moved
+    judge_reply(
+        docker_config,
+        request,
+        f"chose the window starting {chosen} to replace the visit on {booked_visit[:10]}",
+        moved,
+        f"the customer moved their existing technician visit to the window starting {chosen}; a correct reply says the visit was moved to that date and window, keeps a BK- booking reference, and asks whether there is anything else it can help with",
+    )
+
+    # The move is real: the account now reports the new date, and only one visit.
+    _, body = send(docker_page, "Where is my installation?")
+    assert chosen[:10] in assistant_text(body) and "BK-" in assistant_text(body), (
+        assistant_text(body)
     )
 
 

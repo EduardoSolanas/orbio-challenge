@@ -48,7 +48,7 @@ you typed only the account number in between. Stop with
 | JSON storage and summary | `gateway/storage.py`, [`examples/session.example.json`](examples/session.example.json) |
 | Speech-to-text and text-to-speech | Upload or record audio, edit the transcript, play replies (`gateway/providers/`) |
 | RAG | Embedding retrieval (keyword matching if no embedding model is set) over `gateway/knowledge/northstar-faq.json`, validated citations, abstention |
-| Account actions (extra) | After verifying the demo account: installation status and booking a technician (`backend_api/`, `gateway/conversation/visits.py`) |
+| Account actions (extra) | After verifying the demo account: installation status, booking a technician and changing the date of the booked visit (`backend_api/`, `gateway/conversation/visits.py`) |
 | Sentiment (bonus) | The extraction call also labels sentiment and frustration; clear frustration hands off to a simulated agent |
 | Multiple languages (bonus) | English and Spanish |
 | Multi-turn memory (bonus) | Within a session |
@@ -228,7 +228,7 @@ so the first was kept.
 - Nothing is sent to a real support team; "submitted" means saved locally.
 - The receipt shows a short reference (`REQ-` and the first eight characters of the session id, for example `REQ-2B0737BE`), not the full id. The session file is named after the full id, so the reference is enough to find it, but eight characters are not unique at scale.
 - Answers come from twelve short fictional records. Keyword matching can miss a differently worded question; embedding retrieval depends on `EMBED_MIN_SIMILARITY`, tuned for one model on a small set. The gas-safety record quotes the UK National Gas Emergency number from memory; check it before relying on it. A citation shows which record was used, not that the model summarised it correctly.
-- Bookings (SQLite): one visit per account, no cancelling or rescheduling, and the offered times disappear if the page is reloaded (ask again).
+- Bookings (SQLite): one visit per account. Asking to book again shows the existing visit with the free times to move it to; choosing one moves the visit in a single step and keeps its reference. There is no cancelling, and the offered times disappear if the page is reloaded (ask again).
 - Only gas (a smell, a leak or a carbon monoxide alarm) gets the immediate safety answer. Other emergencies (sparks, smoke) are not in the knowledge base, so the assistant treats them like any other message. Both checks can miss: the model's flag, and the embedding check, which needs the embedding service and is switched off when none is configured (the model's flag alone then applies). Both were measured on 29 messages (see Evaluation).
 - Jailbreak resistance is tested with six attempts and three gas reports on the real model; that shows the obvious attacks fail, not that it is secure.
 - Voice accepts PCM WAV only, with no streaming.

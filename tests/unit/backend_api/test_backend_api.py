@@ -439,3 +439,27 @@ def test_client_defaults_are_bounded_json_only_and_normalize_the_base_url() -> N
     assert explicit._client.timeout == httpx.Timeout(0.25)
     assert str(explicit._client.base_url) == "http://backend-api.test"
     assert explicit._client.headers["Accept"] == "application/json"
+
+
+def test_a_booking_can_replace_the_accounts_visit_only_when_it_says_so() -> None:
+    client = TestClient(fixture_app())
+    first, second = client.get("/internal/v1/availability").json()["slots"][:2]
+
+    def book(window, **extra):
+        return client.post(
+            "/internal/v1/bookings",
+            json={
+                "order_number": FIXTURE_ORDER_NUMBER,
+                "starts_at": window["starts_at"],
+                **extra,
+            },
+        )
+
+    kept = book(first).json()
+    refused = book(second)
+    moved = book(second, replace=True)
+
+    assert (refused.status_code, refused.json()) == (409, {"error": "already_booked"})
+    assert moved.status_code == 200
+    assert moved.json()["starts_at"] == second["starts_at"]
+    assert moved.json()["reference"] == kept["reference"]

@@ -7,6 +7,7 @@ the Backend API supplies every offered window and reference.
 
 from __future__ import annotations
 
+import re
 from uuid import uuid4
 
 import pytest
@@ -248,7 +249,7 @@ async def test_booking_offers_windows_and_the_chosen_one_is_booked(client, provi
     assert chosen["starts_at"][:10] in status["reply"]
 
 
-async def test_a_booked_account_is_shown_its_visit_instead_of_new_windows(
+async def test_a_booked_account_is_shown_its_visit_and_the_other_windows_to_move_it(
     client, provider
 ):
     session_id, revision = await verified_session(client, provider)
@@ -260,8 +261,10 @@ async def test_a_booked_account_is_shown_its_visit_instead_of_new_windows(
         await send_turn(client, session_id, "Book a technician", booked["revision"])
     ).json()
 
-    assert body["slot_options"] == []
+    offered = [slot["starts_at"] for slot in body["slot_options"]]
+    assert offered and windows[0]["starts_at"] not in offered
     assert "Booking reference: BK-" in body["reply"]
+    assert body["reply"].endswith(text("booking.change_offer", "en"))
 
 
 async def test_booking_without_verification_is_refused(client):
@@ -282,17 +285,38 @@ async def test_an_unknown_window_is_refused_as_unavailable(client, provider):
     assert response.json()["error"]["code"] == "slot_unavailable"
 
 
-async def test_a_second_window_for_the_same_account_is_refused(client, provider):
+async def test_choosing_another_window_moves_the_visit_and_keeps_its_reference(
+    client, provider
+):
     session_id, revision = await verified_session(client, provider)
     windows, revision = await offered_windows(client, provider, session_id, revision)
-    booked = (await book(client, session_id, revision, windows[0]["starts_at"])).json()
+    first = (await book(client, session_id, revision, windows[0]["starts_at"])).json()
+    reference = re.search(r"BK-[0-9A-F]{8}", first["reply"]).group()
 
-    response = await book(
-        client, session_id, booked["revision"], windows[1]["starts_at"]
-    )
+    moved = await book(client, session_id, first["revision"], windows[1]["starts_at"])
 
-    assert response.status_code == 409
-    assert response.json()["error"]["code"] == "already_booked"
+    assert moved.status_code == 200
+    body = moved.json()
+    assert body["reply"].startswith("Done: your technician visit is moved")
+    assert reference in body["reply"] and windows[1]["starts_at"][:10] in body["reply"]
+    provider.script_extraction(intent("book_technician"))
+    again = (
+        await send_turn(client, session_id, "Book a technician", body["revision"])
+    ).json()
+    offered = [slot["starts_at"] for slot in again["slot_options"]]
+    assert windows[0]["starts_at"] in offered
+    assert windows[1]["starts_at"] not in offered
+
+
+async def test_choosing_the_window_already_held_changes_nothing(client, provider):
+    session_id, revision = await verified_session(client, provider)
+    windows, revision = await offered_windows(client, provider, session_id, revision)
+    first = (await book(client, session_id, revision, windows[0]["starts_at"])).json()
+
+    same = await book(client, session_id, first["revision"], windows[0]["starts_at"])
+
+    assert same.status_code == 200
+    assert same.json()["reply"].startswith("Booked:")
 
 
 async def test_repeating_a_booking_request_replays_without_a_second_backend_call(

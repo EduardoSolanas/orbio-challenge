@@ -67,6 +67,7 @@ class Availability(ContractModel):
 class BookingCommand(ContractModel):
     order_number: Annotated[StrictStr, Field(max_length=64)]
     starts_at: Annotated[StrictStr, Field(max_length=32)]
+    replace: StrictBool = False
 
 
 class OrderVerificationCommand(ContractModel):

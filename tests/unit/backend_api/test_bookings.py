@@ -180,3 +180,46 @@ def test_a_second_visit_that_gets_past_the_check_is_still_refused_by_the_databas
         store.book("NS-000123", "2026-11-02T11:00")
 
     assert refused.value.code == ALREADY_BOOKED
+
+
+def test_replacing_a_visit_moves_it_keeps_the_reference_and_frees_the_old_window(
+    store_at,
+) -> None:
+    store = store_at()
+    first = store.book("NS-000123", FIRST_WINDOW)
+
+    moved = store.book("NS-000123", "2026-11-02T11:00", replace=True)
+
+    assert moved["starts_at"] == "2026-11-02T11:00"
+    assert moved["reference"] == first["reference"]
+    assert store.appointment("NS-000123") == moved
+    open_now = [slot["starts_at"] for slot in store.open_slots()]
+    assert FIRST_WINDOW in open_now and "2026-11-02T11:00" not in open_now
+
+
+def test_a_refused_move_leaves_the_visit_where_it_was(store_at, tmp_path) -> None:
+    store = store_at(path=str(tmp_path / "bookings.db"))
+    first = store.book("NS-000123", FIRST_WINDOW)
+    store.book("NS-000999", "2026-11-02T11:00")
+
+    for target in ("2026-11-02T11:00", "2026-11-07T09:00", "nonsense"):
+        with pytest.raises(BookingRefused) as refused:
+            store.book("NS-000123", target, replace=True)
+        assert refused.value.code == SLOT_UNAVAILABLE
+
+    assert store.appointment("NS-000123") == first
+
+
+def test_replacing_with_the_window_already_held_changes_nothing(store_at) -> None:
+    store = store_at()
+    first = store.book("NS-000123", FIRST_WINDOW)
+
+    assert store.book("NS-000123", FIRST_WINDOW, replace=True) == first
+
+
+def test_replacing_without_a_visit_is_an_ordinary_booking(store_at) -> None:
+    store = store_at()
+
+    booked = store.book("NS-000123", FIRST_WINDOW, replace=True)
+
+    assert booked["starts_at"] == FIRST_WINDOW and booked["reference"].startswith("BK-")

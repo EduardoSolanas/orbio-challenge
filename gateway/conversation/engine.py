@@ -765,9 +765,11 @@ class ConversationEngine:
             order_number = self.verification.grant(session_id)
             if order_number is None or self.customer_data is None:
                 raise app_error("verification_required")
+            record = await self.customer_data.installation(order_number)
+            before = None if record is None else record.appointment
             try:
                 appointment = await self.customer_data.book(
-                    order_number, command.starts_at
+                    order_number, command.starts_at, replace=before is not None
                 )
             except AppError as error:
                 # A lost response may already have booked this exact window.
@@ -780,7 +782,12 @@ class ConversationEngine:
 
             now = _now()
             language = session.reply_language
-            reply = visit_text("booking.confirmed", language, appointment)
+            moved = before is not None and before.starts_at != appointment.starts_at
+            reply = visit_text(
+                "booking.changed" if moved else "booking.confirmed",
+                language,
+                appointment,
+            )
             window = window_values(appointment.starts_at, appointment.ends_at)
             assistant_message = _system_message(reply, language, now)
             response = _reply_response(session, assistant_message)

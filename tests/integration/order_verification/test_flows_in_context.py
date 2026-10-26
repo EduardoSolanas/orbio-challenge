@@ -256,7 +256,7 @@ async def test_an_already_booked_refusal_with_no_visit_on_record_is_passed_on(
     turn = (await verify(client, session_id)).json()["turn"]
 
     class Refusing:
-        async def book(self, order_number, starts_at):
+        async def book(self, order_number, starts_at, *, replace=False):
             raise app_error("already_booked")
 
         async def installation(self, order_number):

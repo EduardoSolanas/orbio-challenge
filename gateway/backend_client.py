@@ -94,13 +94,21 @@ class BackendApiClient:
             Availability, await self._request("GET", AVAILABILITY_PATH)
         )
 
-    async def book(self, order_number: str, starts_at: str) -> Appointment:
-        """Reserve one window; a refused booking raises its fixed application error."""
+    async def book(
+        self, order_number: str, starts_at: str, *, replace: bool = False
+    ) -> Appointment:
+        """Reserve one window, or with ``replace`` move the existing visit to it.
 
+        A refused booking raises its fixed application error.
+        """
+
+        body = {"order_number": order_number, "starts_at": starts_at}
+        if replace:
+            body["replace"] = True
         response = await self._request(
             "POST",
             BOOKINGS_PATH,
-            json={"order_number": order_number, "starts_at": starts_at},
+            json=body,
             allow_conflict=True,
         )
         if response.status_code == 409:

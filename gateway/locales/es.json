@@ -35,6 +35,8 @@
   "category.meter_reading": "problema con la lectura del contador",
   "category.other_energy_issue": "otro problema energético",
   "category.supply_issue": "problema de suministro",
+  "booking.change_offer": "Para cambiar la fecha, elige otra franja abajo, o mantén esta visita.",
+  "booking.changed": "Hecho: tu visita del técnico se ha cambiado al {date} entre las {start} y las {end}. Tu referencia de reserva sigue siendo {reference}. ¿Hay algo más en lo que pueda ayudarte?",
   "booking.choose": "Estas son las próximas franjas disponibles para el técnico. Elige una abajo.",
   "booking.confirmed": "Reservado: un técnico te visitará el {date} entre las {start} y las {end}. Tu referencia de reserva es {reference}. ¿Hay algo más en lo que pueda ayudarte?",
   "anything_else": "¿Hay algo más en lo que pueda ayudarte?",

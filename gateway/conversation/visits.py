@@ -53,12 +53,15 @@ async def installation_reply(
 async def booking_offer(
     client: BackendApiClient, order_number: str, language: Language
 ) -> tuple[str, tuple[SlotOption, ...]]:
-    """The existing visit if there is one, else the open windows to choose from."""
+    """The open windows to choose from; beside an existing visit they offer to move it."""
 
     record = await client.installation(order_number)
-    if record is not None and record.appointment is not None:
-        return installation_text(order_number, record, language), ()
     slots = tuple((await client.availability()).slots)
+    if record is not None and record.appointment is not None:
+        visit = installation_text(order_number, record, language)
+        if not slots:
+            return visit, ()
+        return f"{visit} {text('booking.change_offer', language)}", slots
     if not slots:
         return text("booking.no_slots", language), ()
     return text("booking.choose", language), slots

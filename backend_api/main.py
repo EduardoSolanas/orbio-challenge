@@ -134,7 +134,9 @@ def create_backend_api_app(
         if command.order_number not in catalog:
             return JSONResponse({"error": NOT_FOUND}, status_code=404)
         try:
-            booked = store.book(command.order_number, command.starts_at)
+            booked = store.book(
+                command.order_number, command.starts_at, replace=command.replace
+            )
         except BookingRefused as refused:
             return JSONResponse({"error": refused.code}, status_code=409)
         return JSONResponse(Appointment(**booked).model_dump(mode="json"))

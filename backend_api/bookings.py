@@ -104,29 +104,47 @@ class BookingStore:
             else dict(zip(("starts_at", "ends_at", "reference"), row))
         )
 
-    def book(self, order_number: str, starts_at: str) -> dict[str, str]:
-        """Reserve one open window for the order or raise ``BookingRefused``."""
+    def book(
+        self, order_number: str, starts_at: str, *, replace: bool = False
+    ) -> dict[str, str]:
+        """Reserve one open window for the order or raise ``BookingRefused``.
 
-        if self.appointment(order_number) is not None:
+        With ``replace`` an existing visit moves to the new window and keeps its reference;
+        the old window is freed and the new one claimed in one transaction, so a refused
+        move leaves the visit where it was.
+        """
+
+        current = self.appointment(order_number)
+        if current is not None and not replace:
             raise BookingRefused(ALREADY_BOOKED)
+        if current is not None and current["starts_at"] == starts_at:
+            return current
+        reference = current["reference"] if current else f"BK-{uuid4().hex[:8].upper()}"
         try:
             with self._db:
+                if current is not None:
+                    self._db.execute(
+                        "UPDATE slots SET order_number = NULL, reference = NULL"
+                        " WHERE order_number = ?",
+                        (order_number,),
+                    )
                 claimed = self._db.execute(
                     "UPDATE slots SET order_number = ?, reference = ?"
                     " WHERE starts_at = ? AND order_number IS NULL AND starts_at > ?",
                     (
                         order_number,
-                        f"BK-{uuid4().hex[:8].upper()}",
+                        reference,
                         starts_at,
                         self._clock().strftime(TIME_FORMAT),
                     ),
                 ).rowcount
+                if not claimed:
+                    # inside the transaction: the freed window is taken back on refusal
+                    raise BookingRefused(SLOT_UNAVAILABLE)
         except (
             sqlite3.IntegrityError
         ):  # the unique index, should two bookings ever race
             raise BookingRefused(ALREADY_BOOKED) from None
-        if not claimed:
-            raise BookingRefused(SLOT_UNAVAILABLE)
         booked = self.appointment(order_number)
         assert booked is not None
         return booked

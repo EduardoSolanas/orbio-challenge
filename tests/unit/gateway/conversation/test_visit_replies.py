@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from gateway.conversation.engine import ConversationEngine
 from gateway.conversation.visits import booking_offer, installation_text
 from gateway.localization import text
+from gateway.schemas import SlotOption
 from shared.models import Appointment, InstallationRecord, OrderRecord
 
 APPOINTMENT = Appointment(
@@ -63,3 +64,23 @@ async def test_with_no_windows_left_the_customer_is_told_so_in_their_language() 
 
     assert reply == text("booking.no_slots", "es") != text("booking.no_slots", "en")
     assert slots == ()
+
+
+async def test_with_a_visit_booked_the_other_windows_are_offered_to_move_it() -> None:
+    other = SlotOption(starts_at="2026-11-02T11:00", ends_at="2026-11-02T13:00")
+
+    reply, slots = await booking_offer(Client(BOOKED, [other]), "NS-000123", "en")
+
+    assert reply == (
+        f"{installation_text('NS-000123', BOOKED, 'en')} {text('booking.change_offer', 'en')}"
+    )
+    assert slots == (other,)
+
+
+async def test_the_offer_to_move_a_visit_comes_in_the_customers_language() -> None:
+    other = SlotOption(starts_at="2026-11-02T11:00", ends_at="2026-11-02T13:00")
+
+    reply, _ = await booking_offer(Client(BOOKED, [other]), "NS-000123", "es")
+
+    assert reply.endswith(text("booking.change_offer", "es"))
+    assert text("booking.change_offer", "es") != text("booking.change_offer", "en")
