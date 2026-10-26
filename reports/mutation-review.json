@@ -1,0 +1,970 @@
+{
+  "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+  "mutation_run_commit": "6c197dc2d54b6bcc754c08497b4b237a76a61037",
+  "approvals": [
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁ__init____mutmut_13",
+      "status": "equivalent",
+      "rationale": "base url trailing slash: rstrip('XX/XX') strips the same trailing slashes as rstrip('/') unless the URL ends in the letter X.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "295c821ac2e070d809855109547876cfe32a4c2bf5a182702f25216b4b99f3fc",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁ__init____mutmut_16",
+      "status": "equivalent",
+      "rationale": "header name case: HTTP header names are case-insensitive: httpx stores, sends and looks them up regardless of case, so a differently cased name is the same header.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "22843c66df414589c13365a644bcf551ef65d0088a1db6690b7f74fbea487747",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁ__init____mutmut_17",
+      "status": "equivalent",
+      "rationale": "header name case: HTTP header names are case-insensitive: httpx stores, sends and looks them up regardless of case, so a differently cased name is the same header.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "34341107c165911fd92892a021fd2edc918d8a8071aff620e7f3e0334b1865a0",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁverify_order__mutmut_16",
+      "status": "equivalent",
+      "rationale": "http method case: httpx upper-cases the request method before sending, so 'get'/'post' go on the wire as GET/POST.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "13df12e4051e829602936e4ff71936289f68d69e0ecd48eebbf5a59abeeb9110",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁlookup_order__mutmut_9",
+      "status": "equivalent",
+      "rationale": "http method case: httpx upper-cases the request method before sending, so 'get'/'post' go on the wire as GET/POST.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "1063369cfd56bc84a973567393a749b07a0ae82a725f0a00f6e4383fec84f3a0",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁlookup_order__mutmut_14",
+      "status": "equivalent",
+      "rationale": "quote safe characters: quote(..., safe='XXXX') still percent-encodes '/', the only character the empty safe set was protecting; no other character is affected.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "5108d6b15a5c4ca22ad73fe82c88f6ce7caf086d74bffdac287b3770cbbbcd63",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁinstallation__mutmut_9",
+      "status": "equivalent",
+      "rationale": "quote safe characters: quote(..., safe='XXXX') still percent-encodes '/', the only character the empty safe set was protecting; no other character is affected.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "bcd764980ea88d0fc5722eb4aefc8f5a43498f599edcbaa181a74f3fba8045d0",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁavailability__mutmut_10",
+      "status": "equivalent",
+      "rationale": "http method case: httpx upper-cases the request method before sending, so 'get'/'post' go on the wire as GET/POST.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "c79395e795b9cfb05ce02eab280d7885ee98197c4922914db28d9d7dd570238b",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁbook__mutmut_17",
+      "status": "equivalent",
+      "rationale": "error code fallback value: code is only compared against two known codes; None and '' are both outside them, so the refusal maps to the same error.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "759845f0637126fe7c985ad1ab999a3151a08d32ec6cd4f25f90f2c15a53caf6",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁ_request__mutmut_2",
+      "status": "equivalent",
+      "rationale": "conflict handling gives the same error: A 409 handed back to a call that does not expect one fails model validation and maps to the same invalid_backend_api_response error as raising it directly.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "06d42ad1bb7b253753cf5c718a057986743199a3c4e57acb72089a7aa9c50065",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁ_request__mutmut_23",
+      "status": "equivalent",
+      "rationale": "conflict handling gives the same error: A 409 handed back to a call that does not expect one fails model validation and maps to the same invalid_backend_api_response error as raising it directly.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "032360fd9842345a0677e377b15b913257b3937d6c4de92589e381a9ebeeeae3",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.config.x__embed__mutmut_12",
+      "status": "equivalent",
+      "rationale": "blank field check, later check rejects the same input: A blank required field makes the next validator (base URL, model, auth mode) reject it with the same configuration error, so the blank-field pre-check is redundant for the outcome.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "529251a0caf10ee13ae700d925fde6cb6eda98caab03a57f49e129027ecc0fa4",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.config.x__tts_es__mutmut_12",
+      "status": "equivalent",
+      "rationale": "blank field check, later check rejects the same input: A blank required field makes the next validator (base URL, model, auth mode) reject it with the same configuration error, so the blank-field pre-check is redundant for the outcome.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "86f6570acfe56fd1d01f1e92e921c09bd9209ea92aa78e27ff2554ccbc8fbfe1",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.localization.x_build_summary__mutmut_17",
+      "status": "equivalent",
+      "rationale": "exception message text: Only the text of an exception message changes; the exception type and every caller are unchanged and nothing reads or matches the message.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "ac65dfe28c84ac3bb32de26226f1e86080208812e6642a73a9c0dae4a87e49f3",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.localization.x_build_summary__mutmut_18",
+      "status": "equivalent",
+      "rationale": "exception message text: Only the text of an exception message changes; the exception type and every caller are unchanged and nothing reads or matches the message.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "3288c7d6882f46acf70453cf99504379a94b0381099a39c42033edb763926813",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.localization.x_build_summary__mutmut_19",
+      "status": "equivalent",
+      "rationale": "exception message text: Only the text of an exception message changes; the exception type and every caller are unchanged and nothing reads or matches the message.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "52242116e75c930e86b274ff476b998799c87ac01b9b6ef3658264e4a56c30b1",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.localization.x_request_reference__mutmut_10",
+      "status": "equivalent",
+      "rationale": "request reference uses the first eight characters: The first eight characters of a UUID's text are its first group (hex only, no dash), so removing dashes or changing what replaces them cannot change the first eight characters.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "d5fa60e934f68e3f0088d258f6be1806560abea3745f33233b6b02a71070d83e",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.localization.x_request_reference__mutmut_11",
+      "status": "equivalent",
+      "rationale": "request reference uses the first eight characters: The first eight characters of a UUID's text are its first group (hex only, no dash), so removing dashes or changing what replaces them cannot change the first eight characters.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "e24efb975f4669c21c208451b5b13914abe75b05794e6b0f1f079fd04a1bbab0",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.x_migrate_session_document__mutmut_7",
+      "status": "equivalent",
+      "rationale": "exception message text: Only the text of an exception message changes; the exception type and every caller are unchanged and nothing reads or matches the message.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "cb519c3f4939a6d5feaf005a4cccd7f0160477c3fd2b0fb2ba45abff85e768d4",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.x_migrate_session_document__mutmut_8",
+      "status": "equivalent",
+      "rationale": "exception message text: Only the text of an exception message changes; the exception type and every caller are unchanged and nothing reads or matches the message.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "50d007ec86cbf7b41cb8be42dc535380d86847385215aab41371fefd1762b533",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.x_migrate_session_document__mutmut_9",
+      "status": "equivalent",
+      "rationale": "exception message text: Only the text of an exception message changes; the exception type and every caller are unchanged and nothing reads or matches the message.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "7df9101f539e53965f368c0099f2e588b9035cacc746898906f89bc34b3516d7",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.x_migrate_session_document__mutmut_18",
+      "status": "equivalent",
+      "rationale": "exception message text: Only the text of an exception message changes; the exception type and every caller are unchanged and nothing reads or matches the message.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "d5aecaa92598128181620a15e4672335b3b616ecf85ac429463fdafd6ada22a6",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.x_migrate_session_document__mutmut_19",
+      "status": "equivalent",
+      "rationale": "exception message text: Only the text of an exception message changes; the exception type and every caller are unchanged and nothing reads or matches the message.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "d73d79f967409721811b2981906cdbe69d7a2ac673b7ee7c743c5582a3db448f",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.x_migrate_session_document__mutmut_20",
+      "status": "equivalent",
+      "rationale": "exception message text: Only the text of an exception message changes; the exception type and every caller are unchanged and nothing reads or matches the message.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "9f4e419ce0f14f8d8050355ef8dc2c50dc01a10858a3d1a7a80a5f724bbd9ff3",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.x__upgrade_legacy_document__mutmut_33",
+      "status": "equivalent",
+      "rationale": "dict.setdefault default omitted: dict.setdefault(key) defaults to None, so dropping the explicit None changes nothing.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "345c20eba98daf287e9b72cb9f574ad4163d19ea3201adeacb9501be96a0b3a2",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.x__upgrade_legacy_document__mutmut_38",
+      "status": "equivalent",
+      "rationale": "dict.setdefault default omitted: dict.setdefault(key) defaults to None, so dropping the explicit None changes nothing.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "76996730731b50581ce38646d32195e437e6108d67527893ba55d28f8125bbb3",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.x__fill_emotion_metadata__mutmut_14",
+      "status": "equivalent",
+      "rationale": "dict.setdefault default omitted: dict.setdefault(key) defaults to None, so dropping the explicit None changes nothing.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "89e5f22582f1d24f101aa3e29d4e2bb61d7e04bb769acc4be82ed512b93122f3",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.x__fill_emotion_metadata__mutmut_19",
+      "status": "equivalent",
+      "rationale": "dict.setdefault default omitted: dict.setdefault(key) defaults to None, so dropping the explicit None changes nothing.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "d118ee9d6030e4973a3ae30831cc3b38322a26a50fbb80d7109ee99e047e5f3f",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_13",
+      "status": "equivalent",
+      "rationale": "exception message text: Only the text of an exception message changes; the exception type and every caller are unchanged and nothing reads or matches the message.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "c4e9ebc3616eab422078a9e1bfcc03d25056a33076e4632ea189b6120edb8b4b",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_14",
+      "status": "equivalent",
+      "rationale": "exception message text: Only the text of an exception message changes; the exception type and every caller are unchanged and nothing reads or matches the message.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "e343438a3b8a6e85f0ceeea31cc1b79d38eeb5ab155b081d76e9f79dfc325dc9",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_15",
+      "status": "equivalent",
+      "rationale": "exception message text: Only the text of an exception message changes; the exception type and every caller are unchanged and nothing reads or matches the message.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "8504427670567c9e1a5804c4177b3d33ca65287eb4d3d1906e750d6a721ffa2f",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_16",
+      "status": "equivalent",
+      "rationale": "exception message text: Only the text of an exception message changes; the exception type and every caller are unchanged and nothing reads or matches the message.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "31289efb11be57e7df70f51a0ce8f1a396adf0c8eb5f47985ff8f79c618dad6d",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_4",
+      "status": "equivalent",
+      "rationale": "falsy flag swapped for None: A flag or option whose only readers test its truth value: None is falsy exactly like False, so behaviour is identical (and for ensure_ascii/delete the callee treats None as False).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "6330e615b560144e82adaaeef78650c2b5758811e9f5ff71a1514c07e5cfdd7e",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_15",
+      "status": "equivalent",
+      "rationale": "codec name case: Python looks codec names up case-insensitively ('UTF-8' and 'utf-8' are the same codec).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "2ef1b62035cd5d6aefb07de9fff40afc5f0f7a9868c063257ce919241d177ef1",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_17",
+      "status": "equivalent",
+      "rationale": "temp file bookkeeping: The temporary file is created, written, closed and removed inside the same call; the value of the staging marker before it is set, or an empty write, is never observed.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "880313c921ef76950c599ee36e30adc4743608dbfe80a66b8952cfdffaadfde6",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_20",
+      "status": "equivalent",
+      "rationale": "falsy flag swapped for None: A flag or option whose only readers test its truth value: None is falsy exactly like False, so behaviour is identical (and for ensure_ascii/delete the callee treats None as False).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "551ab359f1adc8e14f80d7f89b8c8c2154b4ac885d4799f38e45d1316f1f78cc",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_33",
+      "status": "equivalent",
+      "rationale": "temp file bookkeeping: The temporary file is created, written, closed and removed inside the same call; the value of the staging marker before it is set, or an empty write, is never observed.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "dd766f4c3be9d59c82495fa7de971c8efac3ad105913940af5d94e068cce98f7",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁcheck_writable__mutmut_4",
+      "status": "equivalent",
+      "rationale": "falsy flag swapped for None: A flag or option whose only readers test its truth value: None is falsy exactly like False, so behaviour is identical (and for ensure_ascii/delete the callee treats None as False).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "e805c5ba957797fae18e266f8a0cb96db8b4a827f9f20f9a2ece33d8cfd0352e",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁcheck_writable__mutmut_9",
+      "status": "equivalent",
+      "rationale": "temp file bookkeeping: The temporary file is created, written, closed and removed inside the same call; the value of the staging marker before it is set, or an empty write, is never observed.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "a5b89d32d61ba451f93e80a8a66179355940e608c0d795144083d83821390f9e",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁcreate_session__mutmut_24",
+      "status": "equivalent",
+      "rationale": "defaults that equal the mutation: The removed argument is the default the callee would use anyway ('en', or the field's own default).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "c19d8df6d8a184c495a65cd98246917de3af5223c100f9ed074e99cddc1ffc25",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁcreate_session__mutmut_60",
+      "status": "equivalent",
+      "rationale": "defaults that equal the mutation: The removed argument is the default the callee would use anyway ('en', or the field's own default).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "1cfd99b5814dc244bdbe67c3d68d8d0a630b5a8e3b19c6de45d5a1b958124bd6",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_select_plan__mutmut_91",
+      "status": "equivalent",
+      "rationale": "rejection flag passed twice: review_rejected is only True here when the same turn's other conditions already refuse a plain yes (a rejected review that is not recovered cannot also be an unambiguous confirmation).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "e33c7f3f21620d2285feda222212fb71197b151266546a83616338a32a8c7090",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_select_plan__mutmut_92",
+      "status": "equivalent",
+      "rationale": "recovered flag already implied by the review check: recovered_this_turn is only True when the session's review was rejected, and a rejected review is never current_review_valid, so is_pure_confirmation returns False whether the flag is passed or None.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "baef110018eb928c7a0d79476b65394f8a2f502ce98c69e425c4e124d78faf1f",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁconfirm__mutmut_62",
+      "status": "equivalent",
+      "rationale": "response fields that hold the same value: The omitted or replaced field already has that value at this point (an empty review has no pending issues or citations; verification cannot still be required after it succeeded; the session id inside a replay digest adds nothing because replay records are stored per session; the flow is always finished at this point).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "6add6b2ca48ecfa723cb5136cf59430b5e640e8b474c77c64cee2385b97fa740",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁconfirm__mutmut_64",
+      "status": "equivalent",
+      "rationale": "response fields that hold the same value: The omitted or replaced field already has that value at this point (an empty review has no pending issues or citations; verification cannot still be required after it succeeded; the session id inside a replay digest adds nothing because replay records are stored per session; the flow is always finished at this point).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "9f287420693e323c71a6bdebc61deb4f6a741b042047a47fc98edd69c3599bcc",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_continue_flow__mutmut_29",
+      "status": "equivalent",
+      "rationale": "response fields that hold the same value: The omitted or replaced field already has that value at this point (an empty review has no pending issues or citations; verification cannot still be required after it succeeded; the session id inside a replay digest adds nothing because replay records are stored per session; the flow is always finished at this point).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "c51cb0f1d61c14dd9e1b729b248177224f6d956af38173057b1a5ce39c93ad1c",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_continue_flow__mutmut_41",
+      "status": "equivalent",
+      "rationale": "response fields that hold the same value: The omitted or replaced field already has that value at this point (an empty review has no pending issues or citations; verification cannot still be required after it succeeded; the session id inside a replay digest adds nothing because replay records are stored per session; the flow is always finished at this point).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "9ef29980e0464dee8e9c622a29f3475c07aecd92bc2bdd2bb9c5b1e0a9e79b81",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_continue_flow__mutmut_42",
+      "status": "equivalent",
+      "rationale": "response fields that hold the same value: The omitted or replaced field already has that value at this point (an empty review has no pending issues or citations; verification cannot still be required after it succeeded; the session id inside a replay digest adds nothing because replay records are stored per session; the flow is always finished at this point).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "65e52697199ab5bfd20b6e4ea19e579d3c09c83ac5db582902946c96ad016730",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁbook_slot__mutmut_5",
+      "status": "equivalent",
+      "rationale": "response fields that hold the same value: The omitted or replaced field already has that value at this point (an empty review has no pending issues or citations; verification cannot still be required after it succeeded; the session id inside a replay digest adds nothing because replay records are stored per session; the flow is always finished at this point).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "06158d0841346e4f9705f3018500eb1d31269deafa3150be66570bc12b9d4c13",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_34",
+      "status": "equivalent",
+      "rationale": "rejection flag passed twice: review_rejected is only True here when the same turn's other conditions already refuse a plain yes (a rejected review that is not recovered cannot also be an unambiguous confirmation).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "634511483e9dc566c136f0f397c2011029ea8c7cdfb8e462ef3b9ae4fe5900ff",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_35",
+      "status": "equivalent",
+      "rationale": "recovered flag already implied by the review check: recovered_this_turn is only True when the session's review was rejected, and a rejected review is never current_review_valid, so is_pure_confirmation returns False whether the flag is passed or None.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "9ef4e36988991f28fda8664c91f9caec4a4751611983a0535ee98a25bff01e58",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_48",
+      "status": "equivalent",
+      "rationale": "falsy flag swapped for None: A flag or option whose only readers test its truth value: None is falsy exactly like False, so behaviour is identical (and for ensure_ascii/delete the callee treats None as False).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "0f881c49a6326c54ec8beab2f5e4c663a29da317b2f62d28d8d926cd72279ef4",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_50",
+      "status": "equivalent",
+      "rationale": "falsy flag swapped for None: A flag or option whose only readers test its truth value: None is falsy exactly like False, so behaviour is identical (and for ensure_ascii/delete the callee treats None as False).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "6f6a98dd0678afb46c03c51fb6f4d9b4e50478197bfa1b7736b25b135277be8b",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.flows.x_collect_details__mutmut_15",
+      "status": "equivalent",
+      "rationale": "empty reply is the default reply: StepResult(None) is StepResult(): reply defaults to None, so a step with nothing missing gives the same result however the condition is written.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "7be3eaca5ce6442f3960d99864882197a9276779c516ea82f4d076fa88da2e3b",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.replay.x__digest__mutmut_5",
+      "status": "equivalent",
+      "rationale": "falsy flag swapped for None: A flag or option whose only readers test its truth value: None is falsy exactly like False, so behaviour is identical (and for ensure_ascii/delete the callee treats None as False).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "d85281299484ed6baeadc3836381ee4d43cdb0eb37c8d067408e8c572424bf0b",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.replay.x__digest__mutmut_22",
+      "status": "equivalent",
+      "rationale": "codec name case: Python looks codec names up case-insensitively ('UTF-8' and 'utf-8' are the same codec).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "6ab6bdb46192eee99b275090b40e2e5d2a449ba9cf760658cb8c232fcc5c48e6",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.replay.x_booking_digest__mutmut_1",
+      "status": "equivalent",
+      "rationale": "request fingerprint keys: The fingerprint is only ever compared with another fingerprint built by the same function, so how its keys are spelled or whether the endpoint name is included cannot change a comparison (booking and confirm commands already differ in their fields).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "75475e66a00e79d279d8c4edce3641aa69841c5962d6fe94dea2beb460d5edac",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.replay.x_booking_digest__mutmut_7",
+      "status": "equivalent",
+      "rationale": "request fingerprint keys: The fingerprint is only ever compared with another fingerprint built by the same function, so how its keys are spelled or whether the endpoint name is included cannot change a comparison (booking and confirm commands already differ in their fields).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "580b87f53dab0c78109f0b98128667994514cbec33ef45a1bcf5b8c2f40cda96",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.replay.x_booking_digest__mutmut_8",
+      "status": "equivalent",
+      "rationale": "request fingerprint keys: The fingerprint is only ever compared with another fingerprint built by the same function, so how its keys are spelled or whether the endpoint name is included cannot change a comparison (booking and confirm commands already differ in their fields).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "1074064eb0ea3268189190d2998c21bea4d740854693165deca1dae3e2a3f3b2",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.replay.x_booking_digest__mutmut_10",
+      "status": "equivalent",
+      "rationale": "request fingerprint keys: The fingerprint is only ever compared with another fingerprint built by the same function, so how its keys are spelled or whether the endpoint name is included cannot change a comparison (booking and confirm commands already differ in their fields).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "0931c2d9497dcd9a13205322f6c82f6930b762b657062715cf8daa898e860e51",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.replay.x_booking_digest__mutmut_11",
+      "status": "equivalent",
+      "rationale": "request fingerprint keys: The fingerprint is only ever compared with another fingerprint built by the same function, so how its keys are spelled or whether the endpoint name is included cannot change a comparison (booking and confirm commands already differ in their fields).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "ec7b7b2f4114853d788459ff34ffc62ef9baee94863567d43efebebbd6838fd8",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.replay.x_booking_digest__mutmut_12",
+      "status": "equivalent",
+      "rationale": "request fingerprint keys: The fingerprint is only ever compared with another fingerprint built by the same function, so how its keys are spelled or whether the endpoint name is included cannot change a comparison (booking and confirm commands already differ in their fields).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "3475fbe57917153ed941af2e3d4369bb9e62ac1ea94be8292491be81ca9c24c4",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.replay.x_booking_digest__mutmut_13",
+      "status": "equivalent",
+      "rationale": "request fingerprint keys: The fingerprint is only ever compared with another fingerprint built by the same function, so how its keys are spelled or whether the endpoint name is included cannot change a comparison (booking and confirm commands already differ in their fields).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "d6b4a11d654ebcd61c0cb7852c6345cfddc694e2aae163b62cdfbe8a013d071e",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.visits.x_window_values__mutmut_7",
+      "status": "equivalent",
+      "rationale": "slice past the end of the string: Timestamps are 16 characters ('YYYY-MM-DDTHH:MM'), so [11:17] is the same slice as [11:16].",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "341fc288c014bb9cf0e53d904d33c58e980a7f9955e59a7030e84f32b97638c5",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.conversation.visits.x_window_values__mutmut_11",
+      "status": "equivalent",
+      "rationale": "slice past the end of the string: Timestamps are 16 characters ('YYYY-MM-DDTHH:MM'), so [11:17] is the same slice as [11:16].",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "87a8a52473b89301ce41267e869d93679cba74f0bf04651e8c6cd2626c399d56",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.knowledge.retrieval.x_load_knowledge__mutmut_13",
+      "status": "equivalent",
+      "rationale": "codec name case: Python looks codec names up case-insensitively ('UTF-8' and 'utf-8' are the same codec).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "cac1bd907a24290c6b4ab79554e499e941bb609a388c24e633728a9b5b5db958",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.audio.x__fmt_fields__mutmut_4",
+      "status": "equivalent",
+      "rationale": "wav parsing: same rejection either way: Each variant moves a boundary or a struct format so that the same malformed or out-of-range input is rejected by the next check with the same error (signed versus unsigned only differs above 2**15, which the format, channel, bits and rate checks already reject; a silent clip is silent whatever the initial peak).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "d164fa45c3e90e5f97d95563f5e2de8ebf1b256306158da325b5664e93b0b46a",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.audio.x__fmt_fields__mutmut_5",
+      "status": "equivalent",
+      "rationale": "wav parsing: same rejection either way: Each variant moves a boundary or a struct format so that the same malformed or out-of-range input is rejected by the next check with the same error (signed versus unsigned only differs above 2**15, which the format, channel, bits and rate checks already reject; a silent clip is silent whatever the initial peak).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "66e24ef30b374dace4c811db45db62c6c3becb0ca9d66c382dc6fe2270fc5aa5",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.audio.x__fmt_fields__mutmut_38",
+      "status": "equivalent",
+      "rationale": "wav parsing: same rejection either way: Each variant moves a boundary or a struct format so that the same malformed or out-of-range input is rejected by the next check with the same error (signed versus unsigned only differs above 2**15, which the format, channel, bits and rate checks already reject; a silent clip is silent whatever the initial peak).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "ab961a2ab2c6943b35a234e84446ad61f1aa0397c0726400c479c1cca1eaddd0",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.audio.x_validate_wav__mutmut_48",
+      "status": "equivalent",
+      "rationale": "wav parsing: same rejection either way: Each variant moves a boundary or a struct format so that the same malformed or out-of-range input is rejected by the next check with the same error (signed versus unsigned only differs above 2**15, which the format, channel, bits and rate checks already reject; a silent clip is silent whatever the initial peak).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "9c14d6046c4625d8fde34faad5e2f388f6db6982cb1cadb51a598ca2abfc52f9",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.audio.x_validate_wav__mutmut_59",
+      "status": "equivalent",
+      "rationale": "wav parsing: same rejection either way: Each variant moves a boundary or a struct format so that the same malformed or out-of-range input is rejected by the next check with the same error (signed versus unsigned only differs above 2**15, which the format, channel, bits and rate checks already reject; a silent clip is silent whatever the initial peak).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "1fe36d26b1d9ca8547c4a0ef7661ba4d5d71c9a481d79d8f8a730618e6a17d2f",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.audio.x_validate_wav__mutmut_60",
+      "status": "equivalent",
+      "rationale": "wav parsing: same rejection either way: Each variant moves a boundary or a struct format so that the same malformed or out-of-range input is rejected by the next check with the same error (signed versus unsigned only differs above 2**15, which the format, channel, bits and rate checks already reject; a silent clip is silent whatever the initial peak).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "8bd9e390c258185ba7fede6aa8894c2d7388d21935ce308db10e4e702937d037",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.audio.x_validate_wav__mutmut_61",
+      "status": "equivalent",
+      "rationale": "wav parsing: same rejection either way: Each variant moves a boundary or a struct format so that the same malformed or out-of-range input is rejected by the next check with the same error (signed versus unsigned only differs above 2**15, which the format, channel, bits and rate checks already reject; a silent clip is silent whatever the initial peak).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "b89e8d996ca454d407561fd6b909e5b4f0f78b840dd1ae9f5d106124b21dafe3",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁAIProviderǁsynthesize__mutmut_1",
+      "status": "invalid",
+      "rationale": "interface stub: A default argument in a typing.Protocol method whose body is '...': it is never executed.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "42966b38b64ead060a33cd61d4a4771de09d230c2babba047ef38877fedf56e8",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁAIProviderǁsynthesize__mutmut_2",
+      "status": "invalid",
+      "rationale": "interface stub: A default argument in a typing.Protocol method whose body is '...': it is never executed.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "9f8cf6b625ccffa7e545d3b2a333135afe8329da20b35997c04529cb5f092a5d",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.x__media_type__mutmut_8",
+      "status": "equivalent",
+      "rationale": "header name case: HTTP header names are case-insensitive: httpx stores, sends and looks them up regardless of case, so a differently cased name is the same header.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "e3b22af944e10c089c937aada6ff06aec7bd06498181d59e72b79f27df084d08",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.x__media_type__mutmut_9",
+      "status": "equivalent",
+      "rationale": "missing media type: A response with no content-type gets '' or 'xxxx' as its media type; neither is one of the accepted media types, so it is rejected the same way.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "559b8ff3ab3b2d0e17a17b53742aac0e3b06eec2e183c70e39ebd88e16ab1762",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.x__reject_encoded__mutmut_8",
+      "status": "equivalent",
+      "rationale": "header name case: HTTP header names are case-insensitive: httpx stores, sends and looks them up regardless of case, so a differently cased name is the same header.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "0a97702c88cf03edebd278285d565554c56f791ec0dc8ff9e3af6d967c169947",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.x__success_json_body__mutmut_14",
+      "status": "equivalent",
+      "rationale": "codec name case: Python looks codec names up case-insensitively ('UTF-8' and 'utf-8' are the same codec).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "7ae5a2690f2ec827f7b4807d01167bb7b8892182694786618569ca10d8561c07",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ__init____mutmut_17",
+      "status": "equivalent",
+      "rationale": "falsy flag swapped for None: A flag or option whose only readers test its truth value: None is falsy exactly like False, so behaviour is identical (and for ensure_ascii/delete the callee treats None as False).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "3994b8d951af8c07fb9dfbd2653f414fbf993aa0188a7360487d64f660fda50a",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_4",
+      "status": "equivalent",
+      "rationale": "header name case: HTTP header names are case-insensitive: httpx stores, sends and looks them up regardless of case, so a differently cased name is the same header.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "12f88b575d69b8ab10c75e37ef3b884c2b4e34d478ea372ef6f0ddef7a791016",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_5",
+      "status": "equivalent",
+      "rationale": "header name case: HTTP header names are case-insensitive: httpx stores, sends and looks them up regardless of case, so a differently cased name is the same header.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "49a90e5aa3798077d5dd1c55ec7ec723403b7be4fd496474b3639cfefa01711a",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_13",
+      "status": "equivalent",
+      "rationale": "header name case: HTTP header names are case-insensitive: httpx stores, sends and looks them up regardless of case, so a differently cased name is the same header.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "6c15a9352316642f900814b3f6a5229c682caa7f856db569a8b6ff1be8344d37",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_14",
+      "status": "equivalent",
+      "rationale": "header name case: HTTP header names are case-insensitive: httpx stores, sends and looks them up regardless of case, so a differently cased name is the same header.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "be9f7d06f5952e812311af57f431a42952a0c075c72ae75fde4cfd5183498057",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_21",
+      "status": "equivalent",
+      "rationale": "httpx default: httpx.AsyncClient already defaults to follow_redirects=False.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "df96ab4029e296e2b72d4337691cd0e6ddf5656977200836838c00813974e9bd",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁembed__mutmut_27",
+      "status": "equivalent",
+      "rationale": "http method case: httpx upper-cases the request method before sending, so 'get'/'post' go on the wire as GET/POST.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "0d068cfc299fb82ad0e159a40aa0fbd50fedb19d66b38984b207269fee51cef2",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁembed__mutmut_37",
+      "status": "equivalent",
+      "rationale": "repair flag for non-text operations: repair_on_invalid only decides whether the next attempt asks the model to repair its JSON; embeddings and audio build their request without it, and an invalid body is retried the same way either way.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "71322b7cb906dddc2cbda1c13175ad0702472de98d4a69fcd14aba6ff8fc5291",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁembed__mutmut_42",
+      "status": "equivalent",
+      "rationale": "repair flag for non-text operations: repair_on_invalid only decides whether the next attempt asks the model to repair its JSON; embeddings and audio build their request without it, and an invalid body is retried the same way either way.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "7dc86656a4243b04996acf02909e724ed603c4624c2bdc0e9485bfd2b4604d2b",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_speech_request__mutmut_35",
+      "status": "equivalent",
+      "rationale": "http method case: httpx upper-cases the request method before sending, so 'get'/'post' go on the wire as GET/POST.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "f71a2df7c3396ed6ee431e8eef8a11e46aa04a61f97c6e0c5e21c9ddf269f448",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_text_operation__mutmut_16",
+      "status": "equivalent",
+      "rationale": "http method case: httpx upper-cases the request method before sending, so 'get'/'post' go on the wire as GET/POST.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "e3687c9ccffb1907f5c0a2c61682215ae99e6f82df2281733cbd7cbdda38f309",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_audio_operation__mutmut_18",
+      "status": "equivalent",
+      "rationale": "http method case: httpx upper-cases the request method before sending, so 'get'/'post' go on the wire as GET/POST.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "b9dcaba20074741f6664ce9b01da48dc0948d63f26723f52b11a391e667d9e4e",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_audio_operation__mutmut_25",
+      "status": "equivalent",
+      "rationale": "repair flag for non-text operations: repair_on_invalid only decides whether the next attempt asks the model to repair its JSON; embeddings and audio build their request without it, and an invalid body is retried the same way either way.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "428d58ddb6600d0afc13476c1234d0f1bb398a0d94896f7ea664cddccdb7f3fc",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_audio_operation__mutmut_30",
+      "status": "equivalent",
+      "rationale": "repair flag for non-text operations: repair_on_invalid only decides whether the next attempt asks the model to repair its JSON; embeddings and audio build their request without it, and an invalid body is retried the same way either way.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "af9276e888a457a804ee2f83801bdf31c5c6aef5896b98dcd32342d6e90e4daf",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_1",
+      "status": "equivalent",
+      "rationale": "falsy flag swapped for None: A flag or option whose only readers test its truth value: None is falsy exactly like False, so behaviour is identical (and for ensure_ascii/delete the callee treats None as False).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "c50d33c9191cc37205b9f063eeb266cd680324608dfee680e0df3b6bf613cbaf",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_9",
+      "status": "equivalent",
+      "rationale": "unreachable line: Every branch of the retry loop returns or raises on its last attempt, so the line after the loop is never reached and the extra loop pass can never run.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "fa0629544e2fd2b477279a77152b4e2e793fc61c9aecfb510f8c097953230db4",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_45",
+      "status": "equivalent",
+      "rationale": "unreachable line: Every branch of the retry loop returns or raises on its last attempt, so the line after the loop is never reached and the extra loop pass can never run.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "11f7c37726896ade7166151c5362b74772c35ba71d22ca68289e09c7fae43ea3",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_46",
+      "status": "equivalent",
+      "rationale": "unreachable line: Every branch of the retry loop returns or raises on its last attempt, so the line after the loop is never reached and the extra loop pass can never run.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "d23875bacc1cbd0be18e37b936ebccfe5fd8ed40585ac8b8e8cc04f8d053638e",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_47",
+      "status": "equivalent",
+      "rationale": "unreachable line: Every branch of the retry loop returns or raises on its last attempt, so the line after the loop is never reached and the extra loop pass can never run.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "be856ae538884432f1b6f7be42ed8d29df2c2602739b206b67508ccbc0f9a4fb",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_3",
+      "status": "equivalent",
+      "rationale": "wav parsing: same rejection either way: Each variant moves a boundary or a struct format so that the same malformed or out-of-range input is rejected by the next check with the same error (signed versus unsigned only differs above 2**15, which the format, channel, bits and rate checks already reject; a silent clip is silent whatever the initial peak).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "29f132634f0e08e85af8c9fcf8f11524afea7133278dbd9ea4e531b538f17c1d",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_4",
+      "status": "equivalent",
+      "rationale": "wav parsing: same rejection either way: Each variant moves a boundary or a struct format so that the same malformed or out-of-range input is rejected by the next check with the same error (signed versus unsigned only differs above 2**15, which the format, channel, bits and rate checks already reject; a silent clip is silent whatever the initial peak).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "e8f2cf0b26e314ab140f78a8dd7f1a0b555f2cab590031a6e82354108784b4dc",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_25",
+      "status": "equivalent",
+      "rationale": "wav parsing: same rejection either way: Each variant moves a boundary or a struct format so that the same malformed or out-of-range input is rejected by the next check with the same error (signed versus unsigned only differs above 2**15, which the format, channel, bits and rate checks already reject; a silent clip is silent whatever the initial peak).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "f30647a2257a1d9de9e46d45f5188b6e0625e6bd8fd4e1c095f47502605819cc",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_53",
+      "status": "equivalent",
+      "rationale": "wav parsing: same rejection either way: Each variant moves a boundary or a struct format so that the same malformed or out-of-range input is rejected by the next check with the same error (signed versus unsigned only differs above 2**15, which the format, channel, bits and rate checks already reject; a silent clip is silent whatever the initial peak).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "9a070c7443623ccf7a3a89189c9cc70c248e4f45c267553baf69556400da08be",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.wire.x__schema_instruction__mutmut_3",
+      "status": "equivalent",
+      "rationale": "falsy flag swapped for None: A flag or option whose only readers test its truth value: None is falsy exactly like False, so behaviour is identical (and for ensure_ascii/delete the callee treats None as False).",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "1da5b71b0ae75a7b273b033cd08fde295c7947a8443bef12cc42434c4b5a8f0d",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.wire.x__schema_instruction__mutmut_5",
+      "status": "equivalent",
+      "rationale": "schema text is ASCII: The JSON schema of the extraction model contains only ASCII, so ensure_ascii does not change its text.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "f665b63adb2adb52f157ef210553f71fc6b441cfb86375f13d179c1a1031c442",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.wire.x__schema_instruction__mutmut_6",
+      "status": "equivalent",
+      "rationale": "schema text is ASCII: The JSON schema of the extraction model contains only ASCII, so ensure_ascii does not change its text.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "3f61950a7c0c8b5fbb935d68c97c151c567c74d7e0b0b01b8037e46a1ec88252",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "gateway.providers.wire.x_parse_embeddings__mutmut_27",
+      "status": "equivalent",
+      "rationale": "sort key for entries that are rejected anyway: The sort key only differs for an entry that is not an object, and such an entry raises InvalidContent right after sorting whatever its position.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "633c44999dc9634b41a2ca197c19ac6fb68098c4cb7cb70c50cd0ec301681078",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingRefusedǁ__init____mutmut_1",
+      "status": "equivalent",
+      "rationale": "exception message text: Only the text of an exception message changes; the exception type and every caller are unchanged and nothing reads or matches the message.",
+      "source_revision": "02b3c2bb5390a40280c7bca5acd0865c13783a6f",
+      "diff_sha256": "473c705225373fa9644e73c059f9deb242d4e33b670ec87d59fe8469f7004b20",
+      "verifier": "claude-sonnet-5.5 (read each mutation diff against the code; the rationale says why it cannot matter)",
+      "decision": "approved"
+    }
+  ],
+  "function_approvals": []
+}
