@@ -64,6 +64,7 @@ export class App {
     this.view.bind({
       playReply: (messageId) => this.voice.playReply(messageId),
       bookSlot: (slot) => this.turns.onBookSlot(slot),
+      starter: (key) => this.turns.onStarter(key),
     });
   }
 

@@ -3,6 +3,7 @@ export const ELEMENT_IDS = Object.freeze({
   log: "transcript",
   review: "review",
   slotPicker: "slot-picker",
+  starters: "starters",
   alert: "alert",
   verification: "order-verification",
   verificationNotice: "verification-notice",

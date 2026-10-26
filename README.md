@@ -84,7 +84,7 @@ Docker runs three containers: `web` (nginx, the only published port: it serves t
 - `gateway/conversation/engine.py` is the turn transaction and state machine (`collecting` → `awaiting_confirmation` → `completed`); `intent.py`, `plans.py` and `replay.py` decide what an extraction means, what to reply and how duplicates are handled.
 - `gateway/providers/client.py` is one OpenAI-compatible adapter for every role, with timeouts, retries and a concurrency limit.
 - `backend_api/` is the only place that holds account data: the account check, installation status, technician windows (hours and days are edited in `availability.json`) and bookings, kept in one SQLite file. The gateway reaches it over the internal network only.
-- `web/` is the chat page with no build step: plain ES modules, one class per concern, everything injected so tests replace the network and microphone. CSS follows OOCSS: `objects.css` structure, `skins.css` colour, `base.css` tokens.
+- `web/` is the chat page with no build step: plain ES modules, one class per concern, everything injected so tests replace the network and microphone. CSS follows OOCSS: `objects.css` structure, `skins.css` colour, `base.css` tokens. The chat is one centred column, 720 px wide at most (the whole screen on a phone). Four quick-option buttons (report a problem, ask a question, installation status, book a technician) show under the greeting and under the "what I can do" reply, so a customer can start without typing; they send a ready-made message through the normal turn and disappear once the conversation moves on.
 
 ## Key design decisions
 
@@ -151,7 +151,7 @@ npm ci && npm test                   # frontend unit tests (Jest)
 |---|---|---|
 | Unit and integration | Validation, state machine, storage, HTTP routes, providers over a real socket, RAG, audio | 1813 unit and 390 integration passed, run as separate layers. Two wall-clock timeout tests can fail when both share one pytest process on a slow machine. |
 | Browser (Playwright) | Eleven Chromium tests of the user journeys, including voice and RAG | 11 passed |
-| Frontend (Jest) | The page's classes in jsdom, using the real `index.html` | 278 passed; 97.7% statements, 91% branches (CI gate 90% / 80%) |
+| Frontend (Jest) | The page's classes in jsdom, using the real `index.html` | 294 passed; 97.7% statements, 92% branches (CI gate 90% / 80%) |
 | Judge journeys | 31 browser tests with a scripted provider; 29 record a conversation that a judge LLM grades against a written rule. Every intent, including verification before account actions, and frustration hand-off | 31 passed; 29 of 29 judged pass. Replies are mostly templates, so this checks wording rules, not model behaviour. |
 | Real Docker end-to-end | 15 tests on the deployed containers against the real LLM, speech services and embeddings, graded by the judge LLM: every intent, a full intake, RAG with abstention, account actions, angry and nervous customers in both languages | 15 passed, with the same DeepSeek model as judge, so it grades itself. The booking test uses the demo account's one visit; reset with `docker compose down --volumes`. A reasoning judge needs `E2E_JUDGE_MAX_TOKENS=4096`. |
 | Live providers | `scripts/check_backends.py` | 5 of 5 (2026-10-24) |
@@ -231,6 +231,7 @@ so the first was kept.
 - Streaming voice and barge-in.
 - Rename the stored category values to the energy vocabulary, with a migration.
 - Cross-session memory with identity and consent.
+- Order the quick-option buttons by the most common intents in the last 10 minutes, so the page offers what customers are asking for right now.
 - A live ticketing handoff instead of the simulated one.
 
 ## Demo video

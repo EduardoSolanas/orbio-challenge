@@ -6,10 +6,22 @@
 
 /* ---- layout ------------------------------------------------------------------ */
 
+/* The chat is one centred column: full screen on a phone, a fixed-width card on a desktop. */
 .shell {
-  width: 100%;
+  width: min(100%, 720px);
   height: 100dvh;
   margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .shell {
+    height: calc(100dvh - 48px);
+    margin: 24px auto;
+  }
+
+  .panel {
+    border-radius: 16px;
+  }
 }
 
 .panel {
@@ -124,10 +136,16 @@
   border-radius: 50%;
 }
 
+.btn--large {
+  min-height: 44px;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
 .btn--square {
   display: grid;
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   flex: none;
   place-items: center;
   border-radius: 11px;
@@ -215,7 +233,7 @@
   flex: none;
   margin: 0;
   padding: 0 12px 8px;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .hint--tight {

@@ -12,15 +12,16 @@
 </head>
 <body>
 <main class="shell">
-  <section class="panel skin-paper" id="support-chat" role="dialog" aria-modal="false" aria-label="Northstar Energy support chat" data-i18n-aria-label="site.chat_dialog">
+  <section class="panel skin-paper skin-frame" id="support-chat" role="dialog" aria-modal="false" aria-label="Northstar Energy support chat" data-i18n-aria-label="site.chat_dialog">
     <header class="bar bar--header skin-forest">
       <span class="badge skin-glass" aria-hidden="true"><svg class="icon icon--m" viewBox="0 0 24 24"><path d="M13.1 1.8 4.8 13h5.8l-.7 9.2L19.2 10h-6.1z"/></svg></span>
       <div class="bar__body"><strong class="title">Northstar Energy</strong><small class="subtitle text-on-dark-soft" data-i18n="site.chat_status"></small></div>
-      <button type="button" id="new-intake" class="btn btn--square bar__push skin-glass-button" aria-label="New conversation" data-i18n-aria-label="actions.new_intake" title="New conversation">↻</button>
+      <button type="button" id="new-intake" class="btn btn--square bar__push skin-glass-button" aria-label="New conversation" data-i18n-aria-label="actions.new_intake" title="New conversation"><svg class="icon icon--m" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg></button>
     </header>
     <div id="transcript" class="panel__scroll skin-log" role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversation" data-i18n-aria-label="site.chat_log"></div>
     <section id="review" class="notice notice--pre skin-review" role="region" aria-label="Review details" data-i18n-aria-label="ui.review_region" hidden></section>
     <section id="slot-picker" class="cluster cluster--loose cluster--margin" role="region" aria-label="Available technician times" data-i18n-aria-label="ui.slots_region" hidden></section>
+    <section id="starters" class="cluster cluster--loose cluster--margin" role="region" aria-label="Quick options" data-i18n-aria-label="starters.region" hidden></section>
     <div id="alert" class="notice skin-alert" role="alert" hidden></div>
     <section id="order-verification" class="notice stack skin-form" role="region" aria-label="Account verification" data-i18n-aria-label="auth.verification_region" aria-describedby="verification-notice" hidden>
       <p id="verification-notice" class="callout skin-note" data-i18n="auth.demo_code_notice"></p>

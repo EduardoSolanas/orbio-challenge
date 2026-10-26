@@ -9,6 +9,11 @@
   background: var(--paper);
 }
 
+/* The edge of the chat card against the page behind it. */
+.skin-frame {
+  box-shadow: 0 0 0 1px var(--line), 0 18px 48px rgba(23, 60, 50, 0.14);
+}
+
 .skin-log {
   background: #fbfcf7;
 }
@@ -139,7 +144,7 @@
 /* ---- text colours -------------------------------------------------------------------------- */
 
 .text-muted {
-  color: #748175;
+  color: var(--muted);
 }
 
 .text-brand {
@@ -159,7 +164,7 @@
 }
 
 .label--muted {
-  color: #748175;
+  color: var(--muted);
 }
 
 .label--on-dark {

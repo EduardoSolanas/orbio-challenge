@@ -3,6 +3,8 @@ import { MAX_CHARS } from "./config.js";
 const SVG_NS = "http://www.w3.org/2000/svg";
 const SPEAKER_PATH =
   "M3 9v6h4l5 4V5L7 9H3Zm13.5 3a4.5 4.5 0 0 0-2.1-3.8v7.6a4.5 4.5 0 0 0 2.1-3.8Zm0-8.3v2.1a8 8 0 0 1 0 12.4v2.1a10 10 0 0 0 0-16.6Z";
+/** The quick options, in the order shown. */
+const STARTERS = Object.freeze(["report", "question", "installation", "booking"]);
 const CLOCK_PATH =
   "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5v5.59l3.7 3.7-1.4 1.42L11 13.41V7h2Z";
 
@@ -13,7 +15,7 @@ export class ChatView {
     this.state = state;
     this.i18n = i18n;
     this.document = dom.document;
-    this.handlers = { playReply: () => {}, bookSlot: () => {} };
+    this.handlers = { playReply: () => {}, bookSlot: () => {}, starter: () => {} };
     /** Controls that were enabled before transcription locked the panel. */
     this.lockedControls = new WeakMap();
   }
@@ -148,6 +150,9 @@ export class ChatView {
     dom.slotPicker.querySelectorAll("button").forEach((button) => {
       button.disabled = busy || closed;
     });
+    dom.starters.querySelectorAll("button").forEach((button) => {
+      button.disabled = busy || closed;
+    });
     this.renderVerification();
 
     if (state.sttPending) {
@@ -211,13 +216,52 @@ export class ChatView {
     for (const slot of this.state.slotOptions) {
       const button = this.document.createElement("button");
       button.type = "button";
-      button.className = "btn btn--pill skin-outline grow";
+      button.className = "btn btn--pill btn--large skin-outline grow";
       button.dataset.startsAt = slot.starts_at;
       button.textContent = this.slotLabel(slot);
       button.addEventListener("click", () => this.handlers.bookSlot(slot));
       picker.appendChild(button);
     }
     picker.hidden = this.state.slotOptions.length === 0;
+  }
+
+  // ---- starter buttons -------------------------------------------------------------
+
+  /** True when the last assistant message is one of the replies that lists what it can do. */
+  offersOptions(message) {
+    return [this.ui("capability_reply"), this.ui("capability")].includes(message.text);
+  }
+
+  /** Starter buttons show on a fresh conversation and under the "what I can do" replies. */
+  startersVisible() {
+    const { state } = this;
+    if (!state.sessionId || state.isClosed() || state.turnPending || state.pendingTurnMessage) {
+      return false;
+    }
+    if (state.slotOptions.length || state.orderVerificationRequired || state.canConfirm()) {
+      return false;
+    }
+    const last = [...state.messages].reverse().find((message) => message.role === "assistant");
+    if (!last) return false;
+    return !state.messages.some((message) => message.role === "user") || this.offersOptions(last);
+  }
+
+  renderStarters() {
+    const picker = this.dom.starters;
+    this.setText(picker, "");
+    const visible = this.startersVisible();
+    if (visible) {
+      for (const key of STARTERS) {
+        const button = this.document.createElement("button");
+        button.type = "button";
+        button.className = "btn btn--pill btn--large skin-outline grow";
+        button.dataset.starter = key;
+        button.textContent = this.ui(`starters.${key}`);
+        button.addEventListener("click", () => this.handlers.starter(key));
+        picker.appendChild(button);
+      }
+    }
+    picker.hidden = !visible;
   }
 
   // ---- transcript ------------------------------------------------------------------

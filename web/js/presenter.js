@@ -91,6 +91,7 @@ export class ChatPresenter {
     view.renderTranscript();
     view.renderReview();
     view.renderSlots();
+    view.renderStarters();
     view.updateControls();
   }
 }

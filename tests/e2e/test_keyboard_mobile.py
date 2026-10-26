@@ -140,8 +140,12 @@ def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
         panel_box = page.locator("#support-chat").bounding_box()
         form_box = page.locator("#message-form").bounding_box()
         field_box = ui.message.bounding_box()
-        assert panel_box is not None and panel_box["width"] == viewport_width
-        assert panel_box["height"] == 844
+        # One centred column: the whole screen on a phone, a 720px card from 768px up.
+        expected_width = min(viewport_width, 720)
+        expected_height = 844 if viewport_width < 768 else 844 - 48
+        assert panel_box is not None and panel_box["width"] == expected_width
+        assert panel_box["height"] == expected_height
+        assert abs(panel_box["x"] - (viewport_width - expected_width) / 2) <= 1
         assert form_box is not None and field_box is not None
         assert field_box["width"] >= form_box["width"] * 0.58
         assert page.evaluate(NO_OVERFLOW), f"layout must not overflow at {viewport_width}px"

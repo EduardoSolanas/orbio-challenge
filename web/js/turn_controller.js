@@ -34,6 +34,7 @@ export class TurnController extends Controller {
       state.inputMode = "text";
     }
     view.renderTranscript();
+    view.renderStarters();
     view.updateControls();
     const gen = state.generation;
     view.clearAlert();
@@ -79,6 +80,7 @@ export class TurnController extends Controller {
         state.turnPending = false;
         state.pending = false;
         view.renderTranscript();
+        view.renderStarters();
         view.updateControls();
       }
     }
@@ -125,6 +127,28 @@ export class TurnController extends Controller {
       expected_revision: state.revision,
       text,
       input_mode: state.inputMode === "transcript" ? "transcript" : "text",
+    };
+    state.retryPayload = payload;
+    state.pending = true;
+    view.updateControls();
+    await this.submitTurnPayload(payload, { alreadyPending: true });
+  }
+
+  /** A starter button: most send a ready-made message, the question one just opens the box. */
+  async onStarter(key) {
+    const { state, view, presenter } = this;
+    if (key === "question") {
+      view.dom.message.focus();
+      return;
+    }
+    if (!state.sessionId || state.isClosed()) return;
+    if (state.pending || state.createPending || state.sttPending) return;
+    presenter.clearRetry();
+    const payload = {
+      request_id: this.newRequestId(),
+      expected_revision: state.revision,
+      text: view.ui(`starters.${key}_message`),
+      input_mode: "text",
     };
     state.retryPayload = payload;
     state.pending = true;
