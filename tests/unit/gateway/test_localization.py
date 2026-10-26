@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from gateway import localization
+from gateway.conversation.validation import FIELD_ORDER
 from gateway.localization import (
     CATALOG,
     DEFAULT_LANGUAGE,
@@ -18,8 +19,8 @@ from gateway.providers.prompts import (
     ABSTENTION,
     CAPABILITY,
     CAPABILITY_REPLY,
-    GREETING,
     GRATITUDE_ACKNOWLEDGMENT,
+    GREETING,
     INVALID_CATEGORY,
     INVALID_DESCRIPTION,
     INVALID_ORDER,
@@ -38,7 +39,6 @@ from gateway.providers.prompts import (
     SOCIAL_ACKNOWLEDGMENT,
 )
 from gateway.schemas import Slots
-from gateway.conversation.validation import FIELD_ORDER
 
 SLOTS = Slots(
     order_number="NS-000123",

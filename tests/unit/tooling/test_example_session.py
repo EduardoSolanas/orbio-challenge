@@ -15,7 +15,12 @@ from pathlib import Path
 import pytest
 
 from gateway.localization import request_reference
-from gateway.providers.prompts import GREETING, RECEIPT_TEMPLATE, build_review_reply, build_summary
+from gateway.providers.prompts import (
+    GREETING,
+    RECEIPT_TEMPLATE,
+    build_review_reply,
+    build_summary,
+)
 from gateway.schemas import Session
 
 ROOT = Path(__file__).resolve().parents[3]

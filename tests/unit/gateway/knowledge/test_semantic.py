@@ -10,10 +10,10 @@ import pytest
 
 from gateway.config import ServiceProfile
 from gateway.errors import AppError
-from gateway.providers.wire import InvalidContent, parse_embeddings
-from gateway.providers.client import OpenAICompatibleProvider
-from gateway.schemas import KnowledgeRecord
 from gateway.knowledge.semantic import SemanticIndex, cosine
+from gateway.providers.client import OpenAICompatibleProvider
+from gateway.providers.wire import InvalidContent, parse_embeddings
+from gateway.schemas import KnowledgeRecord
 from tests.unit.gateway.providers.provider_support import (
     LLM_PROFILE,
     RAG_PROFILE,

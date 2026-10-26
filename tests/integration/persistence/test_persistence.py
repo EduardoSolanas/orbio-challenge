@@ -31,6 +31,7 @@ from tests.integration.support.api import (
     read_session,
     served_messages,
     session_files,
+    session_path,
 )
 from tests.integration.support.confirmation import (
     CHANGE_TEXT,
@@ -52,7 +53,6 @@ from tests.integration.support.intake import (
 )
 from tests.integration.support.persistence import app_client, app_running
 
-
 STORAGE_UNAVAILABLE_TEXT = "Session storage is unavailable. Please retry."
 STORAGE_CORRUPT_TEXT = "This session cannot be loaded. Contact the demo operator."
 INVALID_REQUEST_TEXT = "The request does not match the expected format."
@@ -64,9 +64,6 @@ PART_SLOTS = {
     "urgency": None,
 }
 
-
-def session_path(session_dir: Path, session_id: str) -> Path:
-    return session_dir / f"{session_id}.json"
 
 
 def assert_error_envelope(response, *, status, code, message, retryable):

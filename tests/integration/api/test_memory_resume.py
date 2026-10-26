@@ -15,9 +15,6 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-import pytest
-from pydantic import ValidationError
-
 from gateway.providers.prompts import SOCIAL_ACKNOWLEDGMENT, serialize_context
 from gateway.schemas import KnowledgeRecord, RecentMessage
 from tests.integration.support.api import (
@@ -26,6 +23,9 @@ from tests.integration.support.api import (
     persisted_response,
     read_session,
     served_messages,
+)
+from tests.integration.support.confirmation import (
+    equal_explicit_correction_extraction as urgency_correction_extraction,
 )
 from tests.integration.support.intake import (
     CATEGORY_TEXT,
@@ -50,7 +50,6 @@ from tests.integration.support.rag import (
     question_extraction,
     seed_citation,
 )
-
 
 SOCIAL_TEXT = "Hello, how are you?"
 
@@ -305,13 +304,6 @@ def ambiguous_extraction():
         ambiguous_fields=["category"],
     )
 
-
-def urgency_correction_extraction():
-    return make_extraction(
-        intent="correction",
-        candidates={"urgency": "high"},
-        explicit_corrections=["urgency"],
-    )
 
 
 def last_extract_context(provider):

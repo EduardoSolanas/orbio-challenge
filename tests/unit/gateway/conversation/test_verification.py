@@ -12,17 +12,17 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
+from gateway.conversation.verification import (
+    MAX_VERIFICATION_ATTEMPTS,
+    VERIFICATION_TTL_SECONDS,
+    VerificationRegistry,
+)
 from gateway.localization import text
 from gateway.schemas import (
     Extraction,
     OrderVerificationRequest,
     Slots,
     ToolRequest,
-)
-from gateway.conversation.verification import (
-    MAX_VERIFICATION_ATTEMPTS,
-    VERIFICATION_TTL_SECONDS,
-    VerificationRegistry,
 )
 
 FIXTURE_ORDER_NUMBER = "NS-000123"

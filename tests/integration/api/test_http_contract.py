@@ -24,7 +24,6 @@ from tests.integration.support.api import (
     unrelated_extraction,
 )
 
-
 SESSION_VIEW_KEYS = {
     "session_id",
     "revision",

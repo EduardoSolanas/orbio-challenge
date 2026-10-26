@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from gateway.conversation.validation import FIELD_ORDER, MergeOutcome
 from gateway.localization import missing_question, text
 from gateway.schemas import (
     Citation,
@@ -19,7 +20,6 @@ from gateway.schemas import (
     SlotOption,
     Slots,
 )
-from gateway.conversation.validation import FIELD_ORDER, MergeOutcome
 
 
 @dataclass(frozen=True)

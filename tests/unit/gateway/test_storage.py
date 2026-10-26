@@ -230,7 +230,6 @@ async def test_locks_serialize_concurrent_access_to_one_session(tmp_path):
     import asyncio
 
     repo = repository(tmp_path)
-    entered = asyncio.Event()
     order = []
 
     async def holder():
@@ -254,7 +253,6 @@ async def test_locks_serialize_concurrent_access_to_one_session(tmp_path):
 async def test_lock_acquisition_timeout_is_two_seconds_and_session_busy(
     tmp_path,
 ):
-    import asyncio
     import time
 
     repo = repository(tmp_path)
@@ -275,7 +273,6 @@ async def test_lock_acquisition_timeout_is_two_seconds_and_session_busy(
 
 
 async def test_locks_are_independent_per_session(tmp_path):
-    import asyncio
 
     repo = repository(tmp_path)
     other = uuid4()

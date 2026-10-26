@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
-from gateway.errors import INVALID_PROVIDER_RESPONSE, KNOWLEDGE_INVALID_MESSAGE, AppError
+from gateway.errors import (
+    INVALID_PROVIDER_RESPONSE,
+    KNOWLEDGE_INVALID_MESSAGE,
+    AppError,
+)
 from gateway.knowledge.retrieval import (
     MAX_ANSWER_CHARS,
     MAX_KB_BYTES,

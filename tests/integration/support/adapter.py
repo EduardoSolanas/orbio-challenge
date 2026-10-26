@@ -21,7 +21,6 @@ from tests.integration.support.transcription import (
     unexpected,
 )
 
-
 ROLES = ("llm", "rag", "stt", "tts")
 
 DEFAULT_ENV = {

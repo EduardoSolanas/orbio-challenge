@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from gateway.main import create_app
 from gateway.backend_client import BackendApiClient
 from gateway.conversation.verification import VerificationRegistry
+from gateway.main import create_app
 from tests.integration.order_verification.support import FakeClock
-from tests.integration.support.api import running_client
 from tests.integration.support.backend_api import LocalBackendApiServer
 
 
@@ -36,9 +35,3 @@ def app(settings, provider, verification, backend_api):
         verification_registry=verification,
         backend_api_client=BackendApiClient(backend_api.base_url),
     )
-
-
-@pytest.fixture
-async def client(app):
-    async with running_client(app) as active_client:
-        yield active_client

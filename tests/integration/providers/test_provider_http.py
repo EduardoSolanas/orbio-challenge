@@ -14,31 +14,27 @@ from __future__ import annotations
 import json
 import socket
 import time
-from typing import Any
 
 import pytest
 
 from gateway.errors import AppError
-from gateway.providers.prompts import EXTRACTION_SYSTEM_PROMPT, KNOWLEDGE_PROMPT
 from gateway.providers.client import (
     REPAIR_LINE,
     SCHEMA_INSTRUCTION,
     SUCCESS_JSON_LIMIT,
     OpenAICompatibleProvider,
 )
+from gateway.providers.prompts import EXTRACTION_SYSTEM_PROMPT, KNOWLEDGE_PROMPT
 from gateway.schemas import (
     Extraction,
-    ExtractionContext,
     KnowledgeAnswer,
-    KnowledgeContext,
     KnowledgeRecord,
-    Slots,
 )
+from tests.integration.support.adapter import extraction_context
 from tests.integration.support.provider_http import (
     ABORTED,
     CHAT_PATH,
     REDIRECTED,
-    LocalProviderServer,
     answer_payload,
     build_settings,
     chat_system_content,
@@ -47,7 +43,7 @@ from tests.integration.support.provider_http import (
     provider_from,
     shorten_text_budget,
 )
-
+from tests.unit.gateway.providers.provider_support import knowledge_context
 
 SOURCE = KnowledgeRecord(
     id="faq-returns",
@@ -71,34 +67,12 @@ ANSWER = answer_payload(
 )
 
 
-def extraction_context() -> ExtractionContext:
-    return ExtractionContext(
-        slots=Slots(order_number=None, category=None, description=None, urgency=None),
-        pending_clarifications={},
-        recent_messages=[],
-        current_message="My order NS-000123 arrived broken.",
-        status="collecting",
-        intake_started=False,
-        frustration_active=False,
-    )
-
-
-def knowledge_context() -> KnowledgeContext:
-    return KnowledgeContext(
-        question="Can I return an unused item?",
-        kb_version="2026-10-22",
-        sources=[SOURCE],
-    )
 
 
 async def no_sleep(delay: float) -> None:
     """Injected retry pause: no wall-clock jitter in transport tests."""
 
 
-@pytest.fixture
-def server():
-    with LocalProviderServer() as active:
-        yield active
 
 
 # Exact requests and parsed results -------------------------------------------
@@ -413,9 +387,9 @@ async def test_provider_400_is_not_retried_and_maps_to_configuration(server, tmp
     assert server.count(CHAT_PATH) == 1
 
 
-async def test_read_timeout_is_bounded_and_leaves_no_detached_work(
-    server, tmp_path, monkeypatch
-):
+async def extract_against_a_slow_server(server, tmp_path, monkeypatch) -> tuple[AppError, float]:
+    """Two attempts, each answered a second late, against a 0.3 s attempt budget."""
+
     shorten_text_budget(monkeypatch, attempt_timeout=0.3, total_deadline=5.0)
     settings = build_settings(tmp_path / "sessions", server)
     server.respond(CHAT_PATH, json_body={}, delay=1.0)
@@ -429,14 +403,27 @@ async def test_read_timeout_is_bounded_and_leaves_no_detached_work(
         elapsed = time.monotonic() - started
     finally:
         await provider.close()
+    return excinfo.value, elapsed
 
-    assert excinfo.value.code == "provider_timeout"
-    assert excinfo.value.status == 504
+
+async def test_read_timeout_is_bounded(server, tmp_path, monkeypatch):
+    error, elapsed = await extract_against_a_slow_server(server, tmp_path, monkeypatch)
+
+    assert error.code == "provider_timeout"
+    assert error.status == 504
     assert elapsed < 2.5, elapsed
-    requests = server.settle(CHAT_PATH)
+
+
+async def test_a_timed_out_call_makes_only_the_configured_attempts_and_leaves_no_detached_work(
+    server, tmp_path, monkeypatch
+):
+    await extract_against_a_slow_server(server, tmp_path, monkeypatch)
+
+    # Wait for both attempts to reach the server, then for the delayed responses to finish.
+    requests = server.settle(CHAT_PATH, expected=2)
+
     assert len(requests) == 2
-    # The client made only the two configured attempts; completing the delayed
-    # fake responses must not start another provider attempt or mutate state.
+    # Completing the delayed fake responses must not start another provider attempt.
     assert server.count(CHAT_PATH) == 2
 
 

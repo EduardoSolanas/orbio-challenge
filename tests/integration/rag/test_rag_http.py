@@ -26,11 +26,14 @@ import pytest
 
 from gateway.conversation.engine import RECENT_MESSAGE_LIMIT
 from gateway.main import create_app
-from gateway.providers.prompts import ABSTENTION, EXTRACTION_SYSTEM_PROMPT, KNOWLEDGE_PROMPT
 from gateway.providers.client import REPAIR_LINE
+from gateway.providers.prompts import (
+    ABSTENTION,
+    EXTRACTION_SYSTEM_PROMPT,
+    KNOWLEDGE_PROMPT,
+)
 from tests.integration.support.api import running_client
 from tests.integration.support.provider_http import (
-    ABORTED,
     CHAT_PATH,
     SPEECH_PATH,
     LocalProviderServer,
@@ -40,7 +43,6 @@ from tests.integration.support.provider_http import (
     chat_user_content,
     extraction_payload,
 )
-
 
 KB = json.loads(
     (Path(__file__).resolve().parents[3] / "gateway" / "knowledge" / "northstar-faq.json").read_text(
@@ -66,10 +68,6 @@ TWO_SOURCE_ANSWER = (
 DELIVERY_ANSWER = "Standard delivery takes 2 to 5 business days after dispatch."
 
 
-@pytest.fixture
-def server():
-    with LocalProviderServer() as active:
-        yield active
 
 
 def seed_citation(record_id: str) -> dict[str, Any]:

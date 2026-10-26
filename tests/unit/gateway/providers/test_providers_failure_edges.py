@@ -7,8 +7,8 @@ retry jitter and deadline arithmetic are deterministic: failure edges."""
 from __future__ import annotations
 
 import asyncio
-from dataclasses import replace
 import json
+from dataclasses import replace
 
 import httpx
 import pytest
@@ -17,18 +17,18 @@ from gateway.errors import AppError
 from gateway.providers.client import OpenAICompatibleProvider
 from gateway.schemas import Extraction, KnowledgeContext, KnowledgeRecord
 from tests.unit.gateway.providers.provider_support import (
-    ChunkedStream,
     EXTRACTION_PAYLOAD,
     LLM_PROFILE,
     RAG_PROFILE,
     ROLES,
-    RoleTransport,
     SOURCE,
     STT_PROFILE,
+    TTS_PROFILE,
+    ChunkedStream,
+    RoleTransport,
     SequenceClock,
     SleepRecorder,
     SlowStream,
-    TTS_PROFILE,
     audio_responder,
     build_provider,
     chat_envelope,
@@ -476,7 +476,6 @@ async def test_fifth_capacity_call_is_bounded_and_busy_without_queueing():
 
 
 async def test_released_permit_restores_capacity_one_at_a_time():
-    held = asyncio.Event()
     release = asyncio.Event()
     wire_calls = 0
 

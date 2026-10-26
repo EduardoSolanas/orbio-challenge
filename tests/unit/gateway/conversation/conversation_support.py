@@ -14,7 +14,6 @@ from tests.support.unit_fakes import (
     make_slots,
 )
 
-
 FULL_SLOTS = make_slots(
     order_number="NS-000123",
     category="damaged_item",

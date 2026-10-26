@@ -7,13 +7,13 @@ session mutation. ``conversation.py`` combines these answers into a reply plan
 
 from __future__ import annotations
 
-from gateway.schemas import Extraction, Frustration, Session, Slots
 from gateway.conversation.validation import (
     FIELD_ORDER,
     MergeOutcome,
     normalize_candidate,
     validate_field,
 )
+from gateway.schemas import Extraction, Frustration, Session, Slots
 
 
 def slots_complete(slots: Slots) -> bool:

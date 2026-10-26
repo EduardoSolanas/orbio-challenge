@@ -31,6 +31,9 @@ jobs:
       - name: pip check
         run: python -m pip check
 
+      - name: Ruff (unused imports, import order, undefined names)
+        run: python -m ruff check .
+
       - name: Prepare report directory
         run: mkdir -p reports
 

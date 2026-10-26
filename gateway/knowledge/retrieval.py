@@ -18,7 +18,11 @@ from typing import Any
 
 from pydantic import ConfigDict
 
-from gateway.errors import INVALID_PROVIDER_RESPONSE, KNOWLEDGE_INVALID_MESSAGE, app_error
+from gateway.errors import (
+    INVALID_PROVIDER_RESPONSE,
+    KNOWLEDGE_INVALID_MESSAGE,
+    app_error,
+)
 from gateway.schemas import Citation, KnowledgeAnswer, KnowledgeRecord
 
 KB_SCHEMA_VERSION = 1

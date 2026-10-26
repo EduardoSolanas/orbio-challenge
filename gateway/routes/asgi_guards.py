@@ -8,7 +8,11 @@ import time
 from uuid import UUID, uuid4
 
 from gateway.errors import INPUT_TOO_LARGE, AppError, app_error
-from gateway.routes.http_support import MAX_JSON_BODY_BYTES, MAX_MULTIPART_BYTES, error_payload
+from gateway.routes.http_support import (
+    MAX_JSON_BODY_BYTES,
+    MAX_MULTIPART_BYTES,
+    error_payload,
+)
 
 logger = logging.getLogger(__name__)
 

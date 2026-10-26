@@ -6,17 +6,33 @@ from datetime import datetime
 
 import pytest
 
-from backend_api.bookings import ALREADY_BOOKED, SLOT_UNAVAILABLE, BookingRefused, BookingStore
+from backend_api.bookings import (
+    ALREADY_BOOKED,
+    SLOT_UNAVAILABLE,
+    BookingRefused,
+    BookingStore,
+)
 
 MONDAY_MORNING = datetime(2026, 11, 2, 8, 0)
 FIRST_WINDOW = "2026-11-02T09:00"
 
 
-def store_at(moment: datetime = MONDAY_MORNING, path: str | None = None) -> BookingStore:
-    return BookingStore(path, clock=lambda: moment)
+@pytest.fixture
+def store_at():
+    """A factory for stores; every one it hands out is closed when the test ends."""
+    opened: list[BookingStore] = []
+
+    def make(moment: datetime = MONDAY_MORNING, path: str | None = None) -> BookingStore:
+        store = BookingStore(path, clock=lambda: moment)
+        opened.append(store)
+        return store
+
+    yield make
+    for store in opened:
+        store.close()
 
 
-def test_open_slots_are_the_next_six_windows_earliest_first() -> None:
+def test_open_slots_are_the_next_six_windows_earliest_first(store_at) -> None:
     slots = store_at().open_slots()
 
     assert [slot["starts_at"] for slot in slots] == [
@@ -30,19 +46,19 @@ def test_open_slots_are_the_next_six_windows_earliest_first() -> None:
     assert slots[0] == {"starts_at": "2026-11-02T09:00", "ends_at": "2026-11-02T11:00"}
 
 
-def test_windows_already_started_are_not_offered() -> None:
+def test_windows_already_started_are_not_offered(store_at) -> None:
     slots = store_at(datetime(2026, 11, 2, 12, 0)).open_slots()
 
     assert slots[0]["starts_at"] == "2026-11-02T13:00"
 
 
-def test_weekends_are_skipped() -> None:
+def test_weekends_are_skipped(store_at) -> None:
     friday_evening = datetime(2026, 11, 6, 16, 0)
 
     assert store_at(friday_evening).open_slots()[0]["starts_at"] == "2026-11-09T09:00"
 
 
-def test_booking_reserves_the_window_and_returns_a_reference() -> None:
+def test_booking_reserves_the_window_and_returns_a_reference(store_at) -> None:
     store = store_at()
 
     appointment = store.book("NS-000123", FIRST_WINDOW)
@@ -54,7 +70,7 @@ def test_booking_reserves_the_window_and_returns_a_reference() -> None:
     assert FIRST_WINDOW not in [slot["starts_at"] for slot in store.open_slots()]
 
 
-def test_an_account_can_hold_only_one_visit() -> None:
+def test_an_account_can_hold_only_one_visit(store_at) -> None:
     store = store_at()
     store.book("NS-000123", FIRST_WINDOW)
 
@@ -67,7 +83,7 @@ def test_an_account_can_hold_only_one_visit() -> None:
 @pytest.mark.parametrize(
     "starts_at", ["2026-11-02T09:00", "2026-11-07T09:00", "2026-11-02T10:00", "nonsense"]
 )
-def test_taken_missing_or_started_windows_are_refused(starts_at: str, tmp_path) -> None:
+def test_taken_missing_or_started_windows_are_refused(store_at, starts_at: str, tmp_path) -> None:
     path = str(tmp_path / "bookings.db")
     store_at(datetime(2026, 11, 2, 8, 0), path=path).book("NS-000999", FIRST_WINDOW)
     store = store_at(datetime(2026, 11, 2, 9, 30), path=path)
@@ -78,7 +94,7 @@ def test_taken_missing_or_started_windows_are_refused(starts_at: str, tmp_path) 
     assert refused.value.code == SLOT_UNAVAILABLE
 
 
-def test_bookings_survive_a_restart_and_the_top_up_keeps_them(tmp_path) -> None:
+def test_bookings_survive_a_restart_and_the_top_up_keeps_them(store_at, tmp_path) -> None:
     path = str(tmp_path / "bookings.db")
     booked = store_at(path=path).book("NS-000123", FIRST_WINDOW)
 
@@ -89,7 +105,7 @@ def test_bookings_survive_a_restart_and_the_top_up_keeps_them(tmp_path) -> None:
     assert reopened.open_slots()[-1]["starts_at"] > "2026-11-03T11:00"
 
 
-def test_two_connections_to_one_file_cannot_take_the_same_window(tmp_path) -> None:
+def test_two_connections_to_one_file_cannot_take_the_same_window(store_at, tmp_path) -> None:
     path = str(tmp_path / "bookings.db")
     first, second = store_at(path=path), store_at(path=path)
 

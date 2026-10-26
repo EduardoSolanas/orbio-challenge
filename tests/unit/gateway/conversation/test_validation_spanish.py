@@ -4,9 +4,13 @@ from __future__ import annotations
 
 import pytest
 
+from gateway.conversation.validation import (
+    merge_extraction,
+    normalize_candidate,
+    validate_field,
+)
 from gateway.localization import field_label
-from gateway.schemas import Clarification, Extraction, Slots
-from gateway.conversation.validation import merge_extraction, normalize_candidate, validate_field
+from gateway.schemas import Extraction, Slots
 
 NO_SLOTS = {
     "order_number": None,

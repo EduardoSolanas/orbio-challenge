@@ -6,8 +6,8 @@ retry jitter and deadline arithmetic are deterministic: transport."""
 
 from __future__ import annotations
 
-from dataclasses import replace
 import json
+from dataclasses import replace
 
 import httpx
 import pytest
@@ -16,14 +16,14 @@ from gateway.errors import AppError
 from gateway.schemas import Extraction
 from tests.unit.gateway.providers.provider_support import (
     ANSWER_PAYLOAD,
-    Clock,
     EXTRACTION_PAYLOAD,
     LLM_PROFILE,
     RAG_PROFILE,
     ROLES,
     STT_PROFILE,
-    SleepRecorder,
     TTS_PROFILE,
+    Clock,
+    SleepRecorder,
     build_provider,
     chat_envelope,
     extraction_context,

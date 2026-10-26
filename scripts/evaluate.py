@@ -35,14 +35,14 @@ if str(REPO_ROOT) not in sys.path:
 
 from gateway.config import Settings  # noqa: E402
 from gateway.conversation.safety import SafetyIndex, load_examples  # noqa: E402
+from gateway.knowledge.retrieval import load_knowledge  # noqa: E402
+from gateway.knowledge.semantic import SemanticIndex  # noqa: E402
 from gateway.main import (  # noqa: E402
     DEFAULT_KNOWLEDGE_PATH,
     DEFAULT_SAFETY_EXAMPLES_PATH,
     _build_provider,
 )
-from gateway.knowledge.retrieval import load_knowledge  # noqa: E402
 from gateway.schemas import ExtractionContext, Slots  # noqa: E402
-from gateway.knowledge.semantic import SemanticIndex  # noqa: E402
 
 DEFAULT_CASES = REPO_ROOT / "tests" / "eval" / "utterances.json"
 DEFAULT_REPORT = REPO_ROOT / "reports" / "evaluation.json"
@@ -246,7 +246,7 @@ async def evaluate_retrieval(settings: Settings, provider, cases: list[dict], la
         except Exception as error:  # noqa: BLE001
             ids = [f"error:{getattr(error, 'code', type(error).__name__)}"]
         results.append((case, ids))
-    report["embedding"] = score(f"embedding", results)
+    report["embedding"] = score("embedding", results)
     report["embedding"]["min_similarity"] = settings.embed_min_similarity
     return report
 

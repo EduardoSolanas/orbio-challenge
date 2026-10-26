@@ -14,25 +14,25 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from gateway.errors import (
-    INVALID_BACKEND_API_RESPONSE,
-    BACKEND_API_TIMEOUT,
-    BACKEND_API_UNAVAILABLE,
-    AppError,
-)
 from backend_api.main import (
     DEMO_VERIFICATION_CODE,
     FIXTURE_ORDER_NUMBER,
     FIXTURE_POSTCODE,
     NOT_FOUND,
-    OrderRecord,
     VERIFICATION_FAILED,
+    OrderRecord,
     create_backend_api_app,
     credentials_match,
     normalize_postcode,
     valid_verification_code,
 )
 from gateway.backend_client import BackendApiClient
+from gateway.errors import (
+    BACKEND_API_TIMEOUT,
+    BACKEND_API_UNAVAILABLE,
+    INVALID_BACKEND_API_RESPONSE,
+    AppError,
+)
 
 OTHER_ORDER = "NS-000999"
 WRONG_CODE = "123456"

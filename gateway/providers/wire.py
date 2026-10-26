@@ -15,7 +15,12 @@ from pydantic import BaseModel, ValidationError
 from gateway.config import TextProfile
 from gateway.errors import app_error
 from gateway.knowledge.retrieval import MAX_ANSWER_CHARS, TOP_K
-from gateway.schemas import Extraction, KnowledgeAnswer, KnowledgeContext, KnowledgeRecord
+from gateway.schemas import (
+    Extraction,
+    KnowledgeAnswer,
+    KnowledgeContext,
+    KnowledgeRecord,
+)
 
 REPAIR_LINE = (
     "The previous response did not satisfy the schema. Return a complete schema object."

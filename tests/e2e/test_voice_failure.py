@@ -10,9 +10,9 @@ from playwright.sync_api import expect
 from tests.e2e.conftest import body_of
 from tests.support.fakes import (
     FULL,
-    receipt_for,
     STT_TEXT,
     make_wav,
+    receipt_for,
     review_reply,
     summary_text,
     x_full,

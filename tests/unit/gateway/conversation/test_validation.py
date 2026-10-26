@@ -2,39 +2,20 @@
 
 import pytest
 
-from gateway.providers.prompts import (
-    MISSING_CATEGORY,
-    MISSING_DESCRIPTION,
-    MISSING_ORDER,
-    MISSING_URGENCY,
-    REJECT_PROMPT,
-    REVIEW_SUFFIX,
-    build_review_reply,
-    build_summary,
-)
-from gateway.schemas import Clarification, Extraction, Slots
 from gateway.conversation.validation import (
     FIELD_ORDER,
     MergeOutcome,
     merge_extraction,
     normalize_candidate,
-    select_reply,
     validate_field,
 )
-
-
-def make_slots(
-    order_number: str | None = None,
-    category: str | None = None,
-    description: str | None = None,
-    urgency: str | None = None,
-) -> Slots:
-    return Slots(
-        order_number=order_number,
-        category=category,
-        description=description,
-        urgency=urgency,
-    )
+from gateway.providers.prompts import (
+    REVIEW_SUFFIX,
+    build_review_reply,
+    build_summary,
+)
+from gateway.schemas import Clarification, Extraction, Slots
+from tests.support.unit_fakes import make_slots
 
 
 def make_extraction(
@@ -585,127 +566,6 @@ def test_merge_returns_a_new_slots_object_and_leaves_the_input_untouched() -> No
     assert isinstance(outcome, MergeOutcome)
     assert outcome.slots is not original
     assert original.order_number is None
-
-
-def test_new_reject_wins_over_every_pending_issue() -> None:
-    pending = {
-        "order_number": Clarification(
-            code="invalid", candidate="12345", question="ignored"
-        )
-    }
-    reply = select_reply(
-        new_reject=True,
-        pending_clarifications=pending,
-        review_rejected=True,
-        slots=make_slots(),
-    )
-    assert reply == REJECT_PROMPT == "What would you like to change?"
-
-
-def test_first_pending_issue_is_asked_in_field_order() -> None:
-    pending = {
-        "urgency": Clarification(code="invalid", candidate="asap", question="U?"),
-        "description": Clarification(
-            code="invalid", candidate="broken", question="D?"
-        ),
-        "order_number": Clarification(
-            code="invalid", candidate="12345", question="O?"
-        ),
-    }
-    assert (
-        select_reply(
-            new_reject=False,
-            pending_clarifications=pending,
-            review_rejected=False,
-            slots=make_slots(),
-        )
-        == "O?"
-    )
-    assert (
-        select_reply(
-            new_reject=False,
-            pending_clarifications={
-                "urgency": pending["urgency"],
-                "description": pending["description"],
-            },
-            review_rejected=False,
-            slots=make_slots(),
-        )
-        == "D?"
-    )
-
-
-def test_pending_issue_wins_over_the_rejection_prompt() -> None:
-    pending = {
-        "category": Clarification(code="conflict", candidate="refund", question="C?")
-    }
-    assert (
-        select_reply(
-            new_reject=False,
-            pending_clarifications=pending,
-            review_rejected=True,
-            slots=make_slots(category="delivery"),
-        )
-        == "C?"
-    )
-
-
-def test_review_rejected_without_pending_issues_asks_for_a_change() -> None:
-    assert (
-        select_reply(
-            new_reject=False,
-            pending_clarifications={},
-            review_rejected=True,
-            slots=make_slots(),
-        )
-        == "What would you like to change?"
-    )
-
-
-@pytest.mark.parametrize(
-    ("slots", "expected"),
-    [
-        (make_slots(), MISSING_ORDER),
-        (make_slots(order_number="NS-123456"), MISSING_CATEGORY),
-        (
-            make_slots(order_number="NS-123456", category="delivery"),
-            MISSING_DESCRIPTION,
-        ),
-        (
-            make_slots(
-                order_number="NS-123456",
-                category="delivery",
-                description="My order arrived broken",
-            ),
-            MISSING_URGENCY,
-        ),
-    ],
-)
-def test_first_missing_field_question_is_asked(slots: Slots, expected: str) -> None:
-    assert (
-        select_reply(
-            new_reject=False,
-            pending_clarifications={},
-            review_rejected=False,
-            slots=slots,
-        )
-        == expected
-    )
-
-
-def test_complete_slots_select_the_review_reply() -> None:
-    slots = make_slots(
-        "NS-000123", "damaged_item", "My order arrived broken", "high"
-    )
-    assert (
-        select_reply(
-            new_reject=False,
-            pending_clarifications={},
-            review_rejected=False,
-            slots=slots,
-        )
-        == build_review_reply(slots)
-    )
 
 
 def test_summary_uses_canonical_values_and_contract_format() -> None:

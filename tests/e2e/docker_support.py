@@ -1,16 +1,20 @@
-"""Shared pieces of the real Docker E2E modules: fixtures, page helpers and the judge call.
+"""Shared pieces of the real Docker E2E modules: page helpers and the judge call (the fixtures are in conftest.py).
 
 Nothing here installs a provider fake; the modules that import it talk to the deployed stack.
 """
 from __future__ import annotations
 
+import json
+import subprocess
+import urllib.request
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Page
 
-from tests.e2e.docker_config import DockerE2EConfig, load_config, probe, semantic_judge
+from tests.e2e.docker_config import DockerE2EConfig, semantic_judge
 from tests.e2e.judge_config import write_artifact
 
 JUDGE_ARTIFACTS = Path("reports/e2e-docker/judge")
@@ -42,6 +46,42 @@ def send(page: Page, text: str) -> tuple[Any, dict[str, Any]]:
     return response, body
 
 
+RESET_BOOKINGS = (
+    "import sqlite3; db = sqlite3.connect('/data/backend/bookings.db'); "
+    "db.execute('UPDATE slots SET order_number = NULL, reference = NULL'); db.commit()"
+)
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def reset_demo_bookings() -> None:
+    """Free every technician window in the deployed Backend API's store (a disposable deployment)."""
+    try:
+        subprocess.run(
+            ["docker", "compose", "exec", "-T", "backend-api", "python", "-c", RESET_BOOKINGS],
+            cwd=REPO_ROOT, check=True, capture_output=True, text=True, timeout=60,
+        )
+    except (OSError, subprocess.SubprocessError) as error:
+        pytest.fail(f"cannot reset the deployed booking store, so a booking journey cannot start fresh: {error}")
+
+
+def book_demo_visit(app_url: str) -> str:
+    """Give the demo account its one visit through the public API; returns the booked window."""
+
+    def call(path: str, body: dict[str, Any]) -> dict[str, Any]:
+        request = urllib.request.Request(f"{app_url}{path}", data=json.dumps(body).encode(), headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(request, timeout=120) as response:
+            return json.loads(response.read())
+
+    session_id = call("/api/sessions", {})["session_id"]
+    first = call(f"/api/sessions/{session_id}/turns", {"request_id": str(uuid4()), "expected_revision": 0, "text": "I'd like to book a technician for account NS-000123.", "input_mode": "text"})
+    assert first["order_verification_required"] is True, first["reply"]
+    verified = call(f"/api/sessions/{session_id}/order-verification", {"delivery_postcode": "SW1A 1AA", "verification_code": "246810"})
+    turn = verified["turn"]
+    window = turn["slot_options"][0]["starts_at"]
+    call(f"/api/sessions/{session_id}/bookings", {"request_id": str(uuid4()), "expected_revision": turn["revision"], "starts_at": window})
+    return window
+
+
 def assistant_text(body: dict[str, Any]) -> str:
     return body["reply"]
 
@@ -54,19 +94,3 @@ def verify(page: Page, postcode: str, code: str) -> dict[str, Any]:
         page.locator("#verify-order").click()
     assert pending.value.status == 200
     return pending.value.json()
-
-
-@pytest.fixture(scope="session")
-def docker_config() -> DockerE2EConfig:
-    config = load_config()
-    probe(config)
-    return config
-
-
-@pytest.fixture
-def docker_page(page: Page, docker_config: DockerE2EConfig) -> Page:
-    response = page.goto(f"{docker_config.app_url}/")
-    assert response is not None and response.status == 200
-    assert page.url == f"{docker_config.app_url}/"
-    expect(page.locator("#transcript")).not_to_be_empty()
-    return page

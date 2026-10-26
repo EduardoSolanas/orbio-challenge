@@ -22,7 +22,6 @@ from uuid import uuid4
 import httpx
 import pytest
 
-from gateway.providers.prompts import GREETING
 from tests.integration.support.intake import PART_TEXT, start_session, turn_body
 from tests.integration.support.transcription import (
     RecordingStream,
@@ -32,7 +31,6 @@ from tests.integration.support.transcription import (
     snapshot,
     streamed_wire,
 )
-
 
 MP3_FIXTURE = Path(__file__).resolve().parents[2] / "fixtures" / "reply.mp3"
 TTS_PATH = "/v1/audio/speech"

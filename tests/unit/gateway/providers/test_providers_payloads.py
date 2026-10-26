@@ -6,15 +6,19 @@ retry jitter and deadline arithmetic are deterministic: payloads."""
 
 from __future__ import annotations
 
-from dataclasses import replace
 import json
+from dataclasses import replace
 
 import httpx
 import pytest
 
 from gateway.errors import AppError
-from gateway.providers.prompts import EXTRACTION_SYSTEM_PROMPT, KNOWLEDGE_PROMPT, serialize_context
 from gateway.providers.client import REPAIR_LINE, SCHEMA_INSTRUCTION
+from gateway.providers.prompts import (
+    EXTRACTION_SYSTEM_PROMPT,
+    KNOWLEDGE_PROMPT,
+    serialize_context,
+)
 from gateway.schemas import Extraction, KnowledgeAnswer
 from tests.unit.gateway.providers.provider_support import (
     ANSWER_PAYLOAD,

@@ -21,7 +21,6 @@ from gateway.schemas import Session
 from tests.integration.support.api import make_extraction, session_files
 from tests.integration.support.intake import turn_body
 
-
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "sessions"
 V1_FIXTURES = [
     "v1-collecting.json",

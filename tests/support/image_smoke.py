@@ -137,10 +137,10 @@ def main() -> int:
     sys.path.insert(0, str(CHECKS_DIR))
     try:
         import uvicorn
+        from support.fakes import E2EProvider
 
         from gateway.main import create_app
         from gateway.schemas import Extraction, Slots
-        from support.fakes import E2EProvider
     except Exception as exc:  # sanitized: class and missing module only
         missing = getattr(exc, "name", None)
         detail = f": {missing}" if missing else ""

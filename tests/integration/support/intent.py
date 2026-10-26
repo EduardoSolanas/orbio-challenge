@@ -5,7 +5,6 @@ from __future__ import annotations
 from gateway.providers.prompts import POLICY_QUESTION_SUFFIX
 from tests.integration.support.api import make_extraction
 
-
 SOCIAL_GREETING = "Hello, how are you?"
 
 SOCIAL_THANKS = "Thanks."
@@ -30,3 +29,11 @@ def social_extraction(has_question: bool = False):
 
 def assert_no_policy_suffix(reply: str) -> None:
     assert POLICY_QUESTION_SUFFIX not in reply
+
+
+def capability_extraction(has_question: bool = False):
+    return make_extraction(intent="capability", has_question=has_question)
+
+
+def start_intake_extraction(has_question: bool = False):
+    return make_extraction(intent="start_intake", has_question=has_question)

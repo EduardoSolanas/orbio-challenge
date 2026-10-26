@@ -21,7 +21,11 @@ from uuid import UUID
 from pydantic import ValidationError
 
 from gateway.errors import app_error
-from gateway.schemas import LEGACY_SESSION_SCHEMA_VERSION, SESSION_SCHEMA_VERSION, Session
+from gateway.schemas import (
+    LEGACY_SESSION_SCHEMA_VERSION,
+    SESSION_SCHEMA_VERSION,
+    Session,
+)
 
 SESSION_FILE_SUFFIX = ".json"
 LOCK_ACQUISITION_TIMEOUT_SECONDS = 2.0

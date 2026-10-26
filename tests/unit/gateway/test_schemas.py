@@ -5,16 +5,17 @@ the implementation contract; strictness rules are asserted in the second slice
 of this file.
 """
 
-import pytest
-from pydantic import ValidationError
-
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
+import pytest
+from pydantic import ValidationError
+
 from gateway.schemas import (
+    Citation,
     Clarification,
-    ConfirmRequest,
     Confirmation,
+    ConfirmRequest,
     Extraction,
     ExtractionContext,
     FieldName,
@@ -31,7 +32,6 @@ from gateway.schemas import (
     Status,
     TurnRequest,
     TurnResponse,
-    Citation,
 )
 
 SESSION_ID = "3f7c1c1e-0f0a-4a4e-9a5e-2b1d0f6c8a11"

@@ -258,3 +258,7 @@ def read_session(session_dir: Path, session_id: str) -> dict[str, Any]:
 
 def canonical_uuid(value: str) -> UUID:
     return UUID(value)
+
+
+def session_path(session_dir: Path, session_id: str) -> Path:
+    return session_dir / f"{session_id}.json"

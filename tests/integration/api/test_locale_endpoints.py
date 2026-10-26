@@ -2,30 +2,24 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
 
 from gateway.errors import LOCALIZATION_INVALID_MESSAGE
-from gateway.localization import LOCALES_DIR, load_locales
+from gateway.localization import load_locales
 from gateway.main import create_app
 from tests.integration.support.api import (
     ScriptedProvider,
     build_settings,
     running_client,
 )
+from tests.support.locale_files import write_locales
 
 
 def shipped(language: str) -> dict[str, str]:
     return dict(load_locales().mapping(language))
 
-
-def write_locales(directory: Path, english: dict[str, object], spanish: dict[str, object]) -> Path:
-    directory.mkdir(parents=True, exist_ok=True)
-    (directory / "en.json").write_text(json.dumps(english, ensure_ascii=False), encoding="utf-8")
-    (directory / "es.json").write_text(json.dumps(spanish, ensure_ascii=False), encoding="utf-8")
-    return directory
 
 
 async def test_locale_route_serves_only_the_selected_dictionary(client):

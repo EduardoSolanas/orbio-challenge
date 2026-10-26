@@ -32,7 +32,6 @@ from tests.integration.support.transcription import (
     snapshot,
 )
 
-
 STT_PATH = "/v1/audio/transcriptions"
 TRANSCRIPT = "My order NS-000123 arrived broken and this is urgent."
 

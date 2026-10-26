@@ -11,7 +11,6 @@ from tests.integration.support.api import (
     read_session,
 )
 
-
 PART_TEXT = "My order NS-000123 arrived broken."
 
 CATEGORY_TEXT = "It is a damaged item."

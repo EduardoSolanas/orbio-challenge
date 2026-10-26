@@ -34,8 +34,8 @@ if str(REPO_ROOT) not in sys.path:
 
 from gateway.config import Settings
 from gateway.errors import AppError
-from gateway.providers.prompts import EMOTION_EVALUATION_CASES
 from gateway.providers.client import OpenAICompatibleProvider
+from gateway.providers.prompts import EMOTION_EVALUATION_CASES
 from gateway.schemas import ExtractionContext, RecentMessage, Slots
 
 DEFAULT_REPORT = REPO_ROOT / "reports" / "emotion-evaluation.json"

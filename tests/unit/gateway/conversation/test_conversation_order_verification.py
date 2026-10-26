@@ -8,16 +8,14 @@ response models and registry run without a network.
 
 from __future__ import annotations
 
-from uuid import uuid4
-
 import httpx
 import pytest
 
-from gateway.conversation.engine import ConversationEngine
 from gateway.backend_client import BackendApiClient
+from gateway.conversation.engine import ConversationEngine
+from gateway.conversation.verification import VerificationRegistry
 from gateway.schemas import OrderVerificationRequest
 from gateway.storage import JsonSessionRepository
-from gateway.conversation.verification import VerificationRegistry
 from tests.support.unit_fakes import (
     FakeKnowledgeBase,
     FakeProvider,

@@ -10,10 +10,15 @@ from uuid import uuid4
 
 import pytest
 
-from gateway.localization import request_reference
 from gateway.conversation.engine import ConversationEngine
 from gateway.errors import AppError
-from gateway.localization import build_review_reply, build_summary, render, text
+from gateway.localization import (
+    build_review_reply,
+    build_summary,
+    render,
+    request_reference,
+    text,
+)
 from gateway.schemas import (
     Citation,
     ConfirmRequest,

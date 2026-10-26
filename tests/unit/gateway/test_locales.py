@@ -7,12 +7,10 @@ mappings and strict named-placeholder substitution.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
 
-from gateway.schemas import Slots
 from gateway.localization import (
     CATALOG,
     DEFAULT_LANGUAGE,
@@ -23,19 +21,8 @@ from gateway.localization import (
     render,
     text,
 )
-
-
-def write_locales(
-    directory: Path, english: dict[str, object], spanish: dict[str, object]
-) -> Path:
-    directory.mkdir(parents=True, exist_ok=True)
-    (directory / "en.json").write_text(
-        json.dumps(english, ensure_ascii=False), encoding="utf-8"
-    )
-    (directory / "es.json").write_text(
-        json.dumps(spanish, ensure_ascii=False), encoding="utf-8"
-    )
-    return directory
+from gateway.schemas import Slots
+from tests.support.locale_files import write_locales
 
 
 def test_supported_languages_and_default_are_exactly_english_and_spanish():

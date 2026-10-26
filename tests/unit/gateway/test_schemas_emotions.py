@@ -7,7 +7,7 @@ and served object. Missing or invalid labels never degrade to ``neutral``.
 
 from __future__ import annotations
 
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
 from pydantic import ValidationError
@@ -18,7 +18,6 @@ from gateway.schemas import (
     Message,
     Session,
     SessionView,
-    Slots,
     TurnResponse,
 )
 

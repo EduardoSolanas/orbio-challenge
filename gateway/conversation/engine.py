@@ -16,14 +16,15 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Literal, Protocol, Sequence
 from uuid import UUID, uuid4
 
-from shared.models import OrderRecord
 from gateway.backend_client import BackendApiClient
-from gateway.errors import AppError, app_error
-from gateway.conversation.safety import (
-    SAFETY_QUERY,
-    SafetyIndex,
-    as_safety_question,
-    fallback_extraction,
+from gateway.conversation.flows import (
+    INTAKE_STATUS,
+    SUPPORT_REQUEST,
+    FlowContext,
+    FlowDefinition,
+    load_flows,
+    only_account_number,
+    run_flow,
 )
 from gateway.conversation.intent import (
     apply_transitions,
@@ -36,7 +37,6 @@ from gateway.conversation.intent import (
     is_pure_unrelated,
     transition_frustration,
 )
-from gateway.localization import build_summary, render, text, request_reference
 from gateway.conversation.plans import (
     TurnPlan,
     choose_reply_language,
@@ -44,8 +44,31 @@ from gateway.conversation.plans import (
     unchanged_outcome,
     unsupported_plan,
 )
-from gateway.conversation.replay import booking_digest, confirm_digest, find_replay, turn_digest
+from gateway.conversation.replay import (
+    booking_digest,
+    confirm_digest,
+    find_replay,
+    turn_digest,
+)
+from gateway.conversation.safety import (
+    SAFETY_QUERY,
+    SafetyIndex,
+    as_safety_question,
+    fallback_extraction,
+)
+from gateway.conversation.validation import (
+    FIELD_ORDER,
+    MergeOutcome,
+    merge_extraction,
+    normalize_candidate,
+    validate_field,
+)
+from gateway.conversation.verification import VERIFICATION_FAILED, VerificationRegistry
+from gateway.conversation.visits import visit_text, window_values
+from gateway.errors import AppError, app_error
 from gateway.knowledge.retrieval import validate_knowledge_answer
+from gateway.knowledge.semantic import SemanticIndex
+from gateway.localization import build_summary, render, request_reference, text
 from gateway.schemas import (
     SESSION_SCHEMA_VERSION,
     BookingRequest,
@@ -69,31 +92,12 @@ from gateway.schemas import (
     Sentiment,
     Session,
     SessionView,
-    SlotOption,
     Slots,
     TurnRequest,
     TurnResponse,
 )
-from gateway.knowledge.semantic import SemanticIndex
 from gateway.storage import JsonSessionRepository
-from gateway.conversation.validation import (
-    FIELD_ORDER,
-    MergeOutcome,
-    merge_extraction,
-    normalize_candidate,
-    validate_field,
-)
-from gateway.conversation.verification import VERIFICATION_FAILED, VerificationRegistry
-from gateway.conversation.visits import visit_text, window_values
-from gateway.conversation.flows import (
-    INTAKE_STATUS,
-    SUPPORT_REQUEST,
-    FlowContext,
-    FlowDefinition,
-    load_flows,
-    only_account_number,
-    run_flow,
-)
+from shared.models import OrderRecord
 
 if TYPE_CHECKING:
     from gateway.providers.client import AIProvider

@@ -23,6 +23,11 @@ from gateway.providers.prompts import (
 )
 from gateway.schemas import KnowledgeAnswer
 from gateway.storage import JsonSessionRepository
+from tests.integration.support.intent import (
+    capability_extraction,
+    social_extraction,
+    start_intake_extraction,
+)
 from tests.support.unit_fakes import (
     FakeKnowledgeBase,
     FakeProvider,
@@ -39,18 +44,6 @@ from tests.unit.gateway.conversation.conversation_support import (
     rejection,
     turn_request,
 )
-
-
-def social_extraction(has_question: bool = False):
-    return make_extraction(intent="social", has_question=has_question)
-
-
-def capability_extraction(has_question: bool = False):
-    return make_extraction(intent="capability", has_question=has_question)
-
-
-def start_intake_extraction(has_question: bool = False):
-    return make_extraction(intent="start_intake", has_question=has_question)
 
 
 async def test_pure_social_replies_with_the_exact_acknowledgment_only(tmp_path):

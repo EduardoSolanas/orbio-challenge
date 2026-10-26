@@ -30,10 +30,13 @@ from starlette.exceptions import HTTPException
 from starlette.responses import PlainTextResponse
 from starlette.staticfiles import StaticFiles
 
-from gateway.config import Settings
 from backend_api.main import create_backend_api_app
+from gateway.config import Settings
 from gateway.errors import app_error
 from gateway.main import create_app
+from tests.e2e.docker_config import DockerE2EConfig, probe
+from tests.e2e.docker_config import load_config as load_docker_config
+from tests.e2e.docker_support import book_demo_visit, reset_demo_bookings
 from tests.e2e.hooks import (  # noqa: F401  (pytest registers these hook functions)
     pytest_collection_finish,
     pytest_collectreport,
@@ -838,3 +841,34 @@ def ui(server: AppServer, make_ui: Callable[[AppServer], UI]) -> UI:
     # `server` is requested before `page`, so the browser context closes (and its
     # keep-alive sockets drop) before Uvicorn is asked to stop.
     return make_ui(server)
+
+
+# ---- real Docker E2E: the deployed page and its judge, shared by test_docker_e2e.py and test_docker_flows.py
+
+
+@pytest.fixture(scope="session")
+def docker_config() -> DockerE2EConfig:
+    config = load_docker_config()
+    probe(config)
+    return config
+
+
+@pytest.fixture
+def fresh_bookings(docker_config: DockerE2EConfig) -> None:
+    """Start the test with every technician window free, whatever an earlier run booked."""
+    reset_demo_bookings()
+
+
+@pytest.fixture
+def booked_visit(docker_config: DockerE2EConfig, fresh_bookings: None) -> str:
+    """Start the test with the demo account's one visit already booked."""
+    return book_demo_visit(docker_config.app_url)
+
+
+@pytest.fixture
+def docker_page(page: Page, docker_config: DockerE2EConfig) -> Page:
+    response = page.goto(f"{docker_config.app_url}/")
+    assert response is not None and response.status == 200
+    assert page.url == f"{docker_config.app_url}/"
+    expect(page.locator("#transcript")).not_to_be_empty()
+    return page

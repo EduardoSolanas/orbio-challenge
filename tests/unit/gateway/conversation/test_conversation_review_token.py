@@ -6,9 +6,9 @@ from uuid import uuid4
 
 import pytest
 
-from gateway.localization import request_reference
 from gateway.conversation.engine import ConversationEngine
 from gateway.errors import AppError
+from gateway.localization import request_reference
 from gateway.providers.prompts import ABSTENTION
 from gateway.schemas import ConfirmRequest, KnowledgeAnswer
 from gateway.storage import JsonSessionRepository
@@ -30,7 +30,6 @@ from tests.unit.gateway.conversation.conversation_support import (
     rejection,
     turn_request,
 )
-
 
 QUESTION = "Can I return it?"
 

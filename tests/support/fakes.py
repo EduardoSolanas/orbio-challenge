@@ -14,20 +14,19 @@ rules that production code depends on.
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import struct
 import threading
 import time
 import wave
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
-from gateway.localization import request_reference
 from gateway.errors import app_error
+from gateway.localization import request_reference
 from gateway.providers.client import SynthesizedAudio
 from gateway.schemas import Extraction, KnowledgeAnswer, Slots, ToolRequest
 from tests.support.waiting import await_until

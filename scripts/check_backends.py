@@ -43,8 +43,8 @@ if str(REPO_ROOT) not in sys.path:
 
 from gateway.config import ServiceProfile, Settings
 from gateway.errors import AppError
-from gateway.providers.client import OpenAICompatibleProvider
 from gateway.knowledge.retrieval import load_knowledge
+from gateway.providers.client import OpenAICompatibleProvider
 from gateway.schemas import (
     Extraction,
     ExtractionContext,

@@ -6,7 +6,6 @@ import pytest
 
 from gateway.config import Settings
 
-
 SESSION_DIR = "/tmp/orbio-sessions"
 
 

@@ -11,11 +11,12 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
-import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+
+from tests.support.git_repo import commit_all, init_repo
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SCRIPTS = REPO_ROOT / "scripts"
@@ -670,24 +671,7 @@ def test_exporter_rejects_missing_source_module(tmp_path: Path) -> None:
 # --- commit-safe revision policy ---------------------------------
 
 
-def git(root: Path, *args: str) -> str:
-    completed = subprocess.run(
-        ["git", "-C", str(root), *args], check=True, capture_output=True, text=True
-    )
-    return completed.stdout.strip()
 
-
-def init_repo(root: Path) -> None:
-    git(root, "init", "--quiet")
-    git(root, "config", "user.email", "evidence@example.test")
-    git(root, "config", "user.name", "Evidence Test")
-    git(root, "config", "commit.gpgsign", "false")
-
-
-def commit_all(root: Path, message: str) -> str:
-    git(root, "add", "--all")
-    git(root, "commit", "--quiet", "--message", message)
-    return git(root, "rev-parse", "HEAD")
 
 
 def write_repo_inputs(root: Path) -> None:

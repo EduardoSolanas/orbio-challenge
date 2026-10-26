@@ -10,9 +10,7 @@ from __future__ import annotations
 
 import json
 import threading
-import wave
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -23,7 +21,7 @@ from gateway.main import create_app
 from tests.integration.support.api import running_client
 from tests.integration.support.transcription import snapshot
 from tests.support.fakes import make_streaming_wav, make_wav
-
+from tests.support.wav import wav_geometry as wav_frames
 
 TTS_LIMIT = 5 * 1024 * 1024
 CHUNK_SECONDS = 0.1
@@ -185,16 +183,6 @@ async def save_reply(client, session_id: str) -> dict:
     assert response.status_code == 200, response.text
     return response.json()
 
-
-def wav_frames(data: bytes) -> tuple[int, int, int, bytes]:
-    with wave.open(BytesIO(data)) as reader:
-        channels, width, rate = (
-            reader.getnchannels(),
-            reader.getsampwidth(),
-            reader.getframerate(),
-        )
-        count = reader.getnframes()
-        return channels, width, rate, reader.readframes(count)
 
 
 async def test_wav_reply_is_chunked_at_the_provider_cap_and_assembled(server, tmp_path):

@@ -22,16 +22,13 @@ import pytest
 import gateway.main as main_module
 from gateway.errors import KNOWLEDGE_INVALID_MESSAGE
 from gateway.main import create_app
-from gateway.providers.prompts import ABSTENTION
-from gateway.schemas import KnowledgeAnswer
 from tests.integration.support.api import (
     ScriptedProvider,
-    make_extraction,
     read_session,
     running_client,
 )
-from tests.integration.support.intake import MISSING_ORDER, start_session, turn_body
-
+from tests.integration.support.intake import start_session, turn_body
+from tests.integration.support.rag import grounded, question_extraction
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "kb" / "startup"
 CORRUPT = FIXTURES / "corrupt.json"
@@ -68,12 +65,6 @@ def seed_citation(record_id: str) -> dict:
     }
 
 
-def question_extraction():
-    return make_extraction(intent="question", has_question=True)
-
-
-def grounded(answer: str, cited_ids: list[str]) -> KnowledgeAnswer:
-    return KnowledgeAnswer(answerable=True, answer=answer, cited_ids=cited_ids)
 
 
 async def post(client, session_id: str, text: str, revision: int):

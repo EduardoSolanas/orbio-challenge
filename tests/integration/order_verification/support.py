@@ -4,11 +4,14 @@ from __future__ import annotations
 
 from uuid import uuid4
 
+from backend_api.main import (
+    DEMO_VERIFICATION_CODE,
+    FIXTURE_ORDER_NUMBER,
+    FIXTURE_POSTCODE,
+)
 from gateway.localization import render, text
-from backend_api.main import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
 from gateway.schemas import ToolRequest
 from tests.integration.support.api import make_extraction
-
 
 OTHER_ORDER = "NS-000999"
 

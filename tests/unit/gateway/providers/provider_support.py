@@ -12,7 +12,6 @@ from gateway.config import ServiceProfile, SpeechProfile, TextProfile
 from gateway.providers.client import OpenAICompatibleProvider
 from gateway.schemas import ExtractionContext, KnowledgeContext, KnowledgeRecord, Slots
 
-
 ROLES = ("llm", "rag", "stt", "tts")
 
 LLM_PROFILE = TextProfile(

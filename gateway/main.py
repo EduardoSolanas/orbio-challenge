@@ -15,10 +15,15 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from gateway.routes.asgi_guards import CorrelationIdMiddleware, JsonBodyGuardMiddleware
 from gateway.backend_client import BackendApiClient
 from gateway.config import Settings
 from gateway.conversation.engine import ConversationEngine
+from gateway.conversation.safety import (
+    SafetyExamplesInvalid,
+    SafetyIndex,
+    load_examples,
+)
+from gateway.conversation.verification import VerificationRegistry
 from gateway.errors import (
     KNOWLEDGE_INVALID_MESSAGE,
     LOCALIZATION_INVALID_MESSAGE,
@@ -26,15 +31,14 @@ from gateway.errors import (
     AppError,
     app_error,
 )
-from gateway.routes.http_support import error_payload, request_id_of
+from gateway.knowledge.retrieval import KnowledgeInvalid, load_knowledge
+from gateway.knowledge.semantic import SemanticIndex
 from gateway.localization import LocalizationInvalid, load_locales
 from gateway.providers.client import OpenAICompatibleProvider
-from gateway.knowledge.retrieval import KnowledgeInvalid, load_knowledge
+from gateway.routes.asgi_guards import CorrelationIdMiddleware, JsonBodyGuardMiddleware
 from gateway.routes.endpoints import router
-from gateway.conversation.safety import SafetyExamplesInvalid, SafetyIndex, load_examples
-from gateway.knowledge.semantic import SemanticIndex
+from gateway.routes.http_support import error_payload, request_id_of
 from gateway.storage import JsonSessionRepository
-from gateway.conversation.verification import VerificationRegistry
 
 logger = logging.getLogger(__name__)
 

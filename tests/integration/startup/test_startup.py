@@ -36,7 +36,6 @@ from tests.integration.support.transcription import (
     unexpected,
 )
 
-
 SENTINEL_KEY = "sk-live-provider-key-sentinel"
 SENTINEL_CUSTOMER = "customer NS-000999 payment details"
 INTERNAL_MESSAGE = "An internal error occurred."

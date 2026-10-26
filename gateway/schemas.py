@@ -11,7 +11,6 @@ from datetime import datetime, timezone
 from typing import Annotated, Literal
 from uuid import UUID
 
-from shared.models import SlotOption
 from pydantic import (
     AfterValidator,
     BaseModel,
@@ -25,6 +24,8 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+
+from shared.models import SlotOption
 
 FieldName = Literal["order_number", "category", "description", "urgency"]
 Status = Literal["collecting", "awaiting_confirmation", "completed", "handed_off"]

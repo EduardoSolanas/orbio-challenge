@@ -14,6 +14,7 @@ from httpx import ASGITransport, AsyncClient
 from gateway.errors import ERRORS
 from gateway.main import create_app
 from gateway.providers.client import OpenAICompatibleProvider
+from tests.unit.gateway.providers.provider_support import unexpected
 
 
 async def no_sleep(delay: float) -> None:
@@ -33,12 +34,6 @@ class RoleTransport:
         self.requests.append(request)
         return self.responder(request, len(self.requests))
 
-
-def unexpected(role: str):
-    def responder(request: httpx.Request, attempt: int) -> httpx.Response:
-        raise AssertionError(f"unexpected {role} wire call")
-
-    return responder
 
 
 def json_wire(payload: object, status: int = 200) -> httpx.Response:

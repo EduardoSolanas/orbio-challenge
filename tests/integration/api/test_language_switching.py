@@ -8,17 +8,13 @@ context and citation identity, not just rendered text.
 
 from __future__ import annotations
 
-import io
-import wave
-from pathlib import Path
 from uuid import uuid4
 
-import pytest
-from httpx import AsyncClient
-
-from gateway.localization import request_reference
-from gateway.config import Settings
-from gateway.localization import build_review_reply, build_summary, text
+from gateway.localization import (
+    build_summary,
+    request_reference,
+    text,
+)
 from gateway.main import create_app
 from gateway.schemas import Slots
 from tests.integration.support.api import (
@@ -32,9 +28,7 @@ from tests.integration.support.intake import (
     FULL_SLOTS,
     FULL_SUMMARY,
     start_session,
-    turn_body,
 )
-
 
 SPANISH_TEXT = "Mi pedido NS-000123 llegó dañado, urgencia alta"
 SPANISH_SLOTS = {

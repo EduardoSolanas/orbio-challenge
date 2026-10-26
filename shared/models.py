@@ -8,7 +8,14 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    StrictStr,
+    model_validator,
+)
 
 VERIFICATION_FAILED = "verification_failed"
 SLOT_UNAVAILABLE = "slot_unavailable"

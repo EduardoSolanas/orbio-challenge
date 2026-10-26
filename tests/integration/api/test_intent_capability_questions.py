@@ -17,8 +17,7 @@ This file: capability and policy questions."""
 from __future__ import annotations
 
 from gateway.providers.prompts import ABSTENTION, CAPABILITY_REPLY, MISSING_CATEGORY
-from gateway.schemas import KnowledgeAnswer
-from tests.integration.support.api import make_extraction, read_session
+from tests.integration.support.api import read_session
 from tests.integration.support.confirmation import (
     assert_ledger,
     assert_session_state,
@@ -42,8 +41,10 @@ from tests.integration.support.intent import (
     CAPABILITY_Q,
     PART_SLOTS,
     assert_no_policy_suffix,
+    capability_extraction,
 )
-
+from tests.integration.support.rag import question_extraction
+from tests.support.fakes import return_answer as grounded_return_answer
 
 RETURN_Q = "Can I return an unused item?"
 
@@ -56,19 +57,6 @@ RETURN_ANSWER_TEXT = (
     "its original packaging. Refund eligibility requires support review."
 )
 
-
-def capability_extraction(has_question: bool = False):
-    return make_extraction(intent="capability", has_question=has_question)
-
-
-def question_extraction():
-    return make_extraction(intent="question", has_question=True)
-
-
-def grounded_return_answer() -> KnowledgeAnswer:
-    return KnowledgeAnswer(
-        answerable=True, answer=RETURN_ANSWER_TEXT, cited_ids=["faq-returns"]
-    )
 
 
 async def test_capability_returns_the_exact_offer_without_retrieval_or_state_change(

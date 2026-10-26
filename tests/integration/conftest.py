@@ -12,6 +12,7 @@ from tests.integration.support.api import (
     build_settings,
     running_client,
 )
+from tests.integration.support.provider_http import LocalProviderServer
 
 
 @pytest.fixture
@@ -38,3 +39,9 @@ def app(settings, provider):
 async def client(app):
     async with running_client(app) as active_client:
         yield active_client
+
+
+@pytest.fixture
+def server():
+    with LocalProviderServer() as active:
+        yield active

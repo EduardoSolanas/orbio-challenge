@@ -11,7 +11,6 @@ from gateway.schemas import Confirmation, Message, Session, Slots
 from gateway.storage import JsonSessionRepository
 from tests.integration.support.intake import FULL_SLOTS
 
-
 TURN_LIMIT_MESSAGE = (
     "This conversation has reached its message limit. You can confirm the current "
     "details or start a new conversation."

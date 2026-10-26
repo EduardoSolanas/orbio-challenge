@@ -11,7 +11,12 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from tests.e2e.judge_config import JudgeConfig, ask_judge, parse_reasoning_effort, read_dotenv
+from tests.e2e.judge_config import (
+    JudgeConfig,
+    ask_judge,
+    parse_reasoning_effort,
+    read_dotenv,
+)
 
 
 @dataclass(frozen=True)

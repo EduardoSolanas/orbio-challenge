@@ -166,9 +166,14 @@ class LocalProviderServer:
     def count(self, path: str) -> int:
         return len(self.requests(path))
 
-    def settle(self, path: str, timeout: float = 5.0) -> list[WireRequest]:
-        """Wait until every response for ``path`` has finished or aborted."""
+    def settle(self, path: str, timeout: float = 5.0, *, expected: int = 0) -> list[WireRequest]:
+        """Wait until ``expected`` requests have arrived and every response has finished or aborted.
 
+        Without ``expected`` a request that is still on its way to the server is not yet pending,
+        so a loaded machine could return before the last attempt is even counted.
+        """
+
+        poll(lambda: self.count(path) >= expected, timeout)
         poll(lambda: not [r for r in self.requests(path) if r.outcome == PENDING], timeout)
         return self.requests(path)
 

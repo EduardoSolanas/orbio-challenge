@@ -218,3 +218,44 @@ async def test_complete_details_go_to_the_review_and_wait_for_confirmation() -> 
 
     assert outcome.reply == build_review_reply(FULL, "en")
     assert INTAKE_STATUS[outcome.step] == "awaiting_confirmation"
+
+
+async def test_the_first_pending_problem_in_field_order_is_asked_first() -> None:
+    pending = {
+        "urgency": Clarification(code="invalid", candidate="asap", question="U?"),
+        "description": Clarification(code="invalid", candidate="broken", question="D?"),
+        "order_number": Clarification(code="invalid", candidate="12345", question="O?"),
+    }
+    slots = make_slots(None, None, None, None)
+
+    assert (await run_intake(intake(slots=slots, pending=pending))).reply == "O?"
+    later = {"urgency": pending["urgency"], "description": pending["description"]}
+    assert (await run_intake(intake(slots=slots, pending=later))).reply == "D?"
+
+
+async def test_a_pending_problem_wins_over_the_rejection_prompt() -> None:
+    conflict = Clarification(code="conflict", candidate="refund", question="C?")
+
+    outcome = await run_intake(intake(slots=make_slots(category="delivery"), pending={"category": conflict}, rejected=True))
+
+    assert outcome.reply == "C?"
+
+
+@pytest.mark.parametrize(
+    ("slots", "field"),
+    [
+        (make_slots(), "order_number"),
+        (make_slots(order_number="NS-123456"), "category"),
+        (make_slots(order_number="NS-123456", category="delivery"), "description"),
+        (make_slots(order_number="NS-123456", category="delivery", description="My order arrived broken"), "urgency"),
+    ],
+)
+async def test_each_missing_detail_is_asked_for_in_turn(slots, field) -> None:
+    outcome = await run_intake(intake(slots=slots))
+
+    assert outcome.reply == missing_question(field, "en")
+    assert INTAKE_STATUS[outcome.step] == "collecting"
+
+
+def test_the_rejection_prompt_asks_what_to_change() -> None:
+    assert text("reject_prompt", "en") == "What would you like to change?"

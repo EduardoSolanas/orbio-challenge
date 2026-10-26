@@ -13,6 +13,12 @@ from urllib.parse import quote
 import httpx
 from pydantic import ValidationError
 
+from gateway.errors import (
+    BACKEND_API_TIMEOUT,
+    BACKEND_API_UNAVAILABLE,
+    INVALID_BACKEND_API_RESPONSE,
+    app_error,
+)
 from shared.models import (
     ALREADY_BOOKED,
     SLOT_UNAVAILABLE,
@@ -21,12 +27,6 @@ from shared.models import (
     InstallationRecord,
     OrderRecord,
     OrderVerificationResult,
-)
-from gateway.errors import (
-    BACKEND_API_TIMEOUT,
-    BACKEND_API_UNAVAILABLE,
-    INVALID_BACKEND_API_RESPONSE,
-    app_error,
 )
 
 VERIFICATIONS_PATH = "/internal/v1/order-verifications"

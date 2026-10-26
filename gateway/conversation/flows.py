@@ -16,9 +16,9 @@ from typing import Awaitable, Callable, get_args
 from uuid import UUID
 
 from gateway.backend_client import BackendApiClient
+from gateway.conversation.plans import first_issue, first_missing
 from gateway.conversation.verification import VerificationRegistry
 from gateway.conversation.visits import booking_offer, installation_reply
-from gateway.conversation.plans import first_issue, first_missing
 from gateway.localization import build_review_reply, text
 from gateway.schemas import (
     Clarification,

@@ -18,9 +18,9 @@ import asyncio
 import json
 import time
 from contextlib import asynccontextmanager
-from unittest import mock
 from pathlib import Path
 from typing import Callable
+from unittest import mock
 from uuid import uuid4
 
 import httpx
@@ -29,13 +29,13 @@ from httpx import ASGITransport, AsyncClient
 
 from gateway.conversation import engine as conversation_engine
 from gateway.main import create_app
+from gateway.providers.client import REPAIR_LINE, OpenAICompatibleProvider
 from gateway.providers.prompts import (
     ABSTENTION,
     KNOWLEDGE_PROMPT,
     POLICY_QUESTION_SUFFIX,
     SOCIAL_ACKNOWLEDGMENT,
 )
-from gateway.providers.client import REPAIR_LINE, OpenAICompatibleProvider
 from gateway.schemas import KnowledgeAnswer
 from tests.integration.support.api import (
     ScriptedProvider,
@@ -76,7 +76,6 @@ from tests.integration.support.transcription import (
     snapshot,
     unexpected,
 )
-
 
 PAYMENT_Q = "Which payment methods are accepted?"
 REGION_Q = "Do you ship internationally?"
@@ -182,7 +181,6 @@ async def case_payment_q_no_match(settings, provider, session_dir):
     app = create_app(settings=settings, provider=provider)
     async with running_client(app) as client:
         session_id = await start_session(client)
-        before = read_session(session_dir, session_id)
 
         response = await policy_turn(
             client,
@@ -470,7 +468,6 @@ async def case_mixed_asserted_facts_question(settings, provider, session_dir):
     app = create_app(settings=settings, provider=provider)
     async with running_client(app) as client:
         session_id = await start_session(client)
-        before = read_session(session_dir, session_id)
 
         provider.script_extraction(mixed_extraction())
         response = await post(client, session_id, MIXED_TEXT, 0)

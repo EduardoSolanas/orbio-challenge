@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import asynccontextmanager
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -28,6 +27,7 @@ from tests.integration.support.api import (
     ScriptedProvider,
     persisted_response,
     read_session,
+    session_path,
 )
 from tests.integration.support.confirmation import (
     assert_error,
@@ -46,7 +46,6 @@ from tests.integration.support.intake import (
     turn_body,
 )
 
-
 REQUEST_ID_CONFLICT_TEXT = "This request ID was already used for different input."
 REVISION_CONFLICT_TEXT = "This session changed. Refresh before sending again."
 LOCK_WAIT_SECONDS = 2.0
@@ -58,9 +57,6 @@ PART_SLOTS = {
     "urgency": None,
 }
 
-
-def session_path(session_dir: Path, session_id: str) -> Path:
-    return session_dir / f"{session_id}.json"
 
 
 def turns_url(session_id: str) -> str:

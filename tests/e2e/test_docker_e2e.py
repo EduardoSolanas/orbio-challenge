@@ -10,7 +10,7 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from tests.e2e.docker_config import DockerE2EConfig
-from tests.e2e.docker_support import assistant_text, docker_config, docker_page, judge_reply, send, verify  # noqa: F401
+from tests.e2e.docker_support import assistant_text, judge_reply, send, verify
 
 pytestmark = pytest.mark.docker_e2e
 

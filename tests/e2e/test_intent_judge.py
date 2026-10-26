@@ -2,65 +2,68 @@
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 
 import pytest
 from playwright.sync_api import expect
 
 from tests.e2e.conftest import response_of, wait_until
-from tests.e2e.judge_config import JudgeConfig, judge, load_config, validate_verdict, write_artifact
+from tests.e2e.judge_config import (
+    JudgeConfig,
+    judge,
+    load_config,
+    validate_verdict,
+    write_artifact,
+)
 from tests.support.fakes import (
     ABSTENTION,
     ASK_CATEGORY,
     AUTH_ORDER_RESULT,
+    AUTH_VERIFICATION_FAILED,
     AUTH_VERIFICATION_PROMPT,
     BOOK_Q,
     CAPABILITY_Q,
-    CHANGE,
-    INSTALLATION_Q,
-    receipt_for,
-    UNRELATED,
-    WHAT_TO_CHANGE,
-    YES,
-    review_reply,
-    summary_text,
-    x_change,
-    x_unrelated,
-    x_yes,
-    GREETING_STANDING_CHARGE_Q,
-    MIXED_PART,
-    PAYMENT_Q,
-    RESUME,
-    THANKS,
     CATEGORY,
+    CHANGE,
     FULL,
+    GREETING_STANDING_CHARGE_Q,
+    INSTALLATION_Q,
+    MIXED_PART,
     NO,
     ORDER_STATUS_Q,
     PART,
-    AUTH_VERIFICATION_FAILED,
+    PAYMENT_Q,
+    RESUME,
+    THANKS,
+    UNRELATED,
+    WHAT_TO_CHANGE,
+    YES,
+    receipt_for,
+    review_reply,
+    standing_charge_answer,
+    summary_text,
     x_capability,
-    x_gratitude,
     x_category,
+    x_change,
     x_full,
-    x_high,
+    x_gratitude,
     x_no,
     x_order_lookup,
     x_part,
     x_question,
     x_social,
     x_start_intake,
-    standing_charge_answer,
+    x_unrelated,
+    x_yes,
+)
+from tests.support.fakes import (
     extraction as make_extraction,
 )
 
 CAPABILITY_REPLY = "I can answer questions about Northstar Energy bills, tariffs, meter readings, moving home, and supply issues. I can also help you report a service problem and, once you verify the demo account, check an installation or book a technician. What do you need help with?"
 JUDGE_RULES = {
-    "greeting": "social: brief fixed acknowledgment, no field question or review reminder, no retrieval.",
-    "thanks": "gratitude: give a brief thanks acknowledgment. The approved reply 'You're welcome! How else can I help with your energy service?' is valid and its general invitation does not restart or advance intake. Do not add a field question, retrieval answer, or review reminder; hidden state preservation is checked by deterministic assertions.",
     "facts": "real facts outrank the social preface: start intake, accept the explicit issue facts, and ask only the next missing issue field. A relevant category/area question is valid; do not require the assistant to repeat the supplied facts.",
     "policy": "question, supported: answer the policy question with grounded information and no intake follow-up.",
-    "capability": "capability: fixed capability response, no retrieval and no intake start.",
     "unsupported": "question, unsupported: safe abstention with no invented facts or citations.",
     "resume": (
         "After a saved issue, an FAQ detour and page refresh, the final assistant "
@@ -97,8 +100,8 @@ JUDGE_RULES = {
         "changed. It must not confirm, save, hand off or ask for unrelated details."
     ),
     "order_status_requires_verification": (
-        "The conversation ends with a note of what the customer did in the separate "
-        "verification form, which is outside the chat because credentials never enter chat. "
+        "Right after the first assistant response there is a note of what the customer did in the "
+        "separate verification form, which is outside the chat because credentials never enter chat. "
         "The customer asks for their account status before verifying. The first assistant "
         "response must ask for the service postcode and verification code and reveal no "
         "account data. After verification and a repeated request, the assistant reports the "
@@ -106,23 +109,23 @@ JUDGE_RULES = {
         "before verification or which verification detail failed."
     ),
     "installation_status_requires_verification": (
-        "The conversation ends with a note of what the customer did in the separate "
-        "verification form, which is outside the chat because credentials never enter chat. "
+        "Right after the first assistant response there is a note of what the customer did in the "
+        "separate verification form, which is outside the chat because credentials never enter chat. "
         "The customer asks for their smart meter installation status before verifying. The "
         "first assistant response must ask for the service postcode and verification code and "
-        "reveal no installation details. After verification and a repeated request, the "
-        "assistant reports that the installation is approved and waiting for a technician "
-        "visit and says how to book one. It must not reveal details before verification or "
+        "reveal no installation details. After verification the assistant, without the customer "
+        "repeating the request, reports that the installation is approved and waiting for a "
+        "technician visit and says how to book one. It must not reveal details before verification or "
         "invent a date."
     ),
     "booking_requires_verification": (
-        "The conversation ends with a note of what the customer did in the separate "
-        "verification form, which is outside the chat because credentials never enter chat. "
+        "Right after the first assistant response there is a note of what the customer did in the "
+        "separate verification form, which is outside the chat because credentials never enter chat. "
         "The customer asks to book a technician before verifying the account. The first "
         "assistant response must ask for the service postcode and verification code and "
-        "must not offer or confirm any time. After the account is verified and the request "
-        "is repeated, the assistant says technician times are available to choose from, and "
-        "once one is chosen it confirms the window the customer clicked, as shown on the "
+        "must not offer or confirm any time. After the account is verified the assistant answers "
+        "the original request on its own, without the customer repeating it: it says technician "
+        "times are available to choose from, and once one is chosen it confirms the window the customer clicked, as shown on the "
         "button including its end time, with a booking reference. It must not reveal which "
         "verification detail failed, offer or confirm a booking before verification, or "
         "invent a time that was not chosen."
@@ -148,7 +151,8 @@ FRUSTRATION_HANDOFF_FLOWS = [
 def _with_form_events(transcript: str, events: str) -> str:
     """The verification form is outside the chat, so the judge is told what happened there."""
 
-    return f"{transcript}\n[Outside the chat, in the separate verification form: {events}]"
+    note = f" [Outside the chat, in the separate verification form: {events}]"
+    return transcript.replace(AUTH_VERIFICATION_PROMPT, AUTH_VERIFICATION_PROMPT + note, 1)
 
 
 FORM_EVENTS = (
@@ -193,7 +197,7 @@ def test_intent_judge_accepts_passing_and_failing_structured_fixtures() -> None:
 
 
 @pytest.mark.intent_judge
-def test_intent_judge_greeting_only(ui, provider, judge_config, request):
+def test_intent_judge_greeting_only(ui, provider):
     provider.script_extract("Hello", x_social())
     ui.open()
     assert ui.send("Hello").status == 200
@@ -201,11 +205,10 @@ def test_intent_judge_greeting_only(ui, provider, judge_config, request):
     assert len(provider.calls("answer_knowledge")) == 0
     assert "What is your energy account reference?" not in ui.transcript_text()
     provider.assert_consumed()
-    _record_and_judge(judge_config, request, ui.transcript_text(), "greeting")
 
 
 @pytest.mark.intent_judge
-def test_intent_judge_thanks_preserves_intake(ui, provider, judge_config, request):
+def test_intent_judge_thanks_preserves_intake(ui, provider):
     provider.script_extract("My order NS-000123 arrived broken.", x_part())
     provider.script_extract(THANKS, x_gratitude())
     ui.open()
@@ -220,7 +223,6 @@ def test_intent_judge_thanks_preserves_intake(ui, provider, judge_config, reques
     assert ui.disk(sid)["slots"] == before["slots"]
     assert len(provider.calls("answer_knowledge")) == 0
     provider.assert_consumed()
-    _record_and_judge(judge_config, request, ui.transcript_text(), "thanks")
 
 
 @pytest.mark.intent_judge
@@ -248,7 +250,7 @@ def test_intent_judge_social_preface_policy(ui, provider, judge_config, request)
 
 
 @pytest.mark.intent_judge
-def test_intent_judge_capability_request(ui, provider, judge_config, request):
+def test_intent_judge_capability_request(ui, provider):
     provider.script_extract(CAPABILITY_Q, x_capability())
     ui.open()
     assert ui.send(CAPABILITY_Q).status == 200
@@ -257,7 +259,6 @@ def test_intent_judge_capability_request(ui, provider, judge_config, request):
     assert "Which area do you need help with" not in ui.transcript_text()
     assert len(provider.calls("answer_knowledge")) == 0
     provider.assert_consumed()
-    _record_and_judge(judge_config, request, ui.transcript_text(), "capability")
 
 
 @pytest.mark.intent_judge
@@ -510,7 +511,6 @@ def test_intent_judge_frustration_hands_off(flow, ui, provider, judge_config, re
 def test_intent_judge_booking_requires_verification_first(ui, provider, judge_config, request):
     slots = ui.page.locator("#slot-picker button")
     provider.script_extract(BOOK_Q, make_extraction(intent="book_technician", order_number="NS-000123"))
-    provider.script_extract(BOOK_Q, make_extraction(intent="book_technician"))
     ui.open()
 
     # Unverified: the form is asked for and no time is offered.
@@ -526,10 +526,10 @@ def test_intent_judge_booking_requires_verification_first(ui, provider, judge_co
     expect(ui.page.locator("#order-verification")).to_be_visible()
     expect(slots).to_have_count(0)
 
-    # Verified: repeating the request offers six windows; choosing one books exactly that one.
-    assert json.loads(ui.verify_order("SW1A 1AA", "246810").text()) == {"verified": True, "error": None}
+    # Verified: the request made before verifying is answered at once with six windows;
+    # choosing one books exactly that one.
+    assert json.loads(ui.verify_order("SW1A 1AA", "246810").text())["verified"] is True
     expect(ui.page.locator("#order-verification")).to_be_hidden()
-    assert ui.send(BOOK_Q).status == 200
     expect(slots).to_have_count(6)
     chosen = slots.first.get_attribute("data-starts-at")
     labels = [label.strip() for label in slots.all_inner_texts()]
@@ -546,7 +546,7 @@ def test_intent_judge_booking_requires_verification_first(ui, provider, judge_co
         judge_config, request,
         _with_form_events(
             ui.transcript_text(),
-            f"{FORM_EVENTS}; after the request was repeated the page showed these time buttons: "
+            f"{FORM_EVENTS}; right after that, without the request being repeated, the page showed these time buttons: "
             f"{labels}; the customer clicked '{clicked}', the first one",
         ),
         "booking_requires_verification",
@@ -637,9 +637,8 @@ def test_intent_judge_order_status_requires_verification(ui, provider, judge_con
 @pytest.mark.intent_judge
 def test_intent_judge_installation_status_requires_verification(ui, provider, judge_config, request):
     provider.script_extract(INSTALLATION_Q, make_extraction(intent="installation_status", order_number="NS-000123"))
-    provider.script_extract(INSTALLATION_Q, make_extraction(intent="installation_status"))
     _verify_after_asking(ui, INSTALLATION_Q)
-    assert ui.send(INSTALLATION_Q).status == 200
+    # Verifying answers the request made before it; nothing is asked a second time.
     expect(ui.log).to_contain_text("waiting for a technician visit")
     provider.assert_consumed()
     _record_and_judge(

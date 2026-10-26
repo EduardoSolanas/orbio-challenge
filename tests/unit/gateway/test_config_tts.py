@@ -7,8 +7,8 @@ import pytest
 from gateway.config import (
     DEFAULT_TTS_AUDIO_FORMAT,
     DEFAULT_TTS_MAX_INPUT_CHARS,
-    SpeechProfile,
     Settings,
+    SpeechProfile,
 )
 from gateway.errors import CONFIGURATION_INVALID_MESSAGE
 

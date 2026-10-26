@@ -13,11 +13,8 @@ from typing import Mapping
 
 from gateway.localization import (
     ambiguous_question,
-    build_review_reply,
     conflict_question,
     invalid_question,
-    missing_question,
-    text,
 )
 from gateway.schemas import Clarification, Extraction, FieldName, Language, Slots
 
@@ -214,25 +211,3 @@ def merge_extraction(
         accepted_fields=frozenset(accepted),
         cleared_fields=frozenset(cleared),
     )
-
-
-def select_reply(
-    *,
-    new_reject: bool,
-    pending_clarifications: Mapping[FieldName, Clarification],
-    review_rejected: bool,
-    slots: Slots,
-    language: Language = "en",
-) -> str:
-    if new_reject:
-        return text("reject_prompt", language)
-    for field in FIELD_ORDER:
-        clarification = pending_clarifications.get(field)
-        if clarification is not None:
-            return clarification.question
-    if review_rejected:
-        return text("reject_prompt", language)
-    for field in FIELD_ORDER:
-        if getattr(slots, field) is None:
-            return missing_question(field, language)
-    return build_review_reply(slots, language)

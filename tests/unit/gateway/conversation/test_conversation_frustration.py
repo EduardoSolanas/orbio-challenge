@@ -10,8 +10,13 @@ from gateway.errors import AppError, app_error
 from gateway.localization import text
 from gateway.schemas import TurnRequest
 from gateway.storage import JsonSessionRepository
-from tests.support.unit_fakes import FakeKnowledgeBase, FakeProvider, make_extraction, make_session, make_slots
-
+from tests.support.unit_fakes import (
+    FakeKnowledgeBase,
+    FakeProvider,
+    make_extraction,
+    make_session,
+    make_slots,
+)
 
 TRANSITIONS = [
     (False, "none", False, False),

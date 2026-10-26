@@ -32,6 +32,13 @@ from gateway.providers.prompts import (
     KNOWLEDGE_PROMPT,
     serialize_context,
 )
+from gateway.providers.speech_wav import (
+    TTS_LIMIT,
+    PcmChunk,
+    assemble_wav,
+    decode_pcm_wav,
+    split_tts_text,
+)
 from gateway.providers.wire import (
     REPAIR_LINE,
     SCHEMA_INSTRUCTION,
@@ -47,13 +54,6 @@ from gateway.schemas import (
     ExtractionContext,
     KnowledgeAnswer,
     KnowledgeContext,
-)
-from gateway.providers.speech_wav import (
-    TTS_LIMIT,
-    PcmChunk,
-    assemble_wav,
-    decode_pcm_wav,
-    split_tts_text,
 )
 
 __all__ = [

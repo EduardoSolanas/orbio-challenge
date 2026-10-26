@@ -11,6 +11,7 @@ from __future__ import annotations
 import pytest
 
 from tests.integration.support.api import make_extraction, read_session
+from tests.integration.support.confirmation import change_extraction
 from tests.integration.support.intake import (
     CATEGORY_TEXT,
     EMPTY_SLOTS,
@@ -33,16 +34,8 @@ from tests.integration.support.intake import (
     start_session,
 )
 
-
 CHANGE_TEXT = "Actually make the urgency low."
 
-
-def change_extraction():
-    return make_extraction(
-        intent="correction",
-        candidates={"urgency": "low"},
-        explicit_corrections=["urgency"],
-    )
 
 
 async def case_full_one_turn(client, provider, session_dir):

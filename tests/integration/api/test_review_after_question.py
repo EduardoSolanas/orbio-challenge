@@ -12,14 +12,13 @@ from __future__ import annotations
 from pathlib import Path
 from uuid import uuid4
 
-from gateway.localization import request_reference
-from gateway.schemas import KnowledgeAnswer
 from tests.integration.support.api import (
     ScriptedProvider,
     make_extraction,
     persisted_response,
     read_session,
 )
+from tests.integration.support.confirmation import receipt_for
 from tests.integration.support.intake import (
     FULL_SLOTS,
     FULL_SUMMARY,
@@ -30,7 +29,8 @@ from tests.integration.support.intake import (
     start_session,
     turn_body,
 )
-
+from tests.integration.support.rag import question_extraction
+from tests.support.fakes import return_answer
 
 PART_TEXT = "My order NS-000123 arrived broken."
 CATEGORY_TEXT = "It is a damaged item."
@@ -56,22 +56,10 @@ RETURN_CITATION = {
 }
 
 
-def receipt_for(session_id: str) -> str:
-    return f"Saved locally as {request_reference(session_id)}. No request has been sent to a real support team. Is there anything else I can help with?"
-
-
-def question_extraction():
-    return make_extraction(intent="question", has_question=True)
-
 
 def yes_extraction():
     return make_extraction(intent="confirm")
 
-
-def return_answer() -> KnowledgeAnswer:
-    return KnowledgeAnswer(
-        answerable=True, answer=RETURN_ANSWER_TEXT, cited_ids=["faq-returns"]
-    )
 
 
 async def review_session(client, provider: ScriptedProvider) -> str:

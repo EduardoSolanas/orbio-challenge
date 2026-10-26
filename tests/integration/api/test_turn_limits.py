@@ -45,7 +45,6 @@ from tests.integration.support.limits import (
     seed_session,
 )
 
-
 SESSION_COMPLETED_MESSAGE = "This support conversation is complete. Start a new conversation if you need help with another issue."
 NEAR_CAP = 49
 

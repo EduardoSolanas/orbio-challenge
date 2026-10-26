@@ -18,7 +18,7 @@ from io import BytesIO
 import httpx
 import pytest
 
-from gateway.config import ServiceProfile, SpeechProfile, TextProfile
+from gateway.config import ServiceProfile, SpeechProfile
 from gateway.errors import AppError
 from gateway.providers.client import (
     SynthesizedAudio,
@@ -27,13 +27,12 @@ from gateway.providers.client import (
     split_tts_text,
 )
 from tests.support.fakes import make_streaming_wav, make_wav
+from tests.support.wav import wav_geometry
 from tests.unit.gateway.providers.provider_support import (
     LLM_PROFILE,
     RAG_PROFILE,
     STT_PROFILE,
     TTS_PROFILE,
-    Clock,
-    RoleTransport,
     SequenceClock,
     SleepRecorder,
     build_provider,
@@ -58,16 +57,6 @@ def audio_responder(body: bytes, headers: dict[str, str] | None = None, status: 
 
     return responder
 
-
-def wav_geometry(data: bytes) -> tuple[int, int, int, bytes]:
-    with wave.open(BytesIO(data)) as reader:
-        channels, width, rate = (
-            reader.getnchannels(),
-            reader.getsampwidth(),
-            reader.getframerate(),
-        )
-        count = reader.getnframes()
-        return channels, width, rate, reader.readframes(count)
 
 
 def raw_wav(*, rate: int = 16000, channels: int = 1, width: int = 2, frames: int = 100) -> bytes:

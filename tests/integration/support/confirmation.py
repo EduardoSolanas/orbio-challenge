@@ -23,7 +23,6 @@ from tests.integration.support.intake import (
     turn_body,
 )
 
-
 YES_TEXT = "Yes."
 
 NO_TEXT = "No."

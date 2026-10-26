@@ -22,9 +22,17 @@ import pytest
 
 from gateway.config import Settings
 from gateway.main import create_app
-from gateway.providers.prompts import EXTRACTION_SYSTEM_PROMPT, KNOWLEDGE_PROMPT, serialize_context
 from gateway.providers.client import REPAIR_LINE, SCHEMA_INSTRUCTION
-from gateway.schemas import Extraction, KnowledgeAnswer, KnowledgeContext, KnowledgeRecord
+from gateway.providers.prompts import (
+    EXTRACTION_SYSTEM_PROMPT,
+    KNOWLEDGE_PROMPT,
+    serialize_context,
+)
+from gateway.schemas import (
+    Extraction,
+    KnowledgeAnswer,
+    KnowledgeRecord,
+)
 from tests.integration.support.adapter import (
     EXTRACTION_PAYLOAD,
     ROLES,
@@ -45,7 +53,7 @@ from tests.integration.support.transcription import (
     snapshot,
     streamed_wire,
 )
-
+from tests.unit.gateway.providers.provider_support import knowledge_context
 
 ANSWER_PAYLOAD = {
     "answerable": True,
@@ -62,13 +70,6 @@ SOURCE = KnowledgeRecord(
 
 MP3 = b"ID3\x03\x00\x00\x00\x00\x00\x00finite-mp3-fixture-bytes"
 
-
-def knowledge_context() -> KnowledgeContext:
-    return KnowledgeContext(
-        question="Can I return an unused item?",
-        kb_version="2026-10-22",
-        sources=[SOURCE],
-    )
 
 
 def status_responder(status: int, body: bytes = b'{"error":"denied"}', headers=None):

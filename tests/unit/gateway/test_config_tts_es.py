@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from gateway.config import SpeechProfile, Settings
+from gateway.config import Settings, SpeechProfile
 from gateway.errors import CONFIGURATION_INVALID_MESSAGE
 
 SESSION_DIR = "/tmp/orbio-sessions"

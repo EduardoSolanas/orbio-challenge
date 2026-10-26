@@ -50,14 +50,11 @@ from tests.integration.support.intent import (
     START_TEXT,
     UNRELATED_TEXT,
     assert_no_policy_suffix,
+    start_intake_extraction,
 )
-
 
 RESUME_TEXT = "Continue my issue"
 
-
-def start_intake_extraction(has_question: bool = False):
-    return make_extraction(intent="start_intake", has_question=has_question)
 
 
 async def test_explicit_start_intake_asks_the_first_missing_field(

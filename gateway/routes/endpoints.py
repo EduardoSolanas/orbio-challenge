@@ -7,8 +7,8 @@ from fastapi.responses import JSONResponse, Response
 from starlette.datastructures import UploadFile
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from gateway.providers.audio import validate_wav
 from gateway.errors import INVALID_REQUEST, app_error
+from gateway.providers.audio import validate_wav
 from gateway.routes.http_support import (
     MAX_MULTIPART_BYTES,
     MAX_SPEECH_TEXT_CHARS,

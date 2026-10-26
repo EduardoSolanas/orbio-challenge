@@ -17,12 +17,15 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-from gateway.errors import INVALID_BACKEND_API_RESPONSE, BACKEND_API_TIMEOUT
+from backend_api.main import (
+    DEMO_VERIFICATION_CODE,
+    FIXTURE_ORDER_NUMBER,
+    FIXTURE_POSTCODE,
+)
+from gateway.backend_client import BackendApiClient
+from gateway.errors import BACKEND_API_TIMEOUT, INVALID_BACKEND_API_RESPONSE
 from gateway.localization import text
 from gateway.main import create_app
-from backend_api.main import DEMO_VERIFICATION_CODE, FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE
-from gateway.backend_client import BackendApiClient
-from tests.support.waiting import wait_until
 from tests.integration.order_verification.support import (
     ORDER_NUMBER_TEXT,
     ORDER_RESULT,
@@ -33,6 +36,7 @@ from tests.integration.order_verification.support import (
     verify,
 )
 from tests.integration.support.api import running_client
+from tests.support.waiting import wait_until
 
 
 async def test_backend_api_outage_during_verification_is_safe_and_recovers(

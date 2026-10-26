@@ -23,8 +23,8 @@ import pytest
 
 from gateway import storage
 from gateway.main import create_app
-from gateway.providers.prompts import serialize_context
 from gateway.providers.client import REPAIR_LINE, SUCCESS_JSON_LIMIT
+from gateway.providers.prompts import serialize_context
 from gateway.schemas import Extraction
 from tests.integration.support.adapter import (
     EXTRACTION_PAYLOAD,
@@ -51,7 +51,6 @@ from tests.integration.support.transcription import (
     snapshot,
     streamed_wire,
 )
-
 
 ERROR_BODY_LIMIT = 64 * 1024
 

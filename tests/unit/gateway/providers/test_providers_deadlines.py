@@ -14,8 +14,8 @@ import pytest
 from gateway.errors import AppError
 from gateway.providers.client import REPAIR_LINE
 from tests.unit.gateway.providers.provider_support import (
-    ChunkedStream,
     EXTRACTION_PAYLOAD,
+    ChunkedStream,
     SequenceClock,
     SlowStream,
     build_provider,

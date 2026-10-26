@@ -7,7 +7,6 @@ report shape, sanitization and nonzero exit on any role failure are asserted.
 
 from __future__ import annotations
 
-import asyncio
 import json
 import sys
 import wave
@@ -16,7 +15,6 @@ from io import BytesIO
 from pathlib import Path
 
 import httpx
-import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))

@@ -6,10 +6,10 @@ from the Backend API, so a reply can never invent an appointment.
 
 from __future__ import annotations
 
-from shared.models import Appointment, InstallationRecord
 from gateway.backend_client import BackendApiClient
 from gateway.localization import render, text
 from gateway.schemas import Language, SlotOption
+from shared.models import Appointment, InstallationRecord
 
 
 def window_values(starts_at: str, ends_at: str) -> dict[str, str]:

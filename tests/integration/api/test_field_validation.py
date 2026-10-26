@@ -26,7 +26,6 @@ from tests.integration.support.intake import (
     start_session,
 )
 
-
 MISSING_ORDER = (
     "What is your energy account reference? Use NS- followed by six digits, for example NS-123456."
 )

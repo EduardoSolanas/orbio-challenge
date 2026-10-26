@@ -12,10 +12,10 @@ from playwright.sync_api import expect
 
 from tests.e2e.conftest import DENY_MICROPHONE_JS, body_of
 from tests.support.fakes import (
-    receipt_for,
     STT_TEXT,
     Gate,
     make_wav,
+    receipt_for,
     reply_mp3_bytes,
     review_reply,
     summary_text,
