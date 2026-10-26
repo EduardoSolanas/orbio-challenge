@@ -42,6 +42,9 @@ show_missing = true
 source_paths = ["gateway/", "backend_api/", "shared/"]
 do_not_mutate = ["gateway/__init__.py", "gateway/routes/__init__.py", "gateway/conversation/__init__.py", "gateway/providers/__init__.py", "gateway/knowledge/__init__.py", "backend_api/__init__.py", "shared/__init__.py", "gateway/main.py", "gateway/routes/endpoints.py", "gateway/routes/http_support.py", "gateway/routes/asgi_guards.py", "gateway/schemas.py", "gateway/providers/prompts.py", "gateway/errors.py"]
 pytest_add_cli_args_test_selection = ["tests/unit", "tests/integration"]
+# The tooling tests check the repo's scripts and configuration, not the code under mutation (and one of
+# them counts lines in the very source files mutmut rewrites), so mutation runs leave them out.
+pytest_add_cli_args = ["--ignore=tests/unit/tooling"]
 also_copy = ["web/", "tests/", "scripts/", "examples/", "docs/", "README.md", "pyproject.toml", "compose.yaml"]
 mutate_only_covered_lines = false
 # Mutations no test can observe, so they are not worth a survivor each: SQL keyword case, the codec
