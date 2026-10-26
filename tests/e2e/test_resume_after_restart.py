@@ -56,10 +56,10 @@ def test_resume_after_restart(case_id, ui, server, provider):
     # appends another missing-field prompt while clarification is pending.
     assert ui.send(CAPABILITY_Q).status == 200
     expect(ui.log).to_contain_text(
-        "I can answer questions about Northstar Energy bills, tariffs, meter readings, moving home, and supply issues."
+        "I can answer questions about Northstar Energy bills, tariffs, meter readings, moving home, and supply issues. I can also help you report a service problem and, once you verify the demo account, check an installation or book a technician. What do you need help with?"
     )
     assert ui.last_assistant(sid)["text"] == (
-        "I can answer questions about Northstar Energy bills, tariffs, meter readings, moving home, and supply issues."
+        "I can answer questions about Northstar Energy bills, tariffs, meter readings, moving home, and supply issues. I can also help you report a service problem and, once you verify the demo account, check an installation or book a technician. What do you need help with?"
     )
     assert ui.disk(sid)["slots"] == {
         "order_number": "NS-000123",
@@ -69,7 +69,7 @@ def test_resume_after_restart(case_id, ui, server, provider):
     }
     assert ui.send(UNRELATED).status == 200
     expect(ui.log).to_contain_text(
-        "I can answer questions about Northstar Energy bills, tariffs, meter readings, moving home, and supply issues."
+        "I can answer questions about Northstar Energy bills, tariffs, meter readings, moving home, and supply issues. I can also help you report a service problem and, once you verify the demo account, check an installation or book a technician. What do you need help with?"
     )
     expect(ui.log).not_to_contain_text(ASK_URGENCY)
     context_before = ui.transcript_text()

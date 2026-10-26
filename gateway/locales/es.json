@@ -28,7 +28,7 @@
   "booking.no_slots": "Ahora mismo no hay franjas disponibles para el técnico. Inténtalo más tarde.",
   "booking.user_choice": "Elijo la visita del técnico el {date} a las {start}.",
   "capability": "No puedo ayudarte con eso, pero puedo responder preguntas sobre energía, consultar una cuenta de demostración tras verificarla y ayudarte a comunicar un problema de servicio. No puedo modificar una cuenta real ni contactar con la red eléctrica.",
-  "capability_reply": "Puedo responder preguntas sobre facturas, tarifas, lecturas del contador, mudanzas y problemas de suministro de Northstar Energy.",
+  "capability_reply": "Puedo responder preguntas sobre facturas, tarifas, lecturas del contador, mudanzas y problemas de suministro de Northstar Energy. También puedo ayudarte a registrar un problema del servicio y, cuando verifiques la cuenta de demostración, consultar una instalación o reservar un técnico. ¿En qué necesitas ayuda?",
   "errors.empty_transcription": "No se devolvió ninguna transcripción. Prueba otra grabación o escribe tu mensaje.",
   "errors.input_too_large": "La entrada supera el tamaño permitido.",
   "errors.internal_error": "Se produjo un error interno.",

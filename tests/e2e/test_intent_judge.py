@@ -54,7 +54,7 @@ from tests.support.fakes import (
     extraction as make_extraction,
 )
 
-CAPABILITY_REPLY = "I can answer questions about Northstar Energy bills, tariffs, meter readings, moving home, and supply issues."
+CAPABILITY_REPLY = "I can answer questions about Northstar Energy bills, tariffs, meter readings, moving home, and supply issues. I can also help you report a service problem and, once you verify the demo account, check an installation or book a technician. What do you need help with?"
 JUDGE_RULES = {
     "greeting": "social: brief fixed acknowledgment, no field question or review reminder, no retrieval.",
     "thanks": "gratitude: give a brief thanks acknowledgment. The approved reply 'You're welcome! How else can I help with your energy service?' is valid and its general invitation does not restart or advance intake. Do not add a field question, retrieval answer, or review reminder; hidden state preservation is checked by deterministic assertions.",

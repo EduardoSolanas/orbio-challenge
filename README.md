@@ -168,7 +168,7 @@ python scripts/evaluate.py            # also: intents, safety, frustration, retr
 ```
 
 It uses the labelled utterances in [`tests/eval/utterances.json`](tests/eval/utterances.json)
-(89 English and Spanish messages, plus two FAQ question sets). Run on 2026-10-25 with
+(94 English and Spanish messages, plus two FAQ question sets). Run on 2026-10-25 with
 `DeepSeek-V4.1-Flash-1017` and `nvidia/nemotron-3-embed-1b:free`.
 
 **Intent detection: 85 of 89 at first, 89 of 89 after a prompt-only fix.** The misses
@@ -177,6 +177,8 @@ variants) read as `provide_details`, and "What are the urgency levels?" read as
 `capability`. The fix was two prompt rules and three new examples worded differently
 from the test messages. The 89 are the messages that exposed the misses, so read 100%
 as a regression baseline, not general accuracy.
+
+A manual test later showed "help me with something" being sent to intake, which asked for an account reference before the customer had said what they wanted. A vague request for help that names no problem or topic is now a `capability` turn: the reply lists what the assistant can do and asks what the customer needs. Five such messages joined the set, and the score on the live model is 94 of 94 (the explicit "I want to report a problem" cases still start an intake, 8 of 8).
 
 **Safety triage (gas): each check alone, and both together, caught 15 of 15 gas reports with 0 false alarms on 14 look-alikes and 0 on 89 everyday messages.** The set has English and Spanish, indirect wording ("smells like rotten eggs", "hissing by the meter", a carbon monoxide alarm) and look-alikes (a high gas bill, a gas meter installation, "I smelled new paint"). Recall is the number that matters, since a false alarm only shows safety advice. The first run of the embedding check raised one false alarm ("How's it going?"); adding two greeting sentences to the examples file fixed it with no code change. The examples share nothing with the evaluation messages (a test enforces that). The messages were written by one author and 29 is a small set: read it as a check that both work, not as a guarantee. Adding the safety checks did not move the other scores (intents still 89 of 89, hand-off 9 of 9 and 8 of 8).
 
