@@ -8,6 +8,7 @@ from uuid import UUID
 import pytest
 
 from backend_api.main import FIXTURE_ORDER_NUMBER
+from gateway.errors import app_error
 from gateway.localization import missing_question, text
 from tests.integration.order_verification.support import (
     ORDER_STATUS_Q,
@@ -241,3 +242,30 @@ async def test_verification_and_booking_lock_the_session_they_belong_to(
     )
 
     assert locked == [UUID(session_id), UUID(session_id)]
+
+
+# --- a refusal that says "already booked" but has no visit to show -----------------------------
+
+
+async def test_an_already_booked_refusal_with_no_visit_on_record_is_passed_on(
+    client, provider, app, monkeypatch
+):
+    session_id = await create_session(client)
+    provider.script_extraction(booking(order_number=FIXTURE_ORDER_NUMBER))
+    await send_turn(client, session_id, "Book a technician", 0)
+    turn = (await verify(client, session_id)).json()["turn"]
+
+    class Refusing:
+        async def book(self, order_number, starts_at):
+            raise app_error("already_booked")
+
+        async def installation(self, order_number):
+            return None
+
+    monkeypatch.setattr(app.state.engine, "customer_data", Refusing())
+    response = await book(
+        client, session_id, turn["revision"], turn["slot_options"][0]["starts_at"]
+    )
+
+    assert response.status_code == 409
+    assert response.json()["error"]["code"] == "already_booked"
