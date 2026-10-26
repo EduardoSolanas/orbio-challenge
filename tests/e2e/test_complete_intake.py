@@ -153,19 +153,19 @@ def test_complete_intake(case_id, ui, server, provider):
     assert saved["summary"] == SUMMARY
     assert [m["text"] for m in saved["messages"]].count(receipt) == 1
     assert provider.methods() == ["extract", "extract", "extract", "extract"]
-    expect(ui.message).not_to_be_editable()
-    expect(ui.enabled_button("Send")).to_have_count(0)
+    expect(ui.message).to_be_editable()  # the receipt asks "anything else?", so typing stays open
+    expect(ui.enabled_button("Send")).to_have_count(0)  # but nothing is typed yet
     expect(ui.enabled_button("Confirm details")).to_have_count(0)
     ui.cp("complete_intake.confirmed-local-receipt")
 
-    # Reload: completed view restored by GET, read-only, no model call, no commit.
+    # Reload: completed view restored by GET, no model call, no commit.
     completed_bytes = server.session_bytes(sid)
     gets_before = len(ui.session_gets())
     ui.page.reload()
     expect(ui.page.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
     expect(ui.log).to_contain_text(receipt)
-    expect(ui.message).not_to_be_editable()
-    expect(ui.enabled_button("Send")).to_have_count(0)
+    expect(ui.message).to_be_editable()  # the receipt asks "anything else?", so typing stays open
+    expect(ui.enabled_button("Send")).to_have_count(0)  # but nothing is typed yet
     expect(ui.enabled_button("Confirm details")).to_have_count(0)
     wait_until(lambda: len(ui.session_gets()) > gets_before, "resume GET after reload")
     resumed = ui.session_gets()[-1]

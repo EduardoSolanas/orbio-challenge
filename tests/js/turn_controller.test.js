@@ -281,7 +281,7 @@ describe("confirming the review", () => {
       review_revision: 3,
     });
     expect(app.state.status).toBe("completed");
-    expect(app.dom.message.readOnly).toBe(true);
+    expect(app.dom.message.readOnly).toBe(false);
     expect(app.dom.review.hidden).toBe(true);
     expect(http.to("GET", SESSION)).toHaveLength(1);
     expect(app.state.pending).toBe(false);

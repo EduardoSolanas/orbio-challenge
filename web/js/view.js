@@ -105,11 +105,14 @@ export class ChatView {
     const verificationBlocked = state.orderVerificationRequired;
     const draftPresent = this.draftNonempty();
 
-    dom.message.readOnly = closed || busy;
+    // After a saved request the receipt asks "anything else?", so typing stays open (it starts a new conversation).
+    const locked = state.status === "handed_off";
+
+    dom.message.readOnly = locked || busy;
 
     const overLimit = this.draftValue().length > MAX_CHARS;
     const sendOk =
-      !!state.sessionId && !closed && !busy && !overLimit && this.draftValue().trim().length > 0;
+      !!state.sessionId && !locked && !busy && !overLimit && this.draftValue().trim().length > 0;
     dom.send.disabled = !sendOk;
 
     const confirmable = state.canConfirm();

@@ -226,6 +226,38 @@ describe("after a saved request", () => {
     expect(http.to("POST", NEW_TURNS)).toHaveLength(0);
   });
 
+  test("the message box stays open and typing there starts a new conversation", async () => {
+    const { app, http } = await completed();
+    http
+      .on("POST", SESSIONS, ok(sessionView({ session_id: SECOND_SESSION_ID })))
+      .on("POST", NEW_TURNS, ok(turnResponse({ session_id: SECOND_SESSION_ID, revision: 1 })));
+    app.dom.message.value = "I also have a billing question";
+    app.view.updateControls();
+
+    expect(app.dom.message.readOnly).toBe(false);
+    expect(app.dom.send.disabled).toBe(false);
+    await app.turns.onSend();
+
+    expect(app.state.sessionId).toBe(SECOND_SESSION_ID);
+    expect(JSON.parse(http.to("POST", NEW_TURNS)[0].options.body)).toMatchObject({
+      text: "I also have a billing question",
+    });
+    expect(http.to("POST", TURNS)).toHaveLength(0);
+  });
+
+  test("if the new conversation cannot be created, the typed text is kept", async () => {
+    const { app, http } = await completed();
+    http.on("POST", SESSIONS, failure("provider_unavailable", 503));
+    app.dom.message.value = "another question";
+    app.view.updateControls();
+
+    await app.turns.onSend();
+
+    expect(app.dom.message.value).toBe("another question");
+    expect(app.state.sessionId).toBe(SESSION_ID);
+    expect(http.to("POST", TURNS)).toHaveLength(0);
+  });
+
   test("if the new conversation cannot be created, nothing is sent", async () => {
     const { app, http } = await completed();
     http.on("POST", SESSIONS, failure("provider_unavailable", 503));

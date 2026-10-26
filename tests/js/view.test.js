@@ -124,15 +124,28 @@ describe("updateControls", () => {
     expect(state.charLimitAlert).toBe(false);
   });
 
-  test.each(["completed", "handed_off"])("a %s conversation locks the composer", (status) => {
+  test("a handed-off conversation locks the composer", () => {
     state.sessionId = "s";
-    state.status = status;
+    state.status = "handed_off";
     dom.message.value = "hello";
 
     view.updateControls();
 
     expect(dom.message.readOnly).toBe(true);
     expect(dom.send.disabled).toBe(true);
+    expect(dom.startRecording.disabled).toBe(true);
+    expect(dom.newIntake.disabled).toBe(false);
+  });
+
+  test("a completed conversation keeps typing open, because the receipt asks if there is more", () => {
+    state.sessionId = "s";
+    state.status = "completed";
+    dom.message.value = "hello";
+
+    view.updateControls();
+
+    expect(dom.message.readOnly).toBe(false);
+    expect(dom.send.disabled).toBe(false);
     expect(dom.startRecording.disabled).toBe(true);
     expect(dom.newIntake.disabled).toBe(false);
   });

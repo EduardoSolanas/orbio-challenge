@@ -121,6 +121,15 @@ export class TurnController extends Controller {
     if (view.dom.send.disabled || state.pending || state.createPending || state.sttPending) return;
     const text = view.draftValue();
     if (!text.trim() || text.length > MAX_CHARS) return;
+    if (state.status === "completed") {
+      // The saved request is finished: typing opens a fresh conversation and sends the text there.
+      await this.session.startNewIntake();
+      if (state.status === "completed") {
+        view.dom.message.value = text; // it could not be created; keep what was typed
+        view.updateControls();
+        return;
+      }
+    }
     presenter.clearRetry();
     const payload = {
       request_id: this.newRequestId(),
