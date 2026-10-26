@@ -103,15 +103,15 @@ async def case_rejected_then_valid_changed_correction(client, provider, session_
     )
 
 
-async def case_rejected_then_explicit_equal_accepted_correction(client, provider, session_dir):
+async def case_rejected_then_explicit_equal_accepted_correction(
+    client, provider, session_dir
+):
     session_id = await rejected_session(client, provider)
     before = read_session(session_dir, session_id)
     calls_before = len(provider.calls)
     provider.script_extraction(equal_explicit_correction_extraction())
     text = "Keep the high urgency."
-    request_id, response = await send_turn(
-        client, session_id, text=text, revision=2
-    )
+    request_id, response = await send_turn(client, session_id, text=text, revision=2)
     assert response.status_code == 200, response.text
     payload = response.json()
     assert_ledger(provider, calls_before=calls_before, extracts=1, answers=0)
@@ -170,7 +170,9 @@ async def case_rejected_then_unambiguous_all_null_yes(client, provider, session_
     assert disk["confirmation"] is None
 
 
-async def case_rejected_then_unambiguous_equal_value_reaffirmation(client, provider, session_dir):
+async def case_rejected_then_unambiguous_equal_value_reaffirmation(
+    client, provider, session_dir
+):
     session_id = await rejected_session(client, provider)
     before = read_session(session_dir, session_id)
     calls_before = len(provider.calls)
@@ -208,9 +210,7 @@ async def case_rejected_then_invalid_correction(client, provider, session_dir):
     calls_before = len(provider.calls)
     provider.script_extraction(invalid_correction_extraction())
     text = "Change the order to NS-12345."
-    request_id, response = await send_turn(
-        client, session_id, text=text, revision=2
-    )
+    request_id, response = await send_turn(client, session_id, text=text, revision=2)
     assert response.status_code == 200, response.text
     payload = response.json()
     assert_ledger(provider, calls_before=calls_before, extracts=1, answers=0)
@@ -243,15 +243,15 @@ async def case_rejected_then_invalid_correction(client, provider, session_dir):
     assert disk["confirmation"] is None
 
 
-async def case_rejected_then_valid_urgency_correction_plus_invalid_order(client, provider, session_dir):
+async def case_rejected_then_valid_urgency_correction_plus_invalid_order(
+    client, provider, session_dir
+):
     session_id = await rejected_session(client, provider)
     before = read_session(session_dir, session_id)
     calls_before = len(provider.calls)
     provider.script_extraction(valid_correction_plus_invalid_sibling_extraction())
     text = "Make it low urgency, and the order is NS-12345."
-    request_id, response = await send_turn(
-        client, session_id, text=text, revision=2
-    )
+    request_id, response = await send_turn(client, session_id, text=text, revision=2)
     assert response.status_code == 200, response.text
     payload = response.json()
     assert_ledger(provider, calls_before=calls_before, extracts=1, answers=0)
@@ -291,9 +291,7 @@ async def case_rejected_then_unrelated_statement(client, provider, session_dir):
     calls_before = len(provider.calls)
     provider.script_extraction(unrelated_extraction())
     text = "It is raining today."
-    request_id, response = await send_turn(
-        client, session_id, text=text, revision=2
-    )
+    request_id, response = await send_turn(client, session_id, text=text, revision=2)
     assert response.status_code == 200, response.text
     payload = response.json()
     assert_ledger(provider, calls_before=calls_before, extracts=1, answers=0)
@@ -344,7 +342,9 @@ async def case_rejected_then_return_q(client, provider, session_dir):
         token=None,
     )
     assert payload["reply"] == RETURN_ANSWER_TEXT
-    assert [citation["source_id"] for citation in payload["citations"]] == ["faq-returns"]
+    assert [citation["source_id"] for citation in payload["citations"]] == [
+        "faq-returns"
+    ]
     disk = assert_turn_commit(
         session_dir=session_dir,
         session_id=session_id,
@@ -359,15 +359,15 @@ async def case_rejected_then_return_q(client, provider, session_dir):
     assert disk["pending_review_revision"] is None
 
 
-async def case_reject_accepted_correction_same_extraction(client, provider, session_dir):
+async def case_reject_accepted_correction_same_extraction(
+    client, provider, session_dir
+):
     session_id = await review_session(client, provider)
     before = read_session(session_dir, session_id)
     calls_before = len(provider.calls)
     provider.script_extraction(reject_with_correction_extraction())
     text = "No, make it low urgency."
-    request_id, response = await send_turn(
-        client, session_id, text=text, revision=1
-    )
+    request_id, response = await send_turn(client, session_id, text=text, revision=1)
     assert response.status_code == 200, response.text
     payload = response.json()
     assert_ledger(provider, calls_before=calls_before, extracts=1, answers=0)
@@ -395,15 +395,15 @@ async def case_reject_accepted_correction_same_extraction(client, provider, sess
     assert disk["confirmation"] is None
 
 
-async def case_rejected_then_correction_has_question_true(client, provider, session_dir):
+async def case_rejected_then_correction_has_question_true(
+    client, provider, session_dir
+):
     session_id = await rejected_session(client, provider)
     before = read_session(session_dir, session_id)
     calls_before = len(provider.calls)
     provider.script_extraction(correction_with_question_extraction())
     text = "Make it low urgency. Can I return an unused item?"
-    request_id, response = await send_turn(
-        client, session_id, text=text, revision=2
-    )
+    request_id, response = await send_turn(client, session_id, text=text, revision=2)
     assert response.status_code == 200, response.text
     payload = response.json()
     assert_ledger(provider, calls_before=calls_before, extracts=1, answers=0)

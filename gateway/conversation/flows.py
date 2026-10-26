@@ -24,6 +24,7 @@ from gateway.schemas import (
     Clarification,
     Extraction,
     FieldName,
+    FlowState,
     Intent,
     Language,
     SlotOption,
@@ -95,12 +96,12 @@ async def ask_account(ctx: FlowContext) -> StepResult:
 
 
 async def verify_account(ctx: FlowContext) -> StepResult:
-    if ctx.order_number is None:  # nothing to verify, and "no grant" must not match "no account"
-        return await ask_account(ctx)
     if ctx.verification.grant(ctx.session_id) == ctx.order_number:
         return StepResult()
     ctx.verification.set_pending_order(ctx.session_id, ctx.order_number)
-    return StepResult(text("auth.verification_prompt", ctx.language), verification_required=True)
+    return StepResult(
+        text("auth.verification_prompt", ctx.language), verification_required=True
+    )
 
 
 async def show_installation(ctx: FlowContext) -> StepResult:
@@ -109,7 +110,9 @@ async def show_installation(ctx: FlowContext) -> StepResult:
 
 
 async def offer_windows(ctx: FlowContext) -> StepResult:
-    reply, slots = await booking_offer(ctx.customer_data, ctx.order_number, ctx.language)
+    reply, slots = await booking_offer(
+        ctx.customer_data, ctx.order_number, ctx.language
+    )
     return StepResult(reply, slot_options=slots, finish=True)
 
 
@@ -136,6 +139,13 @@ STEP_KINDS = {
     "offer_windows": "account",
     "collect_details": "intake",
     "review_details": "intake",
+}
+
+# A step that needs what an earlier step settled: that step must come before it in the flow.
+NEEDS = {
+    "verify_account": "ask_account",
+    "show_installation": "verify_account",
+    "offer_windows": "verify_account",
 }
 
 STEPS: dict[str, Callable[[FlowContext], Awaitable[StepResult]]] = {
@@ -166,12 +176,21 @@ def load_flows(path: Path = DEFAULT_FLOWS_PATH) -> dict[str, FlowDefinition]:
         if intent not in intents:
             raise FlowsInvalid(f"flow {name!r} starts on an unknown intent {intent!r}")
         if not isinstance(steps, list) or not steps or len(set(steps)) != len(steps):
-            raise FlowsInvalid(f"flow {name!r} needs a non-empty list of distinct steps")
+            raise FlowsInvalid(
+                f"flow {name!r} needs a non-empty list of distinct steps"
+            )
         unknown = [step for step in steps if step not in STEPS]
         if unknown:
             raise FlowsInvalid(f"flow {name!r} uses unknown steps {unknown}")
+        for index, step in enumerate(steps):
+            if step in NEEDS and NEEDS[step] not in steps[:index]:
+                raise FlowsInvalid(
+                    f"flow {name!r}: {step} needs {NEEDS[step]} before it"
+                )
         if len({STEP_KINDS[step] for step in steps}) != 1:
-            raise FlowsInvalid(f"flow {name!r} mixes account steps and support-request steps")
+            raise FlowsInvalid(
+                f"flow {name!r} mixes account steps and support-request steps"
+            )
         flows[name] = FlowDefinition(name, intent, tuple(steps))
     if SUPPORT_REQUEST not in flows:
         raise FlowsInvalid(f"the flows file must define {SUPPORT_REQUEST!r}")
@@ -193,11 +212,14 @@ def only_account_number(extraction: Extraction) -> bool:
     )
 
 
-async def run_flow(definition: FlowDefinition, step: str, ctx: FlowContext) -> FlowOutcome:
-    """Run from ``step`` until a step has something to say."""
+async def run_flow(definition: FlowDefinition, ctx: FlowContext) -> FlowOutcome:
+    """Run the steps in order until one has something to say.
 
-    start = definition.steps.index(step) if step in definition.steps else 0
-    for current in definition.steps[start:]:
+    It always starts at the first step: every step is a check that passes quietly when it is
+    already satisfied, so a message that changes the account is re-checked from the top.
+    """
+
+    for current in definition.steps:
         result = await STEPS[current](ctx)
         if result.reply is None:
             continue
@@ -208,3 +230,15 @@ async def run_flow(definition: FlowDefinition, step: str, ctx: FlowContext) -> F
             result.slot_options,
         )
     return FlowOutcome(None, None)
+
+
+def flow_state_after(
+    definition: FlowDefinition, outcome: FlowOutcome
+) -> FlowState | None:
+    """What the session file keeps: where the flow waits, or nothing once it has finished."""
+
+    return (
+        None
+        if outcome.step is None
+        else FlowState(name=definition.name, step=outcome.step)
+    )

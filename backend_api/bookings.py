@@ -98,7 +98,11 @@ class BookingStore:
             "SELECT starts_at, ends_at, reference FROM slots WHERE order_number = ?",
             (order_number,),
         ).fetchone()
-        return None if row is None else dict(zip(("starts_at", "ends_at", "reference"), row))
+        return (
+            None
+            if row is None
+            else dict(zip(("starts_at", "ends_at", "reference"), row))
+        )
 
     def book(self, order_number: str, starts_at: str) -> dict[str, str]:
         """Reserve one open window for the order or raise ``BookingRefused``."""
@@ -117,7 +121,9 @@ class BookingStore:
                         self._clock().strftime(TIME_FORMAT),
                     ),
                 ).rowcount
-        except sqlite3.IntegrityError:  # the unique index, should two bookings ever race
+        except (
+            sqlite3.IntegrityError
+        ):  # the unique index, should two bookings ever race
             raise BookingRefused(ALREADY_BOOKED) from None
         if not claimed:
             raise BookingRefused(SLOT_UNAVAILABLE)

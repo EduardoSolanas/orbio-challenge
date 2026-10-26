@@ -31,6 +31,9 @@ from tests.integration.support.transcription import (
     json_wire,
     snapshot,
 )
+from tests.integration.support.transcription import (
+    unavailable_status as stt_status,
+)
 
 STT_PATH = "/v1/audio/transcriptions"
 TRANSCRIPT = "My order NS-000123 arrived broken and this is urgent."
@@ -39,13 +42,6 @@ TRANSCRIPT = "My order NS-000123 arrived broken and this is urgent."
 def stt_json(text: str):
     def responder(request: httpx.Request, attempt: int) -> httpx.Response:
         return json_wire({"text": text})
-
-    return responder
-
-
-def stt_status(status: int):
-    def responder(request: httpx.Request, attempt: int) -> httpx.Response:
-        return json_wire({"error": "unavailable"}, status=status)
 
     return responder
 
@@ -68,7 +64,11 @@ async def upload(client, payload: bytes, *, filename: str = "recording.wav"):
 
 
 async def case_valid_finite16_khz_mono16_bit_pcm_wav(settings, session_dir):
-    async with audio_client(settings, {"stt": stt_json(TRANSCRIPT)}) as (client, rec, _):
+    async with audio_client(settings, {"stt": stt_json(TRANSCRIPT)}) as (
+        client,
+        rec,
+        _,
+    ):
         session_id = await start_session(client)
         before = snapshot(session_dir, session_id)
         payload = gen_wav.pcm_wav()
@@ -82,7 +82,9 @@ async def case_valid_finite16_khz_mono16_bit_pcm_wav(settings, session_dir):
         assert len(rec["stt"].requests) == 1
         request = rec["stt"].requests[0]
         assert request.url.path == STT_PATH
-        assert request.headers["content-type"].startswith("multipart/form-data; boundary=")
+        assert request.headers["content-type"].startswith(
+            "multipart/form-data; boundary="
+        )
         assert request.headers["accept-encoding"] == "identity"
         body = request.content
         assert b'name="file"' in body
@@ -96,27 +98,47 @@ async def case_valid_finite16_khz_mono16_bit_pcm_wav(settings, session_dir):
 
 
 async def case_all_zero_valid_wav(settings, session_dir):
-    await assert_guard(settings, session_dir, gen_wav.silence_wav(), status=422, code="silent_audio")
+    await assert_guard(
+        settings, session_dir, gen_wav.silence_wav(), status=422, code="silent_audio"
+    )
 
 
 async def case_malformed_riff_header_bytes(settings, session_dir):
-    await assert_guard(settings, session_dir, gen_wav.malformed_wav(), status=422, code="invalid_audio")
+    await assert_guard(
+        settings, session_dir, gen_wav.malformed_wav(), status=422, code="invalid_audio"
+    )
 
 
 async def case_declared_frames_exceed_actual_bytes(settings, session_dir):
-    await assert_guard(settings, session_dir, gen_wav.truncated_wav(), status=422, code="invalid_audio")
+    await assert_guard(
+        settings, session_dir, gen_wav.truncated_wav(), status=422, code="invalid_audio"
+    )
 
 
 async def case_compressed_wav(settings, session_dir):
-    await assert_guard(settings, session_dir, gen_wav.compressed_wav(), status=415, code="unsupported_audio")
+    await assert_guard(
+        settings,
+        session_dir,
+        gen_wav.compressed_wav(),
+        status=415,
+        code="unsupported_audio",
+    )
 
 
 async def case_webm_payload_file(settings, session_dir):
-    await assert_guard(settings, session_dir, gen_wav.webm_bytes(), status=415, code="unsupported_audio")
+    await assert_guard(
+        settings,
+        session_dir,
+        gen_wav.webm_bytes(),
+        status=415,
+        code="unsupported_audio",
+    )
 
 
 async def case_valid_pcm_duration61_seconds(settings, session_dir):
-    await assert_guard(settings, session_dir, gen_wav.long_wav(), status=422, code="invalid_audio")
+    await assert_guard(
+        settings, session_dir, gen_wav.long_wav(), status=422, code="invalid_audio"
+    )
 
 
 # file10mib 1 bytes..chunked body exceeding multipart cap without content length: upload caps ---------------------------------------------
@@ -144,7 +166,10 @@ async def case_multipart_total10mib_64kib_1(settings, session_dir):
             app,
             method="POST",
             path="/api/transcriptions",
-            chunks=[body[index : index + 64 * 1024] for index in range(0, len(body), 64 * 1024)],
+            chunks=[
+                body[index : index + 64 * 1024]
+                for index in range(0, len(body), 64 * 1024)
+            ],
             headers={
                 "content-type": f"multipart/form-data; boundary={boundary}",
                 "content-length": str(len(body)),
@@ -156,7 +181,9 @@ async def case_multipart_total10mib_64kib_1(settings, session_dir):
         assert snapshot(session_dir, session_id) == before
 
 
-async def case_chunked_body_exceeding_multipart_cap_without_content_length(settings, session_dir):
+async def case_chunked_body_exceeding_multipart_cap_without_content_length(
+    settings, session_dir
+):
     async with audio_client(settings, {}) as (client, rec, app):
         session_id = await start_session(client)
         before = snapshot(session_dir, session_id)
@@ -165,7 +192,9 @@ async def case_chunked_body_exceeding_multipart_cap_without_content_length(setti
             method="POST",
             path="/api/transcriptions",
             chunks=gen_wav.chunked_oversize(),
-            headers={"content-type": "multipart/form-data; boundary=----orbio10chunked"},
+            headers={
+                "content-type": "multipart/form-data; boundary=----orbio10chunked"
+            },
         )
         assert status == 413
         assert json.loads(raw)["error"]["code"] == "input_too_large"
@@ -173,7 +202,9 @@ async def case_chunked_body_exceeding_multipart_cap_without_content_length(setti
         assert snapshot(session_dir, session_id) == before
 
 
-async def assert_guard(settings, session_dir, payload: bytes, *, status: int, code: str):
+async def assert_guard(
+    settings, session_dir, payload: bytes, *, status: int, code: str
+):
     async with audio_client(settings, {}) as (client, rec, _):
         session_id = await start_session(client)
         before = snapshot(session_dir, session_id)
@@ -198,7 +229,9 @@ async def assert_transcript_rejected(settings, session_dir, text: str, *, code: 
 
 
 async def case_valid_wav_empty_transcript(settings, session_dir):
-    await assert_transcript_rejected(settings, session_dir, "", code="empty_transcription")
+    await assert_transcript_rejected(
+        settings, session_dir, "", code="empty_transcription"
+    )
 
 
 async def case_valid_wav_whitespace_transcript(settings, session_dir):
@@ -216,7 +249,9 @@ async def case_valid_wav_with4001_char_transcript(settings, session_dir):
 # valid wav stt provider unavailable..valid wav stt timeout: STT service failures ------------------------------------
 
 
-async def assert_stt_failure(settings, session_dir, responder, *, status: int, code: str):
+async def assert_stt_failure(
+    settings, session_dir, responder, *, status: int, code: str
+):
     async with audio_client(settings, {"stt": responder}) as (client, rec, _):
         session_id = await start_session(client)
         before = snapshot(session_dir, session_id)
@@ -257,7 +292,11 @@ async def case_cancel_upload_stt_task(settings, session_dir):
             )
         return json_wire({"text": TRANSCRIPT})
 
-    async with audio_client(settings, {"stt": stt_gated}, capacity=1) as (client, rec, _):
+    async with audio_client(settings, {"stt": stt_gated}, capacity=1) as (
+        client,
+        rec,
+        _,
+    ):
         session_id = await start_session(client)
         before = snapshot(session_dir, session_id)
 

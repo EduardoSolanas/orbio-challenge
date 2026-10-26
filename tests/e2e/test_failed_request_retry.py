@@ -15,13 +15,17 @@ from tests.support.fakes import (
     x_full,
 )
 
-pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+pytestmark = (
+    pytest.mark.browser_e2e
+)  # controlled-provider browser workflow, never live Docker/provider proof
 
 SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
 UNAVAILABLE = "The AI service is unavailable. Please retry."
 
 
-@pytest.mark.parametrize("case_id", [pytest.param("failed_request_retry", id="failed_request_retry")])
+@pytest.mark.parametrize(
+    "case_id", [pytest.param("failed_request_retry", id="failed_request_retry")]
+)
 def test_failed_request_retry(case_id, ui, server, provider):
     gate = Gate("FULL extraction")
     provider.script_extract(FULL, fail="provider_unavailable", hold=gate)
@@ -65,7 +69,11 @@ def test_failed_request_retry(case_id, ui, server, provider):
     assert [p["status"] for p in posts] == [503]
     assert server.session_bytes(sid) == baseline
     saved = ui.disk(sid)
-    assert saved["revision"] == 0 and saved["requests"] == [] and len(saved["messages"]) == 1
+    assert (
+        saved["revision"] == 0
+        and saved["requests"] == []
+        and len(saved["messages"]) == 1
+    )
     ui.cp("failed_request_retry.failure-keeps-draft")
 
     # Resending the restored draft creates a fresh request and succeeds once.
@@ -78,7 +86,10 @@ def test_failed_request_retry(case_id, ui, server, provider):
     assert [p["status"] for p in posts] == [503, 200]
     assert posts[0]["request_body"] != posts[1]["request_body"]
     assert body_of(posts[0])["request_id"] != body_of(posts[1])["request_id"]
-    assert body_of(posts[1])["text"] == FULL and body_of(posts[1])["expected_revision"] == 0
+    assert (
+        body_of(posts[1])["text"] == FULL
+        and body_of(posts[1])["expected_revision"] == 0
+    )
     expect(ui.review).to_be_visible()
     expect(ui.message).to_have_value("")
     saved = ui.disk(sid)
@@ -97,7 +108,9 @@ def test_failed_request_retry(case_id, ui, server, provider):
     assert saved["collection_turn_count"] == 1
     assert len(saved["messages"]) == 5
     assert [m["text"] for m in saved["messages"]].count(receipt) == 1
-    assert [m["text"] for m in saved["messages"] if m["role"] == "user"].count(FULL) == 1
+    assert [m["text"] for m in saved["messages"] if m["role"] == "user"].count(
+        FULL
+    ) == 1
     assert [c["outcome"] for c in provider.calls("extract")] == [
         "failed:provider_unavailable",
         "ok",

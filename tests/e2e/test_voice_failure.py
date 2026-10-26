@@ -18,7 +18,9 @@ from tests.support.fakes import (
     x_full,
 )
 
-pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+pytestmark = (
+    pytest.mark.browser_e2e
+)  # controlled-provider browser workflow, never live Docker/provider proof
 
 SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
 UNAVAILABLE = "The AI service is unavailable. Please retry."
@@ -42,7 +44,9 @@ def test_voice_failure(case_id, ui, server, provider, tmp_path):
     transcript_before = ui.transcript_text()
 
     # One STT outage: safe error, no draft, no bubble, no commit.
-    with ui.page.expect_response(lambda r: r.url.endswith("/api/transcriptions")) as pending:
+    with ui.page.expect_response(
+        lambda r: r.url.endswith("/api/transcriptions")
+    ) as pending:
         ui.upload(wav_path)
     assert pending.value.status == 503
     ui.expect_alert(UNAVAILABLE)
@@ -54,7 +58,9 @@ def test_voice_failure(case_id, ui, server, provider, tmp_path):
     assert server.session_bytes(sid) == baseline
     assert ui.turn_posts() == []
     assert [p["status"] for p in ui.transcription_posts()] == [503]
-    assert [c["outcome"] for c in provider.calls("transcribe")] == ["failed:provider_unavailable"]
+    assert [c["outcome"] for c in provider.calls("transcribe")] == [
+        "failed:provider_unavailable"
+    ]
     ui.cp("voice_failure.stt-outage-safe-error")
 
     # Typed FULL still works and is recorded as text input.
@@ -77,12 +83,16 @@ def test_voice_failure(case_id, ui, server, provider, tmp_path):
         ui.play_button(reply["id"]).click()
     assert pending.value.status == 503
     ui.expect_alert(UNAVAILABLE)
-    expect(ui.log).to_contain_text("Please confirm these details or tell me what to change.")
+    expect(ui.log).to_contain_text(
+        "Please confirm these details or tell me what to change."
+    )
     expect(ui.review).to_be_visible()
     expect(ui.enabled_button("Confirm details")).to_have_count(1)
     assert server.session_bytes(sid) == before_play
     assert len(ui.turn_posts()) == 1
-    assert [c["outcome"] for c in provider.calls("synthesize")] == ["failed:provider_unavailable"]
+    assert [c["outcome"] for c in provider.calls("synthesize")] == [
+        "failed:provider_unavailable"
+    ]
     ui.cp("voice_failure.tts-outage-text-intact")
 
     # Confirmation succeeds normally with exactly one receipt.

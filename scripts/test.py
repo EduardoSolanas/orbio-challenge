@@ -180,11 +180,15 @@ def build_commands(
 ) -> list[list[str]]:
     """Return the child commands for a layer, in execution order."""
     if layer == "unit":
-        return [pytest_command(["tests/unit"], passthrough, junit="reports/junit/unit.xml")]
+        return [
+            pytest_command(["tests/unit"], passthrough, junit="reports/junit/unit.xml")
+        ]
     if layer == "integration":
         return [
             pytest_command(
-                ["tests/integration"], passthrough, junit="reports/junit/integration.xml"
+                ["tests/integration"],
+                passthrough,
+                junit="reports/junit/integration.xml",
             )
         ]
     if layer == "e2e":
@@ -336,7 +340,10 @@ def _emit(stream, text: str = "") -> None:
 
 
 def print_help(stream) -> None:
-    _emit(stream, "Portable test command runner — python scripts/test.py <layer> [-- args]")
+    _emit(
+        stream,
+        "Portable test command runner — python scripts/test.py <layer> [-- args]",
+    )
     _emit(stream, "")
     _emit(stream, "Layers:")
     for name, info in LAYER_INFO.items():
@@ -347,12 +354,27 @@ def print_help(stream) -> None:
         _emit(stream, f"  {'':<12} reports: {info.reports}")
         _emit(stream, "")
     _emit(stream, "Runner options:")
-    _emit(stream, "  docker-e2e --compose   start the local Compose stack before the real Docker suite.")
-    _emit(stream, "                         Without it the runner only verifies the configured deployment.")
-    _emit(stream, "  -- <args>              append args to the layer's pytest command, e.g. unit -- -k localization -q")
+    _emit(
+        stream,
+        "  docker-e2e --compose   start the local Compose stack before the real Docker suite.",
+    )
+    _emit(
+        stream,
+        "                         Without it the runner only verifies the configured deployment.",
+    )
+    _emit(
+        stream,
+        "  -- <args>              append args to the layer's pytest command, e.g. unit -- -k localization -q",
+    )
     _emit(stream, "")
-    _emit(stream, "Exit codes: the first failing child's exit code; 2 for usage or configuration errors.")
-    _emit(stream, "Secrets are never printed; the judge API key stays in the process environment.")
+    _emit(
+        stream,
+        "Exit codes: the first failing child's exit code; 2 for usage or configuration errors.",
+    )
+    _emit(
+        stream,
+        "Secrets are never printed; the judge API key stays in the process environment.",
+    )
 
 
 def _fail_config(stream, message: str) -> int:
@@ -425,12 +447,19 @@ def main(
         _emit(stream, f"[{index}/{len(commands)}] COMMAND: {' '.join(command)}")
         _emit(stream, "-" * 78)
         try:
-            if compose and layer == "docker-e2e" and command[:2] == ["docker", "compose"]:
+            if (
+                compose
+                and layer == "docker-e2e"
+                and command[:2] == ["docker", "compose"]
+            ):
                 code = run(command, root)
                 _emit(stream, "-" * 78)
                 _emit(stream, f"EXIT CODE: {code}")
                 if code:
-                    _emit(stream, f"RESULT: FAIL (docker-e2e stopped at step {index}/{len(commands)})")
+                    _emit(
+                        stream,
+                        f"RESULT: FAIL (docker-e2e stopped at step {index}/{len(commands)})",
+                    )
                     return code
                 wait_health(f"{docker_config.app_url}/health", HEALTH_TIMEOUT_SECONDS)
                 _emit(stream, f"HEALTH: {docker_config.app_url}/health is ready")
@@ -438,7 +467,10 @@ def main(
             code = run(command, root)
         except (ConfigError, RuntimeError, OSError) as exc:
             _emit(stream, f"ERROR: {exc}")
-            _emit(stream, f"RESULT: FAIL ({layer} stopped at step {index}/{len(commands)})")
+            _emit(
+                stream,
+                f"RESULT: FAIL ({layer} stopped at step {index}/{len(commands)})",
+            )
             return CONFIG_EXIT_CODE
         _emit(stream, "-" * 78)
         _emit(stream, f"EXIT CODE: {code}")

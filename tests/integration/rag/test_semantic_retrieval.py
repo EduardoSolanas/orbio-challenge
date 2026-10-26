@@ -31,7 +31,11 @@ def embed_near(record_id: str | None):
         if len(texts) == size:
             return [[1.0 if i == j else 0.0 for j in range(size)] for i in range(size)]
         index = next((i for i, r in enumerate(RECORDS) if r.id == record_id), None)
-        return [[0.0] * size if index is None else [1.0 if i == index else 0.0 for i in range(size)]]
+        return [
+            [0.0] * size
+            if index is None
+            else [1.0 if i == index else 0.0 for i in range(size)]
+        ]
 
     return embed
 
@@ -46,25 +50,41 @@ def sources_of(provider) -> list[str]:
     return [record.id for record in context.sources]
 
 
-async def test_the_semantically_closest_record_is_retrieved_and_cited(settings, provider):
-    async with running_client(app_with(settings, provider, embed_near("faq-damaged"))) as client:
+async def test_the_semantically_closest_record_is_retrieved_and_cited(
+    settings, provider
+):
+    async with running_client(
+        app_with(settings, provider, embed_near("faq-damaged"))
+    ) as client:
         session_id = await start_session(client)
         provider.script_answer(grounded(ANSWER, ["faq-damaged"]))
 
         _, body = await post_turn(
-            client, provider, session_id, text=METER_Q, revision=0, extraction=question_extraction()
+            client,
+            provider,
+            session_id,
+            text=METER_Q,
+            revision=0,
+            extraction=question_extraction(),
         )
 
     assert sources_of(provider) == ["faq-damaged"]
     assert [citation["source_id"] for citation in body["citations"]] == ["faq-damaged"]
 
 
-async def test_a_question_close_to_nothing_abstains_without_calling_the_model(settings, provider):
+async def test_a_question_close_to_nothing_abstains_without_calling_the_model(
+    settings, provider
+):
     async with running_client(app_with(settings, provider, embed_near(None))) as client:
         session_id = await start_session(client)
 
         _, body = await post_turn(
-            client, provider, session_id, text=METER_Q, revision=0, extraction=question_extraction()
+            client,
+            provider,
+            session_id,
+            text=METER_Q,
+            revision=0,
+            extraction=question_extraction(),
         )
 
     assert body["reply"].startswith(ABSTENTION)
@@ -81,7 +101,12 @@ async def test_an_embedding_outage_falls_back_to_keyword_retrieval(settings, pro
         provider.script_answer(grounded(ANSWER, ["faq-returns"]))
 
         _, body = await post_turn(
-            client, provider, session_id, text=RETURN_Q, revision=0, extraction=question_extraction()
+            client,
+            provider,
+            session_id,
+            text=RETURN_Q,
+            revision=0,
+            extraction=question_extraction(),
         )
 
     assert "faq-returns" in sources_of(provider)

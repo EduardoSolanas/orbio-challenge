@@ -46,7 +46,9 @@ async def test_backend_api_outage_during_verification_is_safe_and_recovers(
     provider.script_extraction(order_lookup())
     assert (await send_turn(client, session_id, ORDER_STATUS_Q, 0)).status_code == 200
     provider.script_extraction(order_lookup(order_number=FIXTURE_ORDER_NUMBER))
-    assert (await send_turn(client, session_id, ORDER_NUMBER_TEXT, 1)).status_code == 200
+    assert (
+        await send_turn(client, session_id, ORDER_NUMBER_TEXT, 1)
+    ).status_code == 200
     before = (session_dir / f"{session_id}.json").read_bytes()
 
     backend_api.stop()
@@ -54,7 +56,9 @@ async def test_backend_api_outage_during_verification_is_safe_and_recovers(
 
     assert down.status_code == 503
     assert down.json()["error"]["code"] == "backend_api_unavailable"
-    assert down.json()["error"]["message"] == text("errors.backend_api_unavailable", "en")
+    assert down.json()["error"]["message"] == text(
+        "errors.backend_api_unavailable", "en"
+    )
     assert down.json()["error"]["retryable"] is True
     assert (session_dir / f"{session_id}.json").read_bytes() == before
     assert verification.grant(UUID(session_id)) is None
@@ -82,7 +86,9 @@ async def test_backend_api_outage_during_lookup_preserves_the_grant_and_recovers
     provider.script_extraction(order_lookup())
     assert (await send_turn(client, session_id, ORDER_STATUS_Q, 0)).status_code == 200
     provider.script_extraction(order_lookup(order_number=FIXTURE_ORDER_NUMBER))
-    assert (await send_turn(client, session_id, ORDER_NUMBER_TEXT, 1)).status_code == 200
+    assert (
+        await send_turn(client, session_id, ORDER_NUMBER_TEXT, 1)
+    ).status_code == 200
     assert (await verify(client, session_id)).json()["verified"] is True
     before = (session_dir / f"{session_id}.json").read_bytes()
 
@@ -94,7 +100,9 @@ async def test_backend_api_outage_during_lookup_preserves_the_grant_and_recovers
 
     assert down.status_code == 503
     assert down.json()["error"]["code"] == "backend_api_unavailable"
-    assert down.json()["error"]["message"] == text("errors.backend_api_unavailable", "en")
+    assert down.json()["error"]["message"] == text(
+        "errors.backend_api_unavailable", "en"
+    )
     assert (session_dir / f"{session_id}.json").read_bytes() == before
     assert verification.grant(UUID(session_id)) == FIXTURE_ORDER_NUMBER
     assert "Casey" not in down.text
@@ -163,7 +171,9 @@ class _FaultyBackendApiServer:
         self._thread = thread
         thread.start()
         wait_until(
-            lambda: server.started, "the faulty Backend API to become ready", self.STARTUP_SECONDS
+            lambda: server.started,
+            "the faulty Backend API to become ready",
+            self.STARTUP_SECONDS,
         )
 
     def stop(self) -> None:
@@ -171,7 +181,9 @@ class _FaultyBackendApiServer:
             self._server.should_exit = True
         if self._thread is not None:
             self._thread.join(self.SHUTDOWN_JOIN_SECONDS)
-            assert not self._thread.is_alive(), "faulty Backend API thread survived shutdown"
+            assert not self._thread.is_alive(), (
+                "faulty Backend API thread survived shutdown"
+            )
         if self._socket is not None:
             self._socket.close()
 
@@ -209,8 +221,12 @@ def faulty_backend_api():
     "mode,status,code",
     [
         pytest.param("slow", 504, BACKEND_API_TIMEOUT, id="OA-I07-timeout"),
-        pytest.param("malformed", 502, INVALID_BACKEND_API_RESPONSE, id="OA-I07-malformed"),
-        pytest.param("server_error", 502, INVALID_BACKEND_API_RESPONSE, id="OA-I07-5xx"),
+        pytest.param(
+            "malformed", 502, INVALID_BACKEND_API_RESPONSE, id="OA-I07-malformed"
+        ),
+        pytest.param(
+            "server_error", 502, INVALID_BACKEND_API_RESPONSE, id="OA-I07-5xx"
+        ),
     ],
 )
 async def test_unusable_backend_api_replies_map_to_fixed_safe_errors(
@@ -230,14 +246,20 @@ async def test_unusable_backend_api_replies_map_to_fixed_safe_errors(
         settings=settings,
         provider=provider,
         verification_registry=verification,
-        backend_api_client=BackendApiClient(faulty_backend_api.base_url, timeout_seconds=0.2),
+        backend_api_client=BackendApiClient(
+            faulty_backend_api.base_url, timeout_seconds=0.2
+        ),
     )
     async with running_client(app) as client:
         session_id = await create_session(client)
         provider.script_extraction(order_lookup())
-        assert (await send_turn(client, session_id, ORDER_STATUS_Q, 0)).status_code == 200
+        assert (
+            await send_turn(client, session_id, ORDER_STATUS_Q, 0)
+        ).status_code == 200
         provider.script_extraction(order_lookup(order_number=FIXTURE_ORDER_NUMBER))
-        assert (await send_turn(client, session_id, ORDER_NUMBER_TEXT, 1)).status_code == 200
+        assert (
+            await send_turn(client, session_id, ORDER_NUMBER_TEXT, 1)
+        ).status_code == 200
         before = (session_dir / f"{session_id}.json").read_bytes()
 
         response = await verify(client, session_id)

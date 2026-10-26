@@ -42,10 +42,16 @@ def build_engine(tmp_path, script=(), kb_answers=None):
     repository = JsonSessionRepository(tmp_path)
     provider = FakeProvider(script)
     knowledge_base = FakeKnowledgeBase(kb_answers)
-    return ConversationEngine(repository, provider, knowledge_base), repository, provider
+    return (
+        ConversationEngine(repository, provider, knowledge_base),
+        repository,
+        provider,
+    )
 
 
-def turn_request(text="NS-000123 arrived broken and this is urgent", revision=0, request_id=None):
+def turn_request(
+    text="NS-000123 arrived broken and this is urgent", revision=0, request_id=None
+):
     return TurnRequest(
         request_id=request_id or uuid4(),
         expected_revision=revision,

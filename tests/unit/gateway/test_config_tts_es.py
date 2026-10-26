@@ -78,7 +78,9 @@ def test_any_supplied_spanish_value_requires_the_whole_profile(field):
 
 
 def test_spanish_profile_requires_an_explicit_audio_format():
-    partial = {key: value for key, value in COMPLETE_ES.items() if key != "TTS_ES_AUDIO_FORMAT"}
+    partial = {
+        key: value for key, value in COMPLETE_ES.items() if key != "TTS_ES_AUDIO_FORMAT"
+    }
     with pytest.raises(RuntimeError):
         Settings.from_env(env(**partial))
 
@@ -96,7 +98,13 @@ def test_spanish_profile_requires_an_explicit_max_input_chars():
 def test_spanish_bearer_mode_requires_its_own_key_and_never_inherits_the_english_key():
     with pytest.raises(RuntimeError):
         Settings.from_env(
-            env(**{**COMPLETE_ES, "TTS_ES_AUTH_MODE": "bearer", "TTS_API_KEY": "english-key"})
+            env(
+                **{
+                    **COMPLETE_ES,
+                    "TTS_ES_AUTH_MODE": "bearer",
+                    "TTS_API_KEY": "english-key",
+                }
+            )
         )
 
     settings = Settings.from_env(
@@ -122,7 +130,13 @@ def test_spanish_key_without_bearer_mode_is_rejected():
 def test_spanish_mp3_profile_must_keep_the_full_cap():
     with pytest.raises(RuntimeError):
         Settings.from_env(
-            env(**{**COMPLETE_ES, "TTS_ES_AUDIO_FORMAT": "mp3", "TTS_ES_MAX_INPUT_CHARS": "200"})
+            env(
+                **{
+                    **COMPLETE_ES,
+                    "TTS_ES_AUDIO_FORMAT": "mp3",
+                    "TTS_ES_MAX_INPUT_CHARS": "200",
+                }
+            )
         )
 
     settings = Settings.from_env(

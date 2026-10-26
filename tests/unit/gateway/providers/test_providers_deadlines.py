@@ -31,7 +31,9 @@ async def test_multi_chunk_valid_json_over_the_cap_is_rejected():
 
     def responder(request: httpx.Request, attempt: int) -> httpx.Response:
         stream = ChunkedStream([raw[:600000], raw[600000:]])
-        return httpx.Response(200, stream=stream, headers={"content-type": "application/json"})
+        return httpx.Response(
+            200, stream=stream, headers={"content-type": "application/json"}
+        )
 
     provider, recorders = build_provider({"llm": responder})
 
@@ -47,7 +49,9 @@ async def test_text_asyncio_timeout_on_the_last_attempt_is_provider_timeout():
 
     def responder(request: httpx.Request, attempt: int) -> httpx.Response:
         return httpx.Response(
-            200, stream=SlowStream(0.3, body), headers={"content-type": "application/json"}
+            200,
+            stream=SlowStream(0.3, body),
+            headers={"content-type": "application/json"},
         )
 
     provider, recorders = build_provider(

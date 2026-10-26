@@ -1,4 +1,5 @@
 """Frustration-to-simulated-handoff behaviour over real HTTP."""
+
 from __future__ import annotations
 
 import pytest
@@ -43,7 +44,11 @@ async def test_fr02_only_clear_new_frustration_triggers_handoff(
 ):
     session_id = await start_session(client)
     response = await send(
-        client, provider, session_id, "I am unhappy with this issue.", 0,
+        client,
+        provider,
+        session_id,
+        "I am unhappy with this issue.",
+        0,
         make_extraction(intent="unrelated", sentiment="negative", frustration=label),
     )
     body = response.json()
@@ -61,12 +66,17 @@ async def test_fr03_frustrated_faq_hands_off_without_retrieval_or_slot_changes(
 ):
     session_id = await start_session(client)
     response = await send(
-        client, provider, session_id,
-        "I am frustrated. What is a standing charge?", 0,
+        client,
+        provider,
+        session_id,
+        "I am frustrated. What is a standing charge?",
+        0,
         make_extraction(
-            intent="question", has_question=True,
+            intent="question",
+            has_question=True,
             candidates={"order_number": "NS-000123"},
-            sentiment="negative", frustration="present",
+            sentiment="negative",
+            frustration="present",
         ),
     )
     assert response.status_code == 200
@@ -74,7 +84,10 @@ async def test_fr03_frustrated_faq_hands_off_without_retrieval_or_slot_changes(
     assert body["reply"] == text("frustration_handoff", "en")
     assert body["status"] == "handed_off" and body["citations"] == []
     assert body["slots"] == {
-        "order_number": None, "category": None, "description": None, "urgency": None
+        "order_number": None,
+        "category": None,
+        "description": None,
+        "urgency": None,
     }
     assert provider.methods() == ["extract"]
     assert read_session(session_dir, session_id)["slots"] == body["slots"]
@@ -83,9 +96,15 @@ async def test_fr03_frustrated_faq_hands_off_without_retrieval_or_slot_changes(
 async def test_fr04_spanish_frustration_uses_spanish_handoff(client, provider):
     session_id = await start_session(client)
     response = await send(
-        client, provider, session_id, "Estoy frustrado y quiero hablar con alguien.", 0,
+        client,
+        provider,
+        session_id,
+        "Estoy frustrado y quiero hablar con alguien.",
+        0,
         make_extraction(
-            intent="unrelated", detected_language="es", sentiment="negative",
+            intent="unrelated",
+            detected_language="es",
+            sentiment="negative",
             frustration="present",
         ),
     )
@@ -100,17 +119,31 @@ async def test_fr05_handoff_at_review_preserves_summary_without_confirmation(
 ):
     session_id = await start_session(client)
     started = await send(
-        client, provider, session_id, "My order NS-000123 arrived broken; damaged item; high urgency.", 0,
-        make_extraction(candidates={
-            "order_number": "NS-000123", "category": "damaged_item",
-            "description": "My order arrived broken", "urgency": "high",
-        }),
+        client,
+        provider,
+        session_id,
+        "My order NS-000123 arrived broken; damaged item; high urgency.",
+        0,
+        make_extraction(
+            candidates={
+                "order_number": "NS-000123",
+                "category": "damaged_item",
+                "description": "My order arrived broken",
+                "urgency": "high",
+            }
+        ),
     )
     assert started.status_code == 200
     summary = started.json()["summary"]
     response = await send(
-        client, provider, session_id, "I am still frustrated.", 1,
-        make_extraction(intent="unrelated", sentiment="negative", frustration="present"),
+        client,
+        provider,
+        session_id,
+        "I am still frustrated.",
+        1,
+        make_extraction(
+            intent="unrelated", sentiment="negative", frustration="present"
+        ),
     )
     assert response.status_code == 200
     body = response.json()
@@ -125,20 +158,40 @@ async def test_fr06_handoff_during_verification_disables_verification_endpoint(
 ):
     session_id = await start_session(client)
     issue = await send(
-        client, provider, session_id, "Order NS-000123 arrived broken.", 0,
-        make_extraction(candidates={
-            "order_number": "NS-000123", "description": "My order arrived broken"
-        }),
+        client,
+        provider,
+        session_id,
+        "Order NS-000123 arrived broken.",
+        0,
+        make_extraction(
+            candidates={
+                "order_number": "NS-000123",
+                "description": "My order arrived broken",
+            }
+        ),
     )
     assert issue.status_code == 200
     lookup = await send(
-        client, provider, session_id, "What is my account status?", 1,
+        client,
+        provider,
+        session_id,
+        "What is my account status?",
+        1,
         make_extraction(intent="order_lookup", has_question=True),
     )
-    assert lookup.status_code == 200 and lookup.json()["order_verification_required"] is True
+    assert (
+        lookup.status_code == 200
+        and lookup.json()["order_verification_required"] is True
+    )
     handoff = await send(
-        client, provider, session_id, "I am really frustrated.", 2,
-        make_extraction(intent="unrelated", sentiment="negative", frustration="present"),
+        client,
+        provider,
+        session_id,
+        "I am really frustrated.",
+        2,
+        make_extraction(
+            intent="unrelated", sentiment="negative", frustration="present"
+        ),
     )
     assert handoff.status_code == 200
     blocked = await client.post(
@@ -150,10 +203,16 @@ async def test_fr06_handoff_during_verification_disables_verification_endpoint(
     assert provider.methods() == ["extract", "extract", "extract"]
 
 
-async def test_fr07_handed_off_session_rejects_followup_before_model_call(client, provider):
+async def test_fr07_handed_off_session_rejects_followup_before_model_call(
+    client, provider
+):
     session_id = await start_session(client)
     handoff = await send(
-        client, provider, session_id, "I am frustrated.", 0,
+        client,
+        provider,
+        session_id,
+        "I am frustrated.",
+        0,
         make_extraction(sentiment="negative", frustration="present"),
     )
     assert handoff.status_code == 200
@@ -163,4 +222,3 @@ async def test_fr07_handed_off_session_rejects_followup_before_model_call(client
     assert followup.status_code == 409
     assert followup.json()["error"]["code"] == "session_handed_off"
     assert provider.methods() == ["extract"]
-

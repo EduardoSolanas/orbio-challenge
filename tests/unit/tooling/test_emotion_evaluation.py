@@ -23,7 +23,9 @@ from gateway.schemas import Extraction, Slots  # noqa: E402
 EMPTY_SLOTS = Slots(order_number=None, category=None, description=None, urgency=None)
 
 
-def extraction(sentiment: str = "neutral", frustration: str = "none", detected_language: str = "en") -> Extraction:
+def extraction(
+    sentiment: str = "neutral", frustration: str = "none", detected_language: str = "en"
+) -> Extraction:
     return Extraction(
         intent="unrelated",
         has_question=False,
@@ -68,7 +70,10 @@ def case(case_id: str, message: str, sentiment: str, frustration: str, **extra) 
 def test_build_context_uses_recent_committed_messages_and_the_active_flag():
     context = evaluate_emotions.build_context(EMOTION_EVALUATION_CASES[7])
 
-    assert context.current_message == "I am still frustrated, but thank you for explaining."
+    assert (
+        context.current_message
+        == "I am still frustrated, but thank you for explaining."
+    )
     assert context.frustration_active is True
     assert [(message.role, message.text) for message in context.recent_messages] == [
         ("user", "I have asked three times. This is really frustrating."),
@@ -84,7 +89,12 @@ async def test_evaluate_cases_records_observed_labels_with_one_call_per_case():
     cases = (
         case("EV01", "How long does delivery take?", "neutral", "none"),
         case("EV02", "Thank you, that solved it.", "positive", "none"),
-        case("EV03", "I have asked three times. This is really frustrating.", "negative", "present"),
+        case(
+            "EV03",
+            "I have asked three times. This is really frustrating.",
+            "negative",
+            "present",
+        ),
     )
     provider = FakeProvider(
         [
@@ -154,7 +164,9 @@ async def test_evaluate_cases_records_a_provider_error_and_continues():
         case("EV01", "My item is broken.", "negative", "none"),
         case("EV02", "Thank you, that solved it.", "positive", "none"),
     )
-    provider = FakeProvider([app_error("provider_timeout"), extraction("positive", "none")])
+    provider = FakeProvider(
+        [app_error("provider_timeout"), extraction("positive", "none")]
+    )
 
     records = await evaluate_emotions.evaluate_cases(provider, cases)
 

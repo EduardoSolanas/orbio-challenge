@@ -133,10 +133,10 @@ def model_payloads():
             "candidates": slots_payload(),
             "explicit_corrections": [],
             "ambiguous_fields": [],
-        "detected_language": "en",
-        "requested_language": None,
-        "sentiment": "neutral",
-        "frustration": "none",
+            "detected_language": "en",
+            "requested_language": None,
+            "sentiment": "neutral",
+            "frustration": "none",
         },
         ExtractionContext: {
             "slots": slots_payload(),
@@ -229,7 +229,15 @@ def test_slots_require_all_four_keys(missing_key):
 
 @pytest.mark.parametrize(
     "missing_key",
-    ["intent", "has_question", "candidates", "explicit_corrections", "ambiguous_fields", "sentiment", "frustration"],
+    [
+        "intent",
+        "has_question",
+        "candidates",
+        "explicit_corrections",
+        "ambiguous_fields",
+        "sentiment",
+        "frustration",
+    ],
 )
 def test_extraction_requires_every_contract_key(missing_key):
     payload = MODELS[Extraction].copy()
@@ -268,7 +276,9 @@ def test_session_requires_every_stored_key(missing_key):
         Session.model_validate(payload)
 
 
-@pytest.mark.parametrize("value", ["order_number", "category", "description", "urgency"])
+@pytest.mark.parametrize(
+    "value", ["order_number", "category", "description", "urgency"]
+)
 def test_field_name_literal_accepts_contract_values(value):
     extraction = Extraction.model_validate(
         {**MODELS[Extraction], "explicit_corrections": [value]}
@@ -279,12 +289,12 @@ def test_field_name_literal_accepts_contract_values(value):
 
 def test_field_name_literal_rejects_unknown_values():
     with pytest.raises(ValidationError):
-        Extraction.model_validate({**MODELS[Extraction], "explicit_corrections": ["id"]})
+        Extraction.model_validate(
+            {**MODELS[Extraction], "explicit_corrections": ["id"]}
+        )
 
 
-@pytest.mark.parametrize(
-    "value", ["collecting", "awaiting_confirmation", "completed"]
-)
+@pytest.mark.parametrize("value", ["collecting", "awaiting_confirmation", "completed"])
 def test_status_literal_accepts_contract_values(value):
     view = SessionView.model_validate({**MODELS[SessionView], "status": value})
 
@@ -436,7 +446,11 @@ INT_FIELDS = [
     (TurnResponse, turn_response_payload(), "revision"),
     (Session, dict(MODELS[Session]), "revision"),
     (Session, dict(MODELS[Session]), "collection_turn_count"),
-    (Confirmation, {"confirmed_at": CREATED_AT, "review_revision": 1}, "review_revision"),
+    (
+        Confirmation,
+        {"confirmed_at": CREATED_AT, "review_revision": 1},
+        "review_revision",
+    ),
 ]
 INT_FIELD_IDS = [f"{model.__name__}.{field}" for model, _, field in INT_FIELDS]
 
@@ -526,9 +540,7 @@ def test_turn_request_text_must_be_nonblank(value):
 
 
 def test_turn_request_text_accepts_exactly_4000_characters():
-    request = TurnRequest.model_validate(
-        {**MODELS[TurnRequest], "text": "a" * 4000}
-    )
+    request = TurnRequest.model_validate({**MODELS[TurnRequest], "text": "a" * 4000})
 
     assert len(request.text) == 4000
 
@@ -554,7 +566,9 @@ def test_has_question_is_a_strict_boolean(value):
 
 @pytest.mark.parametrize("value", [True, False])
 def test_has_question_accepts_real_booleans(value):
-    extraction = Extraction.model_validate({**MODELS[Extraction], "has_question": value})
+    extraction = Extraction.model_validate(
+        {**MODELS[Extraction], "has_question": value}
+    )
 
     assert extraction.has_question is value
 
@@ -652,4 +666,3 @@ def test_candidates_tolerate_invalid_business_values_as_strings():
 
     assert extraction.candidates.category == "banana"
     assert extraction.candidates.urgency == "extremely"
-

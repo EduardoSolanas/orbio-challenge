@@ -89,13 +89,9 @@ async def test_load_corrupt_json_raises_storage_corrupt(tmp_path):
 
 async def test_load_future_schema_version_raises_storage_corrupt(tmp_path):
     repo = repository(tmp_path)
-    payload = json.loads(
-        make_session(session_id=SESSION_ID).model_dump_json()
-    )
+    payload = json.loads(make_session(session_id=SESSION_ID).model_dump_json())
     payload["schema_version"] = 3
-    (tmp_path / f"{SESSION_ID}.json").write_text(
-        json.dumps(payload), encoding="utf-8"
-    )
+    (tmp_path / f"{SESSION_ID}.json").write_text(json.dumps(payload), encoding="utf-8")
 
     with pytest.raises(AppError) as excinfo:
         await repo.load(SESSION_ID)
@@ -105,13 +101,9 @@ async def test_load_future_schema_version_raises_storage_corrupt(tmp_path):
 
 async def test_load_unknown_key_raises_storage_corrupt(tmp_path):
     repo = repository(tmp_path)
-    payload = json.loads(
-        make_session(session_id=SESSION_ID).model_dump_json()
-    )
+    payload = json.loads(make_session(session_id=SESSION_ID).model_dump_json())
     payload["unexpected"] = True
-    (tmp_path / f"{SESSION_ID}.json").write_text(
-        json.dumps(payload), encoding="utf-8"
-    )
+    (tmp_path / f"{SESSION_ID}.json").write_text(json.dumps(payload), encoding="utf-8")
 
     with pytest.raises(AppError) as excinfo:
         await repo.load(SESSION_ID)
@@ -151,9 +143,7 @@ async def test_save_failure_leaves_previous_bytes_and_no_replay_side_effect(
     assert excinfo.value.status == 503
     assert excinfo.value.retryable is True
     assert (tmp_path / f"{SESSION_ID}.json").read_bytes() == original
-    assert sorted(path.name for path in tmp_path.iterdir()) == [
-        f"{SESSION_ID}.json"
-    ]
+    assert sorted(path.name for path in tmp_path.iterdir()) == [f"{SESSION_ID}.json"]
 
 
 async def test_save_stages_a_complete_replacement_in_the_session_directory(
@@ -182,9 +172,7 @@ async def test_save_stages_a_complete_replacement_in_the_session_directory(
     assert json.loads(seen["staged"]) == json.loads(
         (tmp_path / f"{SESSION_ID}.json").read_bytes()
     )
-    assert sorted(path.name for path in tmp_path.iterdir()) == [
-        f"{SESSION_ID}.json"
-    ]
+    assert sorted(path.name for path in tmp_path.iterdir()) == [f"{SESSION_ID}.json"]
 
 
 async def test_save_fsyncs_the_complete_replacement_before_publishing(

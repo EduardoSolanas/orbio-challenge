@@ -68,7 +68,12 @@ def build_engine(tmp_path, script=(), kb_answers=None, speech_languages=("en",))
     return engine, repository, provider
 
 
-def turn_request(text_value="NS-000123 arrived broken", revision=0, input_mode="text", request_id=None):
+def turn_request(
+    text_value="NS-000123 arrived broken",
+    revision=0,
+    input_mode="text",
+    request_id=None,
+):
     return TurnRequest(
         request_id=request_id or uuid4(),
         expected_revision=revision,
@@ -101,7 +106,9 @@ async def test_new_session_starts_in_english_with_a_playable_greeting(tmp_path):
     assert view.messages[0].speech_available is True
 
 
-async def test_spanish_turn_switches_reply_language_and_keeps_canonical_values(tmp_path):
+async def test_spanish_turn_switches_reply_language_and_keeps_canonical_values(
+    tmp_path,
+):
     engine, repository, provider = build_engine(
         tmp_path, script=[("extract", SPANISH_FULL_EXTRACTION)]
     )
@@ -142,7 +149,9 @@ async def test_extraction_context_carries_the_current_reply_language(tmp_path):
     assert context.reply_language == "en"
 
 
-async def test_explicit_switch_to_spanish_redisplays_the_review_without_confirming(tmp_path):
+async def test_explicit_switch_to_spanish_redisplays_the_review_without_confirming(
+    tmp_path,
+):
     engine, repository, provider = build_engine(
         tmp_path,
         script=[
@@ -203,7 +212,9 @@ async def test_explicit_switch_back_to_english_localizes_the_next_review(tmp_pat
     assert response.slots == FULL_SLOTS
 
 
-async def test_unsupported_language_returns_a_localized_notice_and_accepts_no_facts(tmp_path):
+async def test_unsupported_language_returns_a_localized_notice_and_accepts_no_facts(
+    tmp_path,
+):
     engine, repository, provider = build_engine(
         tmp_path,
         script=[
@@ -265,7 +276,9 @@ async def test_unsupported_language_notice_is_spanish_in_a_spanish_session(tmp_p
     assert response.summary == SPANISH_SUMMARY
 
 
-async def test_unsupported_input_with_an_explicit_switch_applies_only_the_language(tmp_path):
+async def test_unsupported_input_with_an_explicit_switch_applies_only_the_language(
+    tmp_path,
+):
     engine, repository, provider = build_engine(
         tmp_path,
         script=[
@@ -301,7 +314,9 @@ async def test_unsupported_input_with_an_explicit_switch_applies_only_the_langua
     assert stored.slots == make_slots()
 
 
-async def test_mixed_language_correction_preserves_canonical_values_and_switches_language(tmp_path):
+async def test_mixed_language_correction_preserves_canonical_values_and_switches_language(
+    tmp_path,
+):
     engine, repository, provider = build_engine(
         tmp_path,
         script=[
@@ -329,7 +344,9 @@ async def test_mixed_language_correction_preserves_canonical_values_and_switches
 
     response = await engine.turn(
         session.session_id,
-        turn_request("Sorry, actually it was the wrong item and it is urgent", revision=1),
+        turn_request(
+            "Sorry, actually it was the wrong item and it is urgent", revision=1
+        ),
     )
 
     assert response.reply_language == "es"
@@ -363,7 +380,9 @@ async def test_numeric_only_turn_keeps_the_current_reply_language(tmp_path):
     assert response.reply == text("intake.category", "es")
 
 
-async def test_spanish_policy_question_gets_a_spanish_answer_with_canonical_citations(tmp_path):
+async def test_spanish_policy_question_gets_a_spanish_answer_with_canonical_citations(
+    tmp_path,
+):
     record = make_record(
         record_id="faq-delivery",
         title="Delivery times",
@@ -378,7 +397,12 @@ async def test_spanish_policy_question_gets_a_spanish_answer_with_canonical_cita
     engine, repository, provider = build_engine(
         tmp_path,
         script=[
-            ("extract", make_extraction(intent="question", has_question=True, detected_language="es")),
+            (
+                "extract",
+                make_extraction(
+                    intent="question", has_question=True, detected_language="es"
+                ),
+            ),
             ("answer_knowledge", answer),
         ],
         kb_answers={"¿Cuánto tarda la entrega?": [record]},
@@ -409,13 +433,20 @@ async def test_spanish_abstention_is_localized_and_keeps_no_citations(tmp_path):
     engine, _, provider = build_engine(
         tmp_path,
         script=[
-            ("extract", make_extraction(intent="question", has_question=True, detected_language="es")),
+            (
+                "extract",
+                make_extraction(
+                    intent="question", has_question=True, detected_language="es"
+                ),
+            ),
         ],
         kb_answers={"¿Puedo pagar con tarjeta?": []},
     )
     created = await engine.create_session()
 
-    response = await engine.turn(created.session_id, turn_request("¿Puedo pagar con tarjeta?"))
+    response = await engine.turn(
+        created.session_id, turn_request("¿Puedo pagar con tarjeta?")
+    )
 
     assert response.reply == text("abstention", "es")
     assert response.reply_language == "es"
@@ -426,7 +457,12 @@ async def test_replay_returns_the_stored_response_with_its_original_language(tmp
     engine, repository, provider = build_engine(
         tmp_path,
         script=[
-            ("extract", make_extraction(candidates={"order_number": "NS-000123"}, detected_language="en")),
+            (
+                "extract",
+                make_extraction(
+                    candidates={"order_number": "NS-000123"}, detected_language="en"
+                ),
+            ),
             (
                 "extract",
                 make_extraction(
@@ -439,9 +475,7 @@ async def test_replay_returns_the_stored_response_with_its_original_language(tmp
     first = turn_request("NS-000123")
 
     english_response = await engine.turn(created.session_id, first)
-    await engine.turn(
-        created.session_id, turn_request("Switch to Spanish", revision=1)
-    )
+    await engine.turn(created.session_id, turn_request("Switch to Spanish", revision=1))
     replay = await engine.turn(created.session_id, first)
 
     assert english_response.reply_language == "en"
@@ -459,12 +493,12 @@ async def test_confirmation_receipt_is_localized_in_the_session_language(tmp_pat
 
     response = await engine.confirm(
         session.session_id,
-        ConfirmRequest(
-            request_id=uuid4(), expected_revision=1, review_revision=1
-        ),
+        ConfirmRequest(request_id=uuid4(), expected_revision=1, review_revision=1),
     )
 
-    assert response.reply == text("receipt", "es").format(reference=request_reference(session.session_id))
+    assert response.reply == text("receipt", "es").format(
+        reference=request_reference(session.session_id)
+    )
     assert response.reply_language == "es"
 
     stored = await repository.load(session.session_id)
@@ -507,7 +541,12 @@ async def test_speech_availability_follows_each_saved_message_language(tmp_path)
     engine, repository, _ = build_engine(
         tmp_path,
         script=[
-            ("extract", make_extraction(candidates={"order_number": "NS-000123"}, detected_language="en")),
+            (
+                "extract",
+                make_extraction(
+                    candidates={"order_number": "NS-000123"}, detected_language="en"
+                ),
+            ),
             (
                 "extract",
                 make_extraction(
@@ -519,16 +558,26 @@ async def test_speech_availability_follows_each_saved_message_language(tmp_path)
     )
     created = await engine.create_session()
     await engine.turn(created.session_id, turn_request("NS-000123"))
-    await engine.turn(created.session_id, turn_request("En español, por favor", revision=1))
+    await engine.turn(
+        created.session_id, turn_request("En español, por favor", revision=1)
+    )
 
     view = await engine.get_session(created.session_id)
 
-    assistant_messages = [message for message in view.messages if message.role == "assistant"]
+    assistant_messages = [
+        message for message in view.messages if message.role == "assistant"
+    ]
     assert [message.language for message in assistant_messages] == ["en", "en", "es"]
-    assert [message.speech_available for message in assistant_messages] == [True, True, True]
+    assert [message.speech_available for message in assistant_messages] == [
+        True,
+        True,
+        True,
+    ]
 
 
-async def test_spanish_messages_report_no_speech_when_only_english_tts_is_configured(tmp_path):
+async def test_spanish_messages_report_no_speech_when_only_english_tts_is_configured(
+    tmp_path,
+):
     engine, repository, _ = build_engine(
         tmp_path,
         script=[("extract", SPANISH_FULL_EXTRACTION)],

@@ -110,9 +110,11 @@ def make_streaming_wav(
     if with_list:
         info = b"INFOISFT" + struct.pack("<L", 12) + b"Lavf61.7.100"
         chunks += b"LIST" + struct.pack("<L", len(info)) + info
-    chunks += b"data" + struct.pack(
-        "<L", STREAMING_SIZE if data_size is None else data_size
-    ) + payload
+    chunks += (
+        b"data"
+        + struct.pack("<L", STREAMING_SIZE if data_size is None else data_size)
+        + payload
+    )
     return (
         b"RIFF"
         + struct.pack("<L", STREAMING_SIZE if riff_size is None else riff_size)
@@ -137,7 +139,9 @@ class Gate:
 
     def wait_entered(self, timeout: float = 10.0) -> None:
         if not self._entered.wait(timeout):
-            raise AssertionError(f"gate {self.label!r}: provider call not reached in {timeout}s")
+            raise AssertionError(
+                f"gate {self.label!r}: provider call not reached in {timeout}s"
+            )
 
     def release(self) -> None:
         self._released.set()
@@ -221,7 +225,13 @@ class E2EProvider:
         hold: Gate | None = None,
     ) -> Step:
         return self._script(
-            Step("transcribe", audio_sha256, STT_TEXT if text is None else text, fail, hold)
+            Step(
+                "transcribe",
+                audio_sha256,
+                STT_TEXT if text is None else text,
+                fail,
+                hold,
+            )
         )
 
     def script_synthesize(
@@ -233,9 +243,7 @@ class E2EProvider:
         fail: str | None = None,
         hold: Gate | None = None,
     ) -> Step:
-        return self._script(
-            Step("synthesize", text, audio, fail, hold, media_type)
-        )
+        return self._script(Step("synthesize", text, audio, fail, hold, media_type))
 
     def discard_script(self) -> None:
         with self._lock:
@@ -257,7 +265,8 @@ class E2EProvider:
             return [
                 dict(c)
                 for c in self.ledger
-                if c["method"] == method and (outcome is None or c["outcome"] == outcome)
+                if c["method"] == method
+                and (outcome is None or c["outcome"] == outcome)
             ]
 
     def methods(self) -> list[str]:
@@ -270,7 +279,9 @@ class E2EProvider:
             while not predicate():
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
-                    raise AssertionError("provider ledger condition not reached in time")
+                    raise AssertionError(
+                        "provider ledger condition not reached in time"
+                    )
                 self._changed.wait(remaining)
 
     def wait_finished(self, method: str, count: int, timeout: float = 10.0) -> None:
@@ -278,7 +289,11 @@ class E2EProvider:
 
         def done() -> bool:
             return (
-                sum(1 for c in self.ledger if c["method"] == method and c["outcome"] != "started")
+                sum(
+                    1
+                    for c in self.ledger
+                    if c["method"] == method and c["outcome"] != "started"
+                )
                 >= count
             )
 
@@ -290,19 +305,25 @@ class E2EProvider:
 
     # ---- AIProvider -------------------------------------------------------
 
-    async def _call(
-        self, method: str, key: str, record: dict[str, Any]
-    ) -> Any:
+    async def _call(self, method: str, key: str, record: dict[str, Any]) -> Any:
         with self._changed:
             step = self._steps.popleft() if self._steps else None
-            if step is None or step.method != method or (
-                step.expect is not None and step.expect != key
+            if (
+                step is None
+                or step.method != method
+                or (step.expect is not None and step.expect != key)
             ):
-                scripted = "nothing" if step is None else f"{step.method}({step.expect!r})"
+                scripted = (
+                    "nothing" if step is None else f"{step.method}({step.expect!r})"
+                )
                 self.unexpected.append(f"{method}({key!r}) but scripted {scripted}")
-                self.ledger.append({"method": method, "key": key, "outcome": "unexpected", **record})
+                self.ledger.append(
+                    {"method": method, "key": key, "outcome": "unexpected", **record}
+                )
                 self._changed.notify_all()
-                raise AssertionError(f"unexpected provider call {method}({key!r}); scripted {scripted}")
+                raise AssertionError(
+                    f"unexpected provider call {method}({key!r}); scripted {scripted}"
+                )
             entry = {"method": method, "key": key, "outcome": "started", **record}
             self.ledger.append(entry)
             self._changed.notify_all()
@@ -329,12 +350,16 @@ class E2EProvider:
 
     async def extract(self, context: Any) -> Extraction:
         return await self._call(
-            "extract", context.current_message, {"context": context.model_dump(mode="json")}
+            "extract",
+            context.current_message,
+            {"context": context.model_dump(mode="json")},
         )
 
     async def answer_knowledge(self, context: Any) -> KnowledgeAnswer:
         return await self._call(
-            "answer_knowledge", context.question, {"context": context.model_dump(mode="json")}
+            "answer_knowledge",
+            context.question,
+            {"context": context.model_dump(mode="json")},
         )
 
     async def transcribe(self, audio: bytes) -> str:
@@ -368,7 +393,9 @@ CHANGE = "Actually make the urgency low."
 NO = "No."
 YES = "Yes."
 RETURN_Q = "Can I return an unused item?"
-GREETING_STANDING_CHARGE_Q = "Hello, what does a standing charge cover on my energy bill?"
+GREETING_STANDING_CHARGE_Q = (
+    "Hello, what does a standing charge cover on my energy bill?"
+)
 PAYMENT_Q = "Which payment methods are accepted?"
 DELIVERY_Q = "Hello, how long does delivery take?"
 CAPABILITY_Q = "What can you help me with?"
@@ -386,16 +413,12 @@ AUTH_ORDER_NUMBER_PROMPT = (
 AUTH_VERIFICATION_PROMPT = (
     "Enter the service postcode and demo verification code for this energy account."
 )
-AUTH_DEMO_CODE_NOTICE = (
-    "Demo account NS-000123, postcode SW1A 1AA, code 246810. Email delivery is simulated; no email is sent."
-)
+AUTH_DEMO_CODE_NOTICE = "Demo account NS-000123, postcode SW1A 1AA, code 246810. Email delivery is simulated; no email is sent."
 AUTH_VERIFICATION_FAILED = (
     "We couldn't verify those details. Check the postcode and code and try again."
 )
 AUTH_VERIFIED = "Energy account verified for this demo."
-AUTH_ORDER_RESULT = (
-    "I found the Northstar Energy account NS-000123 for Casey: Electricity and gas supply. Account status: Active."
-)
+AUTH_ORDER_RESULT = "I found the Northstar Energy account NS-000123 for Casey: Electricity and gas supply. Account status: Active."
 
 BAD_ORDER = "My order NS-12345 arrived broken."
 FIX_ORDER = "The order number is NS-000123."
@@ -404,18 +427,20 @@ KEEP_OLD = "Keep the old one, NS-000123."
 USE_NEW = "Use NS-000999 instead."
 
 GREETING = "Hi, welcome to Northstar Energy. How can I help you today?"
-ASK_CATEGORY = (
-    "Which area do you need help with: a bill, a supply issue, a meter reading, moving home, or something else?"
-)
+ASK_CATEGORY = "Which area do you need help with: a bill, a supply issue, a meter reading, moving home, or something else?"
 ASK_URGENCY = "How urgent is this: low, normal, or high?"
 INVALID_ORDER = "Use NS- followed by exactly six digits for your energy account reference, for example NS-123456."
 WHAT_TO_CHANGE = "What would you like to change?"
 REVIEW_FOOTER = "Please confirm these details or tell me what to change."
-CONFIRM_PROMPT_AT_REVIEW = "Please confirm the reviewed details or tell me what to change."
+CONFIRM_PROMPT_AT_REVIEW = (
+    "Please confirm the reviewed details or tell me what to change."
+)
 ABSTENTION = (
     "I do not have that information in Northstar Energy's help guides. "
     "I can still help with your energy question or service issue."
 )
+
+
 def receipt_for(session_id) -> str:
     return f"Saved locally as {request_reference(session_id)}. No request has been sent to a real support team. Is there anything else I can help with?"
 
@@ -435,7 +460,9 @@ STANDING_CHARGE_ANSWER_TEXT = (
 def conflict_question(old: str, candidate: str, label: str) -> str:
     if label == "order number":
         label = "energy account reference"
-    return f"You previously gave {old}. Should I keep that or use {candidate} for {label}?"
+    return (
+        f"You previously gave {old}. Should I keep that or use {candidate} for {label}?"
+    )
 
 
 def summary_text(order: str, category: str, description: str, urgency: str) -> str:

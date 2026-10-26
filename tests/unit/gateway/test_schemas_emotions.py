@@ -191,9 +191,7 @@ def test_customer_text_messages_accept_every_sentiment_label(
 
 @pytest.mark.parametrize("input_mode", ["text", "transcript"])
 @pytest.mark.parametrize("frustration", FRUSTRATIONS)
-def test_customer_text_messages_accept_every_frustration_label(
-    input_mode, frustration
-):
+def test_customer_text_messages_accept_every_frustration_label(input_mode, frustration):
     message = Message.model_validate(
         message_payload(input_mode=input_mode, frustration=frustration)
     )
@@ -202,15 +200,15 @@ def test_customer_text_messages_accept_every_frustration_label(
 
 
 def test_legacy_customer_message_may_keep_null_labels():
-    message = Message.model_validate(
-        message_payload(sentiment=None, frustration=None)
-    )
+    message = Message.model_validate(message_payload(sentiment=None, frustration=None))
 
     assert message.sentiment is None
     assert message.frustration is None
 
 
-@pytest.mark.parametrize("field,value", [("sentiment", "furious"), ("frustration", "low")])
+@pytest.mark.parametrize(
+    "field,value", [("sentiment", "furious"), ("frustration", "low")]
+)
 def test_message_rejects_invalid_stored_labels(field, value):
     with pytest.raises(ValidationError):
         Message.model_validate({**message_payload(), field: value})
@@ -324,7 +322,10 @@ def test_extraction_context_requires_intake_started():
         ExtractionContext.model_validate(payload)
 
 
-@pytest.mark.parametrize("model,payload", [(SessionView, session_view_payload()), (TurnResponse, turn_response_payload())])
+@pytest.mark.parametrize(
+    "model,payload",
+    [(SessionView, session_view_payload()), (TurnResponse, turn_response_payload())],
+)
 def test_served_objects_require_frustration_active(model, payload):
     without_flag = dict(payload)
     del without_flag["frustration_active"]

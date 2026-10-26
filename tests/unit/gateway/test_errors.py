@@ -15,7 +15,11 @@ from gateway.errors import AppError, ErrorSpec, app_error
 EXPECTED = {
     "session_not_found": ("Session not found.", 404, False),
     "message_not_found": ("Assistant message not found.", 404, False),
-    "revision_conflict": ("This session changed. Refresh before sending again.", 409, False),
+    "revision_conflict": (
+        "This session changed. Refresh before sending again.",
+        409,
+        False,
+    ),
     "request_id_conflict": (
         "This request ID was already used for different input.",
         409,
@@ -41,7 +45,11 @@ EXPECTED = {
         409,
         False,
     ),
-    "review_not_ready": ("Resolve missing or unclear details before confirming.", 409, False),
+    "review_not_ready": (
+        "Resolve missing or unclear details before confirming.",
+        409,
+        False,
+    ),
     "input_too_large": ("The input exceeds the allowed size.", 413, False),
     "unsupported_audio": ("Upload a supported PCM WAV recording.", 415, False),
     "invalid_request": ("The request does not match the expected format.", 422, False),
@@ -66,7 +74,11 @@ EXPECTED = {
         False,
     ),
     "provider_busy": ("The AI service is busy. Please retry.", 429, True),
-    "session_busy": ("This session is processing another request. Please retry.", 429, True),
+    "session_busy": (
+        "This session is processing another request. Please retry.",
+        429,
+        True,
+    ),
     "invalid_provider_response": (
         "The AI service returned an unusable response. Please retry.",
         502,
@@ -106,7 +118,11 @@ EXPECTED = {
         409,
         False,
     ),
-    "already_booked": ("This account already has a technician visit booked.", 409, False),
+    "already_booked": (
+        "This account already has a technician visit booked.",
+        409,
+        False,
+    ),
     "verification_required": (
         "Verify the energy account before booking a technician.",
         403,

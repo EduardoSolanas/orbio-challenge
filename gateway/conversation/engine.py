@@ -13,7 +13,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import replace
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Literal, Protocol, Sequence
+from typing import TYPE_CHECKING, Any, Literal, Protocol, Sequence
 from uuid import UUID, uuid4
 
 from gateway.backend_client import BackendApiClient
@@ -22,6 +22,7 @@ from gateway.conversation.flows import (
     SUPPORT_REQUEST,
     FlowContext,
     FlowDefinition,
+    flow_state_after,
     load_flows,
     only_account_number,
     run_flow,
@@ -153,6 +154,64 @@ def _message(
     )
 
 
+def _system_message(body: str, language: Language, now: datetime) -> Message:
+    """An assistant reply written by the code, not by a provider."""
+
+    return _message(
+        "assistant", body, input_mode="system", created_at=now, language=language
+    )
+
+
+def _reply_response(
+    session: Session, assistant_message: Message, **changes: Any
+) -> TurnResponse:
+    """The response for one more assistant reply: the session's state as it is, with ``changes``."""
+
+    return TurnResponse(
+        **{
+            "session_id": session.session_id,
+            "revision": session.revision + 1,
+            "status": session.status,
+            "reply_language": session.reply_language,
+            "frustration_active": session.frustration_active,
+            "reply": assistant_message.text,
+            "message_id": assistant_message.id,
+            "slots": session.slots,
+            "pending_clarifications": session.pending_clarifications,
+            "pending_review_revision": session.pending_review_revision,
+            "summary": session.summary,
+            **changes,
+        }
+    )
+
+
+def _saved_copy(
+    session: Session, response: TurnResponse, now: datetime, messages: Sequence[Message]
+) -> Session:
+    """The session as it will be stored: one revision on, with ``messages`` added to the chat."""
+
+    committed = session.model_copy(deep=True)
+    committed.revision = response.revision
+    committed.updated_at = now
+    committed.messages = [*session.messages, *messages]
+    return committed
+
+
+def _remember_request(
+    committed: Session,
+    session: Session,
+    request_id: UUID,
+    digest: str,
+    response: TurnResponse,
+) -> None:
+    """Keep the response so an identical retry is answered from the saved turn."""
+
+    committed.requests = [
+        *session.requests,
+        ReplayRecord(request_id=request_id, input_digest=digest, response=response),
+    ]
+
+
 def _view(session: Session, speech_languages: frozenset[str]) -> SessionView:
     return SessionView(
         session_id=session.session_id,
@@ -276,7 +335,9 @@ class ConversationEngine:
         self.support_flow = self.flows[SUPPORT_REQUEST]
         # Nothing starts the support request; it is what a turn falls back to.
         self._flow_by_intent = {
-            flow.intent: flow for flow in self.flows.values() if flow is not self.support_flow
+            flow.intent: flow
+            for flow in self.flows.values()
+            if flow is not self.support_flow
         }
         self.verification = (
             verification if verification is not None else VerificationRegistry()
@@ -394,7 +455,10 @@ class ConversationEngine:
         extraction = await self._extract_with_safety_triage(session, command)
         reply_language = choose_reply_language(session, extraction)
 
-        if extraction.detected_language == "unsupported" and not extraction.safety_concern:
+        if (
+            extraction.detected_language == "unsupported"
+            and not extraction.safety_concern
+        ):
             if at_limit:
                 raise app_error("turn_limit")
             return (
@@ -467,7 +531,9 @@ class ConversationEngine:
         )
         return extraction, outcome, plan
 
-    def _active_flow(self, session: Session, extraction: Extraction) -> FlowDefinition | None:
+    def _active_flow(
+        self, session: Session, extraction: Extraction
+    ) -> FlowDefinition | None:
         """The flow this turn belongs to, updating ``session.flow`` (saved with the turn).
 
         An intent that names a flow starts it from the first step. While a flow is active,
@@ -495,8 +561,8 @@ class ConversationEngine:
     ) -> TurnPlan:
         context = self._flow_context(session, extraction, reply_language)
         # Every message re-checks from the first step: the account may just have changed.
-        outcome = await run_flow(flow, flow.steps[0], context)
-        session.flow = None if outcome.step is None else FlowState(name=flow.name, step=outcome.step)
+        outcome = await run_flow(flow, context)
+        session.flow = flow_state_after(flow, outcome)
         return TurnPlan.keeping_state(
             session,
             outcome.reply,
@@ -514,7 +580,9 @@ class ConversationEngine:
             if extraction is None
             else self._lookup_order_number(session, extraction)
         )
-        given = extraction is not None and extraction.candidates.order_number is not None
+        given = (
+            extraction is not None and extraction.candidates.order_number is not None
+        )
         return FlowContext(
             session_id=session.session_id,
             order_number=order_number,
@@ -590,58 +658,43 @@ class ConversationEngine:
                 raise app_error("review_not_ready")
 
             now = _now()
-            new_revision = session.revision + 1
             language = session.reply_language
-            reply = render("receipt", language, {"reference": request_reference(session.session_id)})
-            assistant_message = _message(
-                "assistant",
-                reply,
-                input_mode="system",
-                created_at=now,
-                language=language,
+            reply = render(
+                "receipt",
+                language,
+                {"reference": request_reference(session.session_id)},
             )
-            response = TurnResponse(
-                session_id=session.session_id,
-                revision=new_revision,
+            assistant_message = _system_message(reply, language, now)
+            response = _reply_response(
+                session,
+                assistant_message,
                 status="completed",
-                reply_language=language,
-                frustration_active=session.frustration_active,
-                reply=reply,
-                message_id=assistant_message.id,
-                slots=session.slots,
                 pending_clarifications={},
                 pending_review_revision=None,
-                summary=session.summary,
                 citations=[],
             )
-            committed = session.model_copy(deep=True)
-            committed.revision = new_revision
-            committed.updated_at = now
+            committed = _saved_copy(
+                session,
+                response,
+                now,
+                [
+                    _message(
+                        "user",
+                        text("review.confirmed", language),
+                        input_mode="system",
+                        created_at=now,
+                        language=language,
+                    ),
+                    assistant_message,
+                ],
+            )
             committed.status = "completed"
             committed.pending_clarifications = {}
             committed.pending_review_revision = None
             committed.confirmation = Confirmation(
                 confirmed_at=now, review_revision=command.review_revision
             )
-            committed.messages = [
-                *session.messages,
-                _message(
-                    "user",
-                    text("review.confirmed", language),
-                    input_mode="system",
-                    created_at=now,
-                    language=language,
-                ),
-                assistant_message,
-            ]
-            committed.requests = [
-                *session.requests,
-                ReplayRecord(
-                    request_id=command.request_id,
-                    input_digest=digest,
-                    response=response,
-                ),
-            ]
+            _remember_request(committed, session, command.request_id, digest, response)
             await self.repository.save(committed)
             return response
 
@@ -681,37 +734,21 @@ class ConversationEngine:
         language = session.reply_language
         flow = self.flows[session.flow.name]
         try:
-            outcome = await run_flow(
-                flow, session.flow.step, self._flow_context(session, None, language)
-            )
+            outcome = await run_flow(flow, self._flow_context(session, None, language))
         except AppError:
             return None  # the account is verified; the customer can simply ask again
         if outcome.reply is None:
             return None
         now = _now()
-        assistant_message = _message(
-            "assistant", outcome.reply, input_mode="system", created_at=now, language=language
-        )
-        response = TurnResponse(
-            session_id=session.session_id,
-            revision=session.revision + 1,
-            status=session.status,
-            reply_language=language,
-            frustration_active=session.frustration_active,
-            reply=outcome.reply,
-            message_id=assistant_message.id,
-            slots=session.slots,
-            pending_clarifications=session.pending_clarifications,
-            pending_review_revision=session.pending_review_revision,
-            summary=session.summary,
+        assistant_message = _system_message(outcome.reply, language, now)
+        response = _reply_response(
+            session,
+            assistant_message,
             order_verification_required=outcome.verification_required,
             slot_options=list(outcome.slot_options),
         )
-        committed = session.model_copy(deep=True)
-        committed.revision = response.revision
-        committed.updated_at = now
-        committed.messages = [*session.messages, assistant_message]
-        committed.flow = None if outcome.step is None else FlowState(name=flow.name, step=outcome.step)
+        committed = _saved_copy(session, response, now, [assistant_message])
+        committed.flow = flow_state_after(flow, outcome)
         await self.repository.save(committed)
         return response
 
@@ -748,54 +785,30 @@ class ConversationEngine:
             language = session.reply_language
             reply = visit_text("booking.confirmed", language, appointment)
             window = window_values(appointment.starts_at, appointment.ends_at)
-            assistant_message = _message(
-                "assistant",
-                reply,
-                input_mode="system",
-                created_at=now,
-                language=language,
+            assistant_message = _system_message(reply, language, now)
+            response = _reply_response(session, assistant_message)
+            chosen = render(
+                "booking.user_choice",
+                language,
+                {"date": window["date"], "start": window["start"]},
             )
-            new_revision = session.revision + 1
-            response = TurnResponse(
-                session_id=session_id,
-                revision=new_revision,
-                status=session.status,
-                reply_language=language,
-                frustration_active=session.frustration_active,
-                reply=reply,
-                message_id=assistant_message.id,
-                slots=session.slots,
-                pending_clarifications=session.pending_clarifications,
-                pending_review_revision=session.pending_review_revision,
-                summary=session.summary,
-            )
-            committed = session.model_copy(deep=True)
-            committed.flow = None
-            committed.revision = new_revision
-            committed.updated_at = now
-            committed.messages = [
-                *session.messages,
-                _message(
-                    "user",
-                    render(
-                        "booking.user_choice",
-                        language,
-                        {"date": window["date"], "start": window["start"]},
+            committed = _saved_copy(
+                session,
+                response,
+                now,
+                [
+                    _message(
+                        "user",
+                        chosen,
+                        input_mode="system",
+                        created_at=now,
+                        language=language,
                     ),
-                    input_mode="system",
-                    created_at=now,
-                    language=language,
-                ),
-                assistant_message,
-            ]
-            committed.requests = [
-                *session.requests,
-                ReplayRecord(
-                    request_id=command.request_id,
-                    input_digest=digest,
-                    response=response,
-                ),
-            ]
+                    assistant_message,
+                ],
+            )
+            committed.flow = None
+            _remember_request(committed, session, command.request_id, digest, response)
             await self.repository.save(committed)
             return response
 
@@ -945,7 +958,9 @@ class ConversationEngine:
             )
         elif pure_confirmation:
             reply = render(
-                "receipt", reply_language, {"reference": request_reference(session.session_id)}
+                "receipt",
+                reply_language,
+                {"reference": request_reference(session.session_id)},
             )
             status = "completed"
             review_revision = None
@@ -964,7 +979,6 @@ class ConversationEngine:
             # The support request: its steps come from flows.json and the step sets the status.
             step = await run_flow(
                 self.support_flow,
-                self.support_flow.steps[0],
                 replace(
                     self._flow_context(session, None, reply_language),
                     slots=outcome.slots,
@@ -978,7 +992,9 @@ class ConversationEngine:
             if status == "awaiting_confirmation":
                 summary = build_summary(outcome.slots, reply_language)
                 unchanged_valid_review = (
-                    review_valid and not outcome.accepted_fields and not recovered_this_turn
+                    review_valid
+                    and not outcome.accepted_fields
+                    and not recovered_this_turn
                 )
                 review_revision = (
                     session.pending_review_revision
@@ -1106,9 +1122,9 @@ class ConversationEngine:
                 outcome.slots.order_number
             ):
                 self.verification.clear_grant(session.session_id)
-        committed = session.model_copy(deep=True)
-        committed.revision = new_revision
-        committed.updated_at = now
+        committed = _saved_copy(
+            session, response, now, [user_message, assistant_message]
+        )
         committed.status = plan.status
         committed.reply_language = plan.language
         committed.frustration_active = plan.frustration_active
@@ -1124,15 +1140,13 @@ class ConversationEngine:
             )
         else:
             committed.collection_turn_count = session.collection_turn_count + 1
-        committed.messages = [*session.messages, user_message, assistant_message]
-        committed.requests = [
-            *session.requests,
-            ReplayRecord(
-                request_id=command.request_id,
-                input_digest=turn_digest(session.session_id, command),
-                response=response,
-            ),
-        ]
+        _remember_request(
+            committed,
+            session,
+            command.request_id,
+            turn_digest(session.session_id, command),
+            response,
+        )
         await self.repository.save(committed)
         if plan.status == "handed_off":
             self.verification.clear(session.session_id)

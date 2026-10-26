@@ -23,7 +23,7 @@ from gateway.providers.prompts import (
 )
 from gateway.schemas import KnowledgeAnswer
 from gateway.storage import JsonSessionRepository
-from tests.integration.support.intent import (
+from tests.support.extraction_builders import (
     capability_extraction,
     social_extraction,
     start_intake_extraction,
@@ -175,7 +175,9 @@ async def test_social_with_facts_falls_through_to_normal_intake(tmp_path):
         script=[
             (
                 "extract",
-                make_extraction(intent="social", candidates={"order_number": "NS-000123"}),
+                make_extraction(
+                    intent="social", candidates={"order_number": "NS-000123"}
+                ),
             )
         ],
     )
@@ -419,9 +421,7 @@ async def test_confirm_without_a_review_explains_and_never_completes(tmp_path):
     )
     created = await engine.create_session()
 
-    response = await engine.turn(
-        created.session_id, turn_request("Yes, that is right")
-    )
+    response = await engine.turn(created.session_id, turn_request("Yes, that is right"))
 
     assert response.reply == NOTHING_TO_CONFIRM
     assert response.status == "collecting"
@@ -495,7 +495,9 @@ async def test_reject_at_a_review_with_a_policy_question_keeps_the_reject_prompt
     sid = created.session_id
     await engine.turn(sid, turn_request())
 
-    response = await engine.turn(sid, turn_request("No, can I still return it?", revision=1))
+    response = await engine.turn(
+        sid, turn_request("No, can I still return it?", revision=1)
+    )
 
     assert response.reply == f"{REJECT_PROMPT} {POLICY_QUESTION_SUFFIX}"
     assert response.status == "collecting"

@@ -31,12 +31,16 @@ from tests.support.fakes import (
     x_unrelated,
 )
 
-pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+pytestmark = (
+    pytest.mark.browser_e2e
+)  # controlled-provider browser workflow, never live Docker/provider proof
 
 SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
 
 
-@pytest.mark.parametrize("case_id", [pytest.param("resume_after_restart", id="resume_after_restart")])
+@pytest.mark.parametrize(
+    "case_id", [pytest.param("resume_after_restart", id="resume_after_restart")]
+)
 def test_resume_after_restart(case_id, ui, server, provider):
     provider.script_extract(PART, x_part())
     provider.script_extract(CAPABILITY_Q, x_capability())
@@ -79,14 +83,18 @@ def test_resume_after_restart(case_id, ui, server, provider):
     # Reload hits one controlled pre-handler 503 on the resume GET.
     fault = server.faults.fail_next("GET", rf"/api/sessions/{sid}$", status=503)
     ui.page.reload()
-    expect(ui.page.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
+    expect(
+        ui.page.get_by_role("dialog", name="Northstar Energy support chat")
+    ).to_be_visible()
     expect(ui.button("Retry")).to_be_visible()
     expect(ui.alerts.filter(has_text=re.compile(r"\S")).first).to_be_visible()
     assert fault.triggered == 1
     faulted = [g for g in ui.session_gets() if g["faulted"]]
     assert len(faulted) == 1 and faulted[0]["status"] == 503
     assert ui.stored_session_id() == sid
-    assert len(ui.create_posts()) == 1, "a failed resume must not POST a replacement session"
+    assert len(ui.create_posts()) == 1, (
+        "a failed resume must not POST a replacement session"
+    )
     assert server.session_bytes(sid) == saved_bytes
     assert server.session_ids() == [sid]
     ui.cp("resume_after_restart.retry-visible-no-replacement")
@@ -113,14 +121,18 @@ def test_resume_after_restart(case_id, ui, server, provider):
     server.restart()
     assert server.base_url == origin
     ui.page.reload()
-    expect(ui.page.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
+    expect(
+        ui.page.get_by_role("dialog", name="Northstar Energy support chat")
+    ).to_be_visible()
     expect(ui.log).to_contain_text(ASK_CATEGORY)
     assert ui.transcript_text() == context_before
     assert ui.stored_session_id() == sid
     assert ui.disk(sid)["revision"] == 3
     assert server.session_bytes(sid) == saved_bytes
     assert len(ui.create_posts()) == 1
-    assert provider.methods() == ["extract", "extract", "extract"], "GET after restart must not call the model"
+    assert provider.methods() == ["extract", "extract", "extract"], (
+        "GET after restart must not call the model"
+    )
     ui.cp("resume_after_restart.restart-preserves-history")
 
     # A FAQ after session restoration answers without replacing the pending
@@ -165,10 +177,18 @@ def test_resume_after_restart(case_id, ui, server, provider):
     confirms = ui.confirm_posts()
     assert len(confirms) == 1 and body_of(confirms[0])["review_revision"] == 7
     assert provider.methods() == [
-        "extract", "extract", "extract", "extract", "answer_knowledge",
-        "extract", "extract", "extract",
+        "extract",
+        "extract",
+        "extract",
+        "extract",
+        "answer_knowledge",
+        "extract",
+        "extract",
+        "extract",
     ]
     assert len(ui.requests("GET", SESSION_ITEM)) >= 4
-    wait_until(lambda: len(ui.create_posts()) == 1, "no replacement session at any point")
+    wait_until(
+        lambda: len(ui.create_posts()) == 1, "no replacement session at any point"
+    )
     provider.assert_consumed()
     ui.cp("resume_after_restart.finish-after-restart")

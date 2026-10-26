@@ -209,9 +209,7 @@ async def case_post_confirm_unknown_body_key(client, app, provider, session_dir)
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     provider.script_extraction(full_extraction())
-    reviewed = await client.post(
-        f"/api/sessions/{session_id}/turns", json=turn_body()
-    )
+    reviewed = await client.post(f"/api/sessions/{session_id}/turns", json=turn_body())
     assert reviewed.status_code == 200
     assert reviewed.json()["status"] == "awaiting_confirmation"
     path = Path(session_dir) / f"{session_id}.json"
@@ -258,7 +256,9 @@ async def case_post_turns_expected_revision_1(client, app, provider, session_dir
     assert_no_calls(provider)
 
 
-async def case_post_turns_text_exactly_three_ascii_spaces(client, app, provider, session_dir):
+async def case_post_turns_text_exactly_three_ascii_spaces(
+    client, app, provider, session_dir
+):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     path = Path(session_dir) / f"{session_id}.json"
@@ -271,7 +271,9 @@ async def case_post_turns_text_exactly_three_ascii_spaces(client, app, provider,
     assert_no_calls(provider)
 
 
-async def case_post_turns_exactly4000_characters_scripted_unrelated(client, app, provider, session_dir):
+async def case_post_turns_exactly4000_characters_scripted_unrelated(
+    client, app, provider, session_dir
+):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     provider.script_extraction(unrelated_extraction())
@@ -314,7 +316,9 @@ async def case_post_turns4001_characters(client, app, provider, session_dir):
     assert_no_calls(provider)
 
 
-async def case_post_sessions_valid_padded_exactly65536_utf_8_bytes(client, app, provider, session_dir):
+async def case_post_sessions_valid_padded_exactly65536_utf_8_bytes(
+    client, app, provider, session_dir
+):
     body = b"{}" + b" " * (65536 - 2)
     assert len(body) == 65536
     response = await client.post(
@@ -325,7 +329,9 @@ async def case_post_sessions_valid_padded_exactly65536_utf_8_bytes(client, app, 
     assert_no_calls(provider)
 
 
-async def case_post_sessions_same_valid_body_padded_to65537_bytes(client, app, provider, session_dir):
+async def case_post_sessions_same_valid_body_padded_to65537_bytes(
+    client, app, provider, session_dir
+):
     body = b"{}" + b" " * (65537 - 2)
     assert len(body) == 65537
     response = await client.post(
@@ -336,7 +342,9 @@ async def case_post_sessions_same_valid_body_padded_to65537_bytes(client, app, p
     assert_no_calls(provider)
 
 
-async def case_post_turns_oversized_raw_asgi_body_understated_content(client, app, provider, session_dir):
+async def case_post_turns_oversized_raw_asgi_body_understated_content(
+    client, app, provider, session_dir
+):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     path = Path(session_dir) / f"{session_id}.json"
@@ -360,7 +368,9 @@ async def case_post_turns_oversized_raw_asgi_body_understated_content(client, ap
     assert_no_calls(provider)
 
 
-async def case_post_turns_oversized_body_without_content_length_one_large(client, app, provider, session_dir):
+async def case_post_turns_oversized_body_without_content_length_one_large(
+    client, app, provider, session_dir
+):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     path = Path(session_dir) / f"{session_id}.json"
@@ -378,13 +388,13 @@ async def case_post_turns_oversized_body_without_content_length_one_large(client
     assert_no_calls(provider)
 
 
-async def case_post_confirm_oversized_body_against_valid_review(client, app, provider, session_dir):
+async def case_post_confirm_oversized_body_against_valid_review(
+    client, app, provider, session_dir
+):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     provider.script_extraction(full_extraction())
-    reviewed = await client.post(
-        f"/api/sessions/{session_id}/turns", json=turn_body()
-    )
+    reviewed = await client.post(f"/api/sessions/{session_id}/turns", json=turn_body())
     assert reviewed.status_code == 200
     assert reviewed.json()["pending_review_revision"] == 1
     path = Path(session_dir) / f"{session_id}.json"
@@ -402,7 +412,9 @@ async def case_post_confirm_oversized_body_against_valid_review(client, app, pro
     assert provider.methods() == ["extract"]
 
 
-async def case_post_turns_valid_text_includes_multibyte_utf_8_characters(client, app, provider, session_dir):
+async def case_post_turns_valid_text_includes_multibyte_utf_8_characters(
+    client, app, provider, session_dir
+):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     text = "Café ☕ naïve — my order arrived broken."
@@ -447,7 +459,9 @@ async def case_post_turns_x_request_id_valid_uuid(client, app, provider, session
     assert provider.methods() == ["extract"]
 
 
-async def case_post_turns_x_request_id_invalid_value(client, app, provider, session_dir):
+async def case_post_turns_x_request_id_invalid_value(
+    client, app, provider, session_dir
+):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     body = turn_body()
@@ -472,7 +486,9 @@ async def case_post_turns_x_request_id_invalid_value(client, app, provider, sess
     assert provider.methods() == ["extract"]
 
 
-async def case_post_speech_caller_supplied_text_extra_key(client, app, provider, session_dir):
+async def case_post_speech_caller_supplied_text_extra_key(
+    client, app, provider, session_dir
+):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     message_id = created["messages"][0]["id"]
@@ -487,7 +503,9 @@ async def case_post_speech_caller_supplied_text_extra_key(client, app, provider,
     assert_no_calls(provider)
 
 
-async def case_post_speech_oversized_body_against_saved_assistant_message(client, app, provider, session_dir):
+async def case_post_speech_oversized_body_against_saved_assistant_message(
+    client, app, provider, session_dir
+):
     created = (await client.post("/api/sessions", json={})).json()
     session_id = created["session_id"]
     message_id = created["messages"][0]["id"]
@@ -498,7 +516,9 @@ async def case_post_speech_oversized_body_against_saved_assistant_message(client
         method="POST",
         path=f"/api/sessions/{session_id}/speech",
         chunks=[
-            b'{"message_id": "' + message_id.encode("ascii") + b'", "pad": "'
+            b'{"message_id": "'
+            + message_id.encode("ascii")
+            + b'", "pad": "'
             + b"x" * 70000
         ],
         headers={"content-type": "application/json"},
@@ -514,25 +534,69 @@ CASES = [
     pytest.param(case_post_sessions, id="post_sessions"),
     pytest.param(case_post_sessions_unknown_field, id="post_sessions_unknown_field"),
     pytest.param(case_get_existing_partial_session, id="get_existing_partial_session"),
-    pytest.param(case_get_valid_format_absent_session_uuid, id="get_valid_format_absent_session_uuid"),
+    pytest.param(
+        case_get_valid_format_absent_session_uuid,
+        id="get_valid_format_absent_session_uuid",
+    ),
     pytest.param(case_post_turns_unknown_body_key, id="post_turns_unknown_body_key"),
-    pytest.param(case_post_confirm_unknown_body_key, id="post_confirm_unknown_body_key"),
-    pytest.param(case_post_speech_caller_supplied_text_extra_key, id="post_speech_caller_supplied_text_extra_key"),
+    pytest.param(
+        case_post_confirm_unknown_body_key, id="post_confirm_unknown_body_key"
+    ),
+    pytest.param(
+        case_post_speech_caller_supplied_text_extra_key,
+        id="post_speech_caller_supplied_text_extra_key",
+    ),
     pytest.param(case_get_path_uuid_not_uuid, id="get_path_uuid_not_uuid"),
-    pytest.param(case_post_turns_expected_revision_true, id="post_turns_expected_revision_true"),
-    pytest.param(case_post_turns_expected_revision_1, id="post_turns_expected_revision_1"),
-    pytest.param(case_post_turns_text_exactly_three_ascii_spaces, id="post_turns_text_exactly_three_ascii_spaces"),
-    pytest.param(case_post_turns_exactly4000_characters_scripted_unrelated, id="post_turns_exactly4000_characters_scripted_unrelated"),
+    pytest.param(
+        case_post_turns_expected_revision_true, id="post_turns_expected_revision_true"
+    ),
+    pytest.param(
+        case_post_turns_expected_revision_1, id="post_turns_expected_revision_1"
+    ),
+    pytest.param(
+        case_post_turns_text_exactly_three_ascii_spaces,
+        id="post_turns_text_exactly_three_ascii_spaces",
+    ),
+    pytest.param(
+        case_post_turns_exactly4000_characters_scripted_unrelated,
+        id="post_turns_exactly4000_characters_scripted_unrelated",
+    ),
     pytest.param(case_post_turns4001_characters, id="post_turns4001_characters"),
-    pytest.param(case_post_sessions_valid_padded_exactly65536_utf_8_bytes, id="post_sessions_valid_padded_exactly65536_utf_8_bytes"),
-    pytest.param(case_post_sessions_same_valid_body_padded_to65537_bytes, id="post_sessions_same_valid_body_padded_to65537_bytes"),
-    pytest.param(case_post_turns_oversized_raw_asgi_body_understated_content, id="post_turns_oversized_raw_asgi_body_understated_content"),
-    pytest.param(case_post_turns_oversized_body_without_content_length_one_large, id="post_turns_oversized_body_without_content_length_one_large"),
-    pytest.param(case_post_confirm_oversized_body_against_valid_review, id="post_confirm_oversized_body_against_valid_review"),
-    pytest.param(case_post_speech_oversized_body_against_saved_assistant_message, id="post_speech_oversized_body_against_saved_assistant_message"),
-    pytest.param(case_post_turns_valid_text_includes_multibyte_utf_8_characters, id="post_turns_valid_text_includes_multibyte_utf_8_characters"),
-    pytest.param(case_post_turns_x_request_id_valid_uuid, id="post_turns_x_request_id_valid_uuid"),
-    pytest.param(case_post_turns_x_request_id_invalid_value, id="post_turns_x_request_id_invalid_value"),
+    pytest.param(
+        case_post_sessions_valid_padded_exactly65536_utf_8_bytes,
+        id="post_sessions_valid_padded_exactly65536_utf_8_bytes",
+    ),
+    pytest.param(
+        case_post_sessions_same_valid_body_padded_to65537_bytes,
+        id="post_sessions_same_valid_body_padded_to65537_bytes",
+    ),
+    pytest.param(
+        case_post_turns_oversized_raw_asgi_body_understated_content,
+        id="post_turns_oversized_raw_asgi_body_understated_content",
+    ),
+    pytest.param(
+        case_post_turns_oversized_body_without_content_length_one_large,
+        id="post_turns_oversized_body_without_content_length_one_large",
+    ),
+    pytest.param(
+        case_post_confirm_oversized_body_against_valid_review,
+        id="post_confirm_oversized_body_against_valid_review",
+    ),
+    pytest.param(
+        case_post_speech_oversized_body_against_saved_assistant_message,
+        id="post_speech_oversized_body_against_saved_assistant_message",
+    ),
+    pytest.param(
+        case_post_turns_valid_text_includes_multibyte_utf_8_characters,
+        id="post_turns_valid_text_includes_multibyte_utf_8_characters",
+    ),
+    pytest.param(
+        case_post_turns_x_request_id_valid_uuid, id="post_turns_x_request_id_valid_uuid"
+    ),
+    pytest.param(
+        case_post_turns_x_request_id_invalid_value,
+        id="post_turns_x_request_id_invalid_value",
+    ),
 ]
 
 

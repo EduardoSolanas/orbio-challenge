@@ -56,15 +56,22 @@ def test_each_service_waits_for_a_healthy_service_behind_it() -> None:
     services = compose()["services"]
 
     assert services[WEB]["depends_on"] == {GATEWAY: {"condition": "service_healthy"}}
-    assert services[GATEWAY]["depends_on"] == {BACKEND: {"condition": "service_healthy"}}
+    assert services[GATEWAY]["depends_on"] == {
+        BACKEND: {"condition": "service_healthy"}
+    }
     for name in (WEB, GATEWAY, BACKEND):
-        assert services[name]["healthcheck"]["test"][-1].endswith(("/health", "/health', timeout=2).close()"))
+        assert services[name]["healthcheck"]["test"][-1].endswith(
+            ("/health", "/health', timeout=2).close()")
+        )
 
 
 def test_gateway_calls_the_backend_api_by_service_dns() -> None:
     gateway = compose()["services"][GATEWAY]
 
-    assert gateway["environment"]["BACKEND_API_BASE_URL"] == f"http://{BACKEND}:{BACKEND_API_PORT}"
+    assert (
+        gateway["environment"]["BACKEND_API_BASE_URL"]
+        == f"http://{BACKEND}:{BACKEND_API_PORT}"
+    )
 
 
 def test_dockerfiles_start_the_right_app_on_the_exposed_port() -> None:
@@ -84,7 +91,9 @@ def test_the_images_carry_only_their_own_packages() -> None:
 
     assert "gateway ./gateway" in gateway and "shared ./shared" in gateway
     assert "backend_api" not in gateway.replace("# Build from", "")
-    assert "backend_api ./backend_api" in backend_api and "shared ./shared" in backend_api
+    assert (
+        "backend_api ./backend_api" in backend_api and "shared ./shared" in backend_api
+    )
     assert "gateway" not in backend_api
 
 
@@ -101,7 +110,9 @@ def test_nginx_forwards_only_the_api_and_health_to_the_gateway() -> None:
 
 def test_nginx_serves_the_page_with_revalidation_and_denies_everything_else() -> None:
     assert re.search(r"location = / \{[^}]*try_files /index.html", NGINX_CONF)
-    assert re.search(r"location /static/ \{[^}]*alias /usr/share/nginx/html/;", NGINX_CONF)
+    assert re.search(
+        r"location /static/ \{[^}]*alias /usr/share/nginx/html/;", NGINX_CONF
+    )
     assert NGINX_CONF.count('add_header Cache-Control "no-cache" always;') == 2
     assert re.search(r"location / \{\s*return 404;", NGINX_CONF)
     # The gateway enforces the audio limit; nginx must not reject a legal upload first.

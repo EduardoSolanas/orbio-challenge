@@ -25,7 +25,7 @@ from gateway.schemas import (
     TurnRequest,
 )
 from gateway.storage import JsonSessionRepository
-from tests.integration.support.rag import question_extraction
+from tests.support.extraction_builders import question_extraction
 from tests.support.unit_fakes import (
     FakeKnowledgeBase,
     FakeProvider,
@@ -52,7 +52,6 @@ def history(size: int) -> list:
         make_message(text=f"message {index}", role="user" if index % 2 else "assistant")
         for index in range(size)
     ]
-
 
 
 def grounded_answer() -> KnowledgeAnswer:

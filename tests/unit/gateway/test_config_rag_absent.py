@@ -13,7 +13,9 @@ from tests.unit.gateway.config_support import (
 @pytest.mark.parametrize(
     "field", ["RAG_BASE_URL", "RAG_MODEL", "RAG_AUTH_MODE", "RAG_OUTPUT_MODE"]
 )
-def test_rag_profile_with_one_required_variable_absent_is_a_configuration_failure(field):
+def test_rag_profile_with_one_required_variable_absent_is_a_configuration_failure(
+    field,
+):
     environ = valid_environ()
     environ.update(complete_rag_environ())
     del environ[field]

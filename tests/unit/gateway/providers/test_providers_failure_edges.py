@@ -89,7 +89,10 @@ async def test_text_asyncio_timeout_then_success_pauses_and_retries():
         if attempt == 1:
             return httpx.Response(
                 200,
-                stream=SlowStream(0.3, json.dumps(chat_envelope(json.dumps(EXTRACTION_PAYLOAD))).encode()),
+                stream=SlowStream(
+                    0.3,
+                    json.dumps(chat_envelope(json.dumps(EXTRACTION_PAYLOAD))).encode(),
+                ),
                 headers={"content-type": "application/json"},
             )
         return json_response(chat_envelope(json.dumps(EXTRACTION_PAYLOAD)))
@@ -108,7 +111,9 @@ async def test_text_asyncio_timeout_then_success_pauses_and_retries():
 @pytest.mark.parametrize("role", ["llm", "stt", "tts"])
 async def test_status_300_is_configuration_error_not_success(role: str):
     if role == "llm":
-        responder = single_response(json.dumps(chat_envelope(json.dumps(EXTRACTION_PAYLOAD))), status=300)
+        responder = single_response(
+            json.dumps(chat_envelope(json.dumps(EXTRACTION_PAYLOAD))), status=300
+        )
         provider, recorders = build_provider({"llm": responder})
         call = provider.extract(extraction_context())
     elif role == "stt":
@@ -200,7 +205,9 @@ async def test_text_pause_with_one_second_left_sleeps_within_budget_then_succeed
     assert sleeps.calls[0] <= 1.0
 
 
-@pytest.mark.parametrize("status,expected", [(599, "provider_unavailable"), (600, "provider_configuration")])
+@pytest.mark.parametrize(
+    "status,expected", [(599, "provider_unavailable"), (600, "provider_configuration")]
+)
 async def test_5xx_upper_boundary(status: int, expected: str):
     provider, recorders = build_provider({"llm": single_response("{}", status=status)})
 
@@ -216,12 +223,19 @@ async def test_base_url_ending_in_a_letter_is_not_stripped():
     profile = replace(LLM_PROFILE, base_url="http://llm.test/v1X")
     provider, recorders = build_provider(
         {"llm": extraction_responder()},
-        profiles={"llm": profile, "rag": RAG_PROFILE, "stt": STT_PROFILE, "tts": TTS_PROFILE},
+        profiles={
+            "llm": profile,
+            "rag": RAG_PROFILE,
+            "stt": STT_PROFILE,
+            "tts": TTS_PROFILE,
+        },
     )
 
     await provider.extract(extraction_context())
 
-    assert str(recorders["llm"].requests[0].url) == "http://llm.test/v1X/chat/completions"
+    assert (
+        str(recorders["llm"].requests[0].url) == "http://llm.test/v1X/chat/completions"
+    )
 
 
 async def test_stt_invalid_utf8_body_is_invalid_provider_response_after_attempts():
@@ -367,15 +381,24 @@ TWO_SOURCES = [
 
 def two_source_context() -> KnowledgeContext:
     return KnowledgeContext(
-        question="Can I return an unused item?", kb_version="2026-10-22", sources=TWO_SOURCES
+        question="Can I return an unused item?",
+        kb_version="2026-10-22",
+        sources=TWO_SOURCES,
     )
 
 
 @pytest.mark.parametrize(
     "cited_ids,valid",
-    [([], False), (["faq-returns", "faq-delivery"], True), (["faq-returns", "faq-delivery", "faq-delivery"], False), (["faq-returns", "faq-returns"], False)],
+    [
+        ([], False),
+        (["faq-returns", "faq-delivery"], True),
+        (["faq-returns", "faq-delivery", "faq-delivery"], False),
+        (["faq-returns", "faq-returns"], False),
+    ],
 )
-async def test_cited_id_count_and_uniqueness_boundaries(cited_ids: list[str], valid: bool):
+async def test_cited_id_count_and_uniqueness_boundaries(
+    cited_ids: list[str], valid: bool
+):
     answer = {"answerable": True, "answer": "Grounded answer.", "cited_ids": cited_ids}
     provider, recorders = build_provider(
         {"rag": single_response(json.dumps(chat_envelope(json.dumps(answer))))}
@@ -394,7 +417,9 @@ async def test_cited_id_count_and_uniqueness_boundaries(cited_ids: list[str], va
 async def test_multi_chunk_success_body_over_the_cap_is_rejected():
     def responder(request: httpx.Request, attempt: int) -> httpx.Response:
         stream = ChunkedStream([b"x" * 600000, b"x" * 448577])
-        return httpx.Response(200, stream=stream, headers={"content-type": "application/json"})
+        return httpx.Response(
+            200, stream=stream, headers={"content-type": "application/json"}
+        )
 
     provider, recorders = build_provider({"llm": responder})
 
@@ -411,9 +436,17 @@ async def test_default_constructor_uses_real_sleep_for_jitter():
     def responder(request: httpx.Request, attempt: int) -> httpx.Response:
         return json_response({"error": "busy"}, status=429)
 
-    recorders = {role: RoleTransport(role, responder if role == "llm" else unexpected(role)) for role in ROLES}
+    recorders = {
+        role: RoleTransport(role, responder if role == "llm" else unexpected(role))
+        for role in ROLES
+    }
     provider = OpenAICompatibleProvider(
-        {"llm": LLM_PROFILE, "rag": RAG_PROFILE, "stt": STT_PROFILE, "tts": TTS_PROFILE},
+        {
+            "llm": LLM_PROFILE,
+            "rag": RAG_PROFILE,
+            "stt": STT_PROFILE,
+            "tts": TTS_PROFILE,
+        },
         transports={role: recorders[role].transport for role in ROLES},
     )
     started = time_module.monotonic()
@@ -462,7 +495,9 @@ async def test_fifth_capacity_call_is_bounded_and_busy_without_queueing():
 
     provider, _ = build_provider({"llm": responder}, capacity=4)
 
-    tasks = [asyncio.create_task(provider.extract(extraction_context())) for _ in range(4)]
+    tasks = [
+        asyncio.create_task(provider.extract(extraction_context())) for _ in range(4)
+    ]
     await asyncio.wait_for(all_started.wait(), timeout=2)
 
     with pytest.raises(AppError) as caught:
@@ -479,7 +514,9 @@ async def test_released_permit_restores_capacity_one_at_a_time():
     release = asyncio.Event()
     wire_calls = 0
 
-    async def blocking_responder(request: httpx.Request, attempt: int) -> httpx.Response:
+    async def blocking_responder(
+        request: httpx.Request, attempt: int
+    ) -> httpx.Response:
         nonlocal wire_calls
         wire_calls += 1
         await release.wait()

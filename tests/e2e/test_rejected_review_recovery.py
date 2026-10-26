@@ -30,14 +30,22 @@ from tests.support.fakes import (
     x_part,
 )
 
-pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+pytestmark = (
+    pytest.mark.browser_e2e
+)  # controlled-provider browser workflow, never live Docker/provider proof
 
-HIGH_SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
-LOW_SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "low")
+HIGH_SUMMARY = summary_text(
+    "NS-000123", "damaged_item", "My order arrived broken", "high"
+)
+LOW_SUMMARY = summary_text(
+    "NS-000123", "damaged_item", "My order arrived broken", "low"
+)
 CONFLICT = conflict_question("NS-000123", "NS-000999", "energy account reference")
 
 
-@pytest.mark.parametrize("case_id", [pytest.param("rejected_review_recovery", id="rejected_review_recovery")])
+@pytest.mark.parametrize(
+    "case_id", [pytest.param("rejected_review_recovery", id="rejected_review_recovery")]
+)
 def test_rejected_review_recovery(case_id, ui, server, provider):
     provider.script_extract(BAD_ORDER, x_part("NS-12345"))
     provider.script_extract(FIX_ORDER, extraction(order_number="NS-000123"))
@@ -47,7 +55,9 @@ def test_rejected_review_recovery(case_id, ui, server, provider):
     provider.script_extract(
         KEEP_OLD,
         extraction(
-            intent="correction", order_number="NS-000123", explicit_corrections=["order_number"]
+            intent="correction",
+            order_number="NS-000123",
+            explicit_corrections=["order_number"],
         ),
     )
     provider.script_extract(NO, x_no())
@@ -64,7 +74,11 @@ def test_rejected_review_recovery(case_id, ui, server, provider):
     assert saved["slots"]["order_number"] is None
     assert saved["slots"]["description"] == "My order arrived broken"
     assert saved["pending_clarifications"] == {
-        "order_number": {"code": "invalid", "candidate": "NS-12345", "question": INVALID_ORDER}
+        "order_number": {
+            "code": "invalid",
+            "candidate": "NS-12345",
+            "question": INVALID_ORDER,
+        }
     }
     assert saved["revision"] == 1 and saved["pending_review_revision"] is None
     expect(ui.enabled_button("Confirm details")).to_have_count(0)
@@ -97,7 +111,11 @@ def test_rejected_review_recovery(case_id, ui, server, provider):
     saved = ui.disk(sid)
     assert saved["slots"]["order_number"] == "NS-000123"
     assert saved["pending_clarifications"] == {
-        "order_number": {"code": "conflict", "candidate": "NS-000999", "question": CONFLICT}
+        "order_number": {
+            "code": "conflict",
+            "candidate": "NS-000999",
+            "question": CONFLICT,
+        }
     }
     assert saved["pending_review_revision"] is None and saved["summary"] is None
     assert saved["status"] == "collecting" and saved["revision"] == 5

@@ -49,11 +49,7 @@ SOURCES = {
         "    def chat(self, prompt):\n"
         "        return prompt\n"
     ),
-    "config": (
-        "class Settings:\n"
-        "    def from_env(self):\n"
-        "        return Settings()\n"
-    ),
+    "config": ("class Settings:\n    def from_env(self):\n        return Settings()\n"),
     "retrieval": (
         "def search(query):\n"
         "    return []\n"
@@ -149,7 +145,9 @@ def body_lines(node: ast.AST) -> set[int]:
 
     def walk(statements: list[ast.stmt]) -> None:
         for statement in statements:
-            if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            if isinstance(
+                statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+            ):
                 continue
             lines.add(statement.lineno)
             for field in ("body", "orelse", "finalbody"):
@@ -209,7 +207,13 @@ def default_inventory() -> dict:
             entry("retrieval", ("outer", "inner")),
             *(
                 entry(module, (f"{module}_helper",))
-                for module in ("intent", "plans", "replay", "provider_wire", "speech_wav")
+                for module in (
+                    "intent",
+                    "plans",
+                    "replay",
+                    "provider_wire",
+                    "speech_wav",
+                )
             ),
         ]
     )
@@ -234,10 +238,15 @@ def build_coverage(root: Path, sources: dict[str, str]) -> Path:
             "missing_lines": [],
             "excluded_lines": [],
             "contexts": contexts,
-            "summary": {"covered_lines": len(executed), "num_statements": len(executed)},
+            "summary": {
+                "covered_lines": len(executed),
+                "num_statements": len(executed),
+            },
         }
     path = root / "coverage.json"
-    path.write_text(json.dumps({"meta": {"format": 3}, "files": files}), encoding="utf-8")
+    path.write_text(
+        json.dumps({"meta": {"format": 3}, "files": files}), encoding="utf-8"
+    )
     return path
 
 
@@ -316,7 +325,9 @@ def test_help_exits_zero() -> None:
 def test_missing_module_fails(tmp_path: Path) -> None:
     sources = dict(SOURCES)
     sources.pop("audio")
-    paths = write_evidence(tmp_path, sources=sources, review_data=review(default_inventory()))
+    paths = write_evidence(
+        tmp_path, sources=sources, review_data=review(default_inventory())
+    )
     assert run_checker(paths) != 0
 
 
@@ -406,7 +417,9 @@ def test_missing_test_nodeids_fails(tmp_path: Path) -> None:
 
 def test_mutant_id_not_matching_function_fails(tmp_path: Path) -> None:
     data = default_inventory()
-    data["functions"][0]["mutant_ids"] = ["gateway.providers.audio.x_transcribe__mutmut_1"]
+    data["functions"][0]["mutant_ids"] = [
+        "gateway.providers.audio.x_transcribe__mutmut_1"
+    ]
     paths = write_evidence(tmp_path, inventory_data=data, review_data=review(data))
     assert run_checker(paths) != 0
 
@@ -575,7 +588,9 @@ def test_exporter_roundtrip_passes_the_gate(tmp_path: Path) -> None:
     }
     assert data["source_revision"] == "rev1"
     start = next(
-        item for item in data["functions"] if item["qualified_name"] == "gateway.conversation.engine.start"
+        item
+        for item in data["functions"]
+        if item["qualified_name"] == "gateway.conversation.engine.start"
     )
     assert start["mutant_ids"] == [
         "gateway.conversation.engine.x_start__mutmut_1",
@@ -671,26 +686,29 @@ def test_exporter_rejects_missing_source_module(tmp_path: Path) -> None:
 # --- commit-safe revision policy ---------------------------------
 
 
-
-
-
 def write_repo_inputs(root: Path) -> None:
     """Create one file under every gated input path."""
     write_sources(root, SOURCES)
     (root / "tests").mkdir(exist_ok=True)
-    (root / "tests" / "test_unit.py").write_text("def test_x():\n    assert True\n", encoding="utf-8")
+    (root / "tests" / "test_unit.py").write_text(
+        "def test_x():\n    assert True\n", encoding="utf-8"
+    )
     (root / "scripts").mkdir(exist_ok=True)
     (root / "scripts" / "gate.py").write_text("GATE = 1\n", encoding="utf-8")
 
 
-def test_inventory_at_inputs_revision_passes_after_reports_only_commit(tmp_path: Path) -> None:
+def test_inventory_at_inputs_revision_passes_after_reports_only_commit(
+    tmp_path: Path,
+) -> None:
     init_repo(tmp_path)
     write_repo_inputs(tmp_path)
     inputs_revision = commit_all(tmp_path, "code at inputs revision")
     data = default_inventory()
     data["source_revision"] = inputs_revision
     paths = write_evidence(
-        tmp_path, inventory_data=data, review_data=review(data, revision=inputs_revision)
+        tmp_path,
+        inventory_data=data,
+        review_data=review(data, revision=inputs_revision),
     )
     commit_all(tmp_path, "store evidence")
     assert run_checker(paths) == 0
@@ -703,7 +721,9 @@ def test_commit_touching_gateway_after_inventory_fails(tmp_path: Path) -> None:
     data = default_inventory()
     data["source_revision"] = inputs_revision
     paths = write_evidence(
-        tmp_path, inventory_data=data, review_data=review(data, revision=inputs_revision)
+        tmp_path,
+        inventory_data=data,
+        review_data=review(data, revision=inputs_revision),
     )
     commit_all(tmp_path, "store evidence")
     (tmp_path / "gateway" / "providers" / "audio.py").write_text(
@@ -720,7 +740,9 @@ def test_commit_touching_tests_after_inventory_fails(tmp_path: Path) -> None:
     data = default_inventory()
     data["source_revision"] = inputs_revision
     paths = write_evidence(
-        tmp_path, inventory_data=data, review_data=review(data, revision=inputs_revision)
+        tmp_path,
+        inventory_data=data,
+        review_data=review(data, revision=inputs_revision),
     )
     commit_all(tmp_path, "store evidence")
     (tmp_path / "tests" / "test_unit.py").write_text(

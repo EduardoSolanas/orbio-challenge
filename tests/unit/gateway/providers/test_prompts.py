@@ -650,7 +650,9 @@ def test_system_instructions_are_the_exact_contract_text() -> None:
 def test_extraction_examples_are_the_fixed_objects() -> None:
     assert EXTRACTION_EXAMPLES == tuple(EXPECTED_EXAMPLES)
     assert len(EXTRACTION_EXAMPLES) == 31
-    assert {example["extraction"]["detected_language"] for example in EXTRACTION_EXAMPLES} == {
+    assert {
+        example["extraction"]["detected_language"] for example in EXTRACTION_EXAMPLES
+    } == {
         "en",
         "es",
         "unsupported",
@@ -722,8 +724,14 @@ def test_evaluation_cases_distinguish_item_dissatisfaction_from_frustration() ->
 
 def test_evaluation_cases_respect_negation_quotation_and_sarcasm() -> None:
     by_message = {case["message"]: case for case in EMOTION_EVALUATION_CASES}
-    assert by_message["I am not frustrated; I just need the policy."]["frustration"] == "none"
-    assert by_message["The example customer says ‘I am furious.’"]["sentiment"] == "neutral"
+    assert (
+        by_message["I am not frustrated; I just need the policy."]["frustration"]
+        == "none"
+    )
+    assert (
+        by_message["The example customer says ‘I am furious.’"]["sentiment"]
+        == "neutral"
+    )
     sarcasm = by_message["Great. Just great."]
     assert (sarcasm["sentiment"], sarcasm["frustration"]) == ("uncertain", "uncertain")
 
@@ -731,7 +739,7 @@ def test_evaluation_cases_respect_negation_quotation_and_sarcasm() -> None:
 def test_system_prompt_appends_the_examples_to_the_instructions() -> None:
     prefix = SYSTEM_INSTRUCTIONS + "\n\n"
     assert EXTRACTION_SYSTEM_PROMPT.startswith(prefix)
-    assert json.loads(EXTRACTION_SYSTEM_PROMPT[len(prefix):]) == EXPECTED_EXAMPLES
+    assert json.loads(EXTRACTION_SYSTEM_PROMPT[len(prefix) :]) == EXPECTED_EXAMPLES
 
 
 def test_knowledge_prompt_is_the_exact_two_paragraph_literal() -> None:
@@ -884,7 +892,9 @@ def test_serialize_context_is_json_with_unicode_preserved() -> None:
         ),
         pending_clarifications={
             "category": Clarification(
-                code="ambiguous", candidate="other", question="Please clarify your energy support area."
+                code="ambiguous",
+                candidate="other",
+                question="Please clarify your energy support area.",
             )
         },
         recent_messages=[RecentMessage(role="user", text="café")],
@@ -925,10 +935,16 @@ def test_prompt_brand_matches_energy_support_experience() -> None:
 
 
 def test_the_safety_flag_is_set_only_on_the_gas_examples() -> None:
-    flagged = [e["customer_message"] for e in EXTRACTION_EXAMPLES if e["extraction"]["safety_concern"]]
+    flagged = [
+        e["customer_message"]
+        for e in EXTRACTION_EXAMPLES
+        if e["extraction"]["safety_concern"]
+    ]
 
     assert flagged == [
         "The flat smells of rotten egg and I can hear a faint hiss",
         "Noto un olor extraño en el salón, ¿puede ser el gas?",
     ]
-    assert all(isinstance(e["extraction"]["safety_concern"], bool) for e in EXTRACTION_EXAMPLES)
+    assert all(
+        isinstance(e["extraction"]["safety_concern"], bool) for e in EXTRACTION_EXAMPLES
+    )

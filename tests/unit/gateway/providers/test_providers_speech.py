@@ -39,10 +39,13 @@ async def test_synthesize_sends_the_exact_speech_request():
 
 
 @pytest.mark.parametrize(
-    "content_type", ["audio/mpeg", "audio/mp3", "Audio/MPEG", "audio/mpeg; charset=binary"]
+    "content_type",
+    ["audio/mpeg", "audio/mp3", "Audio/MPEG", "audio/mpeg; charset=binary"],
 )
 async def test_accepted_mp3_content_types(content_type: str):
-    provider, _ = build_provider({"tts": audio_responder(b"mp3", {"content-type": content_type})})
+    provider, _ = build_provider(
+        {"tts": audio_responder(b"mp3", {"content-type": content_type})}
+    )
 
     assert (await provider.synthesize("hello")).data == b"mp3"
 
@@ -52,7 +55,9 @@ async def test_accepted_mp3_content_types(content_type: str):
 )
 async def test_non_mp3_success_content_is_one_attempt_invalid_response(content_type):
     headers = {} if content_type is None else {"content-type": content_type}
-    provider, recorders = build_provider({"tts": audio_responder(b"wav-bytes", headers)})
+    provider, recorders = build_provider(
+        {"tts": audio_responder(b"wav-bytes", headers)}
+    )
 
     with pytest.raises(AppError) as caught:
         await provider.synthesize("hello")
@@ -90,7 +95,12 @@ async def test_gzip_mp3_success_is_rejected_without_decompression():
     import gzip
 
     provider, recorders = build_provider(
-        {"tts": audio_responder(gzip.compress(b"mp3-bytes"), {"content-type": "audio/mpeg", "content-encoding": "gzip"})}
+        {
+            "tts": audio_responder(
+                gzip.compress(b"mp3-bytes"),
+                {"content-type": "audio/mpeg", "content-encoding": "gzip"},
+            )
+        }
     )
 
     with pytest.raises(AppError) as caught:
@@ -115,10 +125,16 @@ async def test_mp3_streamed_chunks_are_joined_after_a_bounded_read():
 
 
 @pytest.mark.parametrize("status", [429, 500, 503])
-async def test_tts_transient_failure_is_single_attempt_provider_unavailable(status: int):
+async def test_tts_transient_failure_is_single_attempt_provider_unavailable(
+    status: int,
+):
     sleeps = SleepRecorder()
     provider, recorders = build_provider(
-        {"tts": audio_responder(b"error", {"content-type": "text/plain"}, status=status)},
+        {
+            "tts": audio_responder(
+                b"error", {"content-type": "text/plain"}, status=status
+            )
+        },
         sleep=sleeps,
     )
 

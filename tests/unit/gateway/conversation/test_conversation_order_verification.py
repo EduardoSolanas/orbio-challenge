@@ -79,7 +79,9 @@ async def test_successful_verification_records_the_grant_through_the_client(tmp_
         return httpx.Response(200, json={"verified": True, "error": None})
 
     client = BackendApiClient(
-        "http://backend-api.test", timeout_seconds=1.0, transport=httpx.MockTransport(handler)
+        "http://backend-api.test",
+        timeout_seconds=1.0,
+        transport=httpx.MockTransport(handler),
     )
     engine, repository = build_engine(tmp_path, customer_data=client)
     session = make_session(slots=make_slots(order_number=ORDER))

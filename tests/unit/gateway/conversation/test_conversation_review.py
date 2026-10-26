@@ -264,9 +264,7 @@ async def test_pure_question_at_valid_review_preserves_summary_and_token(
     sid = created.session_id
     await engine.turn(sid, turn_request())
 
-    response = await engine.turn(
-        sid, turn_request("Can I return it?", revision=1)
-    )
+    response = await engine.turn(sid, turn_request("Can I return it?", revision=1))
 
     assert response.revision == 2
     assert response.status == "awaiting_confirmation"

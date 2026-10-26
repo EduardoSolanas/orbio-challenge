@@ -185,9 +185,7 @@ def test_complete_version_two_document_keeps_its_stored_labels():
     assert user_message["language"] == "es"
 
 
-@pytest.mark.parametrize(
-    "version", [0, 3, -1, True, False, "2", None, 2.0], ids=str
-)
+@pytest.mark.parametrize("version", [0, 3, -1, True, False, "2", None, 2.0], ids=str)
 def test_unknown_schema_versions_are_rejected(version):
     document = load_fixture("v2-active-frustration-es.json")
     document["schema_version"] = version
@@ -219,7 +217,9 @@ async def test_load_migrates_version_one_without_rewriting_the_file(tmp_path, na
     assert all(message.sentiment is None for message in session.messages)
     assert all(message.frustration is None for message in session.messages)
     assert all(message.language == "en" for message in session.messages)
-    assert all(record.response.frustration_active is False for record in session.requests)
+    assert all(
+        record.response.frustration_active is False for record in session.requests
+    )
     assert path.read_bytes() == before
     assert sorted(entry.name for entry in tmp_path.iterdir()) == [path.name]
 

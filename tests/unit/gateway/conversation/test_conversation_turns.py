@@ -76,7 +76,10 @@ async def test_happy_turn_merges_fields_and_emits_a_fresh_review(tmp_path):
     assert response.pending_clarifications == {}
     assert response.pending_review_revision == 1
     assert response.summary == SUMMARY
-    assert response.reply == SUMMARY + "\nPlease confirm these details or tell me what to change."
+    assert (
+        response.reply
+        == SUMMARY + "\nPlease confirm these details or tell me what to change."
+    )
     assert response.citations == []
     assert response.message_id != created.messages[0].id
 
@@ -137,7 +140,9 @@ async def test_reused_request_id_with_changed_body_is_request_id_conflict(
     await engine.turn(created.session_id, command)
     provider.assert_exhausted()
 
-    changed = turn_request(text="NS-000123 arrived broken", request_id=command.request_id)
+    changed = turn_request(
+        text="NS-000123 arrived broken", request_id=command.request_id
+    )
 
     with pytest.raises(AppError) as excinfo:
         await engine.turn(created.session_id, changed)

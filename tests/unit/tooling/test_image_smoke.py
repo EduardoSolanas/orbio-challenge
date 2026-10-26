@@ -43,7 +43,11 @@ def test_session_predicate_requires_201_and_session_id() -> None:
 
 
 def test_turn_predicate_requires_revision_and_nonblank_reply() -> None:
-    good = {"session_id": "abc", "revision": 1, "reply": "What is your energy account reference?"}
+    good = {
+        "session_id": "abc",
+        "revision": 1,
+        "reply": "What is your energy account reference?",
+    }
     assert image_smoke.turn_ok(200, good) is True
     assert image_smoke.turn_ok(500, good) is False
     assert image_smoke.turn_ok(200, {**good, "revision": 0}) is False

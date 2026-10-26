@@ -52,15 +52,23 @@ async def test_transcribe_sends_the_exact_multipart_request():
 
 async def test_transcribe_trims_text_and_ignores_extra_response_fields():
     provider, _ = build_provider(
-        {"stt": lambda request, attempt: json_response({"text": "  hello there  ", "language": "en"})}
+        {
+            "stt": lambda request, attempt: json_response(
+                {"text": "  hello there  ", "language": "en"}
+            )
+        }
     )
 
     assert await provider.transcribe(b"wav") == "hello there"
 
 
-@pytest.mark.parametrize("payload", [{}, {"text": ""}, {"text": "   "}, {"text": 5}, {"text": None}])
+@pytest.mark.parametrize(
+    "payload", [{}, {"text": ""}, {"text": "   "}, {"text": 5}, {"text": None}]
+)
 async def test_empty_or_nonstring_transcript_is_not_retried(payload: dict):
-    provider, recorders = build_provider({"stt": lambda request, attempt: json_response(payload)})
+    provider, recorders = build_provider(
+        {"stt": lambda request, attempt: json_response(payload)}
+    )
 
     with pytest.raises(AppError) as caught:
         await provider.transcribe(b"wav")
@@ -90,7 +98,9 @@ async def test_transcript_length_boundary(length: int, code: str | None):
 
 @pytest.mark.parametrize("size", [1024 * 1024, 1024 * 1024 + 1])
 async def test_transcript_success_json_one_mib_boundary(size: int):
-    provider, recorders = build_provider({"stt": single_response(transcript_envelope(size))})
+    provider, recorders = build_provider(
+        {"stt": single_response(transcript_envelope(size))}
+    )
 
     if size == 1024 * 1024:
         assert (await provider.transcribe(b"wav")).startswith("My order")

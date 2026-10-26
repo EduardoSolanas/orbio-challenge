@@ -71,7 +71,12 @@ async def test_configured_reasoning_effort_is_forwarded_to_text_model():
     profile = replace(LLM_PROFILE, reasoning_effort="none")
     provider, recorders = build_provider(
         {"llm": extraction_responder()},
-        profiles={"llm": profile, "rag": RAG_PROFILE, "stt": STT_PROFILE, "tts": TTS_PROFILE},
+        profiles={
+            "llm": profile,
+            "rag": RAG_PROFILE,
+            "stt": STT_PROFILE,
+            "tts": TTS_PROFILE,
+        },
     )
 
     await provider.extract(extraction_context())
@@ -117,7 +122,12 @@ async def test_schema_instruction_modes_append_the_exact_instruction(mode: str):
     profile = replace(LLM_PROFILE, output_mode=mode)
     provider, recorders = build_provider(
         {"llm": extraction_responder()},
-        profiles={"llm": profile, "rag": RAG_PROFILE, "stt": STT_PROFILE, "tts": TTS_PROFILE},
+        profiles={
+            "llm": profile,
+            "rag": RAG_PROFILE,
+            "stt": STT_PROFILE,
+            "tts": TTS_PROFILE,
+        },
     )
 
     await provider.extract(extraction_context())
@@ -152,7 +162,12 @@ async def test_extraction_schema_carries_both_emotion_labels_in_every_output_mod
     profile = replace(LLM_PROFILE, output_mode=mode)
     provider, recorders = build_provider(
         {"llm": extraction_responder()},
-        profiles={"llm": profile, "rag": RAG_PROFILE, "stt": STT_PROFILE, "tts": TTS_PROFILE},
+        profiles={
+            "llm": profile,
+            "rag": RAG_PROFILE,
+            "stt": STT_PROFILE,
+            "tts": TTS_PROFILE,
+        },
     )
 
     await provider.extract(extraction_context())
@@ -171,7 +186,9 @@ async def test_extraction_schema_carries_both_emotion_labels_in_every_output_mod
 
 
 async def test_missing_sentiment_label_triggers_the_bounded_repair_then_succeeds():
-    incomplete = {key: value for key, value in EXTRACTION_PAYLOAD.items() if key != "sentiment"}
+    incomplete = {
+        key: value for key, value in EXTRACTION_PAYLOAD.items() if key != "sentiment"
+    }
 
     def responder(request: httpx.Request, attempt: int) -> httpx.Response:
         content = json.dumps(incomplete if attempt == 1 else EXTRACTION_PAYLOAD)
@@ -186,7 +203,10 @@ async def test_missing_sentiment_label_triggers_the_bounded_repair_then_succeeds
     first = json.loads(recorders["llm"].requests[0].content)
     second = json.loads(recorders["llm"].requests[1].content)
     assert REPAIR_LINE not in first["messages"][0]["content"]
-    assert second["messages"][0]["content"] == EXTRACTION_SYSTEM_PROMPT + "\n" + REPAIR_LINE
+    assert (
+        second["messages"][0]["content"]
+        == EXTRACTION_SYSTEM_PROMPT + "\n" + REPAIR_LINE
+    )
 
 
 async def test_invalid_frustration_label_fails_safely_after_one_repair():
@@ -368,7 +388,10 @@ async def test_repair_after_schema_failure_sends_fixed_extra_system_line():
     first = json.loads(recorders["llm"].requests[0].content)
     second = json.loads(recorders["llm"].requests[1].content)
     assert first["messages"][0]["content"] == EXTRACTION_SYSTEM_PROMPT
-    assert second["messages"][0]["content"] == EXTRACTION_SYSTEM_PROMPT + "\n" + REPAIR_LINE
+    assert (
+        second["messages"][0]["content"]
+        == EXTRACTION_SYSTEM_PROMPT + "\n" + REPAIR_LINE
+    )
     assert second["messages"][1] == first["messages"][1]
     assert second["response_format"] == first["response_format"]
     assert second["max_tokens"] == first["max_tokens"] == 1200
@@ -385,11 +408,18 @@ async def test_repair_never_runs_a_third_attempt():
 
     assert caught.value.code == "invalid_provider_response"
     assert len(recorders["llm"].requests) == 2
-    assert REPAIR_LINE in json.loads(recorders["llm"].requests[1].content)["messages"][0]["content"]
+    assert (
+        REPAIR_LINE
+        in json.loads(recorders["llm"].requests[1].content)["messages"][0]["content"]
+    )
 
 
 async def test_knowledge_citation_outside_retrieved_sources_repairs_then_succeeds():
-    bad = {"answerable": True, "answer": "Refunds are instant.", "cited_ids": ["faq-unknown"]}
+    bad = {
+        "answerable": True,
+        "answer": "Refunds are instant.",
+        "cited_ids": ["faq-unknown"],
+    }
 
     def responder(request: httpx.Request, attempt: int) -> httpx.Response:
         content = json.dumps(bad if attempt == 1 else ANSWER_PAYLOAD)
@@ -401,7 +431,10 @@ async def test_knowledge_citation_outside_retrieved_sources_repairs_then_succeed
 
     assert result.cited_ids == ["faq-returns"]
     assert len(recorders["rag"].requests) == 2
-    assert REPAIR_LINE in json.loads(recorders["rag"].requests[1].content)["messages"][0]["content"]
+    assert (
+        REPAIR_LINE
+        in json.loads(recorders["rag"].requests[1].content)["messages"][0]["content"]
+    )
 
 
 async def test_answerable_false_with_text_is_invalid_provider_response():

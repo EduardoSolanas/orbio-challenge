@@ -71,10 +71,10 @@ EXTRACTION_PAYLOAD = {
     },
     "explicit_corrections": [],
     "ambiguous_fields": [],
-"detected_language": "en",
-"requested_language": None,
-"sentiment": "neutral",
-"frustration": "none",
+    "detected_language": "en",
+    "requested_language": None,
+    "sentiment": "neutral",
+    "frustration": "none",
 }
 
 
@@ -201,7 +201,9 @@ async def adapter_app(
             ),
             base_url="http://testserver",
         ) as client:
-            yield Harness(provider=provider, recorders=recorders, app=app, client=client)
+            yield Harness(
+                provider=provider, recorders=recorders, app=app, client=client
+            )
 
 
 def assert_app_error(error: BaseException, *, status: int, code: str) -> None:

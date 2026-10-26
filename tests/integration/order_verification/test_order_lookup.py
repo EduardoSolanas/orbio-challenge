@@ -39,9 +39,7 @@ from tests.integration.support.api import (
 from tests.integration.support.backend_api import LocalBackendApiServer
 
 
-async def test_spanish_order_lookup_prompts_in_spanish(
-    client, provider, verification
-):
+async def test_spanish_order_lookup_prompts_in_spanish(client, provider, verification):
     session_id = await create_session(client)
     provider.script_extraction(order_lookup(language="es"))
 
@@ -104,13 +102,13 @@ async def test_pending_order_is_reused_when_a_followup_omits_the_number(
 ):
     session_id = await create_session(client)
     provider.script_extraction(order_lookup())
-    assert (
-        await send_turn(client, session_id, ORDER_STATUS_Q, 0)
-    ).json()["reply"] == ORDER_NUMBER_PROMPT
+    assert (await send_turn(client, session_id, ORDER_STATUS_Q, 0)).json()[
+        "reply"
+    ] == ORDER_NUMBER_PROMPT
     provider.script_extraction(order_lookup(order_number=FIXTURE_ORDER_NUMBER))
-    assert (
-        await send_turn(client, session_id, ORDER_NUMBER_TEXT, 1)
-    ).json()["reply"] == VERIFICATION_PROMPT
+    assert (await send_turn(client, session_id, ORDER_NUMBER_TEXT, 1)).json()[
+        "reply"
+    ] == VERIFICATION_PROMPT
 
     provider.script_extraction(order_lookup())
     response = await send_turn(client, session_id, ORDER_STATUS_Q, 2)
@@ -251,9 +249,7 @@ async def test_missing_fixture_record_clears_the_grant_and_fails_generically(
         empty_api.stop()
 
 
-async def test_spanish_verified_lookup_uses_the_localized_status(
-    client, provider
-):
+async def test_spanish_verified_lookup_uses_the_localized_status(client, provider):
     spanish_result = render(
         "auth.order_result",
         "es",
@@ -266,15 +262,15 @@ async def test_spanish_verified_lookup_uses_the_localized_status(
     )
     session_id = await create_session(client)
     provider.script_extraction(order_lookup(language="es"))
-    assert (
-        await send_turn(client, session_id, "¿Dónde está mi pedido?", 0)
-    ).json()["reply"] == text("auth.order_number_prompt", "es")
+    assert (await send_turn(client, session_id, "¿Dónde está mi pedido?", 0)).json()[
+        "reply"
+    ] == text("auth.order_number_prompt", "es")
     provider.script_extraction(
         order_lookup(order_number=FIXTURE_ORDER_NUMBER, language="es")
     )
-    assert (
-        await send_turn(client, session_id, "El pedido es NS-000123.", 1)
-    ).json()["reply"] == text("auth.verification_prompt", "es")
+    assert (await send_turn(client, session_id, "El pedido es NS-000123.", 1)).json()[
+        "reply"
+    ] == text("auth.verification_prompt", "es")
     assert (await verify(client, session_id)).json()["verified"] is True
 
     provider.script_extraction(
@@ -312,9 +308,7 @@ async def test_spanish_invalid_order_uses_the_spanish_invalid_order_reply(
     client, provider
 ):
     session_id = await create_session(client)
-    provider.script_extraction(
-        order_lookup(order_number="NS-12345", language="es")
-    )
+    provider.script_extraction(order_lookup(order_number="NS-12345", language="es"))
 
     response = await send_turn(client, session_id, "¿Dónde está mi pedido?", 0)
 
@@ -343,9 +337,7 @@ async def test_spanish_verified_order_without_tool_uses_spanish_verified(
     assert response.json()["reply"] == text("auth.verified", "es")
 
 
-async def test_spanish_missing_fixture_record_uses_spanish_failure(
-    settings, provider
-):
+async def test_spanish_missing_fixture_record_uses_spanish_failure(settings, provider):
     empty_registry = VerificationRegistry(clock=FakeClock())
     empty_api = LocalBackendApiServer(orders={})
     empty_api.start()
@@ -367,7 +359,9 @@ async def test_spanish_missing_fixture_record_uses_spanish_failure(
             assert (await verify(client, session_id)).json()["verified"] is True
 
             provider.script_extraction(
-                order_lookup(order_number=FIXTURE_ORDER_NUMBER, language="es", tool=True)
+                order_lookup(
+                    order_number=FIXTURE_ORDER_NUMBER, language="es", tool=True
+                )
             )
             response = await send_turn(client, session_id, "¿Dónde está mi pedido?", 2)
 

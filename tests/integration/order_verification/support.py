@@ -104,6 +104,17 @@ async def send_turn(client, session_id: str, message: str, revision: int):
     return response
 
 
+async def book(client, session_id: str, revision: int, starts_at: str, request_id=None):
+    return await client.post(
+        f"/api/sessions/{session_id}/bookings",
+        json={
+            "request_id": str(request_id or uuid4()),
+            "expected_revision": revision,
+            "starts_at": starts_at,
+        },
+    )
+
+
 async def verify(
     client,
     session_id: str,
@@ -114,5 +125,3 @@ async def verify(
         f"/api/sessions/{session_id}/order-verification",
         json={"delivery_postcode": postcode, "verification_code": code},
     )
-
-

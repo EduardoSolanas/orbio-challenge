@@ -26,16 +26,12 @@ from tests.integration.support.intake import (
     start_session,
 )
 
-MISSING_ORDER = (
-    "What is your energy account reference? Use NS- followed by six digits, for example NS-123456."
-)
+MISSING_ORDER = "What is your energy account reference? Use NS- followed by six digits, for example NS-123456."
 MISSING_URGENCY = "How urgent is this: low, normal, or high?"
 INVALID_CATEGORY = (
     "Choose a bill, supply issue, meter reading, moving home, or other energy issue."
 )
-INVALID_DESCRIPTION = (
-    "Please describe the problem using 10 to 2000 characters, rather than only a category label."
-)
+INVALID_DESCRIPTION = "Please describe the problem using 10 to 2000 characters, rather than only a category label."
 INVALID_URGENCY = "Please choose low, normal, or high urgency."
 
 NINE_CHARACTER_DESCRIPTION = "Broken it"
@@ -49,7 +45,9 @@ async def _disk(session_dir, session_id):
     return read_session(session_dir, session_id)
 
 
-async def case_raw_order_ns_12345_plus_valid_sibling_description(client, provider, session_dir):
+async def case_raw_order_ns_12345_plus_valid_sibling_description(
+    client, provider, session_dir
+):
     session_id = await start_session(client)
     before = await _disk(session_dir, session_id)
     text = "My order NS-12345 arrived broken."
@@ -127,9 +125,7 @@ async def case_raw_full_width_unicode_order_digits(client, provider, session_dir
         extraction=make_extraction(candidates={"order_number": FULL_WIDTH_ORDER}),
     )
     assert response["slots"] == EMPTY_SLOTS
-    assert_issue(
-        response, "order_number", "invalid", FULL_WIDTH_ORDER, INVALID_ORDER
-    )
+    assert_issue(response, "order_number", "invalid", FULL_WIDTH_ORDER, INVALID_ORDER)
     assert response["pending_clarifications"]["order_number"]["candidate"] == (
         FULL_WIDTH_ORDER
     )
@@ -210,7 +206,9 @@ async def case_description_exactly9_characters(client, provider, session_dir):
     )
 
 
-async def case_description_exactly10_characters_expressing_problem(client, provider, session_dir):
+async def case_description_exactly10_characters_expressing_problem(
+    client, provider, session_dir
+):
     session_id = await start_session(client)
     before = await _disk(session_dir, session_id)
     text = "It broke!!"
@@ -332,7 +330,9 @@ async def case_description2001_characters(client, provider, session_dir):
     )
 
 
-async def case_description_equal_category_alias_damaged_item(client, provider, session_dir):
+async def case_description_equal_category_alias_damaged_item(
+    client, provider, session_dir
+):
     session_id = await start_session(client)
     before = await _disk(session_dir, session_id)
     text = "It is a damaged item."
@@ -452,7 +452,9 @@ async def case_raw_urgency_purple_after_accepted_high(client, provider, session_
     )
 
 
-async def case_explicit_valid_answer_resolves_previously_invalid_field(client, provider, session_dir):
+async def case_explicit_valid_answer_resolves_previously_invalid_field(
+    client, provider, session_dir
+):
     session_id = await start_session(client)
     before = await _disk(session_dir, session_id)
     text = "My order NS-12345 arrived broken and it is purple urgency."
@@ -567,18 +569,43 @@ async def case_explicit_valid_answer_resolves_previously_invalid_field(client, p
 
 
 CASES = [
-    pytest.param(case_raw_order_ns_12345_plus_valid_sibling_description, id="raw_order_ns_12345_plus_valid_sibling_description"),
+    pytest.param(
+        case_raw_order_ns_12345_plus_valid_sibling_description,
+        id="raw_order_ns_12345_plus_valid_sibling_description",
+    ),
     pytest.param(case_raw_order_ns_1234567, id="raw_order_ns_1234567"),
-    pytest.param(case_raw_full_width_unicode_order_digits, id="raw_full_width_unicode_order_digits"),
+    pytest.param(
+        case_raw_full_width_unicode_order_digits,
+        id="raw_full_width_unicode_order_digits",
+    ),
     pytest.param(case_raw_category_banana, id="raw_category_banana"),
-    pytest.param(case_description_exactly9_characters, id="description_exactly9_characters"),
-    pytest.param(case_description_exactly10_characters_expressing_problem, id="description_exactly10_characters_expressing_problem"),
-    pytest.param(case_description_exactly2000_characters, id="description_exactly2000_characters"),
+    pytest.param(
+        case_description_exactly9_characters, id="description_exactly9_characters"
+    ),
+    pytest.param(
+        case_description_exactly10_characters_expressing_problem,
+        id="description_exactly10_characters_expressing_problem",
+    ),
+    pytest.param(
+        case_description_exactly2000_characters, id="description_exactly2000_characters"
+    ),
     pytest.param(case_description2001_characters, id="description2001_characters"),
-    pytest.param(case_description_equal_category_alias_damaged_item, id="description_equal_category_alias_damaged_item"),
-    pytest.param(case_all_other_fields_valid_urgency_missing, id="all_other_fields_valid_urgency_missing"),
-    pytest.param(case_raw_urgency_purple_after_accepted_high, id="raw_urgency_purple_after_accepted_high"),
-    pytest.param(case_explicit_valid_answer_resolves_previously_invalid_field, id="explicit_valid_answer_resolves_previously_invalid_field"),
+    pytest.param(
+        case_description_equal_category_alias_damaged_item,
+        id="description_equal_category_alias_damaged_item",
+    ),
+    pytest.param(
+        case_all_other_fields_valid_urgency_missing,
+        id="all_other_fields_valid_urgency_missing",
+    ),
+    pytest.param(
+        case_raw_urgency_purple_after_accepted_high,
+        id="raw_urgency_purple_after_accepted_high",
+    ),
+    pytest.param(
+        case_explicit_valid_answer_resolves_previously_invalid_field,
+        id="explicit_valid_answer_resolves_previously_invalid_field",
+    ),
 ]
 
 

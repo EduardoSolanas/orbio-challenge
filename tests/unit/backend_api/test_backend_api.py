@@ -146,21 +146,35 @@ def test_postcode_normalization_is_ascii_only_trim_and_uppercase() -> None:
         ("ABC123", False),
     ],
 )
-def test_verification_code_is_exactly_six_ascii_digits(value: str, expected: bool) -> None:
+def test_verification_code_is_exactly_six_ascii_digits(
+    value: str, expected: bool
+) -> None:
     assert valid_verification_code(value) is expected
 
 
 def test_credentials_match_binds_all_three_values() -> None:
-    assert credentials_match(FIXTURE_ORDER_NUMBER, " sw1a 1aa ", DEMO_VERIFICATION_CODE) is True
-    assert credentials_match(FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE, WRONG_CODE) is False
-    assert credentials_match(OTHER_ORDER, FIXTURE_POSTCODE, DEMO_VERIFICATION_CODE) is False
+    assert (
+        credentials_match(FIXTURE_ORDER_NUMBER, " sw1a 1aa ", DEMO_VERIFICATION_CODE)
+        is True
+    )
+    assert (
+        credentials_match(FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE, WRONG_CODE) is False
+    )
+    assert (
+        credentials_match(OTHER_ORDER, FIXTURE_POSTCODE, DEMO_VERIFICATION_CODE)
+        is False
+    )
 
 
 def test_order_records_are_copies_not_shared_state() -> None:
     app = fixture_app()
     client = TestClient(app)
-    first = OrderRecord.model_validate(client.get(f"/internal/v1/orders/{FIXTURE_ORDER_NUMBER}").json())
-    second = OrderRecord.model_validate(client.get(f"/internal/v1/orders/{FIXTURE_ORDER_NUMBER}").json())
+    first = OrderRecord.model_validate(
+        client.get(f"/internal/v1/orders/{FIXTURE_ORDER_NUMBER}").json()
+    )
+    second = OrderRecord.model_validate(
+        client.get(f"/internal/v1/orders/{FIXTURE_ORDER_NUMBER}").json()
+    )
 
     assert first == second
     assert first is not second
@@ -171,7 +185,9 @@ def _client(handler) -> BackendApiClient:
     """Real client over a protocol-faithful in-process HTTP transport."""
 
     return BackendApiClient(
-        "http://backend-api.test", timeout_seconds=1.0, transport=httpx.MockTransport(handler)
+        "http://backend-api.test",
+        timeout_seconds=1.0,
+        transport=httpx.MockTransport(handler),
     )
 
 
@@ -183,7 +199,9 @@ async def test_client_verify_sends_the_exact_internal_request() -> None:
         return httpx.Response(200, json={"verified": True, "error": None})
 
     client = _client(handler)
-    result = await client.verify_order(FIXTURE_ORDER_NUMBER, "SW1A 1AA", DEMO_VERIFICATION_CODE)
+    result = await client.verify_order(
+        FIXTURE_ORDER_NUMBER, "SW1A 1AA", DEMO_VERIFICATION_CODE
+    )
 
     assert result.verified is True
     assert result.error is None
@@ -235,12 +253,16 @@ async def test_client_lookup_maps_not_found_to_none() -> None:
         (422, INVALID_BACKEND_API_RESPONSE),
     ],
 )
-async def test_client_maps_unsuccessful_statuses(status: int, expected_code: str) -> None:
+async def test_client_maps_unsuccessful_statuses(
+    status: int, expected_code: str
+) -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(status, json={"error": "x"})
 
     with pytest.raises(AppError) as raised:
-        await _client(handler).verify_order(FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE, DEMO_VERIFICATION_CODE)
+        await _client(handler).verify_order(
+            FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE, DEMO_VERIFICATION_CODE
+        )
 
     assert raised.value.code == expected_code
 
@@ -250,15 +272,22 @@ async def test_client_maps_unsuccessful_statuses(status: int, expected_code: str
     [
         ({"verified": "yes", "error": None}, INVALID_BACKEND_API_RESPONSE),
         ({"verified": False, "error": "other"}, INVALID_BACKEND_API_RESPONSE),
-        ({"verified": True, "error": "verification_failed"}, INVALID_BACKEND_API_RESPONSE),
+        (
+            {"verified": True, "error": "verification_failed"},
+            INVALID_BACKEND_API_RESPONSE,
+        ),
     ],
 )
-async def test_client_rejects_malformed_verification_bodies(payload, expected_code: str) -> None:
+async def test_client_rejects_malformed_verification_bodies(
+    payload, expected_code: str
+) -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json=payload)
 
     with pytest.raises(AppError) as raised:
-        await _client(handler).verify_order(FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE, DEMO_VERIFICATION_CODE)
+        await _client(handler).verify_order(
+            FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE, DEMO_VERIFICATION_CODE
+        )
 
     assert raised.value.code == expected_code
 
@@ -268,7 +297,9 @@ async def test_client_does_not_accept_a_404_as_a_successful_verification() -> No
         return httpx.Response(404, json={"verified": True, "error": None})
 
     with pytest.raises(AppError) as raised:
-        await _client(handler).verify_order(FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE, DEMO_VERIFICATION_CODE)
+        await _client(handler).verify_order(
+            FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE, DEMO_VERIFICATION_CODE
+        )
 
     assert raised.value.code == INVALID_BACKEND_API_RESPONSE
 
@@ -278,7 +309,9 @@ async def test_client_rejects_non_json_and_unexpected_lookup_fields() -> None:
         return httpx.Response(200, content=b"<html>nope</html>")
 
     with pytest.raises(AppError) as raised:
-        await _client(non_json).verify_order(FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE, DEMO_VERIFICATION_CODE)
+        await _client(non_json).verify_order(
+            FIXTURE_ORDER_NUMBER, FIXTURE_POSTCODE, DEMO_VERIFICATION_CODE
+        )
     assert raised.value.code == INVALID_BACKEND_API_RESPONSE
 
     def extra_field(request: httpx.Request) -> httpx.Response:

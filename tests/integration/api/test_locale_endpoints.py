@@ -21,7 +21,6 @@ def shipped(language: str) -> dict[str, str]:
     return dict(load_locales().mapping(language))
 
 
-
 async def test_locale_route_serves_only_the_selected_dictionary(client):
     english = await client.get("/api/locales/en")
     spanish = await client.get("/api/locales/es")
@@ -61,7 +60,10 @@ async def test_unknown_or_traversal_locale_paths_return_sanitized_404(client, pa
     "english,spanish",
     [
         ({"greeting": "Hello"}, {"greeting": "Hola", "actions.send": "Enviar"}),
-        ({"speech.play": "Play reply {ordinal}"}, {"speech.play": "Reproducir respuesta"}),
+        (
+            {"speech.play": "Play reply {ordinal}"},
+            {"speech.play": "Reproducir respuesta"},
+        ),
         ({"greeting": 1}, {"greeting": "Hola"}),
         ({"greeting": "Hello"}, {"greeting": "Hola", "actions.send": "   "}),
     ],

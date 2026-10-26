@@ -24,12 +24,14 @@ async def test_assistant_text_returns_the_saved_assistant_message(tmp_path):
     created = await engine.create_session()
     response = await engine.turn(created.session_id, turn_request())
 
-    assert await engine.assistant_text(
-        created.session_id, created.messages[0].id
-    ) == GREETING
-    assert await engine.assistant_text(
-        created.session_id, response.message_id
-    ) == response.reply
+    assert (
+        await engine.assistant_text(created.session_id, created.messages[0].id)
+        == GREETING
+    )
+    assert (
+        await engine.assistant_text(created.session_id, response.message_id)
+        == response.reply
+    )
     provider.assert_exhausted()
 
 
@@ -68,9 +70,7 @@ async def test_extraction_deadline_maps_provider_timeout_and_saves_nothing(
 
     monkeypatch.setattr(conversation_module, "TEXT_TURN_DEADLINE_SECONDS", 0.05)
     engine, repository, provider = build_engine(tmp_path, script=[])
-    provider = SlowProvider(
-        [("extract", FULL_EXTRACTION)], delay=0.2
-    )
+    provider = SlowProvider([("extract", FULL_EXTRACTION)], delay=0.2)
     engine.provider = provider
     created = await engine.create_session()
     sid = created.session_id
@@ -131,9 +131,7 @@ async def test_natural_confirmation_without_a_current_review_does_not_complete(
     )
     created = await engine.create_session()
 
-    response = await engine.turn(
-        created.session_id, turn_request("Yes, that is right")
-    )
+    response = await engine.turn(created.session_id, turn_request("Yes, that is right"))
 
     assert response.revision == 1
     assert response.status == "collecting"

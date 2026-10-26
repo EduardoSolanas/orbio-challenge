@@ -54,7 +54,9 @@ async def test_capacity_four_holds_permits_and_the_fifth_call_is_immediate_provi
 
     provider, _ = build_provider({"llm": responder}, capacity=4)
 
-    tasks = [asyncio.create_task(provider.extract(extraction_context())) for _ in range(4)]
+    tasks = [
+        asyncio.create_task(provider.extract(extraction_context())) for _ in range(4)
+    ]
     await asyncio.wait_for(all_started.wait(), timeout=2)
 
     with pytest.raises(AppError) as caught:

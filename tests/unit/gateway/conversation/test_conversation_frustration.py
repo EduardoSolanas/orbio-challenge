@@ -1,4 +1,5 @@
 """Frustration classification and simulated agent handoff."""
+
 from __future__ import annotations
 
 from uuid import uuid4
@@ -27,15 +28,19 @@ TRANSITIONS = [
     (True, "present", True, False),
 ]
 FULL_SLOTS = make_slots(
-    order_number="NS-000123", category="damaged_item",
-    description="My order arrived broken", urgency="high",
+    order_number="NS-000123",
+    category="damaged_item",
+    description="My order arrived broken",
+    urgency="high",
 )
 
 
 def command(message: str, revision: int = 0, request_id=None) -> TurnRequest:
     return TurnRequest(
-        request_id=request_id or uuid4(), expected_revision=revision,
-        text=message, input_mode="text",
+        request_id=request_id or uuid4(),
+        expected_revision=revision,
+        text=message,
+        input_mode="text",
     )
 
 
@@ -46,17 +51,28 @@ def test_transition_table(previous, label, active, handoff):
 
 @pytest.mark.asyncio
 async def test_new_frustration_hands_off_before_faq_or_issue_processing(tmp_path):
-    provider = FakeProvider([("extract", make_extraction(
-        intent="question", has_question=True, candidates={"order_number": "NS-000999"},
-        sentiment="negative", frustration="present",
-    ))])
+    provider = FakeProvider(
+        [
+            (
+                "extract",
+                make_extraction(
+                    intent="question",
+                    has_question=True,
+                    candidates={"order_number": "NS-000999"},
+                    sentiment="negative",
+                    frustration="present",
+                ),
+            )
+        ]
+    )
     knowledge = FakeKnowledgeBase({})
     repository = JsonSessionRepository(tmp_path)
     engine = ConversationEngine(repository, provider, knowledge)
     session = await engine.create_session()
 
     response = await engine.turn(
-        session.session_id, command("I am frustrated; what does a standing charge mean?"),
+        session.session_id,
+        command("I am frustrated; what does a standing charge mean?"),
     )
     stored = await repository.load(session.session_id)
 
@@ -71,16 +87,38 @@ async def test_new_frustration_hands_off_before_faq_or_issue_processing(tmp_path
 
 
 @pytest.mark.asyncio
-async def test_negative_or_uncertain_without_present_frustration_does_not_handoff(tmp_path):
-    provider = FakeProvider([
-        ("extract", make_extraction(candidates={"order_number": "NS-000123"}, sentiment="negative", frustration="none")),
-        ("extract", make_extraction(candidates={"description": "The item arrived late"}, sentiment="uncertain", frustration="uncertain")),
-    ])
-    engine = ConversationEngine(JsonSessionRepository(tmp_path), provider, FakeKnowledgeBase({}))
+async def test_negative_or_uncertain_without_present_frustration_does_not_handoff(
+    tmp_path,
+):
+    provider = FakeProvider(
+        [
+            (
+                "extract",
+                make_extraction(
+                    candidates={"order_number": "NS-000123"},
+                    sentiment="negative",
+                    frustration="none",
+                ),
+            ),
+            (
+                "extract",
+                make_extraction(
+                    candidates={"description": "The item arrived late"},
+                    sentiment="uncertain",
+                    frustration="uncertain",
+                ),
+            ),
+        ]
+    )
+    engine = ConversationEngine(
+        JsonSessionRepository(tmp_path), provider, FakeKnowledgeBase({})
+    )
     session = await engine.create_session()
 
     first = await engine.turn(session.session_id, command("My item arrived late."))
-    second = await engine.turn(session.session_id, command("I am not sure what to say.", 1))
+    second = await engine.turn(
+        session.session_id, command("I am not sure what to say.", 1)
+    )
 
     assert first.status == second.status == "collecting"
     assert first.frustration_active is second.frustration_active is False
@@ -90,11 +128,16 @@ async def test_negative_or_uncertain_without_present_frustration_does_not_handof
 @pytest.mark.asyncio
 async def test_handoff_is_localized_and_preserves_review_without_confirming(tmp_path):
     session = make_session(
-        status="awaiting_confirmation", slots=FULL_SLOTS,
-        pending_review_revision=1, summary="Existing reviewed summary",
+        status="awaiting_confirmation",
+        slots=FULL_SLOTS,
+        pending_review_revision=1,
+        summary="Existing reviewed summary",
     )
     extraction = make_extraction(
-        detected_language="es", intent="confirm", sentiment="negative", frustration="present"
+        detected_language="es",
+        intent="confirm",
+        sentiment="negative",
+        frustration="present",
     )
     provider = FakeProvider([("extract", extraction)])
     repository = JsonSessionRepository(tmp_path)
@@ -117,7 +160,9 @@ async def test_handoff_is_localized_and_preserves_review_without_confirming(tmp_
 
 @pytest.mark.asyncio
 async def test_handed_off_state_is_terminal_but_exact_turn_replay_is_safe(tmp_path):
-    provider = FakeProvider([("extract", make_extraction(sentiment="negative", frustration="present"))])
+    provider = FakeProvider(
+        [("extract", make_extraction(sentiment="negative", frustration="present"))]
+    )
     repository = JsonSessionRepository(tmp_path)
     engine = ConversationEngine(repository, provider, FakeKnowledgeBase({}))
     session = await engine.create_session()
@@ -157,13 +202,17 @@ async def test_extraction_failure_does_not_commit_a_handoff(tmp_path):
 async def test_atomic_save_failure_rolls_back_handoff_state(tmp_path, monkeypatch):
     import gateway.storage as storage
 
-    provider = FakeProvider([("extract", make_extraction(sentiment="negative", frustration="present"))])
+    provider = FakeProvider(
+        [("extract", make_extraction(sentiment="negative", frustration="present"))]
+    )
     repository = JsonSessionRepository(tmp_path)
     engine = ConversationEngine(repository, provider, FakeKnowledgeBase({}))
     session = await engine.create_session()
     path = tmp_path / f"{session.session_id}.json"
     original = path.read_bytes()
-    monkeypatch.setattr(storage.os, "replace", lambda *_: (_ for _ in ()).throw(OSError("disk")))
+    monkeypatch.setattr(
+        storage.os, "replace", lambda *_: (_ for _ in ()).throw(OSError("disk"))
+    )
 
     with pytest.raises(AppError) as raised:
         await engine.turn(session.session_id, command("I am frustrated."))

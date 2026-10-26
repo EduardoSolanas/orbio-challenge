@@ -53,7 +53,11 @@ def _frames(rate: int, seconds: float) -> int:
 def _pcm_frames(*, frames: int, channels: int, peak: int) -> bytes:
     samples = bytearray()
     for index in range(frames):
-        value = 0 if peak == 0 else (peak if (index // (PERIOD_FRAMES // 2)) % 2 == 0 else -peak)
+        value = (
+            0
+            if peak == 0
+            else (peak if (index // (PERIOD_FRAMES // 2)) % 2 == 0 else -peak)
+        )
         samples += struct.pack("<h", value) * channels
     return bytes(samples)
 

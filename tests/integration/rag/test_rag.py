@@ -76,6 +76,9 @@ from tests.integration.support.transcription import (
     snapshot,
     unexpected,
 )
+from tests.integration.support.transcription import (
+    unavailable_status as rag_status,
+)
 
 PAYMENT_Q = "Which payment methods are accepted?"
 REGION_Q = "Do you ship internationally?"
@@ -208,7 +211,9 @@ async def case_payment_q_no_match(settings, provider, session_dir):
 # region q retrieved delivery but unsupported -------------------------------------------------------------------
 
 
-async def case_region_q_retrieved_delivery_but_unsupported(settings, provider, session_dir):
+async def case_region_q_retrieved_delivery_but_unsupported(
+    settings, provider, session_dir
+):
     app = create_app(settings=settings, provider=provider)
     async with running_client(app) as client:
         session_id = await start_session(client)
@@ -267,7 +272,10 @@ async def case_question_retrieves_two_seed_policies(settings, provider, session_
         ]
         assert len(response["citations"]) == 2
         context = provider.calls[1][1]
-        assert [source.id for source in context.sources] == ["faq-returns", "faq-damaged"]
+        assert [source.id for source in context.sources] == [
+            "faq-returns",
+            "faq-damaged",
+        ]
         assert len(context.sources) == 2
 
         disk = read_session(session_dir, session_id)
@@ -303,7 +311,9 @@ async def rag_client(
         capacity=capacity,
         sleep=no_sleep,
     )
-    app = create_app(settings=settings, provider=provider, knowledge_path=knowledge_path)
+    app = create_app(
+        settings=settings, provider=provider, knowledge_path=knowledge_path
+    )
     async with app.router.lifespan_context(app):
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://testserver"
@@ -324,10 +334,10 @@ def llm_question():
             },
             "explicit_corrections": [],
             "ambiguous_fields": [],
-        "detected_language": "en",
-        "requested_language": None,
-        "sentiment": "neutral",
-        "frustration": "none",
+            "detected_language": "en",
+            "requested_language": None,
+            "sentiment": "neutral",
+            "frustration": "none",
         }
     )
 
@@ -346,13 +356,6 @@ def rag_answer(answer_payload: dict):
         return json_wire(
             {"choices": [{"finish_reason": "stop", "message": {"content": content}}]}
         )
-
-    return responder
-
-
-def rag_status(status: int):
-    def responder(request: httpx.Request, attempt: int) -> httpx.Response:
-        return json_wire({"error": "unavailable"}, status=status)
 
     return responder
 
@@ -386,11 +389,17 @@ async def assert_invalid_answer(settings, session_dir, answer_payload: dict):
         return recorders
 
 
-async def case_generated_unknown_citation_id_on_both_wire_attempts(settings, provider, session_dir):
+async def case_generated_unknown_citation_id_on_both_wire_attempts(
+    settings, provider, session_dir
+):
     await assert_invalid_answer(
         settings,
         session_dir,
-        {"answerable": True, "answer": RETURN_ANSWER_TEXT, "cited_ids": ["faq-unknown"]},
+        {
+            "answerable": True,
+            "answer": RETURN_ANSWER_TEXT,
+            "cited_ids": ["faq-unknown"],
+        },
     )
 
 
@@ -406,7 +415,9 @@ async def case_duplicate_cited_ids_on_both_attempts(settings, provider, session_
     )
 
 
-async def case_existing_kb_id_not_this_query_s_retrieved_records(settings, provider, session_dir):
+async def case_existing_kb_id_not_this_query_s_retrieved_records(
+    settings, provider, session_dir
+):
     # faq-damaged exists in the knowledge base but was not retrieved for RETURN_Q.
     await assert_invalid_answer(
         settings,
@@ -452,12 +463,29 @@ def mixed_extraction():
 async def build_review(client, provider, session_id: str) -> dict:
     """PART -> CATEGORY -> HIGH through the real turn route; returns the review turn."""
 
-    _, part = await post_turn(client, provider, session_id, text=PART_TEXT, revision=0, extraction=part_extraction())
+    _, part = await post_turn(
+        client,
+        provider,
+        session_id,
+        text=PART_TEXT,
+        revision=0,
+        extraction=part_extraction(),
+    )
     _, category = await post_turn(
-        client, provider, session_id, text=CATEGORY_TEXT, revision=part["revision"], extraction=category_extraction()
+        client,
+        provider,
+        session_id,
+        text=CATEGORY_TEXT,
+        revision=part["revision"],
+        extraction=category_extraction(),
     )
     _, high = await post_turn(
-        client, provider, session_id, text=HIGH_TEXT, revision=category["revision"], extraction=high_extraction()
+        client,
+        provider,
+        session_id,
+        text=HIGH_TEXT,
+        revision=category["revision"],
+        extraction=high_extraction(),
     )
     assert high["status"] == "awaiting_confirmation"
     assert high["pending_review_revision"] == high["revision"]
@@ -552,7 +580,11 @@ async def case_generation_outage_after_extraction(settings, provider, session_di
 
         # The session is not poisoned: the same revision accepts a later turn.
         recorders["rag"].responder = rag_answer(
-            {"answerable": True, "answer": RETURN_ANSWER_TEXT, "cited_ids": ["faq-returns"]}
+            {
+                "answerable": True,
+                "answer": RETURN_ANSWER_TEXT,
+                "cited_ids": ["faq-returns"],
+            }
         )
         later = await post(client, session_id, RETURN_Q, 0)
         assert later.status_code == 200, later.text
@@ -560,9 +592,12 @@ async def case_generation_outage_after_extraction(settings, provider, session_di
         assert later.json()["citations"] == [seed_citation("faq-returns")]
 
 
-async def case_hostile_instruction_question_scripted_unanswerable_result(settings, provider, session_dir):
+async def case_hostile_instruction_question_scripted_unanswerable_result(
+    settings, provider, session_dir
+):
     async with rag_client(
-        settings, {"llm": llm_question(), "rag": rag_answer(unanswerable().model_dump())}
+        settings,
+        {"llm": llm_question(), "rag": rag_answer(unanswerable().model_dump())},
     ) as (client, recorders, _):
         session_id = await start_session(client)
 
@@ -585,7 +620,9 @@ async def case_hostile_instruction_question_scripted_unanswerable_result(setting
         assert len(recorders["rag"].requests) == 1
 
         request = json.loads(recorders["rag"].requests[0].content)
-        system_prompt, user_content = (message["content"] for message in request["messages"])
+        system_prompt, user_content = (
+            message["content"] for message in request["messages"]
+        )
         # Source text and the hostile question stay data in the user JSON; the
         # literal grounded-answer prompt is the only instruction text.
         assert system_prompt == KNOWLEDGE_PROMPT
@@ -605,14 +642,18 @@ async def case_hostile_instruction_question_scripted_unanswerable_result(setting
         assert_answer_message(disk, body)
 
 
-async def case_saved_answer_replay_after_restart_new_kb_version(settings, provider, session_dir):
+async def case_saved_answer_replay_after_restart_new_kb_version(
+    settings, provider, session_dir
+):
     kb_path = session_dir.parent / "kb-it10-14.json"
     kb_path.write_text(json.dumps(SEED, ensure_ascii=False), encoding="utf-8")
     request_id = str(uuid4())
     body = turn_body(RETURN_Q, 0, request_id)
 
     first_provider = ScriptedProvider()
-    first_app = create_app(settings=settings, provider=first_provider, knowledge_path=kb_path)
+    first_app = create_app(
+        settings=settings, provider=first_provider, knowledge_path=kb_path
+    )
     async with running_client(first_app) as client:
         session_id = await start_session(client)
         first_provider.script_extraction(question_extraction())
@@ -628,7 +669,9 @@ async def case_saved_answer_replay_after_restart_new_kb_version(settings, provid
     kb_path.write_text(json.dumps(edited, ensure_ascii=False), encoding="utf-8")
 
     second_provider = ScriptedProvider()
-    second_app = create_app(settings=settings, provider=second_provider, knowledge_path=kb_path)
+    second_app = create_app(
+        settings=settings, provider=second_provider, knowledge_path=kb_path
+    )
     async with running_client(second_app) as client:
         # Restart + identical request replay: saved snapshots, no provider work.
         replay = await client.post(f"/api/sessions/{session_id}/turns", json=body)
@@ -705,10 +748,14 @@ class SleepyProvider:
         self.close_count += 1
 
 
-async def case_extraction_plus_answer_exhaust_shared25s_deadline(settings, provider, session_dir):
+async def case_extraction_plus_answer_exhaust_shared25s_deadline(
+    settings, provider, session_dir
+):
     sleepy = SleepyProvider()
     app = create_app(settings=settings, provider=sleepy)
-    deadline = mock.patch.object(conversation_engine, "TEXT_TURN_DEADLINE_SECONDS", SHARED_DEADLINE)
+    deadline = mock.patch.object(
+        conversation_engine, "TEXT_TURN_DEADLINE_SECONDS", SHARED_DEADLINE
+    )
     with deadline:
         await _exhaust_the_shared_deadline(app, sleepy, settings, session_dir)
 
@@ -737,7 +784,9 @@ async def _exhaust_the_shared_deadline(app, sleepy, settings, session_dir):
         assert snapshot(session_dir, session_id) == before
 
 
-async def case_greeting_then_policy_question_uses_rag_branch(settings, provider, session_dir):
+async def case_greeting_then_policy_question_uses_rag_branch(
+    settings, provider, session_dir
+):
     """A greeting followed by a policy question still takes the RAG branch."""
 
     app = create_app(settings=settings, provider=provider)

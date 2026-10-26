@@ -8,7 +8,9 @@ from playwright.sync_api import expect
 from tests.e2e.conftest import body_of
 from tests.support.fakes import FULL, receipt_for, summary_text, x_full
 
-pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+pytestmark = (
+    pytest.mark.browser_e2e
+)  # controlled-provider browser workflow, never live Docker/provider proof
 
 SUMMARY = summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
 

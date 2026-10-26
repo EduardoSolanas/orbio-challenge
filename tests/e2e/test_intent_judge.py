@@ -1,4 +1,5 @@
 """semantic intent-routing checks layered over deterministic browser assertions."""
+
 from __future__ import annotations
 
 import json
@@ -152,7 +153,9 @@ def _with_form_events(transcript: str, events: str) -> str:
     """The verification form is outside the chat, so the judge is told what happened there."""
 
     note = f" [Outside the chat, in the separate verification form: {events}]"
-    return transcript.replace(AUTH_VERIFICATION_PROMPT, AUTH_VERIFICATION_PROMPT + note, 1)
+    return transcript.replace(
+        AUTH_VERIFICATION_PROMPT, AUTH_VERIFICATION_PROMPT + note, 1
+    )
 
 
 FORM_EVENTS = (
@@ -167,7 +170,9 @@ def judge_config() -> JudgeConfig:
     return load_config()
 
 
-def _record_and_judge(config: JudgeConfig, request: pytest.FixtureRequest, conversation: str, key: str) -> None:
+def _record_and_judge(
+    config: JudgeConfig, request: pytest.FixtureRequest, conversation: str, key: str
+) -> None:
     artifact = {
         "model": config.model,
         "prompt_version": config.prompt_version,
@@ -177,21 +182,49 @@ def _record_and_judge(config: JudgeConfig, request: pytest.FixtureRequest, conve
     try:
         artifact.update(judge(config, conversation, JUDGE_RULES[key]))
     except Exception as exc:
-        artifact.update({"verdict": {"pass": False, "intent": "judge_failure", "reason": str(exc), "violations": [str(exc)]}})
+        artifact.update(
+            {
+                "verdict": {
+                    "pass": False,
+                    "intent": "judge_failure",
+                    "reason": str(exc),
+                    "violations": [str(exc)],
+                }
+            }
+        )
         write_artifact(Path("reports/e2e-judge"), request.node.nodeid, artifact)
         raise
     write_artifact(Path("reports/e2e-judge"), request.node.nodeid, artifact)
-    assert artifact["verdict"]["pass"], f"LLM intent judge failed: {json.dumps(artifact, ensure_ascii=False)}"
+    assert artifact["verdict"]["pass"], (
+        f"LLM intent judge failed: {json.dumps(artifact, ensure_ascii=False)}"
+    )
 
 
 def test_intent_judge_rejects_non_strict_output() -> None:
     with pytest.raises(ValueError, match="exactly pass, intent, reason, violations"):
-        validate_verdict({"pass": True, "intent": "social", "reason": "ok", "violations": [], "extra": 1})
+        validate_verdict(
+            {
+                "pass": True,
+                "intent": "social",
+                "reason": "ok",
+                "violations": [],
+                "extra": 1,
+            }
+        )
 
 
 def test_intent_judge_accepts_passing_and_failing_structured_fixtures() -> None:
-    passing = validate_verdict({"pass": True, "intent": "social", "reason": "brief", "violations": []})
-    failing = validate_verdict({"pass": False, "intent": "question", "reason": "invented fact", "violations": ["hallucination"]})
+    passing = validate_verdict(
+        {"pass": True, "intent": "social", "reason": "brief", "violations": []}
+    )
+    failing = validate_verdict(
+        {
+            "pass": False,
+            "intent": "question",
+            "reason": "invented fact",
+            "violations": ["hallucination"],
+        }
+    )
     assert passing["pass"] is True
     assert failing["pass"] is False
 
@@ -353,7 +386,11 @@ def test_intent_judge_faq_interruptions(flow, ui, provider, judge_config, reques
     ui.open()
     sid = ui.current_session_id()
 
-    if flow in {"partial_issue_intake", "after_category_before_urgency", "partial_intake_after_reload"}:
+    if flow in {
+        "partial_issue_intake",
+        "after_category_before_urgency",
+        "partial_intake_after_reload",
+    }:
         provider.script_extract(PART, x_part())
         assert ui.send(PART).status == 200
         if flow == "after_category_before_urgency":
@@ -369,8 +406,10 @@ def test_intent_judge_faq_interruptions(flow, ui, provider, judge_config, reques
             provider.script_extract(NO, x_no())
             assert ui.send(NO).status == 200
     elif flow in {
-        "verification_pending", "verification_after_wrong_code",
-        "verified_before_order_lookup", "after_order_result_before_intake_resumes",
+        "verification_pending",
+        "verification_after_wrong_code",
+        "verified_before_order_lookup",
+        "after_order_result_before_intake_resumes",
         "unsupported_faq_during_verification",
     }:
         provider.script_extract(PART, x_part())
@@ -381,7 +420,10 @@ def test_intent_judge_faq_interruptions(flow, ui, provider, judge_config, reques
         if flow == "verification_after_wrong_code":
             assert ui.verify_order("SW1A 1AA", "123456").status == 200
             expect(ui.verification_error).to_contain_text(AUTH_VERIFICATION_FAILED)
-        elif flow in {"verified_before_order_lookup", "after_order_result_before_intake_resumes"}:
+        elif flow in {
+            "verified_before_order_lookup",
+            "after_order_result_before_intake_resumes",
+        }:
             assert ui.verify_order("SW1A 1AA", "246810").status == 200
             expect(ui.verification).to_be_hidden()
             if flow == "after_order_result_before_intake_resumes":
@@ -393,9 +435,19 @@ def test_intent_judge_faq_interruptions(flow, ui, provider, judge_config, reques
     before = ui.disk(sid)
     tracked = {
         key: before.get(key)
-        for key in ("slots", "status", "pending_review_revision", "summary", "review_rejected")
+        for key in (
+            "slots",
+            "status",
+            "pending_review_revision",
+            "summary",
+            "review_rejected",
+        )
     }
-    faq = PAYMENT_Q if flow == "unsupported_faq_during_verification" else GREETING_STANDING_CHARGE_Q
+    faq = (
+        PAYMENT_Q
+        if flow == "unsupported_faq_during_verification"
+        else GREETING_STANDING_CHARGE_Q
+    )
     provider.script_extract(faq, x_question())
     if faq == GREETING_STANDING_CHARGE_Q:
         provider.script_answer(faq, standing_charge_answer())
@@ -406,10 +458,14 @@ def test_intent_judge_faq_interruptions(flow, ui, provider, judge_config, reques
     assert {key: after.get(key) for key in tracked} == tracked
     if faq == GREETING_STANDING_CHARGE_Q:
         assert response["text"] == standing_charge_answer().answer
-        assert [citation["source_id"] for citation in response["citations"]] == ["faq-standing-charge"]
+        assert [citation["source_id"] for citation in response["citations"]] == [
+            "faq-standing-charge"
+        ]
         rule = "faq_interrupt"
-        judge_conversation = ui.transcript_text() + "\nGrounding citations: " + json.dumps(
-            response["citations"], ensure_ascii=False
+        judge_conversation = (
+            ui.transcript_text()
+            + "\nGrounding citations: "
+            + json.dumps(response["citations"], ensure_ascii=False)
         )
         expect(ui.log).to_contain_text("fixed daily amount")
     else:
@@ -417,7 +473,10 @@ def test_intent_judge_faq_interruptions(flow, ui, provider, judge_config, reques
         rule = "faq_unsupported_interrupt"
         judge_conversation = ui.transcript_text()
         expect(ui.log).to_contain_text(ABSTENTION)
-    if flow.startswith("verification_") or flow == "unsupported_faq_during_verification":
+    if (
+        flow.startswith("verification_")
+        or flow == "unsupported_faq_during_verification"
+    ):
         expect(ui.verification).to_be_visible()
         assert response_of(ui.turn_posts()[-1])["order_verification_required"] is True
     else:
@@ -462,12 +521,17 @@ def test_intent_judge_frustration_hands_off(flow, ui, provider, judge_config, re
     if flow == "during_supported_faq":
         message = GREETING_STANDING_CHARGE_Q
         classification = make_extraction(
-            intent="question", has_question=True, sentiment="negative", frustration="present"
+            intent="question",
+            has_question=True,
+            sentiment="negative",
+            frustration="present",
         )
     elif flow == "in_spanish":
         message = "Estoy frustrado y necesito que me atienda una persona."
         classification = make_extraction(
-            intent="unrelated", sentiment="negative", frustration="present",
+            intent="unrelated",
+            sentiment="negative",
+            frustration="present",
             detected_language="es",
         )
     else:
@@ -504,13 +568,19 @@ def test_intent_judge_frustration_hands_off(flow, ui, provider, judge_config, re
     assert len(provider.calls("answer_knowledge")) == 0
     provider.assert_consumed()
     expect(ui.log).to_contain_text(response["text"])
-    _record_and_judge(judge_config, request, ui.transcript_text(), "frustration_handoff")
+    _record_and_judge(
+        judge_config, request, ui.transcript_text(), "frustration_handoff"
+    )
 
 
 @pytest.mark.intent_judge
-def test_intent_judge_booking_requires_verification_first(ui, provider, judge_config, request):
+def test_intent_judge_booking_requires_verification_first(
+    ui, provider, judge_config, request
+):
     slots = ui.page.locator("#slot-picker button")
-    provider.script_extract(BOOK_Q, make_extraction(intent="book_technician", order_number="NS-000123"))
+    provider.script_extract(
+        BOOK_Q, make_extraction(intent="book_technician", order_number="NS-000123")
+    )
     ui.open()
 
     # Unverified: the form is asked for and no time is offered.
@@ -521,8 +591,13 @@ def test_intent_judge_booking_requires_verification_first(ui, provider, judge_co
 
     # A wrong code keeps the form open, says nothing about which detail failed, offers no time.
     wrong = ui.verify_order("SW1A 1AA", "123456")
-    assert json.loads(wrong.text()) == {"verified": False, "error": "verification_failed"}
-    expect(ui.page.locator("#verification-error")).to_have_text(AUTH_VERIFICATION_FAILED)
+    assert json.loads(wrong.text()) == {
+        "verified": False,
+        "error": "verification_failed",
+    }
+    expect(ui.page.locator("#verification-error")).to_have_text(
+        AUTH_VERIFICATION_FAILED
+    )
     expect(ui.page.locator("#order-verification")).to_be_visible()
     expect(slots).to_have_count(0)
 
@@ -543,7 +618,8 @@ def test_intent_judge_booking_requires_verification_first(ui, provider, judge_co
     expect(slots).to_have_count(0)
     provider.assert_consumed()
     _record_and_judge(
-        judge_config, request,
+        judge_config,
+        request,
         _with_form_events(
             ui.transcript_text(),
             f"{FORM_EVENTS}; right after that, without the request being repeated, the page showed these time buttons: "
@@ -558,7 +634,9 @@ def test_intent_judge_unrelated_is_redirected(ui, provider, judge_config, reques
     provider.script_extract(UNRELATED, x_unrelated())
     ui.open()
     assert ui.send(UNRELATED).status == 200
-    expect(ui.log).to_contain_text("I cannot change a real account or contact an energy network")
+    expect(ui.log).to_contain_text(
+        "I cannot change a real account or contact an energy network"
+    )
     assert len(provider.calls("answer_knowledge")) == 0
     expect(ui.page.locator("#review")).to_be_hidden()
     provider.assert_consumed()
@@ -592,7 +670,10 @@ def test_intent_judge_reject_then_correct(ui, provider, judge_config, request):
     provider.script_extract(FULL, x_full())
     provider.script_extract(NO, x_no())
     provider.script_extract(
-        change, make_extraction(intent="correction", urgency="normal", explicit_corrections=["urgency"])
+        change,
+        make_extraction(
+            intent="correction", urgency="normal", explicit_corrections=["urgency"]
+        ),
     )
     ui.open()
     sid = ui.current_session_id()
@@ -600,7 +681,9 @@ def test_intent_judge_reject_then_correct(ui, provider, judge_config, request):
     assert ui.send(NO).status == 200
     expect(ui.log).to_contain_text(WHAT_TO_CHANGE)
     assert ui.send(change).status == 200
-    normal = summary_text("NS-000123", "damaged_item", "My order arrived broken", "normal")
+    normal = summary_text(
+        "NS-000123", "damaged_item", "My order arrived broken", "normal"
+    )
     expect(ui.log).to_contain_text(review_reply(normal))
     assert ui.disk(sid)["status"] == "awaiting_confirmation"
     provider.assert_consumed()
@@ -615,33 +698,48 @@ def _verify_after_asking(ui, first_question):
     expect(ui.log).to_contain_text(AUTH_VERIFICATION_PROMPT)
     expect(ui.page.locator("#order-verification")).to_be_visible()
     assert json.loads(ui.verify_order("SW1A 1AA", "123456").text())["verified"] is False
-    expect(ui.page.locator("#verification-error")).to_have_text(AUTH_VERIFICATION_FAILED)
+    expect(ui.page.locator("#verification-error")).to_have_text(
+        AUTH_VERIFICATION_FAILED
+    )
     assert json.loads(ui.verify_order("SW1A 1AA", "246810").text())["verified"] is True
     expect(ui.page.locator("#order-verification")).to_be_hidden()
 
 
 @pytest.mark.intent_judge
-def test_intent_judge_order_status_requires_verification(ui, provider, judge_config, request):
+def test_intent_judge_order_status_requires_verification(
+    ui, provider, judge_config, request
+):
     provider.script_extract(ORDER_STATUS_Q, x_order_lookup(order_number="NS-000123"))
-    provider.script_extract(ORDER_STATUS_Q, x_order_lookup(order_number="NS-000123", tool=True))
+    provider.script_extract(
+        ORDER_STATUS_Q, x_order_lookup(order_number="NS-000123", tool=True)
+    )
     _verify_after_asking(ui, ORDER_STATUS_Q)
     assert ui.send(ORDER_STATUS_Q).status == 200
     expect(ui.log).to_contain_text(AUTH_ORDER_RESULT)
     provider.assert_consumed()
     _record_and_judge(
-        judge_config, request, _with_form_events(ui.transcript_text(), FORM_EVENTS),
+        judge_config,
+        request,
+        _with_form_events(ui.transcript_text(), FORM_EVENTS),
         "order_status_requires_verification",
     )
 
 
 @pytest.mark.intent_judge
-def test_intent_judge_installation_status_requires_verification(ui, provider, judge_config, request):
-    provider.script_extract(INSTALLATION_Q, make_extraction(intent="installation_status", order_number="NS-000123"))
+def test_intent_judge_installation_status_requires_verification(
+    ui, provider, judge_config, request
+):
+    provider.script_extract(
+        INSTALLATION_Q,
+        make_extraction(intent="installation_status", order_number="NS-000123"),
+    )
     _verify_after_asking(ui, INSTALLATION_Q)
     # Verifying answers the request made before it; nothing is asked a second time.
     expect(ui.log).to_contain_text("waiting for a technician visit")
     provider.assert_consumed()
     _record_and_judge(
-        judge_config, request, _with_form_events(ui.transcript_text(), FORM_EVENTS),
+        judge_config,
+        request,
+        _with_form_events(ui.transcript_text(), FORM_EVENTS),
         "installation_status_requires_verification",
     )

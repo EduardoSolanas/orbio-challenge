@@ -28,12 +28,17 @@ from tests.support.fakes import (
     x_question,
 )
 
-pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+pytestmark = (
+    pytest.mark.browser_e2e
+)  # controlled-provider browser workflow, never live Docker/provider proof
 
 KNOWLEDGE = json.loads(
-    (Path(__file__).resolve().parents[2] / "gateway" / "knowledge" / "northstar-faq.json").read_text(
-        encoding="utf-8"
-    )
+    (
+        Path(__file__).resolve().parents[2]
+        / "gateway"
+        / "knowledge"
+        / "northstar-faq.json"
+    ).read_text(encoding="utf-8")
 )
 STANDING_CHARGE = next(
     record for record in KNOWLEDGE["records"] if record["id"] == "faq-standing-charge"
@@ -59,7 +64,9 @@ def assert_sources_open(region) -> None:
     expect(region).to_contain_text(f"Knowledge base version: {KB_VERSION}")
 
 
-@pytest.mark.parametrize("case_id", [pytest.param("policy_questions", id="policy_questions")])
+@pytest.mark.parametrize(
+    "case_id", [pytest.param("policy_questions", id="policy_questions")]
+)
 def test_policy_questions(case_id, ui, server, provider):
     provider.script_extract(PART, x_part())
     provider.script_extract(GREETING_STANDING_CHARGE_Q, x_question())
@@ -90,9 +97,14 @@ def test_policy_questions(case_id, ui, server, provider):
     assert reply["text"] == STANDING_CHARGE_ANSWER_TEXT
     assert reply["citations"] == [SNAPSHOT]
     assert saved["revision"] == 2 and saved["collection_turn_count"] == 2
-    assert saved["slots"] == partial["slots"] and saved["pending_review_revision"] is None
+    assert (
+        saved["slots"] == partial["slots"] and saved["pending_review_revision"] is None
+    )
     answer_call = provider.calls("answer_knowledge")[0]["context"]
-    assert answer_call["question"] == GREETING_STANDING_CHARGE_Q and answer_call["kb_version"] == KB_VERSION
+    assert (
+        answer_call["question"] == GREETING_STANDING_CHARGE_Q
+        and answer_call["kb_version"] == KB_VERSION
+    )
     assert answer_call["sources"] == [STANDING_CHARGE]
     ui.cp("policy_questions.return-answer-cited-sources")
 
@@ -154,13 +166,18 @@ def test_policy_questions(case_id, ui, server, provider):
     # Reload: saved Sources restore from the stored snapshots, with no new model call.
     gets_before = len(ui.session_gets())
     ui.page.reload()
-    expect(ui.page.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
+    expect(
+        ui.page.get_by_role("dialog", name="Northstar Energy support chat")
+    ).to_be_visible()
     expect(ui.log).to_contain_text(receipt)
     restored = ui.log.get_by_role("region", name="Sources")
     expect(restored).to_have_count(2)
     assert_sources_open(restored.last)
     assert len(ui.session_gets()) > gets_before
-    assert len(provider.calls("answer_knowledge")) == 2 and len(provider.calls("extract")) == 6
+    assert (
+        len(provider.calls("answer_knowledge")) == 2
+        and len(provider.calls("extract")) == 6
+    )
     assert ui.disk(sid)["messages"] == saved["messages"]
     provider.assert_consumed()
     ui.cp("policy_questions.reload-restores-sources")

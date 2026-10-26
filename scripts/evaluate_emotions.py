@@ -51,9 +51,7 @@ def build_context(case: dict[str, object]) -> ExtractionContext:
     """Build the same extraction context the engine builds for a committed turn."""
 
     return ExtractionContext(
-        slots=Slots(
-            order_number=None, category=None, description=None, urgency=None
-        ),
+        slots=Slots(order_number=None, category=None, description=None, urgency=None),
         pending_clarifications={},
         recent_messages=[
             RecentMessage(role=message["role"], text=message["text"])
@@ -171,7 +169,9 @@ async def run_evaluation(settings: Settings) -> list[dict[str, object]]:
 
 def _write_report(path: Path, report: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

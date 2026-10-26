@@ -84,15 +84,23 @@ def approval(
     }
 
 
-def write_evidence(tmp_path: Path, *, run_text: str, results_text: str, review_data: dict | None):
+def write_evidence(
+    tmp_path: Path, *, run_text: str, results_text: str, review_data: dict | None
+):
     (tmp_path / "pyproject.toml").write_text(
         '[tool.mutmut]\nsource_paths = ["gateway/"]\n', encoding="utf-8"
     )
     (tmp_path / "mutation-run.txt").write_text(run_text, encoding="utf-8")
     (tmp_path / "mutation-results.txt").write_text(results_text, encoding="utf-8")
     if review_data is not None:
-        (tmp_path / "mutation-review.json").write_text(json.dumps(review_data), encoding="utf-8")
-    return tmp_path / "mutation-run.txt", tmp_path / "mutation-results.txt", tmp_path / "mutation-review.json"
+        (tmp_path / "mutation-review.json").write_text(
+            json.dumps(review_data), encoding="utf-8"
+        )
+    return (
+        tmp_path / "mutation-run.txt",
+        tmp_path / "mutation-results.txt",
+        tmp_path / "mutation-review.json",
+    )
 
 
 def run(tmp_path: Path, paths) -> int:
@@ -110,7 +118,9 @@ def run(tmp_path: Path, paths) -> int:
 
 
 def test_all_killed_run_passes_and_writes_summary(tmp_path: Path) -> None:
-    paths = write_evidence(tmp_path, run_text=run_log(), results_text="", review_data=review())
+    paths = write_evidence(
+        tmp_path, run_text=run_log(), results_text="", review_data=review()
+    )
     assert run(tmp_path, paths) == 0
     summary = json.loads((tmp_path / SUMMARY).read_text(encoding="utf-8"))
     assert summary["generated"] == 5
@@ -122,7 +132,10 @@ def test_all_killed_run_passes_and_writes_summary(tmp_path: Path) -> None:
 def test_unapproved_survivor_fails(tmp_path: Path) -> None:
     results_text = "    app.config.xǁSettingsǁfrom_env__mutmut_6: survived\n"
     paths = write_evidence(
-        tmp_path, run_text=run_log(killed=4, survived=1), results_text=results_text, review_data=review()
+        tmp_path,
+        run_text=run_log(killed=4, survived=1),
+        results_text=results_text,
+        review_data=review(),
     )
     assert run(tmp_path, paths) != 0
 
@@ -172,7 +185,10 @@ def test_unapproved_timeout_fails(tmp_path: Path) -> None:
     mutant = "gateway.config.xǁSettingsǁfrom_env__mutmut_7"
     results_text = f"    {mutant}: timeout\n"
     paths = write_evidence(
-        tmp_path, run_text=run_log(killed=4, timeout=1), results_text=results_text, review_data=review()
+        tmp_path,
+        run_text=run_log(killed=4, timeout=1),
+        results_text=results_text,
+        review_data=review(),
     )
     assert run(tmp_path, paths) != 0
 
@@ -189,14 +205,19 @@ def test_malformed_results_line_fails(tmp_path: Path) -> None:
 
 def test_missing_run_summary_fails(tmp_path: Path) -> None:
     paths = write_evidence(
-        tmp_path, run_text="Running mutation testing\n", results_text="", review_data=review()
+        tmp_path,
+        run_text="Running mutation testing\n",
+        results_text="",
+        review_data=review(),
     )
     assert run(tmp_path, paths) != 0
 
 
 def test_zero_generated_run_fails(tmp_path: Path) -> None:
     zero = "0/0  🎉 0 🫥 0  ⏰ 0  🤔 0  🙁 0  🔇 0  🧙 0\n"
-    paths = write_evidence(tmp_path, run_text=zero, results_text="", review_data=review())
+    paths = write_evidence(
+        tmp_path, run_text=zero, results_text="", review_data=review()
+    )
     assert run(tmp_path, paths) != 0
 
 
@@ -205,7 +226,9 @@ def test_unexecuted_mutants_fail(tmp_path: Path) -> None:
         tmp_path,
         run_text=run_log(total=5, checked=4, killed=4, survived=1),
         results_text="    app.config.x_covered__mutmut_1: survived\n",
-        review_data=review([approval("gateway.config.x_covered__mutmut_1", "equivalent")]),
+        review_data=review(
+            [approval("gateway.config.x_covered__mutmut_1", "equivalent")]
+        ),
     )
     assert run(tmp_path, paths) != 0
 
@@ -215,7 +238,9 @@ def test_result_count_mismatch_fails(tmp_path: Path) -> None:
         tmp_path,
         run_text=run_log(killed=3, survived=2),
         results_text="    app.config.x_covered__mutmut_1: survived\n",
-        review_data=review([approval("gateway.config.x_covered__mutmut_1", "equivalent")]),
+        review_data=review(
+            [approval("gateway.config.x_covered__mutmut_1", "equivalent")]
+        ),
     )
     assert run(tmp_path, paths) != 0
 
@@ -233,7 +258,9 @@ def test_duplicate_result_line_fails(tmp_path: Path) -> None:
 
 
 def test_missing_review_file_fails(tmp_path: Path) -> None:
-    paths = write_evidence(tmp_path, run_text=run_log(), results_text="", review_data=None)
+    paths = write_evidence(
+        tmp_path, run_text=run_log(), results_text="", review_data=None
+    )
     assert run(tmp_path, paths) != 0
 
 
@@ -264,7 +291,9 @@ def test_approval_for_unknown_mutant_fails(tmp_path: Path) -> None:
         tmp_path,
         run_text=run_log(),
         results_text="",
-        review_data=review([approval("gateway.config.x_covered__mutmut_99", "equivalent")]),
+        review_data=review(
+            [approval("gateway.config.x_covered__mutmut_99", "equivalent")]
+        ),
     )
     assert run(tmp_path, paths) != 0
 
@@ -292,15 +321,16 @@ def test_help_exits_zero() -> None:
 # --- commit-safe revision policy ---------------------------------
 
 
-
-
-
 def write_repo_inputs(root: Path) -> None:
     """Create one file under every gated input path."""
     (root / "gateway").mkdir(parents=True, exist_ok=True)
-    (root / "gateway" / "config.py").write_text("class Settings:\n    pass\n", encoding="utf-8")
+    (root / "gateway" / "config.py").write_text(
+        "class Settings:\n    pass\n", encoding="utf-8"
+    )
     (root / "tests").mkdir(exist_ok=True)
-    (root / "tests" / "test_unit.py").write_text("def test_x():\n    assert True\n", encoding="utf-8")
+    (root / "tests" / "test_unit.py").write_text(
+        "def test_x():\n    assert True\n", encoding="utf-8"
+    )
     (root / "scripts").mkdir(exist_ok=True)
     (root / "scripts" / "gate.py").write_text("GATE = 1\n", encoding="utf-8")
     (root / "pyproject.toml").write_text(
@@ -308,7 +338,9 @@ def write_repo_inputs(root: Path) -> None:
     )
 
 
-def test_review_at_inputs_revision_passes_after_reports_only_commit(tmp_path: Path) -> None:
+def test_review_at_inputs_revision_passes_after_reports_only_commit(
+    tmp_path: Path,
+) -> None:
     init_repo(tmp_path)
     write_repo_inputs(tmp_path)
     inputs_revision = commit_all(tmp_path, "code at inputs revision")

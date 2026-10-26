@@ -94,7 +94,11 @@ def mangled_key(name: str, class_chain: tuple[str, ...], nested: bool) -> str | 
 def is_stub(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
     """True for bodies consisting only of pass/ellipsis (docstring excluded)."""
     body = list(node.body)
-    if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant):
+    if (
+        body
+        and isinstance(body[0], ast.Expr)
+        and isinstance(body[0].value, ast.Constant)
+    ):
         if isinstance(body[0].value.value, str):
             body = body[1:]
     if not body:
@@ -127,7 +131,9 @@ def body_lines(node: ast.FunctionDef | ast.AsyncFunctionDef) -> frozenset[int]:
 
     def walk(statements: list[ast.stmt]) -> None:
         for statement in statements:
-            if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            if isinstance(
+                statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+            ):
                 continue
             lines.add(statement.lineno)
             for field in ("body", "orelse", "finalbody"):
@@ -142,7 +148,9 @@ def body_lines(node: ast.FunctionDef | ast.AsyncFunctionDef) -> frozenset[int]:
     return frozenset(lines)
 
 
-def discover_module(path: Path, module_dotted: str, errors: list[str]) -> dict[str, FunctionInfo]:
+def discover_module(
+    path: Path, module_dotted: str, errors: list[str]
+) -> dict[str, FunctionInfo]:
     try:
         source = path.read_text(encoding="utf-8")
     except OSError as exc:
@@ -161,7 +169,9 @@ def discover_module(path: Path, module_dotted: str, errors: list[str]) -> dict[s
     ) -> None:
         for node in body:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                qualified_name = ".".join([module_dotted, *class_chain, *func_chain, node.name])
+                qualified_name = ".".join(
+                    [module_dotted, *class_chain, *func_chain, node.name]
+                )
                 if not is_stub(node):
                     found[qualified_name] = FunctionInfo(
                         qualified_name=qualified_name,
@@ -222,7 +232,9 @@ def load_coverage(path: Path, errors: list[str]) -> dict[str, Any]:
     return files
 
 
-def coverage_entry(files: dict[str, Any], rel_path: str, errors: list[str]) -> dict[str, Any] | None:
+def coverage_entry(
+    files: dict[str, Any], rel_path: str, errors: list[str]
+) -> dict[str, Any] | None:
     entry = files.get(rel_path)
     if entry is None:
         for key, value in files.items():
@@ -287,14 +299,20 @@ def validate_review(
         missing = sorted(APPROVAL_FIELDS - set(approval))
         unknown = sorted(set(approval) - APPROVAL_FIELDS)
         if missing:
-            errors.append(f"{label}: function_approvals[{index}] missing fields {missing}")
+            errors.append(
+                f"{label}: function_approvals[{index}] missing fields {missing}"
+            )
             continue
         if unknown:
-            errors.append(f"{label}: function_approvals[{index}] unknown fields {unknown}")
+            errors.append(
+                f"{label}: function_approvals[{index}] unknown fields {unknown}"
+            )
             continue
         name = approval["qualified_name"]
         if not isinstance(name, str) or not name.strip():
-            errors.append(f"{label}: function_approvals[{index}].qualified_name is invalid")
+            errors.append(
+                f"{label}: function_approvals[{index}].qualified_name is invalid"
+            )
             continue
         if name in by_name:
             errors.append(f"{label}: duplicate function approval for {name}")
@@ -321,7 +339,9 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     parser.add_argument("--coverage", required=True, help="reports/coverage.json")
-    parser.add_argument("--inventory", required=True, help="reports/mutation-inventory.json")
+    parser.add_argument(
+        "--inventory", required=True, help="reports/mutation-inventory.json"
+    )
     parser.add_argument("--review", required=True, help="reports/mutation-review.json")
     args = parser.parse_args(argv)
 
@@ -359,7 +379,9 @@ def main(argv: list[str] | None = None) -> int:
 
     review_data = load_json(review_path, "review", errors)
     approvals = (
-        validate_review(review_data, revision, errors) if review_data is not None else {}
+        validate_review(review_data, revision, errors)
+        if review_data is not None
+        else {}
     )
 
     expected_revision = gated_input_revision()
@@ -393,19 +415,26 @@ def main(argv: list[str] | None = None) -> int:
         seen.add(qualified_name)
         info = discovered.get(qualified_name)
         if info is None:
-            errors.append(f"inventory: unknown function {qualified_name} is not in the source")
+            errors.append(
+                f"inventory: unknown function {qualified_name} is not in the source"
+            )
             continue
 
         path_value = entry["path"]
         expected_path = info.path
-        if not isinstance(path_value, str) or Path(path_value).as_posix() != expected_path:
+        if (
+            not isinstance(path_value, str)
+            or Path(path_value).as_posix() != expected_path
+        ):
             errors.append(
                 f"inventory: {qualified_name} path {path_value!r} != {expected_path!r}"
             )
 
         source_sha256 = entry["source_sha256"]
         if not isinstance(source_sha256, str) or len(source_sha256) != 64:
-            errors.append(f"inventory: {qualified_name} source_sha256 must be 64 hex chars")
+            errors.append(
+                f"inventory: {qualified_name} source_sha256 must be 64 hex chars"
+            )
         elif source_sha256 != info.source_sha256:
             errors.append(
                 f"inventory: stale source_sha256 for {qualified_name} "
@@ -414,7 +443,9 @@ def main(argv: list[str] | None = None) -> int:
 
         test_nodeids = entry["test_nodeids"]
         if not isinstance(test_nodeids, list) or not test_nodeids:
-            errors.append(f"inventory: {qualified_name} test_nodeids must be a non-empty list")
+            errors.append(
+                f"inventory: {qualified_name} test_nodeids must be a non-empty list"
+            )
             test_nodeids = []
         entry_coverage = coverage_entry(files, expected_path, errors) if files else None
         executed: set[int] = set()
@@ -436,7 +467,9 @@ def main(argv: list[str] | None = None) -> int:
             if not isinstance(nodeid, str) or not nodeid.strip():
                 errors.append(f"inventory: {qualified_name} has a blank test nodeid")
                 continue
-            if not any(context_matches(contexts, line, nodeid) for line in executed_body):
+            if not any(
+                context_matches(contexts, line, nodeid) for line in executed_body
+            ):
                 errors.append(
                     f"inventory: {qualified_name} test {nodeid} has no executed "
                     "coverage context on a body line"
@@ -506,7 +539,9 @@ def main(argv: list[str] | None = None) -> int:
     if errors:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)
-        print(f"Mutation inventory gate FAILED ({len(errors)} error(s))", file=sys.stderr)
+        print(
+            f"Mutation inventory gate FAILED ({len(errors)} error(s))", file=sys.stderr
+        )
         return 1
     print(
         f"Mutation inventory gate passed: {len(discovered)} concrete functions across "

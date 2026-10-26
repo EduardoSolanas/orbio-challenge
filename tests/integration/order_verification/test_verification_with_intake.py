@@ -42,9 +42,7 @@ async def test_generic_policy_faq_does_not_trigger_verification(
     client, provider, verification
 ):
     session_id = await create_session(client)
-    provider.script_extraction(
-        make_extraction(intent="question", has_question=True)
-    )
+    provider.script_extraction(make_extraction(intent="question", has_question=True))
     provider.script_answer(
         KnowledgeAnswer(
             answerable=True, answer=RETURN_ANSWER_TEXT, cited_ids=["faq-returns"]
@@ -117,9 +115,7 @@ async def test_verification_during_an_issue_intake_resumes_without_reasking_the_
     }
     assert verification.grant(UUID(session_id)) == FIXTURE_ORDER_NUMBER
 
-    provider.script_extraction(
-        make_extraction(candidates={"category": "damaged_item"})
-    )
+    provider.script_extraction(make_extraction(candidates={"category": "damaged_item"}))
     second = await send_turn(client, session_id, "It is a damaged item.", 2)
     body = second.json()
     assert body["reply"] == text("intake.urgency", "en")

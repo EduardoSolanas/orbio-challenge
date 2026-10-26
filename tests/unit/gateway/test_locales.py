@@ -158,7 +158,9 @@ def test_malformed_json_is_rejected(tmp_path: Path):
 
 
 def test_missing_file_is_rejected(tmp_path: Path):
-    directory = write_locales(tmp_path / "locales", {"greeting": "Hello"}, {"greeting": "Hola"})
+    directory = write_locales(
+        tmp_path / "locales", {"greeting": "Hello"}, {"greeting": "Hola"}
+    )
     (directory / "es.json").unlink()
 
     with pytest.raises(LocalizationInvalid):
@@ -200,7 +202,9 @@ def test_placeholder_name_mismatch_is_rejected(tmp_path: Path):
 
 @pytest.mark.parametrize("value", [1, None, ["a"], {"a": "b"}])
 def test_non_string_values_are_rejected(tmp_path: Path, value: object):
-    directory = write_locales(tmp_path / "locales", {"greeting": value}, {"greeting": "Hola"})
+    directory = write_locales(
+        tmp_path / "locales", {"greeting": value}, {"greeting": "Hola"}
+    )
 
     with pytest.raises(LocalizationInvalid):
         load_locales(directory)
@@ -208,7 +212,9 @@ def test_non_string_values_are_rejected(tmp_path: Path, value: object):
 
 @pytest.mark.parametrize("value", ["", "   "])
 def test_blank_values_are_rejected(tmp_path: Path, value: str):
-    directory = write_locales(tmp_path / "locales", {"greeting": value}, {"greeting": "Hola"})
+    directory = write_locales(
+        tmp_path / "locales", {"greeting": value}, {"greeting": "Hola"}
+    )
 
     with pytest.raises(LocalizationInvalid):
         load_locales(directory)
@@ -227,7 +233,9 @@ def test_non_object_document_is_rejected(tmp_path: Path):
 def test_duplicate_key_error_names_the_offending_key(tmp_path: Path):
     directory = tmp_path / "locales"
     directory.mkdir()
-    (directory / "en.json").write_text('{"greeting": "One", "greeting": "Two"}', encoding="utf-8")
+    (directory / "en.json").write_text(
+        '{"greeting": "One", "greeting": "Two"}', encoding="utf-8"
+    )
     (directory / "es.json").write_text('{"greeting": "Uno"}', encoding="utf-8")
 
     with pytest.raises(LocalizationInvalid) as caught:
@@ -282,7 +290,9 @@ def test_blank_translation_key_is_rejected(tmp_path: Path):
 
 
 def test_blank_value_error_names_the_offending_key(tmp_path: Path):
-    directory = write_locales(tmp_path / "locales", {"greeting": "  "}, {"greeting": "Hola"})
+    directory = write_locales(
+        tmp_path / "locales", {"greeting": "  "}, {"greeting": "Hola"}
+    )
 
     with pytest.raises(LocalizationInvalid) as caught:
         load_locales(directory)
@@ -339,7 +349,9 @@ def test_order_question_hint_is_localized_with_the_requested_language():
     assert missing_question("order_number", "es") == (
         "¿Cuál es tu referencia de cuenta de energía? Usa NS- seguido de seis dígitos, por ejemplo NS-123456."
     )
-    assert missing_question("urgency", "es") == "¿Qué urgencia tiene: baja, normal o alta?"
+    assert (
+        missing_question("urgency", "es") == "¿Qué urgencia tiene: baja, normal o alta?"
+    )
 
 
 def test_incomplete_summary_error_is_explicit():

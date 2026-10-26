@@ -58,8 +58,12 @@ def main(argv: list[str] | None = None) -> int:
             "Read-only: never generates or applies mutants and never modifies source."
         )
     )
-    parser.add_argument("--source-root", default=".", help="repository root holding the modules")
-    parser.add_argument("--mutants", default="mutants", help="mutmut generated-state directory")
+    parser.add_argument(
+        "--source-root", default=".", help="repository root holding the modules"
+    )
+    parser.add_argument(
+        "--mutants", default="mutants", help="mutmut generated-state directory"
+    )
     parser.add_argument(
         "--coverage",
         default="reports/coverage.json",
@@ -107,7 +111,9 @@ def main(argv: list[str] | None = None) -> int:
         contexts: dict[str, Any] = {}
         if coverage is not None:
             executed = {
-                line for line in coverage.get("executed_lines", []) if isinstance(line, int)
+                line
+                for line in coverage.get("executed_lines", [])
+                if isinstance(line, int)
             }
             contexts = coverage["contexts"]
 
@@ -161,7 +167,10 @@ def main(argv: list[str] | None = None) -> int:
     if errors:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)
-        print(f"Mutation inventory export FAILED ({len(errors)} error(s))", file=sys.stderr)
+        print(
+            f"Mutation inventory export FAILED ({len(errors)} error(s))",
+            file=sys.stderr,
+        )
         return 1
 
     output = Path(args.output)

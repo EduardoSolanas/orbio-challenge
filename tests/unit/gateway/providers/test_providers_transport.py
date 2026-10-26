@@ -58,7 +58,9 @@ async def test_answer_knowledge_uses_only_the_rag_role_and_its_model():
     result = await provider.answer_knowledge(knowledge_context())
 
     assert result.answerable is True
-    assert str(recorders["rag"].requests[0].url) == "http://rag.test/v1/chat/completions"
+    assert (
+        str(recorders["rag"].requests[0].url) == "http://rag.test/v1/chat/completions"
+    )
     assert json.loads(recorders["rag"].requests[0].content)["model"] == "rag-model"
     assert recorders["llm"].requests == []
 
@@ -177,7 +179,13 @@ async def test_base_url_trailing_slashes_are_stripped_without_double_v1(
 ):
     profile = replace(LLM_PROFILE, base_url=base_url)
     provider, recorders = build_provider(
-        {"llm": extraction_responder()}, profiles={"llm": profile, "rag": RAG_PROFILE, "stt": STT_PROFILE, "tts": TTS_PROFILE}
+        {"llm": extraction_responder()},
+        profiles={
+            "llm": profile,
+            "rag": RAG_PROFILE,
+            "stt": STT_PROFILE,
+            "tts": TTS_PROFILE,
+        },
     )
 
     await provider.extract(extraction_context())

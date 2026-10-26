@@ -22,7 +22,9 @@ from tests.support.unit_fakes import make_extraction
 
 ROOT = Path(__file__).resolve().parents[4]
 SHIPPED = ROOT / "gateway" / "knowledge" / "safety-examples.json"
-EVAL_CASES = json.loads((ROOT / "tests" / "eval" / "utterances.json").read_text("utf-8"))
+EVAL_CASES = json.loads(
+    (ROOT / "tests" / "eval" / "utterances.json").read_text("utf-8")
+)
 
 EXAMPLES = SafetyExamples(emergency=("gas smell here",), ordinary=("my bill is high",))
 
@@ -48,7 +50,9 @@ def test_the_shipped_examples_load_and_cover_both_languages() -> None:
 
     assert len(examples.emergency) >= 15 and len(examples.ordinary) >= 15
     assert any("gas" in text.lower() for text in examples.emergency)
-    assert any("gas" in text.lower() and "huele" in text.lower() for text in examples.emergency)
+    assert any(
+        "gas" in text.lower() and "huele" in text.lower() for text in examples.emergency
+    )
 
 
 def test_no_example_is_an_evaluation_message() -> None:
@@ -57,11 +61,20 @@ def test_no_example_is_an_evaluation_message() -> None:
     examples = load_examples(SHIPPED)
     used = {
         case["text"].casefold()
-        for key in ("safety", "intents", "category", "frustration", "retrieval", "retrieval_holdout")
+        for key in (
+            "safety",
+            "intents",
+            "category",
+            "frustration",
+            "retrieval",
+            "retrieval_holdout",
+        )
         for case in EVAL_CASES[key]
     }
 
-    assert not [t for t in (*examples.emergency, *examples.ordinary) if t.casefold() in used]
+    assert not [
+        t for t in (*examples.emergency, *examples.ordinary) if t.casefold() in used
+    ]
 
 
 @pytest.mark.parametrize(
@@ -77,10 +90,14 @@ def test_no_example_is_an_evaluation_message() -> None:
         {"emergency": [1], "ordinary": ["b"]},
     ],
 )
-def test_a_missing_malformed_or_one_sided_file_is_rejected(tmp_path: Path, content) -> None:
+def test_a_missing_malformed_or_one_sided_file_is_rejected(
+    tmp_path: Path, content
+) -> None:
     path = tmp_path / "examples.json"
     if content is not None:
-        path.write_text(content if isinstance(content, str) else json.dumps(content), "utf-8")
+        path.write_text(
+            content if isinstance(content, str) else json.dumps(content), "utf-8"
+        )
 
     with pytest.raises(SafetyExamplesInvalid):
         load_examples(path)
@@ -137,7 +154,9 @@ async def test_a_failed_warm_up_is_retried_on_the_next_message() -> None:
     assert await index.concerning("a smell") is True
 
 
-async def test_a_slow_embedding_service_gives_up_instead_of_holding_the_turn(monkeypatch) -> None:
+async def test_a_slow_embedding_service_gives_up_instead_of_holding_the_turn(
+    monkeypatch,
+) -> None:
     monkeypatch.setattr(safety, "EMBED_DEADLINE_SECONDS", 0.05)
 
     async def hang(texts: list[str]) -> list[list[float]]:
@@ -152,23 +171,32 @@ async def test_the_margin_makes_the_check_less_eager() -> None:
     async def embed(texts: list[str]) -> list[list[float]]:
         # The message sits a little nearer the emergency example than the ordinary one.
         return [
-            {"gas smell here": [1.0, 0.0], "my bill is high": [0.0, 1.0]}.get(text, [0.6, 0.5])
+            {"gas smell here": [1.0, 0.0], "my bill is high": [0.0, 1.0]}.get(
+                text, [0.6, 0.5]
+            )
             for text in texts
         ]
 
     assert await SafetyIndex(EXAMPLES, embed).concerning("ambiguous") is True
-    assert await SafetyIndex(EXAMPLES, embed, margin=0.5).concerning("ambiguous") is False
+    assert (
+        await SafetyIndex(EXAMPLES, embed, margin=0.5).concerning("ambiguous") is False
+    )
 
 
 async def test_a_message_far_from_every_example_is_not_flagged_by_a_hair() -> None:
     async def embed(texts: list[str]) -> list[list[float]]:
         # The odd message is a little nearer the emergency example, but near neither.
         return [
-            {"gas smell here": [1.0, 0.0, 0.0], "my bill is high": [0.0, 1.0, 0.0]}.get(text, [0.2, 0.1, 1.0])
+            {"gas smell here": [1.0, 0.0, 0.0], "my bill is high": [0.0, 1.0, 0.0]}.get(
+                text, [0.2, 0.1, 1.0]
+            )
             for text in texts
         ]
 
-    assert await SafetyIndex(EXAMPLES, embed, floor=0.0).concerning("tell me a joke") is True
+    assert (
+        await SafetyIndex(EXAMPLES, embed, floor=0.0).concerning("tell me a joke")
+        is True
+    )
     assert await SafetyIndex(EXAMPLES, embed).concerning("tell me a joke") is False
 
 
@@ -201,13 +229,18 @@ def test_a_flagged_turn_becomes_a_pure_question_and_keeps_language_and_mood() ->
 
     assert relabelled.intent == "question" and relabelled.has_question
     assert relabelled.safety_concern is True
-    assert relabelled.candidates.description is None and relabelled.candidates.urgency is None
+    assert (
+        relabelled.candidates.description is None
+        and relabelled.candidates.urgency is None
+    )
     assert relabelled.detected_language == "es"
     assert relabelled.frustration == "present"
     assert original.intent == "start_intake" and original.safety_concern is False
 
 
-def test_the_fallback_when_the_model_is_down_is_a_flagged_question_in_the_session_language() -> None:
+def test_the_fallback_when_the_model_is_down_is_a_flagged_question_in_the_session_language() -> (
+    None
+):
     extraction = fallback_extraction("es")
 
     assert extraction.intent == "question" and extraction.has_question

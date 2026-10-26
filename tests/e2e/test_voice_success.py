@@ -22,7 +22,9 @@ from tests.support.fakes import (
     x_full,
 )
 
-pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+pytestmark = (
+    pytest.mark.browser_e2e
+)  # controlled-provider browser workflow, never live Docker/provider proof
 
 EDITED = STT_TEXT.replace("NS-000123", "NS-000456")
 SUMMARY = summary_text("NS-000456", "damaged_item", "My order arrived broken", "high")
@@ -37,7 +39,11 @@ def assert_accepted_pcm_wav(audio: bytes) -> None:
     assert audio[:4] == b"RIFF" and audio[8:12] == b"WAVE"
     assert 0 < len(audio) <= MAX_UPLOAD_BYTES
     with wave.open(BytesIO(audio)) as reader:
-        channels, width, rate = reader.getnchannels(), reader.getsampwidth(), reader.getframerate()
+        channels, width, rate = (
+            reader.getnchannels(),
+            reader.getsampwidth(),
+            reader.getframerate(),
+        )
         count = reader.getnframes()
         frames = reader.readframes(count)
     assert channels in (1, 2) and width == 2 and 8000 <= rate <= 48000
@@ -57,18 +63,30 @@ def test_voice_success(case_id, ui, server, provider, tmp_path):
     wav_path.write_bytes(wav)
     mp3 = reply_mp3_bytes()
     recording_gate = Gate("recording STT")
-    provider.script_transcribe(None, STT_TEXT, hold=recording_gate)  # Chromium fake-device take
-    provider.script_transcribe(hashlib.sha256(wav).hexdigest(), STT_TEXT)  # valid WAV upload
+    provider.script_transcribe(
+        None, STT_TEXT, hold=recording_gate
+    )  # Chromium fake-device take
+    provider.script_transcribe(
+        hashlib.sha256(wav).hexdigest(), STT_TEXT
+    )  # valid WAV upload
     provider.script_extract(EDITED, x_full("NS-000456"))
     provider.script_synthesize(review_reply(SUMMARY))
 
     ui.open()
     ui.expect_greeting()
-    assert ui.audio.get_attribute("controls") is None, "reply audio must use the inline speaker, not browser-native controls"
+    assert ui.audio.get_attribute("controls") is None, (
+        "reply audio must use the inline speaker, not browser-native controls"
+    )
     expect(ui.audio).to_be_hidden()
-    assert ui.page.locator("#message-form #start-recording").count() == 1, "recording belongs beside the message input"
-    assert ui.page.locator("#message-form #stop-recording").count() == 1, "stop belongs beside the message input"
-    expect(ui.button("Start recording").locator("svg[aria-hidden='true']")).to_have_count(1)
+    assert ui.page.locator("#message-form #start-recording").count() == 1, (
+        "recording belongs beside the message input"
+    )
+    assert ui.page.locator("#message-form #stop-recording").count() == 1, (
+        "stop belongs beside the message input"
+    )
+    expect(
+        ui.button("Start recording").locator("svg[aria-hidden='true']")
+    ).to_have_count(1)
     sid = ui.current_session_id()
     baseline = server.session_bytes(sid)
     transcript_before = ui.transcript_text()
@@ -88,7 +106,9 @@ def test_voice_success(case_id, ui, server, provider, tmp_path):
     # Starting a new intake during a take releases the microphone without STT.
     ui.button("Start recording").click()
     expect(ui.button("Stop recording")).to_be_visible()
-    expect(ui.button("Stop recording").locator("svg[aria-hidden='true']")).to_have_count(1)
+    expect(
+        ui.button("Stop recording").locator("svg[aria-hidden='true']")
+    ).to_have_count(1)
     with ui.page.expect_response(
         lambda r: r.request.method == "POST" and r.url.endswith("/api/sessions")
     ) as pending:
@@ -104,7 +124,9 @@ def test_voice_success(case_id, ui, server, provider, tmp_path):
     ui.button("Start recording").click()
     expect(ui.button("Stop recording")).to_be_visible()
     ui.page.wait_for_function("window.__spy.contexts.some(c => c.currentTime > 0.5)")
-    with ui.page.expect_response(lambda r: r.url.endswith("/api/transcriptions")) as pending:
+    with ui.page.expect_response(
+        lambda r: r.url.endswith("/api/transcriptions")
+    ) as pending:
         ui.button("Stop recording").click()
         recording_gate.wait_entered(timeout=2)
         expect(ui.message).to_have_js_property("readOnly", True)
@@ -124,7 +146,9 @@ def test_voice_success(case_id, ui, server, provider, tmp_path):
     ui.cp("voice_success.recording-take-fills-draft")
 
     # Upload a valid finite WAV and transcribe: draft only, nothing committed.
-    with ui.page.expect_response(lambda r: r.url.endswith("/api/transcriptions")) as pending:
+    with ui.page.expect_response(
+        lambda r: r.url.endswith("/api/transcriptions")
+    ) as pending:
         ui.upload(wav_path)
     assert pending.value.status == 200
     expect(ui.message).to_have_value(STT_TEXT)
@@ -143,7 +167,9 @@ def test_voice_success(case_id, ui, server, provider, tmp_path):
     expect(ui.message).to_have_value(EDITED)
     assert ui.send(EDITED).status == 200
     sent = ui.turn_posts()[0]
-    assert body_of(sent)["input_mode"] == "transcript" and body_of(sent)["text"] == EDITED
+    assert (
+        body_of(sent)["input_mode"] == "transcript" and body_of(sent)["text"] == EDITED
+    )
     expect(ui.review).to_be_visible()
     for line in SUMMARY.split("\n"):
         expect(ui.review).to_contain_text(line)
@@ -173,7 +199,11 @@ def test_voice_success(case_id, ui, server, provider, tmp_path):
     assert speech[0]["response_headers"]["content-type"] == "audio/mpeg"
     assert speech[0]["response_headers"]["cache-control"] == "no-store"
     assert speech[0]["response_bytes"] == len(mp3)
-    assert provider.calls("synthesize")[0]["text"] == reply["text"] == review_reply(SUMMARY)
+    assert (
+        provider.calls("synthesize")[0]["text"]
+        == reply["text"]
+        == review_reply(SUMMARY)
+    )
     expect(ui.audio).to_have_attribute("src", re.compile(r"^blob:"))
     ui.page.wait_for_function(PLAYBACK_READY)
     spy = ui.spy()

@@ -58,7 +58,6 @@ RETURN_ANSWER_TEXT = (
 )
 
 
-
 async def test_capability_returns_the_exact_offer_without_retrieval_or_state_change(
     client, provider, session_dir
 ):
@@ -160,7 +159,9 @@ async def test_supported_policy_question_during_intake_returns_only_the_cited_an
     assert payload["reply"] == RETURN_ANSWER_TEXT
     assert MISSING_CATEGORY not in payload["reply"]
     assert payload["reply"] != part["reply"]
-    assert [citation["source_id"] for citation in payload["citations"]] == ["faq-returns"]
+    assert [citation["source_id"] for citation in payload["citations"]] == [
+        "faq-returns"
+    ]
     assert_session_state(
         payload,
         revision=part["revision"] + 1,

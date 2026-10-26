@@ -43,7 +43,9 @@ RETURN_ANSWER_TEXT = (
 )
 REVIEW_SUFFIX_TEXT = "Please confirm these details or tell me what to change."
 CONFIRM_USER_TEXT = "Confirm these details"
-STALE_REVIEW_MESSAGE = "The review changed. Review the latest details before confirming."
+STALE_REVIEW_MESSAGE = (
+    "The review changed. Review the latest details before confirming."
+)
 RETURN_CITATION = {
     "source_id": "faq-returns",
     "title": "Returns and refunds",
@@ -56,10 +58,8 @@ RETURN_CITATION = {
 }
 
 
-
 def yes_extraction():
     return make_extraction(intent="confirm")
-
 
 
 async def review_session(client, provider: ScriptedProvider) -> str:

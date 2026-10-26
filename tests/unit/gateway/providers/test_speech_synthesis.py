@@ -49,7 +49,9 @@ def profiles_with(tts: SpeechProfile) -> dict[str, ServiceProfile]:
     return {"llm": LLM_PROFILE, "rag": RAG_PROFILE, "stt": STT_PROFILE, "tts": tts}
 
 
-def audio_responder(body: bytes, headers: dict[str, str] | None = None, status: int = 200):
+def audio_responder(
+    body: bytes, headers: dict[str, str] | None = None, status: int = 200
+):
     resolved = {"content-type": "audio/wav"} if headers is None else headers
 
     def responder(request: httpx.Request, attempt: int) -> httpx.Response:
@@ -58,8 +60,9 @@ def audio_responder(body: bytes, headers: dict[str, str] | None = None, status: 
     return responder
 
 
-
-def raw_wav(*, rate: int = 16000, channels: int = 1, width: int = 2, frames: int = 100) -> bytes:
+def raw_wav(
+    *, rate: int = 16000, channels: int = 1, width: int = 2, frames: int = 100
+) -> bytes:
     """A PCM WAV with explicit geometry, used for unsupported-format cases."""
 
     buffer = BytesIO()
@@ -272,7 +275,10 @@ def test_decode_pcm_wav_accepts_streaming_with_many_empty_chunks():
     [
         (make_streaming_wav(frames=0), "empty or truncated WAV frames"),
         (make_streaming_wav(frames=100) + b"\x00", "empty or truncated WAV frames"),
-        (make_streaming_wav(frames=100, data_size=202), "empty or truncated WAV frames"),
+        (
+            make_streaming_wav(frames=100, data_size=202),
+            "empty or truncated WAV frames",
+        ),
         (make_streaming_wav(channels=3), "unsupported WAV geometry"),
         (make_streaming_wav(width=1), "unsupported WAV geometry"),
         (make_streaming_wav(width=4), "unsupported WAV geometry"),
@@ -288,8 +294,7 @@ def test_decode_pcm_wav_accepts_streaming_with_many_empty_chunks():
             "not a decodable PCM WAV",
         ),
         (
-            b"RIFF\xff\xff\xff\xffWAVE"
-            + b"data\x04\x00\x00\x00\x00\x00\x00\x00",
+            b"RIFF\xff\xff\xff\xffWAVE" + b"data\x04\x00\x00\x00\x00\x00\x00\x00",
             "not a decodable PCM WAV",
         ),
         (float_format_wav(), "not a decodable PCM WAV"),
@@ -481,7 +486,8 @@ async def test_wav_profile_requests_wav_and_returns_typed_wav_audio():
 
 async def test_wav_profile_at_the_cap_uses_a_single_request():
     provider, recorders = build_provider(
-        {"tts": audio_responder(make_wav(seconds=0.1))}, profiles=profiles_with(WAV_PROFILE)
+        {"tts": audio_responder(make_wav(seconds=0.1))},
+        profiles=profiles_with(WAV_PROFILE),
     )
 
     result = await provider.synthesize("B" * 200)
@@ -689,7 +695,8 @@ async def test_compressed_wav_success_is_rejected_without_decompression():
 
 async def test_twenty_chunks_at_the_cap_are_accepted():
     provider, recorders = build_provider(
-        {"tts": audio_responder(make_wav(seconds=0.1))}, profiles=profiles_with(WAV_PROFILE)
+        {"tts": audio_responder(make_wav(seconds=0.1))},
+        profiles=profiles_with(WAV_PROFILE),
     )
 
     result = await provider.synthesize("A" * 4000)
@@ -807,7 +814,9 @@ async def test_one_permit_is_held_across_every_chunk():
         if calls == 2:
             entered_second.set()
             await release_second.wait()
-        return streamed_response(make_wav(seconds=0.1), 200, {"content-type": "audio/wav"})
+        return streamed_response(
+            make_wav(seconds=0.1), 200, {"content-type": "audio/wav"}
+        )
 
     provider, _ = build_provider(
         {"tts": responder}, profiles=profiles_with(WAV_PROFILE), capacity=1

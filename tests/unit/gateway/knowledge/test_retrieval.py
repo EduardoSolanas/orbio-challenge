@@ -26,9 +26,13 @@ from gateway.knowledge.retrieval import (
 from gateway.schemas import Citation, KnowledgeAnswer
 
 CONTRACT = Path(__file__).resolve().parents[4] / "docs" / "rag-contract.md"
-SEED_KB = Path(__file__).resolve().parents[4] / "gateway" / "knowledge" / "northstar-faq.json"
+SEED_KB = (
+    Path(__file__).resolve().parents[4] / "gateway" / "knowledge" / "northstar-faq.json"
+)
 KB_FIXTURES = Path(__file__).resolve().parents[3] / "fixtures" / "kb"
-INVALID_FIXTURES = sorted(path.name for path in (KB_FIXTURES / "invalid").glob("*.json"))
+INVALID_FIXTURES = sorted(
+    path.name for path in (KB_FIXTURES / "invalid").glob("*.json")
+)
 VALID_FIXTURES = sorted(path.name for path in (KB_FIXTURES / "valid").glob("*.json"))
 
 
@@ -61,7 +65,13 @@ def test_load_reads_the_bundled_seed_kb_immutably() -> None:
         "faq-account-reference",
     ]
     assert isinstance(kb.records, tuple)
-    assert kb.records[0].keywords == ["delivery", "shipping", "ship", "arrive", "arrives"]
+    assert kb.records[0].keywords == [
+        "delivery",
+        "shipping",
+        "ship",
+        "arrive",
+        "arrives",
+    ]
     with pytest.raises(ValidationError):
         kb.records[0].id = "faq-other"
 
@@ -155,7 +165,10 @@ def test_file_of_exactly_the_byte_cap_still_loads(tmp_path: Path) -> None:
         ("What about damaged items?", {"about", "damaged"}),
         ("What does high urgency mean?", {"high", "urgency", "mean"}),
         ("Do you ship internationally?", {"ship", "internationally"}),
-        ("Which payment methods are accepted?", {"which", "payment", "methods", "accepted"}),
+        (
+            "Which payment methods are accepted?",
+            {"which", "payment", "methods", "accepted"},
+        ),
         ("Ｄｅｌｉｖｅｒｙ", {"delivery"}),
         ("ﬁle", {"file"}),
         ("STRASSE", {"strasse"}),
@@ -183,7 +196,9 @@ def test_tokenize_stop_word_list_is_exact() -> None:
     assert tokenize(stop_words) == set()
 
 
-def _kb(records: list[dict[str, object]], version: str = "test-version") -> KnowledgeBase:
+def _kb(
+    records: list[dict[str, object]], version: str = "test-version"
+) -> KnowledgeBase:
     return KnowledgeBase(
         version,
         tuple(ImmutableKnowledgeRecord(**record) for record in records),
@@ -201,7 +216,9 @@ def _kb(records: list[dict[str, object]], version: str = "test-version") -> Know
         ("Which payment methods are accepted?", []),
     ],
 )
-def test_seed_kb_returns_the_contract_examples(question: str, expected_ids: list[str]) -> None:
+def test_seed_kb_returns_the_contract_examples(
+    question: str, expected_ids: list[str]
+) -> None:
     kb = load_knowledge(SEED_KB)
     assert [record.id for record in kb.retrieve(question)] == expected_ids
 
@@ -318,18 +335,33 @@ def test_citation_snapshot_uses_the_whole_record_body_title_and_kb_version() -> 
 def test_two_unique_retrieved_ids_become_snapshots_in_cited_order() -> None:
     kb = _kb(
         [
-            {"id": "faq-delivery", "title": "Delivery times", "keywords": ["delivery"], "body": "D1"},
-            {"id": "faq-returns", "title": "Returns", "keywords": ["returns"], "body": "R1"},
+            {
+                "id": "faq-delivery",
+                "title": "Delivery times",
+                "keywords": ["delivery"],
+                "body": "D1",
+            },
+            {
+                "id": "faq-returns",
+                "title": "Returns",
+                "keywords": ["returns"],
+                "body": "R1",
+            },
         ]
     )
     retrieved = kb.retrieve("delivery returns")
     assert [record.id for record in retrieved] == ["faq-delivery", "faq-returns"]
     citations = validate_knowledge_answer(
-        _answer(answer="Both policies apply.", cited_ids=["faq-returns", "faq-delivery"]),
+        _answer(
+            answer="Both policies apply.", cited_ids=["faq-returns", "faq-delivery"]
+        ),
         retrieved,
         kb.version,
     )
-    assert [citation.source_id for citation in citations] == ["faq-returns", "faq-delivery"]
+    assert [citation.source_id for citation in citations] == [
+        "faq-returns",
+        "faq-delivery",
+    ]
     assert [citation.excerpt for citation in citations] == ["R1", "D1"]
 
 
@@ -388,14 +420,19 @@ def test_accepts_a_single_character_answer() -> None:
 
 def test_answerable_false_returns_no_citations() -> None:
     _, retrieved = _delivery_retrieval()
-    assert validate_knowledge_answer(
-        _answer(answerable=False, answer="", cited_ids=[]), retrieved, "2026-10-22"
-    ) == ()
+    assert (
+        validate_knowledge_answer(
+            _answer(answerable=False, answer="", cited_ids=[]), retrieved, "2026-10-22"
+        )
+        == ()
+    )
 
 
 def test_rejects_answerable_false_with_text() -> None:
     _, retrieved = _delivery_retrieval()
-    _assert_invalid(_answer(answerable=False, answer="No answer.", cited_ids=[]), retrieved)
+    _assert_invalid(
+        _answer(answerable=False, answer="No answer.", cited_ids=[]), retrieved
+    )
     _assert_invalid(_answer(answerable=False, answer=" ", cited_ids=[]), retrieved)
 
 
@@ -419,7 +456,16 @@ def test_answer_model_cannot_supply_titles_or_versions() -> None:
 
 def test_snapshot_uses_the_entire_body_without_truncation() -> None:
     body = "b" * 2000
-    kb = _kb([{"id": "faq-long", "title": "Long policy", "keywords": ["delivery"], "body": body}])
+    kb = _kb(
+        [
+            {
+                "id": "faq-long",
+                "title": "Long policy",
+                "keywords": ["delivery"],
+                "body": body,
+            }
+        ]
+    )
     retrieved = kb.retrieve("delivery")
     citations = validate_knowledge_answer(
         _answer(answer="Answer.", cited_ids=["faq-long"]), retrieved, kb.version
@@ -428,5 +474,3 @@ def test_snapshot_uses_the_entire_body_without_truncation() -> None:
     assert len(citations[0].excerpt) == 2000
     assert citations[0].title == "Long policy"
     assert citations[0].kb_version == kb.version
-
-

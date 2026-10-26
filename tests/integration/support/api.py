@@ -75,7 +75,10 @@ def full_extraction() -> Extraction:
 
 
 def build_settings(
-    session_dir: Path, *, tts_es: bool = False, backend_api_base_url: str = "http://127.0.0.1:9"
+    session_dir: Path,
+    *,
+    tts_es: bool = False,
+    backend_api_base_url: str = "http://127.0.0.1:9",
 ) -> Settings:
     """A complete isolated auth=none environment; no developer configuration is read."""
 
@@ -224,7 +227,9 @@ async def raw_asgi(
         sent.append(message)
 
     await app(scope, receive, send)
-    start = next(message for message in sent if message["type"] == "http.response.start")
+    start = next(
+        message for message in sent if message["type"] == "http.response.start"
+    )
     body = b"".join(
         message.get("body", b"")
         for message in sent

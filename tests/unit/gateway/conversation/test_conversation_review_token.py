@@ -71,9 +71,7 @@ async def test_dedicated_confirm_after_a_pure_question_at_review_completes(tmp_p
         tmp_path
     )
 
-    response = await engine.confirm(
-        sid, confirm_request(revision=2, review_revision=1)
-    )
+    response = await engine.confirm(sid, confirm_request(revision=2, review_revision=1))
 
     assert response.status == "completed"
     assert response.revision == 3
@@ -146,9 +144,7 @@ async def test_dedicated_confirm_after_an_unrelated_reply_at_review_completes(
     assert unrelated.status == "awaiting_confirmation"
     assert unrelated.pending_review_revision == 1
 
-    response = await engine.confirm(
-        sid, confirm_request(revision=2, review_revision=1)
-    )
+    response = await engine.confirm(sid, confirm_request(revision=2, review_revision=1))
 
     assert response.status == "completed"
     assert response.revision == 3
@@ -363,7 +359,9 @@ async def test_model_abstention_uses_deterministic_text_without_citations(
     [
         KnowledgeAnswer(answerable=True, answer="Grounded.", cited_ids=["faq-unknown"]),
         KnowledgeAnswer(
-            answerable=True, answer="Grounded.", cited_ids=["faq-returns", "faq-returns"]
+            answerable=True,
+            answer="Grounded.",
+            cited_ids=["faq-returns", "faq-returns"],
         ),
         KnowledgeAnswer(answerable=True, answer="x" * 1201, cited_ids=["faq-returns"]),
         KnowledgeAnswer(answerable=True, answer="", cited_ids=["faq-returns"]),
@@ -483,9 +481,7 @@ async def test_completed_session_rejects_new_commands(tmp_path):
     with pytest.raises(AppError) as confirm_error:
         await engine.confirm(
             sid,
-            ConfirmRequest(
-                request_id=uuid4(), expected_revision=2, review_revision=1
-            ),
+            ConfirmRequest(request_id=uuid4(), expected_revision=2, review_revision=1),
         )
     assert confirm_error.value.code == "session_completed"
     provider.assert_exhausted()

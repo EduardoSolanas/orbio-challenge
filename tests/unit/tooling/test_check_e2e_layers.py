@@ -60,11 +60,19 @@ def controlled_results() -> dict:
 def test_pass_controlled_only(tmp_path: Path) -> None:
     collection = write_json(tmp_path / "collection.json", controlled_collection())
     results = write_json(tmp_path / "results.json", controlled_results())
-    assert check_e2e_layers.main([
-        "--collection", str(collection),
-        "--results", str(results),
-        "--sources-dir", str(tmp_path / "empty-src"),
-    ]) == 0
+    assert (
+        check_e2e_layers.main(
+            [
+                "--collection",
+                str(collection),
+                "--results",
+                str(results),
+                "--sources-dir",
+                str(tmp_path / "empty-src"),
+            ]
+        )
+        == 0
+    )
 
 
 def test_controlled_report_claiming_live_docker_fails(tmp_path: Path) -> None:
@@ -72,11 +80,19 @@ def test_controlled_report_claiming_live_docker_fails(tmp_path: Path) -> None:
     bad["environment_type"] = "real-docker"
     collection = write_json(tmp_path / "collection.json", bad)
     results = write_json(tmp_path / "results.json", controlled_results())
-    assert check_e2e_layers.main([
-        "--collection", str(collection),
-        "--results", str(results),
-        "--sources-dir", str(tmp_path / "empty-src"),
-    ]) == 1
+    assert (
+        check_e2e_layers.main(
+            [
+                "--collection",
+                str(collection),
+                "--results",
+                str(results),
+                "--sources-dir",
+                str(tmp_path / "empty-src"),
+            ]
+        )
+        == 1
+    )
 
 
 def test_missing_controlled_label_fails(tmp_path: Path) -> None:
@@ -84,11 +100,19 @@ def test_missing_controlled_label_fails(tmp_path: Path) -> None:
     del bad["provider_mode"]
     collection = write_json(tmp_path / "collection.json", bad)
     results = write_json(tmp_path / "results.json", controlled_results())
-    assert check_e2e_layers.main([
-        "--collection", str(collection),
-        "--results", str(results),
-        "--sources-dir", str(tmp_path / "empty-src"),
-    ]) == 1
+    assert (
+        check_e2e_layers.main(
+            [
+                "--collection",
+                str(collection),
+                "--results",
+                str(results),
+                "--sources-dir",
+                str(tmp_path / "empty-src"),
+            ]
+        )
+        == 1
+    )
 
 
 def test_unqualified_full_e2e_in_source_fails(tmp_path: Path) -> None:
@@ -100,11 +124,19 @@ def test_unqualified_full_e2e_in_source_fails(tmp_path: Path) -> None:
     )
     collection = write_json(tmp_path / "collection.json", controlled_collection())
     results = write_json(tmp_path / "results.json", controlled_results())
-    assert check_e2e_layers.main([
-        "--collection", str(collection),
-        "--results", str(results),
-        "--sources-dir", str(src),
-    ]) == 1
+    assert (
+        check_e2e_layers.main(
+            [
+                "--collection",
+                str(collection),
+                "--results",
+                str(results),
+                "--sources-dir",
+                str(src),
+            ]
+        )
+        == 1
+    )
 
 
 def test_qualified_full_e2e_passes(tmp_path: Path) -> None:
@@ -117,11 +149,19 @@ def test_qualified_full_e2e_passes(tmp_path: Path) -> None:
     )
     collection = write_json(tmp_path / "collection.json", controlled_collection())
     results = write_json(tmp_path / "results.json", controlled_results())
-    assert check_e2e_layers.main([
-        "--collection", str(collection),
-        "--results", str(results),
-        "--sources-dir", str(src),
-    ]) == 0
+    assert (
+        check_e2e_layers.main(
+            [
+                "--collection",
+                str(collection),
+                "--results",
+                str(results),
+                "--sources-dir",
+                str(src),
+            ]
+        )
+        == 0
+    )
 
 
 def test_secret_in_controlled_config_fails(tmp_path: Path) -> None:
@@ -131,25 +171,44 @@ def test_secret_in_controlled_config_fails(tmp_path: Path) -> None:
     )
     collection = write_json(tmp_path / "collection.json", controlled_collection())
     results = write_json(tmp_path / "results.json", controlled_results())
-    assert check_e2e_layers.main([
-        "--collection", str(collection),
-        "--results", str(results),
-        "--sources-dir", str(tmp_path / "empty-src"),
-        "--controlled-config", str(config),
-    ]) == 1
+    assert (
+        check_e2e_layers.main(
+            [
+                "--collection",
+                str(collection),
+                "--results",
+                str(results),
+                "--sources-dir",
+                str(tmp_path / "empty-src"),
+                "--controlled-config",
+                str(config),
+            ]
+        )
+        == 1
+    )
 
 
 def test_require_docker_without_evidence_fails(tmp_path: Path) -> None:
     collection = write_json(tmp_path / "collection.json", controlled_collection())
     results = write_json(tmp_path / "results.json", controlled_results())
-    assert check_e2e_layers.main([
-        "--collection", str(collection),
-        "--results", str(results),
-        "--sources-dir", str(tmp_path / "empty-src"),
-        "--require-docker",
-        "--docker-config", str(tmp_path / "missing-run-config.json"),
-        "--docker-xml", str(tmp_path / "missing-docker.xml"),
-    ]) == 1
+    assert (
+        check_e2e_layers.main(
+            [
+                "--collection",
+                str(collection),
+                "--results",
+                str(results),
+                "--sources-dir",
+                str(tmp_path / "empty-src"),
+                "--require-docker",
+                "--docker-config",
+                str(tmp_path / "missing-run-config.json"),
+                "--docker-xml",
+                str(tmp_path / "missing-docker.xml"),
+            ]
+        )
+        == 1
+    )
 
 
 def test_require_docker_with_evidence_passes(tmp_path: Path) -> None:
@@ -164,17 +223,27 @@ def test_require_docker_with_evidence_passes(tmp_path: Path) -> None:
         },
     )
     docker_xml = tmp_path / "docker.xml"
-    docker_xml.write_text("<testsuite tests=\"1\"/>", encoding="utf-8")
+    docker_xml.write_text('<testsuite tests="1"/>', encoding="utf-8")
     collection = write_json(tmp_path / "collection.json", controlled_collection())
     results = write_json(tmp_path / "results.json", controlled_results())
-    assert check_e2e_layers.main([
-        "--collection", str(collection),
-        "--results", str(results),
-        "--sources-dir", str(tmp_path / "empty-src"),
-        "--require-docker",
-        "--docker-config", str(docker_config),
-        "--docker-xml", str(docker_xml),
-    ]) == 0
+    assert (
+        check_e2e_layers.main(
+            [
+                "--collection",
+                str(collection),
+                "--results",
+                str(results),
+                "--sources-dir",
+                str(tmp_path / "empty-src"),
+                "--require-docker",
+                "--docker-config",
+                str(docker_config),
+                "--docker-xml",
+                str(docker_xml),
+            ]
+        )
+        == 0
+    )
 
 
 def test_docker_config_claiming_controlled_fails(tmp_path: Path) -> None:
@@ -183,14 +252,24 @@ def test_docker_config_claiming_controlled_fails(tmp_path: Path) -> None:
         {"environment_type": "controlled-provider", "provider_mode": "real-provider"},
     )
     docker_xml = tmp_path / "docker.xml"
-    docker_xml.write_text("<testsuite tests=\"1\"/>", encoding="utf-8")
+    docker_xml.write_text('<testsuite tests="1"/>', encoding="utf-8")
     collection = write_json(tmp_path / "collection.json", controlled_collection())
     results = write_json(tmp_path / "results.json", controlled_results())
-    assert check_e2e_layers.main([
-        "--collection", str(collection),
-        "--results", str(results),
-        "--sources-dir", str(tmp_path / "empty-src"),
-        "--require-docker",
-        "--docker-config", str(docker_config),
-        "--docker-xml", str(docker_xml),
-    ]) == 1
+    assert (
+        check_e2e_layers.main(
+            [
+                "--collection",
+                str(collection),
+                "--results",
+                str(results),
+                "--sources-dir",
+                str(tmp_path / "empty-src"),
+                "--require-docker",
+                "--docker-config",
+                str(docker_config),
+                "--docker-xml",
+                str(docker_xml),
+            ]
+        )
+        == 1
+    )

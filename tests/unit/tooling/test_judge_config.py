@@ -46,7 +46,9 @@ def test_judge_uses_prompted_json_without_unsupported_structured_output():
         temperature=0,
         prompt_version="test-v1",
     )
-    with patch("tests.e2e.judge_config.urllib.request.urlopen", return_value=_Response()) as opened:
+    with patch(
+        "tests.e2e.judge_config.urllib.request.urlopen", return_value=_Response()
+    ) as opened:
         result = judge(config, "ASSISTANT Hello", "brief greeting")
 
     payload = json.loads(opened.call_args.args[0].data)
@@ -62,8 +64,7 @@ def test_judge_uses_prompted_json_without_unsupported_structured_output():
 def test_judge_default_output_budget_handles_reasoning_models(tmp_path):
     config_file = tmp_path / ".env.judge"
     config_file.write_text(
-        "E2E_JUDGE_BASE_URL=http://judge.local/v1\n"
-        "E2E_JUDGE_MODEL=local-model\n",
+        "E2E_JUDGE_BASE_URL=http://judge.local/v1\nE2E_JUDGE_MODEL=local-model\n",
         encoding="utf-8",
     )
 
@@ -87,8 +88,12 @@ def test_a_judge_that_runs_out_of_tokens_says_so_instead_of_reporting_bad_json()
         temperature=0,
         prompt_version="test-v1",
     )
-    with patch("tests.e2e.judge_config.urllib.request.urlopen", return_value=_Truncated()):
-        with pytest.raises(AssertionError, match="ran out of tokens.*E2E_JUDGE_MAX_TOKENS"):
+    with patch(
+        "tests.e2e.judge_config.urllib.request.urlopen", return_value=_Truncated()
+    ):
+        with pytest.raises(
+            AssertionError, match="ran out of tokens.*E2E_JUDGE_MAX_TOKENS"
+        ):
             judge(config, "ASSISTANT Hello", "brief greeting")
 
 
@@ -109,7 +114,10 @@ def test_reasoning_effort_is_sent_only_when_configured():
     messages = [{"role": "user", "content": "x"}]
 
     assert "reasoning_effort" not in judge_payload(_config(), messages)
-    assert judge_payload(_config(reasoning_effort="low"), messages)["reasoning_effort"] == "low"
+    assert (
+        judge_payload(_config(reasoning_effort="low"), messages)["reasoning_effort"]
+        == "low"
+    )
 
 
 def test_the_reasoning_effort_setting_is_read_and_validated(tmp_path):
@@ -124,4 +132,3 @@ def test_the_reasoning_effort_setting_is_read_and_validated(tmp_path):
     config_file.write_text(base + "E2E_JUDGE_REASONING_EFFORT=loud\n", encoding="utf-8")
     with pytest.raises(ValueError, match="E2E_JUDGE_REASONING_EFFORT"):
         load_config(config_file)
-

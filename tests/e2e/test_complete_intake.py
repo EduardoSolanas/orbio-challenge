@@ -41,7 +41,9 @@ from tests.support.fakes import (
     x_question,
 )
 
-pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+pytestmark = (
+    pytest.mark.browser_e2e
+)  # controlled-provider browser workflow, never live Docker/provider proof
 
 SUMMARY = (
     "Account reference: NS-000123\n"
@@ -51,7 +53,9 @@ SUMMARY = (
 )
 
 
-@pytest.mark.parametrize("case_id", [pytest.param("complete_intake", id="complete_intake")])
+@pytest.mark.parametrize(
+    "case_id", [pytest.param("complete_intake", id="complete_intake")]
+)
 def test_complete_intake(case_id, ui, server, provider):
     provider.script_extract(THANKS, x_gratitude())
     provider.script_extract(MIXED_PART, x_part())
@@ -74,9 +78,14 @@ def test_complete_intake(case_id, ui, server, provider):
 
     # Social thanks resumes the same UX without retrieval or an intake prompt.
     assert ui.send(THANKS).status == 200
-    expect(ui.log).to_contain_text("You're welcome! How else can I help with your energy service?")
+    expect(ui.log).to_contain_text(
+        "You're welcome! How else can I help with your energy service?"
+    )
     expect(ui.log).not_to_contain_text(ASK_CATEGORY)
-    assert ui.last_assistant(sid)["text"] == "You're welcome! How else can I help with your energy service?"
+    assert (
+        ui.last_assistant(sid)["text"]
+        == "You're welcome! How else can I help with your energy service?"
+    )
     assert ui.disk(sid)["slots"] == {
         "order_number": None,
         "category": None,
@@ -152,7 +161,9 @@ def test_complete_intake(case_id, ui, server, provider):
     assert saved["summary"] == SUMMARY
     assert [m["text"] for m in saved["messages"]].count(receipt) == 1
     assert provider.methods() == ["extract", "extract", "extract", "extract"]
-    expect(ui.message).to_be_editable()  # the receipt asks "anything else?", so typing stays open
+    expect(
+        ui.message
+    ).to_be_editable()  # the receipt asks "anything else?", so typing stays open
     expect(ui.enabled_button("Send")).to_have_count(0)  # but nothing is typed yet
     expect(ui.enabled_button("Confirm details")).to_have_count(0)
     ui.cp("complete_intake.confirmed-local-receipt")
@@ -161,9 +172,13 @@ def test_complete_intake(case_id, ui, server, provider):
     completed_bytes = server.session_bytes(sid)
     gets_before = len(ui.session_gets())
     ui.page.reload()
-    expect(ui.page.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
+    expect(
+        ui.page.get_by_role("dialog", name="Northstar Energy support chat")
+    ).to_be_visible()
     expect(ui.log).to_contain_text(receipt)
-    expect(ui.message).to_be_editable()  # the receipt asks "anything else?", so typing stays open
+    expect(
+        ui.message
+    ).to_be_editable()  # the receipt asks "anything else?", so typing stays open
     expect(ui.enabled_button("Send")).to_have_count(0)  # but nothing is typed yet
     expect(ui.enabled_button("Confirm details")).to_have_count(0)
     wait_until(lambda: len(ui.session_gets()) > gets_before, "resume GET after reload")
@@ -239,15 +254,15 @@ def test_complete_intake(case_id, ui, server, provider):
     # A FAQ remains available while account verification is pending. Answering
     # it must preserve the pending verification form and intake data.
     provider.script_extract(GREETING_STANDING_CHARGE_Q, x_question())
-    provider.script_answer(
-        GREETING_STANDING_CHARGE_Q, standing_charge_answer()
-    )
+    provider.script_answer(GREETING_STANDING_CHARGE_Q, standing_charge_answer())
     assert ui.send(GREETING_STANDING_CHARGE_Q).status == 200
     expect(ui.log).to_contain_text(STANDING_CHARGE_ANSWER_TEXT)
     expect(ui.verification).to_be_visible()
     expect(ui.message).to_be_editable()
     assert response_of(ui.turn_posts()[-1])["order_verification_required"] is True
-    assert ui.last_assistant(new_sid)["citations"][0]["source_id"] == "faq-standing-charge"
+    assert (
+        ui.last_assistant(new_sid)["citations"][0]["source_id"] == "faq-standing-charge"
+    )
     assert ui.disk(new_sid)["slots"] == {
         "order_number": "NS-000123",
         "category": None,
@@ -285,13 +300,13 @@ def test_complete_intake(case_id, ui, server, provider):
     # FAQ is still a side path after verification and before the protected
     # lookup; it must not consume or weaken the order-specific grant.
     provider.script_extract(GREETING_STANDING_CHARGE_Q, x_question())
-    provider.script_answer(
-        GREETING_STANDING_CHARGE_Q, standing_charge_answer()
-    )
+    provider.script_answer(GREETING_STANDING_CHARGE_Q, standing_charge_answer())
     assert ui.send(GREETING_STANDING_CHARGE_Q).status == 200
     expect(ui.log).to_contain_text(STANDING_CHARGE_ANSWER_TEXT)
     expect(ui.verification).to_be_hidden()
-    assert ui.last_assistant(new_sid)["citations"][0]["source_id"] == "faq-standing-charge"
+    assert (
+        ui.last_assistant(new_sid)["citations"][0]["source_id"] == "faq-standing-charge"
+    )
     assert response_of(ui.turn_posts()[-1])["order_verification_required"] is False
     assert ui.disk(new_sid)["slots"]["order_number"] == "NS-000123"
 
@@ -320,18 +335,20 @@ def test_complete_intake(case_id, ui, server, provider):
     windows.first.click()
     expect(ui.log).to_contain_text(f"Booked: a technician will visit on {first_day}")
     expect(ui.page.locator("#slot-picker")).to_be_hidden()
-    assert ui.last_assistant(new_sid)["text"].startswith("Booked: a technician will visit on")
+    assert ui.last_assistant(new_sid)["text"].startswith(
+        "Booked: a technician will visit on"
+    )
     assert ui.disk(new_sid)["slots"]["order_number"] == "NS-000123"
     ui.cp("complete_intake.technician-visit-booked")
 
     # A FAQ after the protected result returns to the still-pending issue step.
     provider.script_extract(GREETING_STANDING_CHARGE_Q, x_question())
-    provider.script_answer(
-        GREETING_STANDING_CHARGE_Q, standing_charge_answer()
-    )
+    provider.script_answer(GREETING_STANDING_CHARGE_Q, standing_charge_answer())
     assert ui.send(GREETING_STANDING_CHARGE_Q).status == 200
     expect(ui.log).to_contain_text(STANDING_CHARGE_ANSWER_TEXT)
-    assert ui.last_assistant(new_sid)["citations"][0]["source_id"] == "faq-standing-charge"
+    assert (
+        ui.last_assistant(new_sid)["citations"][0]["source_id"] == "faq-standing-charge"
+    )
     assert ui.disk(new_sid)["slots"] == {
         "order_number": "NS-000123",
         "category": None,
@@ -367,9 +384,11 @@ def test_complete_intake(case_id, ui, server, provider):
     provider.script_extract(HIGH, x_high())
     assert ui.send(HIGH).status == 200
     expect(ui.review).to_be_visible()
-    expect(ui.log).to_contain_text(review_reply(summary_text(
-        "NS-000123", "damaged_item", "My order arrived broken", "high"
-    )))
+    expect(ui.log).to_contain_text(
+        review_reply(
+            summary_text("NS-000123", "damaged_item", "My order arrived broken", "high")
+        )
+    )
     assert ui.disk(new_sid)["pending_review_revision"] == 11
     ui.cp("complete_intake.verified-order-review")
 

@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+import json
+import re
+import sqlite3
+from datetime import datetime, timedelta
 
 import pytest
 
 from backend_api.bookings import (
     ALREADY_BOOKED,
+    AVAILABILITY_PATH,
     SLOT_UNAVAILABLE,
     BookingRefused,
     BookingStore,
@@ -22,7 +26,9 @@ def store_at():
     """A factory for stores; every one it hands out is closed when the test ends."""
     opened: list[BookingStore] = []
 
-    def make(moment: datetime = MONDAY_MORNING, path: str | None = None) -> BookingStore:
+    def make(
+        moment: datetime = MONDAY_MORNING, path: str | None = None
+    ) -> BookingStore:
         store = BookingStore(path, clock=lambda: moment)
         opened.append(store)
         return store
@@ -81,9 +87,12 @@ def test_an_account_can_hold_only_one_visit(store_at) -> None:
 
 
 @pytest.mark.parametrize(
-    "starts_at", ["2026-11-02T09:00", "2026-11-07T09:00", "2026-11-02T10:00", "nonsense"]
+    "starts_at",
+    ["2026-11-02T09:00", "2026-11-07T09:00", "2026-11-02T10:00", "nonsense"],
 )
-def test_taken_missing_or_started_windows_are_refused(store_at, starts_at: str, tmp_path) -> None:
+def test_taken_missing_or_started_windows_are_refused(
+    store_at, starts_at: str, tmp_path
+) -> None:
     path = str(tmp_path / "bookings.db")
     store_at(datetime(2026, 11, 2, 8, 0), path=path).book("NS-000999", FIRST_WINDOW)
     store = store_at(datetime(2026, 11, 2, 9, 30), path=path)
@@ -94,7 +103,9 @@ def test_taken_missing_or_started_windows_are_refused(store_at, starts_at: str, 
     assert refused.value.code == SLOT_UNAVAILABLE
 
 
-def test_bookings_survive_a_restart_and_the_top_up_keeps_them(store_at, tmp_path) -> None:
+def test_bookings_survive_a_restart_and_the_top_up_keeps_them(
+    store_at, tmp_path
+) -> None:
     path = str(tmp_path / "bookings.db")
     booked = store_at(path=path).book("NS-000123", FIRST_WINDOW)
 
@@ -105,7 +116,9 @@ def test_bookings_survive_a_restart_and_the_top_up_keeps_them(store_at, tmp_path
     assert reopened.open_slots()[-1]["starts_at"] > "2026-11-03T11:00"
 
 
-def test_two_connections_to_one_file_cannot_take_the_same_window(store_at, tmp_path) -> None:
+def test_two_connections_to_one_file_cannot_take_the_same_window(
+    store_at, tmp_path
+) -> None:
     path = str(tmp_path / "bookings.db")
     first, second = store_at(path=path), store_at(path=path)
 
@@ -114,3 +127,32 @@ def test_two_connections_to_one_file_cannot_take_the_same_window(store_at, tmp_p
         second.book("NS-000999", FIRST_WINDOW)
 
     assert refused.value.code == SLOT_UNAVAILABLE
+
+
+def test_a_booking_reference_is_bk_and_eight_uppercase_hex_characters(store_at) -> None:
+    appointment = store_at().book("NS-000123", FIRST_WINDOW)
+
+    assert re.fullmatch(r"BK-[0-9A-F]{8}", appointment["reference"])
+
+
+def test_windows_are_seeded_for_every_weekday_of_the_configured_days_ahead(
+    store_at, tmp_path
+) -> None:
+    path = str(tmp_path / "bookings.db")
+    store_at(path=path)
+    config = json.loads(AVAILABILITY_PATH.read_text("utf-8"))
+    days = [
+        MONDAY_MORNING + timedelta(days=offset)
+        for offset in range(config["days_ahead"] + 1)
+    ]
+    expected = {day.strftime("%Y-%m-%d") for day in days if day.weekday() < 5}
+
+    with sqlite3.connect(path) as db:
+        seeded = {
+            row[0]
+            for row in db.execute("SELECT DISTINCT substr(starts_at, 1, 10) FROM slots")
+        }
+        windows = db.execute("SELECT COUNT(*) FROM slots").fetchone()[0]
+
+    assert seeded == expected
+    assert windows == len(expected) * len(config["windows"])

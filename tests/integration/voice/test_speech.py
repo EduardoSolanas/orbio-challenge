@@ -31,6 +31,9 @@ from tests.integration.support.transcription import (
     snapshot,
     streamed_wire,
 )
+from tests.integration.support.transcription import (
+    unavailable_status as tts_status,
+)
 
 MP3_FIXTURE = Path(__file__).resolve().parents[2] / "fixtures" / "reply.mp3"
 TTS_PATH = "/v1/audio/speech"
@@ -47,10 +50,10 @@ PART_EXTRACTION = {
     },
     "explicit_corrections": [],
     "ambiguous_fields": [],
-"detected_language": "en",
-"requested_language": None,
-"sentiment": "neutral",
-"frustration": "none",
+    "detected_language": "en",
+    "requested_language": None,
+    "sentiment": "neutral",
+    "frustration": "none",
 }
 
 
@@ -95,13 +98,6 @@ def tts_response(
     return responder
 
 
-def tts_status(status: int):
-    def responder(request: httpx.Request, attempt: int) -> httpx.Response:
-        return json_wire({"error": "unavailable"}, status=status)
-
-    return responder
-
-
 def speech_url(session_id: str) -> str:
     return f"/api/sessions/{session_id}/speech"
 
@@ -121,10 +117,14 @@ async def saved_reply(client, session_id: str) -> dict:
 # saved assistant message actual mp3 pcm wav wire fixture -------------------------------------------------------------------
 
 
-async def case_saved_assistant_message_actual_mp3_pcm_wav_wire_fixture(settings, session_dir):
-    async with audio_client(
-        settings, {"llm": llm_extraction(), "tts": tts_mp3()}
-    ) as (client, rec, _):
+async def case_saved_assistant_message_actual_mp3_pcm_wav_wire_fixture(
+    settings, session_dir
+):
+    async with audio_client(settings, {"llm": llm_extraction(), "tts": tts_mp3()}) as (
+        client,
+        rec,
+        _,
+    ):
         session_id = await start_session(client)
         reply = await saved_reply(client, session_id)
         before = snapshot(session_dir, session_id)
@@ -164,9 +164,11 @@ async def case_absent_message_uuid(settings, session_dir):
 
 
 async def case_existing_user_message_uuid(settings, session_dir):
-    async with audio_client(
-        settings, {"llm": llm_extraction(), "tts": tts_mp3()}
-    ) as (client, rec, _):
+    async with audio_client(settings, {"llm": llm_extraction(), "tts": tts_mp3()}) as (
+        client,
+        rec,
+        _,
+    ):
         session_id = await start_session(client)
         await saved_reply(client, session_id)
         view = (await client.get(f"/api/sessions/{session_id}")).json()
@@ -186,7 +188,9 @@ async def case_existing_user_message_uuid(settings, session_dir):
 async def assert_unusable_tts(settings, session_dir, responder):
     async with audio_client(settings, {"tts": responder}) as (client, rec, _):
         session_id = await start_session(client)
-        greeting_id = (await client.get(f"/api/sessions/{session_id}")).json()["messages"][0]["id"]
+        greeting_id = (await client.get(f"/api/sessions/{session_id}")).json()[
+            "messages"
+        ][0]["id"]
         before = snapshot(session_dir, session_id)
 
         response = await speak(client, session_id, greeting_id)
@@ -246,12 +250,20 @@ async def case_cancel_tts_streaming_read(settings, session_dir):
                 200, stream=stream, headers={"content-type": "audio/mpeg"}
             )
         return httpx.Response(
-            200, stream=httpx.ByteStream(mp3_bytes()), headers={"content-type": "audio/mpeg"}
+            200,
+            stream=httpx.ByteStream(mp3_bytes()),
+            headers={"content-type": "audio/mpeg"},
         )
 
-    async with audio_client(settings, {"tts": tts_gated}, capacity=1) as (client, rec, _):
+    async with audio_client(settings, {"tts": tts_gated}, capacity=1) as (
+        client,
+        rec,
+        _,
+    ):
         session_id = await start_session(client)
-        greeting_id = (await client.get(f"/api/sessions/{session_id}")).json()["messages"][0]["id"]
+        greeting_id = (await client.get(f"/api/sessions/{session_id}")).json()[
+            "messages"
+        ][0]["id"]
         before = snapshot(session_dir, session_id)
 
         task = asyncio.create_task(speak(client, session_id, greeting_id))
@@ -280,7 +292,9 @@ async def case_tts_unavailable_on_saved_reply(settings, session_dir):
         settings, {"llm": llm_extraction(), "tts": tts_status(503)}
     ) as (client, rec, _):
         session_id = await start_session(client)
-        greeting_id = (await client.get(f"/api/sessions/{session_id}")).json()["messages"][0]["id"]
+        greeting_id = (await client.get(f"/api/sessions/{session_id}")).json()[
+            "messages"
+        ][0]["id"]
         before = snapshot(session_dir, session_id)
 
         response = await speak(client, session_id, greeting_id)

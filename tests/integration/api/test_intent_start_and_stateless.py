@@ -56,7 +56,6 @@ from tests.integration.support.intent import (
 RESUME_TEXT = "Continue my issue"
 
 
-
 async def test_explicit_start_intake_asks_the_first_missing_field(
     client, provider, session_dir
 ):
@@ -290,9 +289,7 @@ async def test_reject_without_a_review_does_not_fabricate_rejection(
     calls_before = len(provider.calls)
     provider.script_extraction(make_extraction(intent="reject"))
 
-    request_id, response = await send_turn(
-        client, session_id, text=NO_TEXT, revision=0
-    )
+    request_id, response = await send_turn(client, session_id, text=NO_TEXT, revision=0)
 
     assert response.status_code == 200, response.text
     payload = response.json()

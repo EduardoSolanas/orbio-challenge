@@ -55,7 +55,9 @@ async def get_view(client, session_id: str) -> dict:
     return response.json()
 
 
-async def seeded_review(client, session_dir: Path, *, revision: int, counter: int) -> str:
+async def seeded_review(
+    client, session_dir: Path, *, revision: int, counter: int
+) -> str:
     """A complete, review-eligible session sitting exactly at the cap."""
 
     session_id = await seed_session(
@@ -106,7 +108,9 @@ async def near_cap_incomplete(client, session_dir: Path) -> str:
 # validated near cap session49 then complete details50 -------------------------------------------------------------------
 
 
-async def case_validated_near_cap_session49_then_complete_details50(client, provider, session_dir):
+async def case_validated_near_cap_session49_then_complete_details50(
+    client, provider, session_dir
+):
     session_id = await near_cap_incomplete(client, session_dir)
     before = read_session(session_dir, session_id)
     assert before["collection_turn_count"] == NEAR_CAP
@@ -163,7 +167,9 @@ async def case_validated_near_cap_session49_then_complete_details50(client, prov
 # validated near cap49 then details50 text yes -------------------------------------------------------------------
 
 
-async def case_validated_near_cap49_then_details50_text_yes(client, provider, session_dir):
+async def case_validated_near_cap49_then_details50_text_yes(
+    client, provider, session_dir
+):
     session_id = await near_cap_incomplete(client, session_dir)
     before = read_session(session_dir, session_id)
     calls_before = len(provider.calls)
@@ -229,7 +235,9 @@ async def case_validated_near_cap49_then_details50_text_yes(client, provider, se
 # incomplete session counter50 then ordinary details -------------------------------------------------------------------
 
 
-async def case_incomplete_session_counter50_then_ordinary_details(client, provider, session_dir):
+async def case_incomplete_session_counter50_then_ordinary_details(
+    client, provider, session_dir
+):
     session_id = await seed_session(
         session_dir,
         revision=AT_CAP,
@@ -275,13 +283,13 @@ async def case_incomplete_session_counter50_then_ordinary_details(client, provid
 
 
 async def case_valid_review_counter50_then_change(client, provider, session_dir):
-    session_id = await seeded_review(client, session_dir, revision=AT_CAP, counter=AT_CAP)
+    session_id = await seeded_review(
+        client, session_dir, revision=AT_CAP, counter=AT_CAP
+    )
     before_bytes = raw_bytes(session_dir, session_id)
     calls_before = len(provider.calls)
     provider.script_extraction(change_extraction())
-    _, response = await send_turn(
-        client, session_id, text=CHANGE_TEXT, revision=AT_CAP
-    )
+    _, response = await send_turn(client, session_id, text=CHANGE_TEXT, revision=AT_CAP)
     await assert_error(
         response, status=409, code="turn_limit", message=TURN_LIMIT_MESSAGE
     )
@@ -306,7 +314,9 @@ async def case_valid_review_counter50_then_change(client, provider, session_dir)
 
 
 async def case_completed_session_new_edit(client, provider, session_dir):
-    session_id = await seeded_review(client, session_dir, revision=AT_CAP, counter=AT_CAP)
+    session_id = await seeded_review(
+        client, session_dir, revision=AT_CAP, counter=AT_CAP
+    )
     before = read_session(session_dir, session_id)
     _, confirmed = await post_confirm(
         client, session_id, expected_revision=AT_CAP, review_revision=AT_CAP
@@ -344,8 +354,12 @@ async def case_completed_session_new_edit(client, provider, session_dir):
 # completed exact confirmation request replay -------------------------------------------------------------------
 
 
-async def case_completed_exact_confirmation_request_replay(client, provider, session_dir):
-    session_id = await seeded_review(client, session_dir, revision=AT_CAP, counter=AT_CAP)
+async def case_completed_exact_confirmation_request_replay(
+    client, provider, session_dir
+):
+    session_id = await seeded_review(
+        client, session_dir, revision=AT_CAP, counter=AT_CAP
+    )
     request_id = str(uuid4())
     body = {
         "request_id": request_id,
@@ -378,12 +392,26 @@ async def case_completed_exact_confirmation_request_replay(client, provider, ses
 
 
 CASES = [
-    pytest.param(case_validated_near_cap_session49_then_complete_details50, id="validated_near_cap_session49_then_complete_details50"),
-    pytest.param(case_validated_near_cap49_then_details50_text_yes, id="validated_near_cap49_then_details50_text_yes"),
-    pytest.param(case_incomplete_session_counter50_then_ordinary_details, id="incomplete_session_counter50_then_ordinary_details"),
-    pytest.param(case_valid_review_counter50_then_change, id="valid_review_counter50_then_change"),
+    pytest.param(
+        case_validated_near_cap_session49_then_complete_details50,
+        id="validated_near_cap_session49_then_complete_details50",
+    ),
+    pytest.param(
+        case_validated_near_cap49_then_details50_text_yes,
+        id="validated_near_cap49_then_details50_text_yes",
+    ),
+    pytest.param(
+        case_incomplete_session_counter50_then_ordinary_details,
+        id="incomplete_session_counter50_then_ordinary_details",
+    ),
+    pytest.param(
+        case_valid_review_counter50_then_change, id="valid_review_counter50_then_change"
+    ),
     pytest.param(case_completed_session_new_edit, id="completed_session_new_edit"),
-    pytest.param(case_completed_exact_confirmation_request_replay, id="completed_exact_confirmation_request_replay"),
+    pytest.param(
+        case_completed_exact_confirmation_request_replay,
+        id="completed_exact_confirmation_request_replay",
+    ),
 ]
 
 

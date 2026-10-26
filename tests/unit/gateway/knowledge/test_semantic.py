@@ -145,7 +145,10 @@ def test_unusable_embedding_bodies_are_invalid_content(payload) -> None:
 
 
 EMBED_PROFILE = ServiceProfile(
-    base_url="http://embed.test/v1", model="embed-model", auth_mode="bearer", api_key="k"
+    base_url="http://embed.test/v1",
+    model="embed-model",
+    auth_mode="bearer",
+    api_key="k",
 )
 
 
@@ -155,7 +158,12 @@ def embed_provider(responder, *, with_profile: bool = True):
         role: RoleTransport(role, unexpected(role)).transport
         for role in ("llm", "rag", "stt", "tts")
     }
-    profiles = {"llm": LLM_PROFILE, "rag": RAG_PROFILE, "stt": STT_PROFILE, "tts": TTS_PROFILE}
+    profiles = {
+        "llm": LLM_PROFILE,
+        "rag": RAG_PROFILE,
+        "stt": STT_PROFILE,
+        "tts": TTS_PROFILE,
+    }
     if with_profile:
         profiles["embed"] = EMBED_PROFILE
         transports["embed"] = recorder.transport
@@ -166,7 +174,9 @@ def embed_provider(responder, *, with_profile: bool = True):
 
 
 async def test_embed_posts_the_model_and_texts_with_the_bearer_key() -> None:
-    body = {"data": [{"index": 0, "embedding": [1, 0]}, {"index": 1, "embedding": [0, 1]}]}
+    body = {
+        "data": [{"index": 0, "embedding": [1, 0]}, {"index": 1, "embedding": [0, 1]}]
+    }
     provider, recorder = embed_provider(lambda request, attempt: json_response(body))
 
     vectors = await provider.embed(["one", "two"])
@@ -174,7 +184,10 @@ async def test_embed_posts_the_model_and_texts_with_the_bearer_key() -> None:
     request = recorder.requests[0]
     assert vectors == [[1.0, 0.0], [0.0, 1.0]]
     assert str(request.url) == "http://embed.test/v1/embeddings"
-    assert json.loads(request.content) == {"model": "embed-model", "input": ["one", "two"]}
+    assert json.loads(request.content) == {
+        "model": "embed-model",
+        "input": ["one", "two"],
+    }
     assert request.headers["authorization"] == "Bearer k"
     await provider.close()
 

@@ -101,7 +101,9 @@ DENY_MICROPHONE_JS = """
 
 
 @pytest.fixture(scope="session")
-def browser_type_launch_args(browser_type_launch_args: dict[str, Any]) -> dict[str, Any]:
+def browser_type_launch_args(
+    browser_type_launch_args: dict[str, Any],
+) -> dict[str, Any]:
     args = list(browser_type_launch_args.get("args") or [])
     args += [
         "--use-fake-device-for-media-stream",
@@ -158,7 +160,11 @@ class RequestLog:
             self._changed.notify_all()
 
     def where(
-        self, method: str | None = None, path: str | None = None, *, done: bool | None = None
+        self,
+        method: str | None = None,
+        path: str | None = None,
+        *,
+        done: bool | None = None,
     ) -> list[dict[str, Any]]:
         pattern = re.compile(path) if path else None
         with self._changed:
@@ -178,7 +184,9 @@ class RequestLog:
             while not predicate():
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
-                    raise AssertionError(f"request ledger condition not reached: {what}")
+                    raise AssertionError(
+                        f"request ledger condition not reached: {what}"
+                    )
                 self._changed.wait(min(remaining, 0.25))
 
 
@@ -199,7 +207,12 @@ class Faults:
         self._armed: list[Fault] = []
 
     def fail_next(
-        self, method: str, path: str, *, status: int = 503, code: str = "storage_unavailable"
+        self,
+        method: str,
+        path: str,
+        *,
+        status: int = 503,
+        code: str = "storage_unavailable",
     ) -> Fault:
         fault = Fault(method, path, status, code)
         with self._lock:
@@ -209,7 +222,11 @@ class Faults:
     def take(self, method: str, path: str) -> Fault | None:
         with self._lock:
             for fault in self._armed:
-                if fault.triggered == 0 and fault.method == method and fault.path.search(path):
+                if (
+                    fault.triggered == 0
+                    and fault.method == method
+                    and fault.path.search(path)
+                ):
                     fault.triggered += 1
                     return fault
         return None
@@ -251,7 +268,9 @@ class ObservedApp:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
-        headers = {k.decode("latin-1"): v.decode("latin-1") for k, v in scope["headers"]}
+        headers = {
+            k.decode("latin-1"): v.decode("latin-1") for k, v in scope["headers"]
+        }
         entry = self.log.begin(scope["method"], scope["path"], headers)
         fault = self.faults.take(scope["method"], scope["path"])
         try:
@@ -347,7 +366,10 @@ class AppServer:
     """A real create_app() served by Uvicorn on a loopback socket bound to port 0."""
 
     def __init__(
-        self, session_dir: Path, provider: E2EProvider, knowledge_path: Path | None = None
+        self,
+        session_dir: Path,
+        provider: E2EProvider,
+        knowledge_path: Path | None = None,
     ) -> None:
         self.session_dir = session_dir
         self.provider = provider
@@ -386,7 +408,9 @@ class AppServer:
         self._socket = sock
         assert self.settings is not None
         app = create_app(
-            settings=self.settings, provider=self.provider, knowledge_path=self.knowledge_path
+            settings=self.settings,
+            provider=self.provider,
+            knowledge_path=self.knowledge_path,
         )
         config = uvicorn.Config(
             ObservedApp(WebFront(app), self.log, self.faults),
@@ -405,7 +429,9 @@ class AppServer:
             except BaseException as exc:  # surfaced by the health wait
                 self._thread_error = exc
 
-        thread = threading.Thread(target=run, name=f"e2e-uvicorn-{self.port}", daemon=True)
+        thread = threading.Thread(
+            target=run, name=f"e2e-uvicorn-{self.port}", daemon=True
+        )
         self._thread = thread
         thread.start()
         self._wait_healthy()
@@ -413,14 +439,18 @@ class AppServer:
     def _wait_healthy(self) -> None:
         def healthy() -> bool:
             if not self.running:
-                raise AssertionError(f"server thread exited during startup: {self._thread_error!r}")
+                raise AssertionError(
+                    f"server thread exited during startup: {self._thread_error!r}"
+                )
             try:
                 status, _, _ = self.request("GET", "/health", timeout=1.0)
             except OSError:
                 return False
             return status == 200
 
-        wait_until(healthy, f"/health to answer 200 within {STARTUP_SECONDS}s", STARTUP_SECONDS)
+        wait_until(
+            healthy, f"/health to answer 200 within {STARTUP_SECONDS}s", STARTUP_SECONDS
+        )
 
     def start_backend_api(self) -> None:
         """Start the real private Backend API on a loopback socket, reusing its port."""
@@ -447,9 +477,12 @@ class AppServer:
             daemon=True,
         )
         self._order_thread.start()
+
         def healthy() -> bool:
             try:
-                conn = http.client.HTTPConnection("127.0.0.1", self._order_port, timeout=1)
+                conn = http.client.HTTPConnection(
+                    "127.0.0.1", self._order_port, timeout=1
+                )
                 try:
                     conn.request("GET", "/health")
                     return conn.getresponse().status == 200
@@ -458,7 +491,11 @@ class AppServer:
             except OSError:
                 return False
 
-        wait_until(healthy, "the Backend API /health to answer 200 during E2E startup", STARTUP_SECONDS)
+        wait_until(
+            healthy,
+            "the Backend API /health to answer 200 during E2E startup",
+            STARTUP_SECONDS,
+        )
 
     def stop_backend_api(self) -> None:
         """Stop the real Backend API while keeping its port for a same-origin restart."""
@@ -515,7 +552,11 @@ class AppServer:
             connection.request(method, path, body=body, headers=request_headers)
             response = connection.getresponse()
             data = response.read()
-            return response.status, {k.lower(): v for k, v in response.getheaders()}, data
+            return (
+                response.status,
+                {k.lower(): v for k, v in response.getheaders()},
+                data,
+            )
         finally:
             connection.close()
 
@@ -585,8 +626,6 @@ SPEECH = r"/api/sessions/[^/]+/speech$"
 ORDER_VERIFICATIONS = r"/api/sessions/[^/]+/order-verification$"
 SESSION_ITEM = r"/api/sessions/[^/]+$"
 TRANSCRIPTIONS = r"/api/transcriptions$"
-
-
 
 
 def body_of(entry: dict[str, Any]) -> dict[str, Any]:
@@ -678,15 +717,20 @@ class UI:
     def open(self, page: Page | None = None) -> Response | None:
         target = page or self.page
         response = target.goto(self.server.base_url + "/")
-        expect(target.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
+        expect(
+            target.get_by_role("dialog", name="Northstar Energy support chat")
+        ).to_be_visible()
         return response
 
     def stored_session_id(self, page: Page | None = None) -> str | None:
-        return (page or self.page).evaluate("localStorage.getItem('northstar.session_id')")
+        return (page or self.page).evaluate(
+            "localStorage.getItem('northstar.session_id')"
+        )
 
     def current_session_id(self) -> str:
         wait_until(
-            lambda: self.stored_session_id() is not None, "northstar.session_id in localStorage"
+            lambda: self.stored_session_id() is not None,
+            "northstar.session_id in localStorage",
         )
         value = self.stored_session_id()
         assert value is not None
@@ -727,8 +771,9 @@ class UI:
         self.page.get_by_label("Service postcode").fill(postcode)
         self.page.get_by_label("Verification code").fill(code)
         with self.page.expect_response(
-            lambda r: r.request.method == "POST"
-            and r.url.endswith("/order-verification")
+            lambda r: (
+                r.request.method == "POST" and r.url.endswith("/order-verification")
+            )
         ) as pending:
             self.button("Verify account").click()
         return pending.value
@@ -812,7 +857,9 @@ class UI:
         return self.server.read_session(session_id or self.current_session_id())
 
     def assistant_messages(self, session_id: str | None = None) -> list[dict[str, Any]]:
-        return [m for m in self.disk(session_id)["messages"] if m["role"] == "assistant"]
+        return [
+            m for m in self.disk(session_id)["messages"] if m["role"] == "assistant"
+        ]
 
     def last_assistant(self, session_id: str | None = None) -> dict[str, Any]:
         return self.assistant_messages(session_id)[-1]
@@ -856,7 +903,7 @@ def docker_config() -> DockerE2EConfig:
 @pytest.fixture
 def fresh_bookings(docker_config: DockerE2EConfig) -> None:
     """Start the test with every technician window free, whatever an earlier run booked."""
-    reset_demo_bookings()
+    reset_demo_bookings(docker_config.app_url)
 
 
 @pytest.fixture

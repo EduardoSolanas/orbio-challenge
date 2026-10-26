@@ -99,17 +99,23 @@ def results(ids: list[str] | None = None) -> dict:
     }
 
 
-def write_evidence(tmp_path: Path, *, spec=None, cases=None, collected=None, outcomes=None):
+def write_evidence(
+    tmp_path: Path, *, spec=None, cases=None, collected=None, outcomes=None
+):
     spec_path = tmp_path / "spec.md"
     spec_path.write_text(spec_text() if spec is None else spec, encoding="utf-8")
     manifest_path = tmp_path / "cases.json"
-    manifest_path.write_text(json.dumps(manifest() if cases is None else cases), encoding="utf-8")
+    manifest_path.write_text(
+        json.dumps(manifest() if cases is None else cases), encoding="utf-8"
+    )
     collection_path = tmp_path / "e2e-collection.json"
     collection_path.write_text(
         json.dumps(collection() if collected is None else collected), encoding="utf-8"
     )
     results_path = tmp_path / "e2e-results.json"
-    results_path.write_text(json.dumps(results() if outcomes is None else outcomes), encoding="utf-8")
+    results_path.write_text(
+        json.dumps(results() if outcomes is None else outcomes), encoding="utf-8"
+    )
     return spec_path, manifest_path, collection_path, results_path
 
 
@@ -162,7 +168,9 @@ def test_deselected_journey_fails(tmp_path: Path) -> None:
     assert run(tmp_path, paths) != 0
 
 
-@pytest.mark.parametrize("outcome", ["skipped", "xfailed", "xpassed", "failed", "error"])
+@pytest.mark.parametrize(
+    "outcome", ["skipped", "xfailed", "xpassed", "failed", "error"]
+)
 def test_non_passing_outcome_fails(tmp_path: Path, outcome: str) -> None:
     outcomes = results()
     outcomes["outcomes"][4]["outcome"] = outcome
@@ -222,13 +230,12 @@ def test_help_exits_zero() -> None:
 # temporary git repository with real commits.
 
 
-
-
-
 def write_repo_inputs(root: Path) -> None:
     """Create one file under every gated input path."""
     (root / "gateway").mkdir(parents=True, exist_ok=True)
-    (root / "gateway" / "conversation.py").write_text("def start():\n    return 1\n", encoding="utf-8")
+    (root / "gateway" / "conversation.py").write_text(
+        "def start():\n    return 1\n", encoding="utf-8"
+    )
     (root / "tests" / "e2e").mkdir(parents=True, exist_ok=True)
     (root / "tests" / "e2e" / "test_journeys.py").write_text(
         "def test_placeholder():\n    assert True\n", encoding="utf-8"
@@ -236,8 +243,12 @@ def write_repo_inputs(root: Path) -> None:
     (root / "scripts").mkdir(exist_ok=True)
     (root / "scripts" / "gate.py").write_text("GATE = 1\n", encoding="utf-8")
     (root / "docs").mkdir(exist_ok=True)
-    (root / "docs" / "implementation-contract.md").write_text(spec_text(), encoding="utf-8")
-    (root / "pyproject.toml").write_text("[project]\nname = 'fixture'\n", encoding="utf-8")
+    (root / "docs" / "implementation-contract.md").write_text(
+        spec_text(), encoding="utf-8"
+    )
+    (root / "pyproject.toml").write_text(
+        "[project]\nname = 'fixture'\n", encoding="utf-8"
+    )
 
 
 def write_repo_evidence(root: Path, revision: str):
@@ -259,7 +270,9 @@ def write_repo_evidence(root: Path, revision: str):
     return spec_path, manifest_path, collection_path, results_path
 
 
-def test_evidence_at_inputs_revision_passes_after_reports_only_commit(tmp_path: Path) -> None:
+def test_evidence_at_inputs_revision_passes_after_reports_only_commit(
+    tmp_path: Path,
+) -> None:
     init_repo(tmp_path)
     write_repo_inputs(tmp_path)
     inputs_revision = commit_all(tmp_path, "code at inputs revision")

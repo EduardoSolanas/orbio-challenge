@@ -70,7 +70,9 @@ def order_correction_extraction():
     )
 
 
-async def post_turn(client, provider, session_id, *, text, revision, extraction, answer=None):
+async def post_turn(
+    client, provider, session_id, *, text, revision, extraction, answer=None
+):
     provider.script_extraction(extraction)
     if answer is not None:
         provider.script_answer(answer)
@@ -86,13 +88,18 @@ async def post_turn(client, provider, session_id, *, text, revision, extraction,
 # resume-01 ------------------------------------------------------------------
 
 
-async def test_resume_01_review_state_resumes_across_restart(settings, provider, session_dir):
+async def test_resume_01_review_state_resumes_across_restart(
+    settings, provider, session_dir
+):
     async with app_client(settings, provider) as first:
         session_id = await start_session(first)
         _, reviewed = await post_turn(
-            first, provider, session_id,
+            first,
+            provider,
+            session_id,
             text="My order NS-000123 arrived broken. It is a damaged item and high urgency.",
-            revision=0, extraction=full_extraction(),
+            revision=0,
+            extraction=full_extraction(),
         )
         assert reviewed["revision"] == 1
         assert reviewed["status"] == "awaiting_confirmation"
@@ -100,8 +107,11 @@ async def test_resume_01_review_state_resumes_across_restart(settings, provider,
         assert reviewed["summary"] == FULL_SUMMARY
 
         _, answered = await post_turn(
-            first, provider, session_id,
-            text=RETURN_Q, revision=1,
+            first,
+            provider,
+            session_id,
+            text=RETURN_Q,
+            revision=1,
             extraction=question_extraction(),
             answer=grounded(RETURN_ANSWER_TEXT, ["faq-returns"]),
         )
@@ -125,7 +135,11 @@ async def test_resume_01_review_state_resumes_across_restart(settings, provider,
         assert view["slots"] == FULL_SLOTS
         assert served_messages(view["messages"]) == committed["messages"]
         assert [m["role"] for m in view["messages"]] == [
-            "assistant", "user", "assistant", "user", "assistant",
+            "assistant",
+            "user",
+            "assistant",
+            "user",
+            "assistant",
         ]
         assert view["messages"][-1]["citations"] == [seed_citation("faq-returns")]
         assert view["pending_clarifications"] == {}
@@ -157,7 +171,10 @@ async def test_resume_01_review_state_resumes_across_restart(settings, provider,
             "confirmed_at": disk["confirmation"]["confirmed_at"],
             "review_revision": 1,
         }
-        assert disk["messages"] == served_messages(view["messages"]) + disk["messages"][-2:]
+        assert (
+            disk["messages"]
+            == served_messages(view["messages"]) + disk["messages"][-2:]
+        )
         assert disk["requests"][-1]["request_id"] == confirm_id
         assert disk["requests"][-1]["response"] == persisted_response(receipt)
 
@@ -183,8 +200,12 @@ async def test_resume_02_facts_survive_beyond_twelve_message_window(
     async with app_client(settings, provider) as client:
         session_id = await start_session(client)
         _, partial = await post_turn(
-            client, provider, session_id,
-            text=PART_TEXT, revision=0, extraction=part_extraction(),
+            client,
+            provider,
+            session_id,
+            text=PART_TEXT,
+            revision=0,
+            extraction=part_extraction(),
         )
         assert partial["revision"] == 1
 
@@ -192,15 +213,21 @@ async def test_resume_02_facts_survive_beyond_twelve_message_window(
         for index in range(8):
             if index % 2 == 0:
                 _, detour = await post_turn(
-                    client, provider, session_id,
-                    text=SOCIAL_TEXT, revision=revision,
+                    client,
+                    provider,
+                    session_id,
+                    text=SOCIAL_TEXT,
+                    revision=revision,
                     extraction=social_extraction(),
                 )
                 assert detour["reply"] == SOCIAL_ACKNOWLEDGMENT
             else:
                 _, detour = await post_turn(
-                    client, provider, session_id,
-                    text=RETURN_Q, revision=revision,
+                    client,
+                    provider,
+                    session_id,
+                    text=RETURN_Q,
+                    revision=revision,
                     extraction=question_extraction(),
                     answer=grounded(RETURN_ANSWER_TEXT, ["faq-returns"]),
                 )
@@ -233,13 +260,19 @@ async def test_resume_02_facts_survive_beyond_twelve_message_window(
         ]
 
         _, categorized = await post_turn(
-            client, provider, session_id,
-            text=CATEGORY_TEXT, revision=revision,
+            client,
+            provider,
+            session_id,
+            text=CATEGORY_TEXT,
+            revision=revision,
             extraction=category_extraction(),
         )
         _, urgent = await post_turn(
-            client, provider, session_id,
-            text=HIGH_TEXT, revision=categorized["revision"],
+            client,
+            provider,
+            session_id,
+            text=HIGH_TEXT,
+            revision=categorized["revision"],
             extraction=high_extraction(),
         )
         assert urgent["status"] == "awaiting_confirmation"
@@ -258,14 +291,21 @@ async def test_resume_03_faq_detour_then_correction_keeps_sibling_facts(
     async with app_client(settings, provider) as client:
         session_id = await start_session(client)
         _, partial = await post_turn(
-            client, provider, session_id,
-            text=PART_TEXT, revision=0, extraction=part_extraction(),
+            client,
+            provider,
+            session_id,
+            text=PART_TEXT,
+            revision=0,
+            extraction=part_extraction(),
         )
         assert partial["revision"] == 1
 
         _, answered = await post_turn(
-            client, provider, session_id,
-            text=RETURN_Q, revision=1,
+            client,
+            provider,
+            session_id,
+            text=RETURN_Q,
+            revision=1,
             extraction=question_extraction(),
             answer=grounded(RETURN_ANSWER_TEXT, ["faq-returns"]),
         )
@@ -274,8 +314,11 @@ async def test_resume_03_faq_detour_then_correction_keeps_sibling_facts(
         assert answered["slots"]["description"] == "My order arrived broken"
 
         _, corrected = await post_turn(
-            client, provider, session_id,
-            text="Actually the order is NS-000456.", revision=2,
+            client,
+            provider,
+            session_id,
+            text="Actually the order is NS-000456.",
+            revision=2,
             extraction=order_correction_extraction(),
         )
         assert corrected["slots"]["order_number"] == "NS-000456"
@@ -305,7 +348,6 @@ def ambiguous_extraction():
     )
 
 
-
 def last_extract_context(provider):
     return next(
         context for method, context in reversed(provider.calls) if method == "extract"
@@ -318,22 +360,32 @@ async def test_context_01_window_matches_persisted_history_and_keeps_the_old_ord
     async with app_client(settings, provider) as client:
         session_id = await start_session(client)
         _, partial = await post_turn(
-            client, provider, session_id,
-            text=PART_TEXT, revision=0, extraction=part_extraction(),
+            client,
+            provider,
+            session_id,
+            text=PART_TEXT,
+            revision=0,
+            extraction=part_extraction(),
         )
         revision = partial["revision"]
         for index in range(12):
             if index % 2 == 0:
                 _, detour = await post_turn(
-                    client, provider, session_id,
-                    text=SOCIAL_TEXT, revision=revision,
+                    client,
+                    provider,
+                    session_id,
+                    text=SOCIAL_TEXT,
+                    revision=revision,
                     extraction=social_extraction(),
                 )
                 assert detour["reply"] == SOCIAL_ACKNOWLEDGMENT
             else:
                 _, detour = await post_turn(
-                    client, provider, session_id,
-                    text=RETURN_Q, revision=revision,
+                    client,
+                    provider,
+                    session_id,
+                    text=RETURN_Q,
+                    revision=revision,
                     extraction=question_extraction(),
                     answer=grounded(RETURN_ANSWER_TEXT, ["faq-returns"]),
                 )
@@ -387,8 +439,12 @@ async def test_context_02_pending_ambiguity_survives_faq_detours(
     async with app_client(settings, provider) as client:
         session_id = await start_session(client)
         _, ambiguous = await post_turn(
-            client, provider, session_id,
-            text=AMBIGUOUS_TEXT, revision=0, extraction=ambiguous_extraction(),
+            client,
+            provider,
+            session_id,
+            text=AMBIGUOUS_TEXT,
+            revision=0,
+            extraction=ambiguous_extraction(),
         )
         assert ambiguous["pending_clarifications"] == {"category": AMBIGUOUS_CATEGORY}
         assert ambiguous["slots"]["order_number"] == "NS-000123"
@@ -397,8 +453,11 @@ async def test_context_02_pending_ambiguity_survives_faq_detours(
         revision = ambiguous["revision"]
         for _ in range(2):
             _, answered = await post_turn(
-                client, provider, session_id,
-                text=RETURN_Q, revision=revision,
+                client,
+                provider,
+                session_id,
+                text=RETURN_Q,
+                revision=revision,
                 extraction=question_extraction(),
                 answer=grounded(RETURN_ANSWER_TEXT, ["faq-returns"]),
             )
@@ -420,8 +479,11 @@ async def test_context_02_pending_ambiguity_survives_faq_detours(
         assert context.intake_started is True
 
         _, resolved = await post_turn(
-            client, provider, session_id,
-            text="It is a delivery problem.", revision=revision,
+            client,
+            provider,
+            session_id,
+            text="It is a delivery problem.",
+            revision=revision,
             extraction=make_extraction(candidates={"category": "delivery"}),
         )
         assert resolved["pending_clarifications"] == {}
@@ -455,8 +517,12 @@ async def test_context_03_provider_context_mutation_cannot_alter_stored_json(
     async with app_client(settings, provider) as client:
         session_id = await start_session(client)
         _, ambiguous = await post_turn(
-            client, provider, session_id,
-            text=AMBIGUOUS_TEXT, revision=0, extraction=ambiguous_extraction(),
+            client,
+            provider,
+            session_id,
+            text=AMBIGUOUS_TEXT,
+            revision=0,
+            extraction=ambiguous_extraction(),
         )
         assert ambiguous["pending_clarifications"] == {"category": AMBIGUOUS_CATEGORY}
 
@@ -497,8 +563,12 @@ async def test_context_04_rag_context_carries_only_its_question_sources_and_lang
     async with app_client(settings, provider) as client:
         session_id = await start_session(client)
         _, partial = await post_turn(
-            client, provider, session_id,
-            text=PART_TEXT, revision=0, extraction=part_extraction(),
+            client,
+            provider,
+            session_id,
+            text=PART_TEXT,
+            revision=0,
+            extraction=part_extraction(),
         )
         assert partial["slots"]["order_number"] == "NS-000123"
 
@@ -509,8 +579,11 @@ async def test_context_04_rag_context_carries_only_its_question_sources_and_lang
             requested_language="es",
         )
         _, answered = await post_turn(
-            client, provider, session_id,
-            text=RETURN_Q, revision=partial["revision"],
+            client,
+            provider,
+            session_id,
+            text=RETURN_Q,
+            revision=partial["revision"],
             extraction=spanish_question,
             answer=grounded(RETURN_ANSWER_TEXT, ["faq-returns"]),
         )
@@ -567,14 +640,16 @@ async def test_context_05_injected_rag_source_cannot_become_a_citation(
     async with app_client(settings, provider) as client:
         session_id = await start_session(client)
         _, partial = await post_turn(
-            client, provider, session_id,
-            text=PART_TEXT, revision=0, extraction=part_extraction(),
+            client,
+            provider,
+            session_id,
+            text=PART_TEXT,
+            revision=0,
+            extraction=part_extraction(),
         )
 
         provider.script_extraction(question_extraction())
-        provider.script_answer(
-            grounded("An injected answer.", ["faq-injected"])
-        )
+        provider.script_answer(grounded("An injected answer.", ["faq-injected"]))
         injected = await client.post(
             f"/api/sessions/{session_id}/turns",
             json=turn_body(RETURN_Q, partial["revision"], str(uuid4())),
@@ -596,8 +671,12 @@ async def test_context_06_policy_and_social_detours_preserve_review_state(
     async with app_client(settings, provider) as client:
         session_id = await start_session(client)
         _, reviewed = await post_turn(
-            client, provider, session_id,
-            text=FULL_TEXT, revision=0, extraction=full_extraction(),
+            client,
+            provider,
+            session_id,
+            text=FULL_TEXT,
+            revision=0,
+            extraction=full_extraction(),
         )
         assert reviewed["status"] == "awaiting_confirmation"
         assert reviewed["pending_review_revision"] == 1
@@ -605,8 +684,11 @@ async def test_context_06_policy_and_social_detours_preserve_review_state(
         assert reviewed["summary"] == FULL_SUMMARY
 
         _, social = await post_turn(
-            client, provider, session_id,
-            text=SOCIAL_TEXT, revision=reviewed["revision"],
+            client,
+            provider,
+            session_id,
+            text=SOCIAL_TEXT,
+            revision=reviewed["revision"],
             extraction=social_extraction(),
         )
         assert social["reply"] == SOCIAL_ACKNOWLEDGMENT
@@ -616,8 +698,11 @@ async def test_context_06_policy_and_social_detours_preserve_review_state(
         assert social["summary"] == FULL_SUMMARY
 
         _, answered = await post_turn(
-            client, provider, session_id,
-            text=RETURN_Q, revision=social["revision"],
+            client,
+            provider,
+            session_id,
+            text=RETURN_Q,
+            revision=social["revision"],
             extraction=question_extraction(),
             answer=grounded(RETURN_ANSWER_TEXT, ["faq-returns"]),
         )
@@ -640,6 +725,3 @@ async def test_context_06_policy_and_social_detours_preserve_review_state(
         assert disk["summary"] == FULL_SUMMARY
         assert disk["status"] == "awaiting_confirmation"
         assert len(disk["messages"]) == 7
-
-
-

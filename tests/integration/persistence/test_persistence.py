@@ -65,7 +65,6 @@ PART_SLOTS = {
 }
 
 
-
 def assert_error_envelope(response, *, status, code, message, retryable):
     """Exact error envelope; storage errors keep their table retryability."""
 
@@ -153,7 +152,9 @@ async def case_commit_normal_partial_turn_reopen_file(settings, provider, sessio
 # stop app new instance same directory resume partial -------------------------------------------------------------------
 
 
-async def case_stop_app_new_instance_same_directory_resume_partial(settings, provider, session_dir):
+async def case_stop_app_new_instance_same_directory_resume_partial(
+    settings, provider, session_dir
+):
     async with app_client(settings, provider) as first:
         session_id = await start_session(first)
         _, response = await post_turn(
@@ -218,7 +219,9 @@ def scoped_replace_failure(target: Path, real_replace):
     return replace
 
 
-async def case_scoped_os_replace_failure_during_turn_save(settings, provider, session_dir):
+async def case_scoped_os_replace_failure_during_turn_save(
+    settings, provider, session_dir
+):
     async with app_client(settings, provider) as client:
         session_id = await start_session(client)
         _, response = await post_turn(
@@ -243,9 +246,7 @@ async def case_scoped_os_replace_failure_during_turn_save(settings, provider, se
             "gateway.storage.os.replace",
             side_effect=scoped_replace_failure(target, real_replace),
         ):
-            failed = await client.post(
-                f"/api/sessions/{session_id}/turns", json=body
-            )
+            failed = await client.post(f"/api/sessions/{session_id}/turns", json=body)
 
         assert_error_envelope(
             failed,
@@ -259,7 +260,9 @@ async def case_scoped_os_replace_failure_during_turn_save(settings, provider, se
         assert_no_temp_files(session_dir)
         after = read_session(session_dir, session_id)
         assert after == original_disk
-        assert len(provider.calls) == calls_before + 1  # extraction happened, save failed
+        assert (
+            len(provider.calls) == calls_before + 1
+        )  # extraction happened, save failed
 
         # No phantom replay record: the same request is not a replay and can
         # commit exactly once after storage recovers.
@@ -274,7 +277,9 @@ async def case_scoped_os_replace_failure_during_turn_save(settings, provider, se
         assert len(disk["messages"]) == len(original_disk["messages"]) + 2
         assert len(disk["requests"]) == 2
         assert disk["requests"][-1]["request_id"] == request_id
-        assert disk["requests"][-1]["response"] == {key: value for key, value in payload.items() if key != "speech_available"}
+        assert disk["requests"][-1]["response"] == {
+            key: value for key, value in payload.items() if key != "speech_available"
+        }
         assert_no_temp_files(session_dir)
 
 
@@ -283,6 +288,7 @@ async def case_scoped_os_replace_failure_during_turn_save(settings, provider, se
 
 async def case_scoped_create_write_replace_failure(settings, provider, session_dir):
     async with app_client(settings, provider) as client:
+
         def failing_create(*args, **kwargs):
             raise OSError("scoped temp-file create failure")
 
@@ -334,9 +340,11 @@ async def case_corrupt_existing_session_json(settings, provider, session_dir):
     async with app_client(settings, provider) as client:
         session_id = await start_session(client)
         target = session_path(session_dir, session_id)
-        corrupt = b'{"schema_version": 1, "session_id": "' + session_id.encode(
-            "ascii"
-        ) + b'", "revision": '
+        corrupt = (
+            b'{"schema_version": 1, "session_id": "'
+            + session_id.encode("ascii")
+            + b'", "revision": '
+        )
         target.write_bytes(corrupt)
 
         loaded = await client.get(f"/api/sessions/{session_id}")
@@ -412,7 +420,9 @@ async def case_persisted_future_schema_version(settings, provider, session_dir):
 # path like session id through public route -------------------------------------------------------------------
 
 
-async def case_path_like_session_id_through_public_route(settings, provider, session_dir):
+async def case_path_like_session_id_through_public_route(
+    settings, provider, session_dir
+):
     outside = session_dir.parent / "evil.json"
     traversal = "..%2F..%2Fsessions%2Fevil.json"
 
@@ -470,9 +480,7 @@ async def case_resume_rejected_session_pending_issue(settings, provider, session
         assert rejected_disk["pending_review_revision"] is None
 
         # An invalid urgency candidate keeps the rejection and records the issue.
-        provider.script_extraction(
-            make_invalid_urgency_extraction()
-        )
+        provider.script_extraction(make_invalid_urgency_extraction())
         request_id = str(uuid4())
         response = await client.post(
             f"/api/sessions/{session_id}/turns",
@@ -541,25 +549,38 @@ async def case_resume_rejected_session_pending_issue(settings, provider, session
             assert final_disk["review_rejected"] is False
             assert final_disk["pending_review_revision"] == 4
             assert final_disk["pending_clarifications"] == {}
-            assert final_disk["requests"][-1]["response"] == persisted_response(recovered_payload)
+            assert final_disk["requests"][-1]["response"] == persisted_response(
+                recovered_payload
+            )
 
 
 CASES = [
-    ("commit_normal_partial_turn_reopen_file", case_commit_normal_partial_turn_reopen_file),
-    ("stop_app_new_instance_same_directory_resume_partial", case_stop_app_new_instance_same_directory_resume_partial),
-    ("scoped_os_replace_failure_during_turn_save", case_scoped_os_replace_failure_during_turn_save),
+    (
+        "commit_normal_partial_turn_reopen_file",
+        case_commit_normal_partial_turn_reopen_file,
+    ),
+    (
+        "stop_app_new_instance_same_directory_resume_partial",
+        case_stop_app_new_instance_same_directory_resume_partial,
+    ),
+    (
+        "scoped_os_replace_failure_during_turn_save",
+        case_scoped_os_replace_failure_during_turn_save,
+    ),
     ("scoped_create_write_replace_failure", case_scoped_create_write_replace_failure),
     ("corrupt_existing_session_json", case_corrupt_existing_session_json),
     ("persisted_future_schema_version", case_persisted_future_schema_version),
-    ("path_like_session_id_through_public_route", case_path_like_session_id_through_public_route),
-    ("resume_rejected_session_pending_issue", case_resume_rejected_session_pending_issue),
+    (
+        "path_like_session_id_through_public_route",
+        case_path_like_session_id_through_public_route,
+    ),
+    (
+        "resume_rejected_session_pending_issue",
+        case_resume_rejected_session_pending_issue,
+    ),
 ]
 
 
-@pytest.mark.parametrize(
-    "case_id,case", CASES, ids=[case_id for case_id, _ in CASES]
-)
-async def test_persistence_and_restart(
-    case_id, case, settings, provider, session_dir
-):
+@pytest.mark.parametrize("case_id,case", CASES, ids=[case_id for case_id, _ in CASES])
+async def test_persistence_and_restart(case_id, case, settings, provider, session_dir):
     await case(settings, provider, session_dir)

@@ -81,9 +81,7 @@ class RaisingProvider(ScriptedProvider):
 
     async def extract(self, context):
         self.calls.append(("extract", context))
-        raise RuntimeError(
-            f"{SENTINEL_KEY} while handling {SENTINEL_CUSTOMER}"
-        )
+        raise RuntimeError(f"{SENTINEL_KEY} while handling {SENTINEL_CUSTOMER}")
 
 
 class ClosingTransport(httpx.MockTransport):
@@ -101,6 +99,7 @@ class ClosingTransport(httpx.MockTransport):
 def closing_provider(settings):
     transports = {}
     for role in ROLES:
+
         def handler(request, _role=role):
             raise AssertionError(f"unexpected {_role} wire call")
 
@@ -171,7 +170,9 @@ async def case_wav_input_limit_above_4000_rejected(session_dir, monkeypatch):
 # real startup scoped temp file creation write permissionerror: unwritable session storage ----------------------------------------
 
 
-async def case_real_startup_scoped_temp_file_creation_write_permissionerror(session_dir, monkeypatch):
+async def case_real_startup_scoped_temp_file_creation_write_permissionerror(
+    session_dir, monkeypatch
+):
     settings = settings_from(none_auth_env(session_dir))
     provider = ScriptedProvider()
     app = create_app(settings=settings, provider=provider)
@@ -226,7 +227,9 @@ async def case_valid_health_probe(session_dir, monkeypatch):
     assert app.state.ready is False
 
 
-async def case_after_healthy_startup_inject_permissionerror_into_actual(session_dir, monkeypatch):
+async def case_after_healthy_startup_inject_permissionerror_into_actual(
+    session_dir, monkeypatch
+):
     settings = settings_from(none_auth_env(session_dir))
     provider, transports = closing_provider(settings)
     app = create_app(settings=settings, provider=provider)
@@ -391,7 +394,9 @@ async def case_two_app_instances(tmp_path):
 # during real turn route fake extract raises runtimeerror: sanitized unexpected error on the real turn route ------------------
 
 
-async def case_during_real_turn_route_fake_extract_raises_runtimeerror(session_dir, caplog):
+async def case_during_real_turn_route_fake_extract_raises_runtimeerror(
+    session_dir, caplog
+):
     settings = settings_from(none_auth_env(session_dir))
     provider = RaisingProvider()
     app = create_app(settings=settings, provider=provider)

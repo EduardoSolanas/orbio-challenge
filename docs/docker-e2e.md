@@ -4,7 +4,14 @@ The fake-provider journeys and the real deployment gate are separate suites. The
 
 ## Setup
 
-1. Deploy an isolated, disposable Northstar stack; do not point this at production. The compose `sessions` volume is test data and should be removed after the run (`docker compose down -v`).
+1. Deploy a dedicated, disposable Northstar stack as its own Compose project with its own volumes and port; never point this at production or at your demo stack. The booking journeys empty every account's bookings, so they act only on a project whose name ends in `-e2e` and whose published page is the origin under test:
+
+   ```sh
+   APP_PUBLISH_PORT=8010 docker compose -p northstar-e2e up -d --build --wait
+   export E2E_DOCKER_BASE_URL=http://127.0.0.1:8010 E2E_COMPOSE_PROJECT=northstar-e2e
+   ```
+
+   Remove it afterwards with `docker compose -p northstar-e2e down -v`.
 2. Copy `tests/e2e/.env.docker.example` to `tests/e2e/.env.docker` and set `E2E_DOCKER_BASE_URL` to the application origin.
 3. Copy `tests/e2e/.env.judge.example` to `tests/e2e/.env.judge`; set the exact judge model and all required numeric/prompt settings. If the judge requires authentication, set `E2E_JUDGE_API_KEY` in the process environment; never commit it to the file.
 4. Run:

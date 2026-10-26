@@ -109,7 +109,11 @@ def test_extraction_context_accepts_spanish_reply_language():
 
 
 def test_knowledge_context_defaults_to_english_and_accepts_spanish():
-    base = {"question": "¿Cuánto tarda la entrega?", "kb_version": "2026-10-22", "sources": []}
+    base = {
+        "question": "¿Cuánto tarda la entrega?",
+        "kb_version": "2026-10-22",
+        "sources": [],
+    }
     assert KnowledgeContext(**base).reply_language == "en"
     assert KnowledgeContext(**base, reply_language="es").reply_language == "es"
     with pytest.raises(ValidationError):

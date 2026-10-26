@@ -25,7 +25,9 @@ from tests.support.fakes import (
     x_part,
 )
 
-pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+pytestmark = (
+    pytest.mark.browser_e2e
+)  # controlled-provider browser workflow, never live Docker/provider proof
 
 NEXT_TASK = "() => new Promise(resolve => setTimeout(resolve, 0))"
 PLAYING = """() => {
@@ -34,7 +36,9 @@ PLAYING = """() => {
 }"""
 
 
-@pytest.mark.parametrize("case_id", [pytest.param("stale_voice_results", id="stale_voice_results")])
+@pytest.mark.parametrize(
+    "case_id", [pytest.param("stale_voice_results", id="stale_voice_results")]
+)
 def test_stale_voice_results(case_id, ui, server, provider, tmp_path):
     wav = make_wav()
     wav_path = tmp_path / "valid-16k-mono.wav"
@@ -54,14 +58,19 @@ def test_stale_voice_results(case_id, ui, server, provider, tmp_path):
     old_bytes = server.session_bytes(old_sid)
 
     # WAV attachment starts STT automatically. Lock every chat button until it ends.
-    with ui.page.expect_response(lambda r: r.url.endswith("/api/transcriptions")) as pending:
+    with ui.page.expect_response(
+        lambda r: r.url.endswith("/api/transcriptions")
+    ) as pending:
         ui.upload(wav_path)
         stt_gate.wait_entered(timeout=2)
         expect(ui.message).to_have_js_property("readOnly", True)
         assert ui.page.locator("#support-chat button").evaluate_all(
             "buttons => buttons.length > 0 && buttons.every(button => button.disabled)"
         )
-        assert len(ui.transcription_posts()) == 1 and ui.transcription_posts()[0]["done"] is False
+        assert (
+            len(ui.transcription_posts()) == 1
+            and ui.transcription_posts()[0]["done"] is False
+        )
         ui.cp("stale_voice_results.stt-locks-chat-controls")
         stt_gate.release()
     assert pending.value.status == 200
@@ -73,7 +82,9 @@ def test_stale_voice_results(case_id, ui, server, provider, tmp_path):
 
     # A new intake becomes available once transcription releases its lock.
     assert ui.new_intake().status == 201
-    wait_until(lambda: ui.stored_session_id() != old_sid, "new session id in localStorage")
+    wait_until(
+        lambda: ui.stored_session_id() != old_sid, "new session id in localStorage"
+    )
     new_sid = ui.current_session_id()
     new_bytes = server.session_bytes(new_sid)
     ui.page.evaluate(NEXT_TASK)
@@ -104,8 +115,11 @@ def test_stale_voice_results(case_id, ui, server, provider, tmp_path):
     ui.play_button(reply_a["id"]).click()
     tts_a_gate.wait_entered()
     with ui.page.expect_response(
-        lambda r: r.url.endswith("/speech")
-        and json.loads(r.request.post_data or "{}").get("message_id") == reply_b["id"]
+        lambda r: (
+            r.url.endswith("/speech")
+            and json.loads(r.request.post_data or "{}").get("message_id")
+            == reply_b["id"]
+        )
     ) as pending:
         ui.play_button(reply_b["id"]).click()
     assert pending.value.status == 200
@@ -115,13 +129,21 @@ def test_stale_voice_results(case_id, ui, server, provider, tmp_path):
     tts_a_gate.release()
     provider.wait_finished("synthesize", 2)
     ui.page.evaluate(NEXT_TASK)
-    assert [body_of(p)["message_id"] for p in ui.speech_posts()] == [reply_a["id"], reply_b["id"]]
-    assert [c["text"] for c in provider.calls("synthesize")] == [ASK_CATEGORY, ASK_URGENCY]
+    assert [body_of(p)["message_id"] for p in ui.speech_posts()] == [
+        reply_a["id"],
+        reply_b["id"],
+    ]
+    assert [c["text"] for c in provider.calls("synthesize")] == [
+        ASK_CATEGORY,
+        ASK_URGENCY,
+    ]
     expect(ui.audio).to_have_attribute("src", src_b)
     spy = ui.spy()
     created = [c["url"] for c in spy["created"]]
     assert src_b in created and src_b not in spy["revoked"]
-    assert set(created) - set(spy["revoked"]) == {src_b}, "stale audio URLs must be revoked"
+    assert set(created) - set(spy["revoked"]) == {src_b}, (
+        "stale audio URLs must be revoked"
+    )
     assert all(c["type"] == "audio/mpeg" for c in spy["created"])
     assert server.session_bytes(new_sid) == before_audio
     ui.cp("stale_voice_results.only-latest-tts-owns-audio")
@@ -138,7 +160,9 @@ def test_stale_voice_results(case_id, ui, server, provider, tmp_path):
         "() => window.dispatchEvent(new PageTransitionEvent('pagehide', {persisted: false}))"
     )
     expect(ui.audio).to_have_js_property("paused", True)
-    wait_until(lambda: src_b in ui.spy()["revoked"], "assigned audio URL revoked on pagehide")
+    wait_until(
+        lambda: src_b in ui.spy()["revoked"], "assigned audio URL revoked on pagehide"
+    )
     assert provider.methods() == [
         "transcribe", "extract", "extract", "synthesize", "synthesize", "extract",
     ]  # fmt: skip

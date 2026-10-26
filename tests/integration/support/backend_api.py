@@ -75,7 +75,9 @@ class LocalBackendApiServer:
             except BaseException as exc:  # surfaced by the health wait
                 self._thread_error = exc
 
-        thread = threading.Thread(target=run, name=f"backend-api-{self.port}", daemon=True)
+        thread = threading.Thread(
+            target=run, name=f"backend-api-{self.port}", daemon=True
+        )
         self._thread = thread
         thread.start()
         self._wait_healthy()
@@ -85,14 +87,20 @@ class LocalBackendApiServer:
 
         def healthy() -> bool:
             if self._thread is None or not self._thread.is_alive():
-                raise AssertionError(f"backend API thread exited: {self._thread_error!r}")
+                raise AssertionError(
+                    f"backend API thread exited: {self._thread_error!r}"
+                )
             try:
-                with urllib.request.urlopen(f"{self.base_url}/health", timeout=1) as response:
+                with urllib.request.urlopen(
+                    f"{self.base_url}/health", timeout=1
+                ) as response:
                     return response.status == 200
             except OSError:
                 return False
 
-        wait_until(healthy, f"backend API /health within {STARTUP_SECONDS}s", STARTUP_SECONDS)
+        wait_until(
+            healthy, f"backend API /health within {STARTUP_SECONDS}s", STARTUP_SECONDS
+        )
 
     def stop(self) -> None:
         server, thread = self._server, self._thread

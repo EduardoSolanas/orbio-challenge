@@ -33,7 +33,9 @@ DOCKER_PROVIDER = "real-provider"
 # "full E2E" (any separator/case) is forbidden unless the same line carries an
 # explicit layer qualification.
 FULL_E2E = re.compile(r"full[\s_\-]*e2e", re.IGNORECASE)
-QUALIFIED = re.compile(r"controlled-provider|controlled provider|real-docker|real docker", re.IGNORECASE)
+QUALIFIED = re.compile(
+    r"controlled-provider|controlled provider|real-docker|real docker", re.IGNORECASE
+)
 
 # Live-coverage claims that must never appear in controlled-provider evidence.
 LIVE_CLAIM = re.compile(
@@ -85,9 +87,7 @@ def check_full_e2e_naming(path: Path, errors: list[str]) -> None:
         return
     for lineno, line in enumerate(text.splitlines(), start=1):
         if FULL_E2E.search(line) and not QUALIFIED.search(line):
-            errors.append(
-                f"sources: unqualified 'full E2E' in {path.name}:{lineno}"
-            )
+            errors.append(f"sources: unqualified 'full E2E' in {path.name}:{lineno}")
 
 
 def check_no_secrets(payload: Any, label: str, errors: list[str]) -> None:
@@ -97,10 +97,14 @@ def check_no_secrets(payload: Any, label: str, errors: list[str]) -> None:
         if isinstance(value, dict):
             for key, item in value.items():
                 if isinstance(key, str) and key.lower() in SECRET_KEYS:
-                    if isinstance(item, str) and item.strip().lower() not in SECRET_ALLOWLIST:
+                    if (
+                        isinstance(item, str)
+                        and item.strip().lower() not in SECRET_ALLOWLIST
+                    ):
                         errors.append(f"{label}: secret value under key {key!r}")
                     elif item not in (None, "") and not (
-                        isinstance(item, str) and item.strip().lower() in SECRET_ALLOWLIST
+                        isinstance(item, str)
+                        and item.strip().lower() in SECRET_ALLOWLIST
                     ):
                         errors.append(f"{label}: secret value under key {key!r}")
                 else:
@@ -117,9 +121,7 @@ def check_report_file(path: Path, errors: list[str]) -> None:
         return
     for lineno, line in enumerate(text.splitlines(), start=1):
         if FULL_E2E.search(line) and not QUALIFIED.search(line):
-            errors.append(
-                f"report: unqualified 'full E2E' in {path.name}:{lineno}"
-            )
+            errors.append(f"report: unqualified 'full E2E' in {path.name}:{lineno}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -128,10 +130,20 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--collection", required=True, help="pytest collection JSON")
     parser.add_argument("--results", required=True, help="pytest results JSON")
-    parser.add_argument("--sources-dir", required=True, help="directory of e2e test sources to scan")
-    parser.add_argument("--controlled-config", default=None, help="controlled run-config JSON")
-    parser.add_argument("--require-docker", action="store_true", help="also require real-Docker evidence")
-    parser.add_argument("--docker-config", default=None, help="real-Docker run-config JSON")
+    parser.add_argument(
+        "--sources-dir", required=True, help="directory of e2e test sources to scan"
+    )
+    parser.add_argument(
+        "--controlled-config", default=None, help="controlled run-config JSON"
+    )
+    parser.add_argument(
+        "--require-docker",
+        action="store_true",
+        help="also require real-Docker evidence",
+    )
+    parser.add_argument(
+        "--docker-config", default=None, help="real-Docker run-config JSON"
+    )
     parser.add_argument("--docker-xml", default=None, help="real-Docker JUnit XML")
     args = parser.parse_args(argv)
 
@@ -149,18 +161,27 @@ def main(argv: list[str] | None = None) -> int:
         for path in sorted(sources.glob("*.py")) + sorted(sources.glob("*.json")):
             check_full_e2e_naming(path, errors)
     for name in ("collection", "results"):
-        check_report_file(Path(args.collection if name == "collection" else args.results), errors)
+        check_report_file(
+            Path(args.collection if name == "collection" else args.results), errors
+        )
 
     if args.controlled_config:
         config = load_json(Path(args.controlled_config), "controlled-config", errors)
         if config is not None:
-            if not isinstance(config, dict) or config.get("environment_type") != CONTROLLED_ENVIRONMENT:
-                errors.append("controlled-config: environment_type must be 'controlled-provider'")
+            if (
+                not isinstance(config, dict)
+                or config.get("environment_type") != CONTROLLED_ENVIRONMENT
+            ):
+                errors.append(
+                    "controlled-config: environment_type must be 'controlled-provider'"
+                )
             check_no_secrets(config, "controlled-config", errors)
 
     if args.require_docker:
         if not args.docker_config or not args.docker_xml:
-            errors.append("docker: --require-docker needs --docker-config and --docker-xml")
+            errors.append(
+                "docker: --require-docker needs --docker-config and --docker-xml"
+            )
         else:
             docker_config = load_json(Path(args.docker_config), "docker-config", errors)
             if docker_config is not None:
@@ -168,9 +189,13 @@ def main(argv: list[str] | None = None) -> int:
                     errors.append("docker-config: top level must be an object")
                 else:
                     if docker_config.get("environment_type") != DOCKER_ENVIRONMENT:
-                        errors.append("docker-config: environment_type must be 'real-docker'")
+                        errors.append(
+                            "docker-config: environment_type must be 'real-docker'"
+                        )
                     if docker_config.get("provider_mode") != DOCKER_PROVIDER:
-                        errors.append("docker-config: provider_mode must be 'real-provider'")
+                        errors.append(
+                            "docker-config: provider_mode must be 'real-provider'"
+                        )
                     check_no_secrets(docker_config, "docker-config", errors)
             xml_path = Path(args.docker_xml)
             if not xml_path.is_file():
@@ -185,7 +210,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"ERROR: {error}", file=sys.stderr)
         print(f"E2E layers gate FAILED ({len(errors)} error(s))", file=sys.stderr)
         return 1
-    print("E2E layers gate passed: controlled-provider and real-Docker evidence separated")
+    print(
+        "E2E layers gate passed: controlled-provider and real-Docker evidence separated"
+    )
     return 0
 
 

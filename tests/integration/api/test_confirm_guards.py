@@ -57,7 +57,9 @@ async def case_dedicated_confirm_stale_review_token(client, provider, session_di
     assert len(after["requests"]) == 1
 
 
-async def case_dedicated_confirm_on_incomplete_collecting_intake(client, provider, session_dir):
+async def case_dedicated_confirm_on_incomplete_collecting_intake(
+    client, provider, session_dir
+):
     session_id = await start_session(client)
     before = read_session(session_dir, session_id)
     provider.script_extraction(part_extraction())
@@ -96,7 +98,9 @@ async def case_dedicated_confirm_on_incomplete_collecting_intake(client, provide
     assert before["revision"] == 0
 
 
-async def case_dedicated_confirm_while_explicit_ambiguity_issue_blocks(client, provider, session_dir):
+async def case_dedicated_confirm_while_explicit_ambiguity_issue_blocks(
+    client, provider, session_dir
+):
     session_id = await review_session(client, provider)
     before = read_session(session_dir, session_id)
     provider.script_extraction(ambiguous_urgency_extraction())

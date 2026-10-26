@@ -65,8 +65,6 @@ def seed_citation(record_id: str) -> dict:
     }
 
 
-
-
 async def post(client, session_id: str, text: str, revision: int):
     return await client.post(
         f"/api/sessions/{session_id}/turns", json=turn_body(text, revision)
@@ -77,7 +75,9 @@ async def expect_startup_failure(settings, knowledge_path: Path) -> ScriptedProv
     """Lifespan must raise the exact RAG §1 error before readiness and close clients."""
 
     provider = ScriptedProvider()
-    app = create_app(settings=settings, provider=provider, knowledge_path=knowledge_path)
+    app = create_app(
+        settings=settings, provider=provider, knowledge_path=knowledge_path
+    )
     with pytest.raises(RuntimeError) as excinfo:
         async with app.router.lifespan_context(app):
             pytest.fail("lifespan reached readiness with an invalid knowledge base")
@@ -133,7 +133,9 @@ async def case_exact_valid_seed_corpus(settings, provider, session_dir, tmp_path
 
         knowledge_base = app.state.knowledge_base
         assert knowledge_base.version == SEED["version"]
-        assert [record.model_dump() for record in knowledge_base.records] == SEED["records"]
+        assert [record.model_dump() for record in knowledge_base.records] == SEED[
+            "records"
+        ]
         assert len(knowledge_base.records) == len(SEED["records"])
         # Startup and health never probe the AI service.
         assert provider.calls == []
@@ -144,7 +146,9 @@ async def case_exact_valid_seed_corpus(settings, provider, session_dir, tmp_path
     assert SEED_PATH.is_file()
 
 
-async def case_edit_valid_kb_file_after_lifespan_startup_then_return_q(settings, provider, session_dir, tmp_path):
+async def case_edit_valid_kb_file_after_lifespan_startup_then_return_q(
+    settings, provider, session_dir, tmp_path
+):
     kb_path = tmp_path / "kb-markup.json"
     kb_path.write_text(json.dumps(SEED, ensure_ascii=False), encoding="utf-8")
 
@@ -191,7 +195,9 @@ async def case_edit_valid_kb_file_after_lifespan_startup_then_return_q(settings,
         assert second_app.state.knowledge_base.version == EDITED_VERSION
 
 
-async def case_valid_literal_markup_source_fixture_boot_app_then_query_its(settings, provider, session_dir, tmp_path):
+async def case_valid_literal_markup_source_fixture_boot_app_then_query_its(
+    settings, provider, session_dir, tmp_path
+):
     fixture = json.loads(LITERAL_MARKUP.read_text(encoding="utf-8"))
     record = fixture["records"][0]
     answer_text = "The markup policy record is stored exactly as written."
@@ -229,7 +235,10 @@ async def case_valid_literal_markup_source_fixture_boot_app_then_query_its(setti
         assert "&gt;" not in text
         assert "&amp;" not in text
         assert "\\u003c" not in text
-        assert json.loads(text)["messages"][-1]["citations"][0]["excerpt"] == record["body"]
+        assert (
+            json.loads(text)["messages"][-1]["citations"][0]["excerpt"]
+            == record["body"]
+        )
 
 
 CASES = {

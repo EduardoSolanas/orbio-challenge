@@ -66,7 +66,9 @@ def require_string(value: Any, field: str, label: str, errors: list[str]) -> str
     return value
 
 
-def require_string_list(value: Any, field: str, label: str, errors: list[str]) -> list[str]:
+def require_string_list(
+    value: Any, field: str, label: str, errors: list[str]
+) -> list[str]:
     if not isinstance(value, list) or not value:
         errors.append(f"{label}: {field} must be a non-empty list")
         return []
@@ -114,7 +116,9 @@ def check_manifest(data: Any, errors: list[str]) -> tuple[str, dict[str, dict]]:
     if not isinstance(data, dict):
         errors.append(f"{label}: top level must be an object")
         return "", {}
-    revision = require_string(data.get("source_revision"), "source_revision", label, errors)
+    revision = require_string(
+        data.get("source_revision"), "source_revision", label, errors
+    )
     cases = data.get("cases")
     if not isinstance(cases, list) or not cases:
         errors.append(f"{label}: cases must be a non-empty list")
@@ -130,15 +134,24 @@ def check_manifest(data: Any, errors: list[str]) -> tuple[str, dict[str, dict]]:
             errors.append(f"{label}: unknown journey id {case_id}")
         if case_id in by_id:
             errors.append(f"{label}: duplicate journey id {case_id}")
-        node = require_string(case.get("nodeid"), f"cases[{index}].nodeid", label, errors)
+        node = require_string(
+            case.get("nodeid"), f"cases[{index}].nodeid", label, errors
+        )
         if node and node in by_nodeid:
-            errors.append(f"{label}: duplicate nodeid {node} for {case_id} and {by_nodeid[node]}")
+            errors.append(
+                f"{label}: duplicate nodeid {node} for {case_id} and {by_nodeid[node]}"
+            )
         if node:
             by_nodeid[node] = case_id
         require_string_list(
-            case.get("requirement_ids"), f"cases[{index}].requirement_ids", label, errors
+            case.get("requirement_ids"),
+            f"cases[{index}].requirement_ids",
+            label,
+            errors,
         )
-        require_string_list(case.get("checkpoints"), f"cases[{index}].checkpoints", label, errors)
+        require_string_list(
+            case.get("checkpoints"), f"cases[{index}].checkpoints", label, errors
+        )
         if case_id:
             by_id[case_id] = case
     missing = sorted(set(JOURNEY_IDS) - set(by_id))
@@ -152,7 +165,9 @@ def check_collection(data: Any, manifest_nodeids: set[str], errors: list[str]) -
     if not isinstance(data, dict):
         errors.append(f"{label}: top level must be an object")
         return ""
-    revision = require_string(data.get("source_revision"), "source_revision", label, errors)
+    revision = require_string(
+        data.get("source_revision"), "source_revision", label, errors
+    )
     collected = data.get("collected")
     if not isinstance(collected, list) or not collected:
         errors.append(f"{label}: collected must be a non-empty list")
@@ -194,25 +209,29 @@ def check_collection(data: Any, manifest_nodeids: set[str], errors: list[str]) -
     return revision
 
 
-def check_results(
-    data: Any, manifest: dict[str, dict], errors: list[str]
-) -> str:
+def check_results(data: Any, manifest: dict[str, dict], errors: list[str]) -> str:
     label = "results"
     if not isinstance(data, dict):
         errors.append(f"{label}: top level must be an object")
         return ""
-    revision = require_string(data.get("source_revision"), "source_revision", label, errors)
+    revision = require_string(
+        data.get("source_revision"), "source_revision", label, errors
+    )
     outcomes = data.get("outcomes")
     if not isinstance(outcomes, list) or not outcomes:
         errors.append(f"{label}: outcomes must be a non-empty list")
         return revision
     seen: list[str] = []
-    manifest_by_nodeid = {case["nodeid"]: case for case in manifest.values() if case.get("nodeid")}
+    manifest_by_nodeid = {
+        case["nodeid"]: case for case in manifest.values() if case.get("nodeid")
+    }
     for index, entry in enumerate(outcomes):
         if not isinstance(entry, dict):
             errors.append(f"{label}: outcome {index} must be an object")
             continue
-        node = require_string(entry.get("nodeid"), f"outcomes[{index}].nodeid", label, errors)
+        node = require_string(
+            entry.get("nodeid"), f"outcomes[{index}].nodeid", label, errors
+        )
         if node in seen:
             errors.append(f"{label}: duplicate outcome for {node}")
         seen.append(node)
@@ -252,7 +271,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Gate Playwright E2E evidence against the browser journey manifest."
     )
-    parser.add_argument("--spec", required=True, help="implementation contract markdown")
+    parser.add_argument(
+        "--spec", required=True, help="implementation contract markdown"
+    )
     parser.add_argument("--manifest", required=True, help="tests/e2e/cases.json")
     parser.add_argument("--collection", required=True, help="pytest collection JSON")
     parser.add_argument("--results", required=True, help="pytest results JSON")
@@ -274,9 +295,13 @@ def main(argv: list[str] | None = None) -> int:
     results_revision = ""
     if manifest_data is not None:
         manifest_revision, manifest = check_manifest(manifest_data, errors)
-    manifest_nodeids = {case["nodeid"] for case in manifest.values() if case.get("nodeid")}
+    manifest_nodeids = {
+        case["nodeid"] for case in manifest.values() if case.get("nodeid")
+    }
     if collection_data is not None:
-        collection_revision = check_collection(collection_data, manifest_nodeids, errors)
+        collection_revision = check_collection(
+            collection_data, manifest_nodeids, errors
+        )
     if results_data is not None:
         results_revision = check_results(results_data, manifest, errors)
 
@@ -289,7 +314,11 @@ def main(argv: list[str] | None = None) -> int:
     if len(set(populated.values())) > 1:
         errors.append(f"stale source revision across evidence: {revisions}")
     expected_revision = gated_input_revision()
-    if expected_revision and populated and set(populated.values()) != {expected_revision}:
+    if (
+        expected_revision
+        and populated
+        and set(populated.values()) != {expected_revision}
+    ):
         errors.append(
             f"stale source revision: evidence {sorted(set(populated.values()))} "
             f"!= gated inputs revision {expected_revision}"

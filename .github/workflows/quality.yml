@@ -34,6 +34,9 @@ jobs:
       - name: Ruff (unused imports, import order, undefined names)
         run: python -m ruff check .
 
+      - name: Ruff format (no unformatted files)
+        run: python -m ruff format --check .
+
       - name: Prepare report directory
         run: mkdir -p reports
 
@@ -138,7 +141,7 @@ jobs:
 
       - name: Ten complete browser journeys (no retries)
         run: |
-          python -m pytest tests/e2e \
+          python -m pytest tests/e2e -m browser_e2e \
             --browser chromium \
             --tracing retain-on-failure \
             --screenshot only-on-failure \

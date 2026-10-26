@@ -1,4 +1,5 @@
 """Dedicated OpenAI-compatible configuration and client for intent E2E judging."""
+
 from __future__ import annotations
 
 import glob
@@ -34,11 +35,15 @@ def parse_reasoning_effort(value: str | None) -> str | None:
     if not value:
         return None
     if value not in REASONING_EFFORTS:
-        raise ValueError(f"E2E_JUDGE_REASONING_EFFORT must be one of {', '.join(REASONING_EFFORTS)}")
+        raise ValueError(
+            f"E2E_JUDGE_REASONING_EFFORT must be one of {', '.join(REASONING_EFFORTS)}"
+        )
     return value
 
 
-def judge_payload(config: JudgeConfig, messages: list[dict[str, str]]) -> dict[str, Any]:
+def judge_payload(
+    config: JudgeConfig, messages: list[dict[str, str]]
+) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "model": config.model,
         "messages": messages,
@@ -65,7 +70,13 @@ def read_dotenv(path: Path) -> dict[str, str]:
 
 def load_config(path: Path | None = None) -> JudgeConfig:
     values = read_dotenv(path or Path(__file__).with_name(".env.judge"))
-    values.update({key: value for key, value in os.environ.items() if key.startswith("E2E_JUDGE_")})
+    values.update(
+        {
+            key: value
+            for key, value in os.environ.items()
+            if key.startswith("E2E_JUDGE_")
+        }
+    )
     required = ("E2E_JUDGE_BASE_URL", "E2E_JUDGE_MODEL")
     missing = [key for key in required if not values.get(key)]
     if missing:
@@ -98,23 +109,36 @@ def load_config(path: Path | None = None) -> JudgeConfig:
         max_tokens=max_tokens,
         temperature=temperature,
         prompt_version=prompt_version,
-        reasoning_effort=parse_reasoning_effort(values.get("E2E_JUDGE_REASONING_EFFORT")),
+        reasoning_effort=parse_reasoning_effort(
+            values.get("E2E_JUDGE_REASONING_EFFORT")
+        ),
     )
 
 
 def validate_verdict(value: Any) -> dict[str, Any]:
-    if not isinstance(value, dict) or set(value) != {"pass", "intent", "reason", "violations"}:
-        raise ValueError("judge output must have exactly pass, intent, reason, violations")
+    if not isinstance(value, dict) or set(value) != {
+        "pass",
+        "intent",
+        "reason",
+        "violations",
+    }:
+        raise ValueError(
+            "judge output must have exactly pass, intent, reason, violations"
+        )
     if not isinstance(value["pass"], bool) or not isinstance(value["intent"], str):
         raise ValueError("judge pass must be boolean and intent must be a string")
-    if not isinstance(value["reason"], str) or not isinstance(value["violations"], list):
+    if not isinstance(value["reason"], str) or not isinstance(
+        value["violations"], list
+    ):
         raise ValueError("judge reason must be a string and violations must be a list")
     if not all(isinstance(item, str) for item in value["violations"]):
         raise ValueError("judge violations must contain strings only")
     return value
 
 
-def ask_judge(config: JudgeConfig, system: str, user: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+def ask_judge(
+    config: JudgeConfig, system: str, user: dict[str, Any]
+) -> tuple[str, dict[str, Any]]:
     """One call to the judge model: the raw answer and the checked verdict."""
 
     payload = judge_payload(
@@ -129,10 +153,14 @@ def ask_judge(config: JudgeConfig, system: str, user: dict[str, Any]) -> tuple[s
         headers["Authorization"] = f"Bearer {config.api_key}"
     request = urllib.request.Request(
         f"{config.base_url}/chat/completions",
-        data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST",
+        data=json.dumps(payload).encode("utf-8"),
+        headers=headers,
+        method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=config.timeout_seconds) as response:
+        with urllib.request.urlopen(
+            request, timeout=config.timeout_seconds
+        ) as response:
             raw = json.loads(response.read().decode("utf-8"))
     except (OSError, urllib.error.URLError, TimeoutError) as exc:
         raise AssertionError(f"judge request failed: {exc}") from exc
@@ -164,11 +192,16 @@ def write_artifact(directory: Path, node_id: str, artifact: dict[str, Any]) -> N
     number = _checkpoints.get((directory, stem), 0) + 1
     _checkpoints[(directory, stem)] = number
     if number == 1:
-        for old in [directory / f"{stem}.json", *directory.glob(f"{glob.escape(stem)}__*.json")]:
+        for old in [
+            directory / f"{stem}.json",
+            *directory.glob(f"{glob.escape(stem)}__*.json"),
+        ]:
             old.unlink(missing_ok=True)
     path = directory / f"{stem}__{number:02d}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(artifact, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(artifact, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
 
 def judge(config: JudgeConfig, conversation: str, rule: str) -> dict[str, Any]:
@@ -176,9 +209,16 @@ def judge(config: JudgeConfig, conversation: str, rule: str) -> dict[str, Any]:
 
     system = (
         "You are a strict intent-routing evaluator. Return only JSON with exactly these keys: "
-        'pass (boolean), intent (string), reason (string), violations (array of strings). '
+        "pass (boolean), intent (string), reason (string), violations (array of strings). "
         "Judge visible response quality only; do not infer hidden state or require the assistant to narrate it. "
         "Deterministic assertions check state preservation separately."
     )
-    content, verdict = ask_judge(config, system, {"conversation": conversation, "expected_rule": rule})
-    return {"model": config.model, "prompt_version": config.prompt_version, "output": content, "verdict": verdict}
+    content, verdict = ask_judge(
+        config, system, {"conversation": conversation, "expected_rule": rule}
+    )
+    return {
+        "model": config.model,
+        "prompt_version": config.prompt_version,
+        "output": content,
+        "verdict": verdict,
+    }

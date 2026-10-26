@@ -44,10 +44,10 @@ EXTRACTION = {
     },
     "explicit_corrections": [],
     "ambiguous_fields": [],
-"detected_language": "en",
-"requested_language": None,
-"sentiment": "neutral",
-"frustration": "none",
+    "detected_language": "en",
+    "requested_language": None,
+    "sentiment": "neutral",
+    "frustration": "none",
 }
 
 TURN_TEXT = "My order NS-000123 arrived broken."
@@ -71,7 +71,9 @@ class LocalProviderServer:
         self.speech_body: bytes | None = None
         self._server = ThreadingHTTPServer(("127.0.0.1", 0), self._handler())
         self._thread = threading.Thread(
-            target=self._server.serve_forever, kwargs={"poll_interval": 0.01}, daemon=True
+            target=self._server.serve_forever,
+            kwargs={"poll_interval": 0.01},
+            daemon=True,
         )
 
     @property
@@ -139,7 +141,9 @@ class LocalProviderServer:
         return Handler
 
 
-def build_settings(session_dir: Path, server: LocalProviderServer, **overrides: str) -> Settings:
+def build_settings(
+    session_dir: Path, server: LocalProviderServer, **overrides: str
+) -> Settings:
     values = {
         "AI_PROVIDER": "openai_compatible",
         "LLM_BASE_URL": server.base_url,
@@ -184,7 +188,6 @@ async def save_reply(client, session_id: str) -> dict:
     return response.json()
 
 
-
 async def test_wav_reply_is_chunked_at_the_provider_cap_and_assembled(server, tmp_path):
     settings = build_settings(tmp_path / "sessions", server)
     app = create_app(settings=settings)
@@ -196,7 +199,8 @@ async def test_wav_reply_is_chunked_at_the_provider_cap_and_assembled(server, tm
         assert len(text) > 200
 
         response = await client.post(
-            f"/api/sessions/{session_id}/speech", json={"message_id": reply["message_id"]}
+            f"/api/sessions/{session_id}/speech",
+            json={"message_id": reply["message_id"]},
         )
 
     expected_chunks = (len(text) + 199) // 200
@@ -204,10 +208,15 @@ async def test_wav_reply_is_chunked_at_the_provider_cap_and_assembled(server, tm
     assert response.headers["content-type"] == "audio/wav"
     assert response.headers["cache-control"] == "no-store"
     assert len(server.speech_requests) == expected_chunks
-    assert [request["response_format"] for request in server.speech_requests] == ["wav"] * expected_chunks
+    assert [request["response_format"] for request in server.speech_requests] == [
+        "wav"
+    ] * expected_chunks
     assert all(len(request["input"]) <= 200 for request in server.speech_requests)
     assert "".join(request["input"] for request in server.speech_requests) == text
-    assert all(request["model"] == "canopylabs/orpheus-v1-english" for request in server.speech_requests)
+    assert all(
+        request["model"] == "canopylabs/orpheus-v1-english"
+        for request in server.speech_requests
+    )
     assert all(request["voice"] == "troy" for request in server.speech_requests)
     assert all(
         {key.lower(): value for key, value in headers.items()}.get("accept-encoding")
@@ -221,7 +230,9 @@ async def test_wav_reply_is_chunked_at_the_provider_cap_and_assembled(server, tm
     assert 0 < len(response.content) <= TTS_LIMIT
 
 
-async def test_mp3_bytes_for_a_wav_profile_are_a_clear_invalid_response(server, tmp_path):
+async def test_mp3_bytes_for_a_wav_profile_are_a_clear_invalid_response(
+    server, tmp_path
+):
     server.speech_media_type = "audio/mpeg"
     server.speech_body = b"ID3-mp3-bytes"
     settings = build_settings(tmp_path / "sessions", server)
@@ -229,7 +240,9 @@ async def test_mp3_bytes_for_a_wav_profile_are_a_clear_invalid_response(server, 
 
     async with running_client(app) as client:
         session_id = await create_session(client)
-        greeting_id = (await client.get(f"/api/sessions/{session_id}")).json()["messages"][0]["id"]
+        greeting_id = (await client.get(f"/api/sessions/{session_id}")).json()[
+            "messages"
+        ][0]["id"]
         response = await client.post(
             f"/api/sessions/{session_id}/speech", json={"message_id": greeting_id}
         )
@@ -243,14 +256,18 @@ async def test_mp3_bytes_for_a_wav_profile_are_a_clear_invalid_response(server, 
     assert len(server.speech_requests) == 1
 
 
-async def test_provider_rejection_maps_to_a_clear_nonretryable_configuration_error(server, tmp_path):
+async def test_provider_rejection_maps_to_a_clear_nonretryable_configuration_error(
+    server, tmp_path
+):
     server.speech_status = 400
     settings = build_settings(tmp_path / "sessions", server)
     app = create_app(settings=settings)
 
     async with running_client(app) as client:
         session_id = await create_session(client)
-        greeting_id = (await client.get(f"/api/sessions/{session_id}")).json()["messages"][0]["id"]
+        greeting_id = (await client.get(f"/api/sessions/{session_id}")).json()[
+            "messages"
+        ][0]["id"]
         response = await client.post(
             f"/api/sessions/{session_id}/speech", json={"message_id": greeting_id}
         )
@@ -264,13 +281,17 @@ async def test_provider_rejection_maps_to_a_clear_nonretryable_configuration_err
     assert len(server.speech_requests) == 1
 
 
-async def test_more_than_twenty_chunks_is_rejected_before_any_provider_call(server, tmp_path):
+async def test_more_than_twenty_chunks_is_rejected_before_any_provider_call(
+    server, tmp_path
+):
     settings = build_settings(tmp_path / "sessions", server, TTS_MAX_INPUT_CHARS="2")
     app = create_app(settings=settings)
 
     async with running_client(app) as client:
         session_id = await create_session(client)
-        greeting_id = (await client.get(f"/api/sessions/{session_id}")).json()["messages"][0]["id"]
+        greeting_id = (await client.get(f"/api/sessions/{session_id}")).json()[
+            "messages"
+        ][0]["id"]
         response = await client.post(
             f"/api/sessions/{session_id}/speech", json={"message_id": greeting_id}
         )
@@ -288,7 +309,9 @@ STREAMING_FRAMES = 2400
 
 
 async def test_groq_streaming_wav_chunks_are_accepted_and_assembled(server, tmp_path):
-    server.speech_body = make_streaming_wav(rate=STREAMING_RATE, frames=STREAMING_FRAMES)
+    server.speech_body = make_streaming_wav(
+        rate=STREAMING_RATE, frames=STREAMING_FRAMES
+    )
     sessions = tmp_path / "sessions"
     settings = build_settings(sessions, server)
     app = create_app(settings=settings)
@@ -301,7 +324,8 @@ async def test_groq_streaming_wav_chunks_are_accepted_and_assembled(server, tmp_
         before = snapshot(sessions, session_id)
 
         response = await client.post(
-            f"/api/sessions/{session_id}/speech", json={"message_id": reply["message_id"]}
+            f"/api/sessions/{session_id}/speech",
+            json={"message_id": reply["message_id"]},
         )
 
         assert snapshot(sessions, session_id) == before
@@ -311,7 +335,9 @@ async def test_groq_streaming_wav_chunks_are_accepted_and_assembled(server, tmp_
     assert response.headers["content-type"] == "audio/wav"
     assert response.headers["cache-control"] == "no-store"
     assert len(server.speech_requests) == expected_chunks
-    assert all(request["response_format"] == "wav" for request in server.speech_requests)
+    assert all(
+        request["response_format"] == "wav" for request in server.speech_requests
+    )
 
     channels, width, rate, frames = wav_frames(response.content)
     assert (channels, width, rate) == (1, 2, STREAMING_RATE)
@@ -329,7 +355,9 @@ async def test_streaming_wav_with_an_incomplete_frame_is_a_clear_invalid_respons
 
     async with running_client(app) as client:
         session_id = await create_session(client)
-        greeting_id = (await client.get(f"/api/sessions/{session_id}")).json()["messages"][0]["id"]
+        greeting_id = (await client.get(f"/api/sessions/{session_id}")).json()[
+            "messages"
+        ][0]["id"]
         before = snapshot(sessions, session_id)
 
         response = await client.post(

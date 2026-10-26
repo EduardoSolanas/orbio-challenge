@@ -21,13 +21,9 @@ FULL_TEXT = "My order NS-000123 arrived broken. It is a damaged item and high ur
 
 REVIEW_SUFFIX = "\nPlease confirm these details or tell me what to change."
 
-MISSING_ORDER = (
-    "What is your energy account reference? Use NS- followed by six digits, for example NS-123456."
-)
+MISSING_ORDER = "What is your energy account reference? Use NS- followed by six digits, for example NS-123456."
 
-MISSING_CATEGORY = (
-    "Which area do you need help with: a bill, a supply issue, a meter reading, moving home, or something else?"
-)
+MISSING_CATEGORY = "Which area do you need help with: a bill, a supply issue, a meter reading, moving home, or something else?"
 
 INVALID_ORDER = "Use NS- followed by exactly six digits for your energy account reference, for example NS-123456."
 

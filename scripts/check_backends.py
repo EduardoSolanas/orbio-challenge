@@ -220,8 +220,8 @@ def build_report(
     source_revision: str,
     error_code: str | None = None,
 ) -> dict[str, object]:
-    passed = error_code is None and bool(checks) and all(
-        check.passed for check in checks
+    passed = (
+        error_code is None and bool(checks) and all(check.passed for check in checks)
     )
     return {
         "checked_at": _utc_text(checked_at),
@@ -263,7 +263,9 @@ async def _record(
         check=check,
         model=profile.model,
         scheme=str(endpoint["scheme"]),
-        hostname=endpoint["hostname"] if isinstance(endpoint["hostname"], str) else None,
+        hostname=endpoint["hostname"]
+        if isinstance(endpoint["hostname"], str)
+        else None,
         port=endpoint["port"] if isinstance(endpoint["port"], int) else None,
         auth_mode=profile.auth_mode,
         output_mode=getattr(profile, "output_mode", None),
@@ -363,7 +365,11 @@ async def run_checks(
         result = await provider.synthesize(TTS_TEXT)
         if not 0 < len(result.data) <= MAX_TTS_BYTES:
             raise CheckFailure("fixture_mismatch")
-        decodable = mp3_decodable(result.data) if result.media_type == "audio/mpeg" else wav_decodable(result.data)
+        decodable = (
+            mp3_decodable(result.data)
+            if result.media_type == "audio/mpeg"
+            else wav_decodable(result.data)
+        )
         if not decodable:
             raise CheckFailure("undecodable_audio")
 
@@ -375,7 +381,9 @@ async def run_checks(
         results.append(
             await _record("rag", "rag_unsupported", profiles["rag"], rag_unsupported)
         )
-        results.append(await _record("stt", "transcription", profiles["stt"], transcription))
+        results.append(
+            await _record("stt", "transcription", profiles["stt"], transcription)
+        )
         results.append(await _record("tts", "synthesis", profiles["tts"], synthesis))
     finally:
         await provider.close()
@@ -384,7 +392,9 @@ async def run_checks(
 
 def _write_report(path: Path, report: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -427,9 +437,7 @@ def main(argv: list[str] | None = None) -> int:
     error_code: str | None = None
     try:
         checks = asyncio.run(
-            run_checks(
-                settings, wav_path=args.wav, knowledge_path=args.knowledge
-            )
+            run_checks(settings, wav_path=args.wav, knowledge_path=args.knowledge)
         )
     except (AppError, CheckFailure) as exc:
         error_code = exc.code

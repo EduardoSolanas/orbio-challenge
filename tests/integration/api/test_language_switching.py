@@ -154,7 +154,9 @@ async def test_explicit_switch_both_ways_redisplays_the_same_review(client, prov
     assert review["reply"] == english_review()
 
     provider.script_extraction(
-        make_extraction(intent="unrelated", detected_language="en", requested_language="es")
+        make_extraction(
+            intent="unrelated", detected_language="en", requested_language="es"
+        )
     )
     spanish = await post_turn(
         client, session_id, text_value="Please continue in Spanish", revision=1
@@ -169,7 +171,9 @@ async def test_explicit_switch_both_ways_redisplays_the_same_review(client, prov
     assert spanish_body["slots"] == FULL_SLOTS
 
     provider.script_extraction(
-        make_extraction(intent="unrelated", detected_language="es", requested_language="en")
+        make_extraction(
+            intent="unrelated", detected_language="es", requested_language="en"
+        )
     )
     english = await post_turn(
         client, session_id, text_value="Continuemos en inglés", revision=2
@@ -182,10 +186,14 @@ async def test_explicit_switch_both_ways_redisplays_the_same_review(client, prov
     assert english_body["slots"] == FULL_SLOTS
 
 
-async def test_language_switch_does_not_confirm_the_review(client, provider, session_dir):
+async def test_language_switch_does_not_confirm_the_review(
+    client, provider, session_dir
+):
     session_id, review = await collect_full_english_intake(client, provider)
     provider.script_extraction(
-        make_extraction(intent="unrelated", requested_language="es", detected_language="en")
+        make_extraction(
+            intent="unrelated", requested_language="es", detected_language="en"
+        )
     )
     await post_turn(client, session_id, text_value="En español", revision=1)
 
@@ -203,7 +211,9 @@ async def test_language_switch_does_not_confirm_the_review(client, provider, ses
         },
     )
     assert confirmed.status_code == 200, confirmed.text
-    assert confirmed.json()["reply"] == text("receipt", "es").format(reference=request_reference(session_id))
+    assert confirmed.json()["reply"] == text("receipt", "es").format(
+        reference=request_reference(session_id)
+    )
     assert confirmed.json()["reply_language"] == "es"
     stored_after = read_session(session_dir, session_id)
     assert stored_after["messages"][-2]["text"] == text("review.confirmed", "es")
@@ -287,7 +297,10 @@ async def test_mixed_language_correction_keeps_canonical_values(client, provider
         )
     )
     first = await post_turn(
-        client, session_id, text_value="NS-000123 arrived broken, low urgency", revision=0
+        client,
+        session_id,
+        text_value="NS-000123 arrived broken, low urgency",
+        revision=0,
     )
     assert first.status_code == 200, first.text
 
@@ -454,7 +467,8 @@ async def test_spanish_speech_uses_the_spanish_profile_when_configured(session_d
 
         provider.script_speech(b"RIFFwav", "audio/wav")
         response = await client.post(
-            f"/api/sessions/{session_id}/speech", json={"message_id": reply["message_id"]}
+            f"/api/sessions/{session_id}/speech",
+            json={"message_id": reply["message_id"]},
         )
 
         assert response.status_code == 200, response.text
@@ -465,12 +479,16 @@ async def test_spanish_speech_uses_the_spanish_profile_when_configured(session_d
 async def test_old_english_messages_remain_english_after_a_switch(client, provider):
     session_id, review = await collect_full_english_intake(client, provider)
     provider.script_extraction(
-        make_extraction(intent="unrelated", requested_language="es", detected_language="en")
+        make_extraction(
+            intent="unrelated", requested_language="es", detected_language="en"
+        )
     )
     await post_turn(client, session_id, text_value="En español", revision=1)
 
     view = (await client.get(f"/api/sessions/{session_id}")).json()
-    assistant = [message for message in view["messages"] if message["role"] == "assistant"]
+    assistant = [
+        message for message in view["messages"] if message["role"] == "assistant"
+    ]
     assert assistant[0]["language"] == "en"
     assert assistant[0]["text"] == text("greeting", "en")
     assert assistant[-2]["language"] == "en"
@@ -483,7 +501,9 @@ async def test_old_english_messages_remain_english_after_a_switch(client, provid
 async def test_replay_returns_the_stored_response_and_language(client, provider):
     session_id = await start_session(client)
     provider.script_extraction(
-        make_extraction(detected_language="en", candidates={"order_number": "NS-000123"})
+        make_extraction(
+            detected_language="en", candidates={"order_number": "NS-000123"}
+        )
     )
     request = {
         "request_id": str(uuid4()),
@@ -495,7 +515,9 @@ async def test_replay_returns_the_stored_response_and_language(client, provider)
     assert first.status_code == 200, first.text
 
     provider.script_extraction(
-        make_extraction(intent="unrelated", requested_language="es", detected_language="en")
+        make_extraction(
+            intent="unrelated", requested_language="es", detected_language="en"
+        )
     )
     await post_turn(client, session_id, text_value="En español", revision=1)
 
@@ -533,5 +555,8 @@ async def test_error_codes_and_messages_stay_canonical(client):
     assert response.status_code == 409
     body = response.json()
     assert body["error"]["code"] == "revision_conflict"
-    assert body["error"]["message"] == "This session changed. Refresh before sending again."
+    assert (
+        body["error"]["message"]
+        == "This session changed. Refresh before sending again."
+    )
     assert body["error"]["current_revision"] == 0

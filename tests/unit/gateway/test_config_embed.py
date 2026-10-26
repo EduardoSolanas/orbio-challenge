@@ -30,7 +30,10 @@ def test_a_complete_profile_is_resolved_and_the_url_is_normalised():
     settings = Settings.from_env(env(**COMPLETE))
 
     assert settings.embed == ServiceProfile(
-        base_url="http://embed.test/v1", model="embed-model", auth_mode="none", api_key=""
+        base_url="http://embed.test/v1",
+        model="embed-model",
+        auth_mode="none",
+        api_key="",
     )
 
 
@@ -43,7 +46,9 @@ def test_a_bearer_profile_carries_its_key():
     assert settings.embed.api_key == "secret"
 
 
-@pytest.mark.parametrize("missing", ["EMBED_BASE_URL", "EMBED_MODEL", "EMBED_AUTH_MODE"])
+@pytest.mark.parametrize(
+    "missing", ["EMBED_BASE_URL", "EMBED_MODEL", "EMBED_AUTH_MODE"]
+)
 def test_a_partial_profile_is_rejected(missing):
     values = {key: value for key, value in COMPLETE.items() if key != missing}
 
@@ -65,7 +70,9 @@ def test_an_inconsistent_profile_is_rejected(extra):
 
 
 def test_the_similarity_floor_can_be_set():
-    assert Settings.from_env(env(EMBED_MIN_SIMILARITY="0.6")).embed_min_similarity == 0.6
+    assert (
+        Settings.from_env(env(EMBED_MIN_SIMILARITY="0.6")).embed_min_similarity == 0.6
+    )
 
 
 @pytest.mark.parametrize("raw", ["0", "1", "-0.2", "high", "1.5"])

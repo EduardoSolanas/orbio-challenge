@@ -40,7 +40,9 @@ RETURN_ANSWER_TEXT = (
 
 CONFIRM_USER_TEXT = "Confirm these details"
 
-STALE_REVIEW_MESSAGE = "The review changed. Review the latest details before confirming."
+STALE_REVIEW_MESSAGE = (
+    "The review changed. Review the latest details before confirming."
+)
 
 REVIEW_NOT_READY_MESSAGE = "Resolve missing or unclear details before confirming."
 
@@ -209,7 +211,9 @@ def assert_turn_commit(
 
     disk = read_session(session_dir, session_id)
     assert disk["revision"] == before["revision"] + 1 == response["revision"]
-    assert disk["collection_turn_count"] == before["collection_turn_count"] + counter_delta
+    assert (
+        disk["collection_turn_count"] == before["collection_turn_count"] + counter_delta
+    )
     assert disk["messages"][:-2] == before["messages"]
     assert len(disk["messages"]) == len(before["messages"]) + 2
     user, assistant = disk["messages"][-2:]
@@ -254,9 +258,7 @@ async def post_confirm(
     return body["request_id"], response
 
 
-async def send_turn(
-    client, session_id: str, *, text: str, revision: int
-):
+async def send_turn(client, session_id: str, *, text: str, revision: int):
     """Post a real turn request and keep its request_id for the replay check."""
 
     request_id = str(uuid4())
@@ -268,7 +270,12 @@ async def send_turn(
 
 
 async def assert_error(
-    response, *, status: int, code: str, message: str, current_revision: int | None = None
+    response,
+    *,
+    status: int,
+    code: str,
+    message: str,
+    current_revision: int | None = None,
 ) -> dict:
     assert response.status_code == status, response.text
     body = response.json()
@@ -324,7 +331,9 @@ def assert_dedicated_confirm_commit(
     assert disk["requests"][:-1] == before["requests"]
     assert len(disk["requests"]) == len(before["requests"]) + 1
     assert disk["requests"][-1]["request_id"] == request_id
-    assert disk["requests"][-1]["response"] == {key: value for key, value in payload.items() if key != "speech_available"}
+    assert disk["requests"][-1]["response"] == {
+        key: value for key, value in payload.items() if key != "speech_available"
+    }
     return disk
 
 

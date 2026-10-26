@@ -74,7 +74,9 @@ def _write(config: Any, name: str, payload: dict[str, Any]) -> None:
     target = Path(config.rootpath) / "reports" / name
     target.parent.mkdir(parents=True, exist_ok=True)
     temporary = target.with_suffix(".json.tmp")
-    temporary.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     os.replace(temporary, target)
 
 
@@ -133,9 +135,9 @@ def pytest_runtest_logreport(report: Any) -> None:
         _state["setups"][report.nodeid] = _state["setups"].get(report.nodeid, 0) + 1
         phases.clear()
     phases[report.when] = _phase_outcome(report)
-    _state["durations"][report.nodeid] = _state["durations"].get(report.nodeid, 0.0) + float(
-        report.duration
-    )
+    _state["durations"][report.nodeid] = _state["durations"].get(
+        report.nodeid, 0.0
+    ) + float(report.duration)
     for name, value in report.user_properties:
         if name == "checkpoint":
             seen = _state["checkpoints"].setdefault(report.nodeid, [])
@@ -153,7 +155,11 @@ def _overall(phases: dict[str, str]) -> str:
         if result is None:
             return "not run"
         if result != "passed":
-            return result if result in {"failed", "skipped", "xfailed", "xpassed"} else "failed"
+            return (
+                result
+                if result in {"failed", "skipped", "xfailed", "xpassed"}
+                else "failed"
+            )
     return "passed"
 
 
@@ -169,7 +175,10 @@ def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
                 "case_id": _state["case_ids"].get(nodeid),
                 "browser": browser_name(config),
                 "outcome": _overall(phases),
-                "phases": {phase: phases.get(phase, "not run") for phase in ("setup", "call", "teardown")},
+                "phases": {
+                    phase: phases.get(phase, "not run")
+                    for phase in ("setup", "call", "teardown")
+                },
                 "reruns": _state["setups"].get(nodeid, 1) - 1,
                 "checkpoints": list(_state["checkpoints"].get(nodeid, [])),
                 "duration_seconds": round(_state["durations"].get(nodeid, 0.0), 3),

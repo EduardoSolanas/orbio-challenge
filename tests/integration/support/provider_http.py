@@ -82,7 +82,9 @@ class LocalProviderServer:
         self._requests: list[WireRequest] = []
         self._server = _Server(("127.0.0.1", 0), self._handler(), self)
         self._thread = threading.Thread(
-            target=self._server.serve_forever, kwargs={"poll_interval": 0.01}, daemon=True
+            target=self._server.serve_forever,
+            kwargs={"poll_interval": 0.01},
+            daemon=True,
         )
 
     @property
@@ -166,15 +168,13 @@ class LocalProviderServer:
     def count(self, path: str) -> int:
         return len(self.requests(path))
 
-    def settle(self, path: str, timeout: float = 5.0, *, expected: int = 0) -> list[WireRequest]:
-        """Wait until ``expected`` requests have arrived and every response has finished or aborted.
+    def settle(self, path: str, timeout: float = 5.0) -> list[WireRequest]:
+        """Wait until every response for ``path`` has finished or aborted."""
 
-        Without ``expected`` a request that is still on its way to the server is not yet pending,
-        so a loaded machine could return before the last attempt is even counted.
-        """
-
-        poll(lambda: self.count(path) >= expected, timeout)
-        poll(lambda: not [r for r in self.requests(path) if r.outcome == PENDING], timeout)
+        poll(
+            lambda: not [r for r in self.requests(path) if r.outcome == PENDING],
+            timeout,
+        )
         return self.requests(path)
 
     # -- handler ------------------------------------------------------------
@@ -224,9 +224,7 @@ class LocalProviderServer:
                         self.end_headers()
                         record.outcome = REDIRECTED
                         return
-                    content_type = spec.headers.get(
-                        "content-type", "application/json"
-                    )
+                    content_type = spec.headers.get("content-type", "application/json")
                     if spec.chunks is not None:
                         self._start(spec.status, content_type)
                         for name, value in spec.headers.items():
@@ -236,9 +234,7 @@ class LocalProviderServer:
                         self.end_headers()
                         for chunk in spec.chunks:
                             self.wfile.write(
-                                f"{len(chunk):x}\r\n".encode("ascii")
-                                + chunk
-                                + b"\r\n"
+                                f"{len(chunk):x}\r\n".encode("ascii") + chunk + b"\r\n"
                             )
                             self.wfile.flush()
                             record.bytes_written += len(chunk)
@@ -321,7 +317,9 @@ def provider_from(settings: Settings, *, sleep=None) -> OpenAICompatibleProvider
     )
 
 
-def shorten_text_budget(monkeypatch, *, attempt_timeout: float, total_deadline: float) -> None:
+def shorten_text_budget(
+    monkeypatch, *, attempt_timeout: float, total_deadline: float
+) -> None:
     """Use a smaller real adapter budget so timeout tests stay wall-clock cheap.
 
     ``extract``/``answer_knowledge`` read ``TEXT_BUDGET`` at call time and the

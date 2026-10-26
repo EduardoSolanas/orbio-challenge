@@ -84,9 +84,7 @@ async def test_verification_endpoint_rejects_malformed_or_unknown_sessions(
     assert wrong_type.status_code == 422
     assert wrong_type.json()["error"]["code"] == "invalid_request"
 
-    empty = await client.post(
-        f"/api/sessions/{session_id}/order-verification", json={}
-    )
+    empty = await client.post(f"/api/sessions/{session_id}/order-verification", json={})
     assert empty.status_code == 422
     assert empty.json()["error"]["code"] == "invalid_request"
 

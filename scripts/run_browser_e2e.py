@@ -32,7 +32,9 @@ RUN_CONFIG = {
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--browser", default="chromium", help="playwright browser (default: chromium)")
+    parser.add_argument(
+        "--browser", default="chromium", help="playwright browser (default: chromium)"
+    )
     args = parser.parse_args()
     evidence = ROOT / "reports" / "e2e-controlled"
     evidence.mkdir(parents=True, exist_ok=True)
@@ -40,10 +42,22 @@ def main() -> int:
         json.dumps(RUN_CONFIG, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     command = [
-        sys.executable, "-m", "pytest", "tests/e2e", "-m", "browser_e2e",
-        "--browser", args.browser,
-        "--tracing", "retain-on-failure", "--screenshot", "only-on-failure",
-        "--video", "retain-on-failure", "--output", "reports/e2e-controlled/playwright",
+        sys.executable,
+        "-m",
+        "pytest",
+        "tests/e2e",
+        "-m",
+        "browser_e2e",
+        "--browser",
+        args.browser,
+        "--tracing",
+        "retain-on-failure",
+        "--screenshot",
+        "only-on-failure",
+        "--video",
+        "retain-on-failure",
+        "--output",
+        "reports/e2e-controlled/playwright",
         "--junitxml=reports/e2e-controlled/controlled.xml",
     ]
     completed = subprocess.run(command, cwd=ROOT, check=False)

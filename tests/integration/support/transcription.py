@@ -14,7 +14,7 @@ from httpx import ASGITransport, AsyncClient
 from gateway.errors import ERRORS
 from gateway.main import create_app
 from gateway.providers.client import OpenAICompatibleProvider
-from tests.unit.gateway.providers.provider_support import unexpected
+from tests.support.provider_builders import unexpected
 
 
 async def no_sleep(delay: float) -> None:
@@ -24,7 +24,9 @@ async def no_sleep(delay: float) -> None:
 class RoleTransport:
     """A real httpx transport double that records each request it serves."""
 
-    def __init__(self, role: str, responder: Callable[[httpx.Request, int], httpx.Response]):
+    def __init__(
+        self, role: str, responder: Callable[[httpx.Request, int], httpx.Response]
+    ):
         self.role = role
         self.responder = responder
         self.requests: list[httpx.Request] = []
@@ -33,7 +35,6 @@ class RoleTransport:
     def _handle(self, request: httpx.Request) -> httpx.Response:
         self.requests.append(request)
         return self.responder(request, len(self.requests))
-
 
 
 def json_wire(payload: object, status: int = 200) -> httpx.Response:
@@ -125,3 +126,10 @@ def snapshot(session_dir, session_id: str):
 
     names = sorted(path.name for path in session_dir.iterdir())
     return names, (session_dir / f"{session_id}.json").read_bytes()
+
+
+def unavailable_status(status: int):
+    def responder(request: httpx.Request, attempt: int) -> httpx.Response:
+        return json_wire({"error": "unavailable"}, status=status)
+
+    return responder

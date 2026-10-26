@@ -6,12 +6,16 @@ import json
 from pathlib import Path
 
 from gateway.schemas import KnowledgeAnswer
-from tests.integration.support.api import make_extraction
+from tests.integration.support.api import make_extraction  # noqa: F401
+from tests.support.extraction_builders import question_extraction  # noqa: F401  (re-exported to the tests)
 
 SEED = json.loads(
-    (Path(__file__).resolve().parents[3] / "gateway" / "knowledge" / "northstar-faq.json").read_text(
-        encoding="utf-8"
-    )
+    (
+        Path(__file__).resolve().parents[3]
+        / "gateway"
+        / "knowledge"
+        / "northstar-faq.json"
+    ).read_text(encoding="utf-8")
 )
 
 KB_VERSION = SEED["version"]
@@ -34,10 +38,6 @@ def seed_citation(record_id: str) -> dict:
         "excerpt": record["body"],
         "kb_version": KB_VERSION,
     }
-
-
-def question_extraction():
-    return make_extraction(intent="question", has_question=True)
 
 
 def grounded(answer: str, cited_ids: list[str]) -> KnowledgeAnswer:

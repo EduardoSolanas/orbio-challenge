@@ -61,7 +61,9 @@ def build(profiles, responders):
     }
     provider = OpenAICompatibleProvider(
         profiles,
-        transports={role: recorders[role].transport for role in roles if role in profiles},
+        transports={
+            role: recorders[role].transport for role in roles if role in profiles
+        },
         capacity=4,
         sleep=SleepRecorder(),
         clock=Clock(),

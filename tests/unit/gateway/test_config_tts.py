@@ -55,7 +55,9 @@ def test_explicit_groq_orpheus_wav_profile_is_resolved():
 
 
 def test_mp3_with_the_full_four_thousand_cap_is_accepted():
-    settings = Settings.from_env(env(TTS_AUDIO_FORMAT="mp3", TTS_MAX_INPUT_CHARS="4000"))
+    settings = Settings.from_env(
+        env(TTS_AUDIO_FORMAT="mp3", TTS_MAX_INPUT_CHARS="4000")
+    )
 
     assert settings.tts.audio_format == "mp3"
     assert settings.tts.max_input_chars == 4000

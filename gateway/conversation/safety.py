@@ -78,7 +78,9 @@ class SafetyIndex:
         self._embed = embed
         self._margin = margin
         self._floor = floor
-        self._vectors: asyncio.Future[tuple[list[list[float]], list[list[float]]]] | None = None
+        self._vectors: (
+            asyncio.Future[tuple[list[list[float]], list[list[float]]]] | None
+        ) = None
 
     def warm(self) -> None:
         """Start embedding the examples now, so the first customer does not wait for it."""
@@ -90,8 +92,10 @@ class SafetyIndex:
             self._vectors.cancel()
 
     def _ensure(self) -> asyncio.Future:
-        failed = self._vectors is not None and self._vectors.done() and (
-            self._vectors.cancelled() or self._vectors.exception() is not None
+        failed = (
+            self._vectors is not None
+            and self._vectors.done()
+            and (self._vectors.cancelled() or self._vectors.exception() is not None)
         )
         if self._vectors is None or failed:
             self._vectors = asyncio.ensure_future(self._embed_examples())
@@ -113,7 +117,10 @@ class SafetyIndex:
             emergency, ordinary = await asyncio.shield(self._ensure())
             (query,) = await self._embed([message])
         nearest = _nearest(query, emergency)
-        return nearest >= self._floor and nearest > _nearest(query, ordinary) + self._margin
+        return (
+            nearest >= self._floor
+            and nearest > _nearest(query, ordinary) + self._margin
+        )
 
 
 def _nearest(query: Sequence[float], examples: Sequence[Sequence[float]]) -> float:

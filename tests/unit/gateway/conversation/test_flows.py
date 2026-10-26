@@ -15,7 +15,9 @@ from gateway.conversation.flows import (
     STEPS,
     SUPPORT_REQUEST,
     FlowContext,
+    FlowOutcome,
     FlowsInvalid,
+    flow_state_after,
     load_flows,
     only_account_number,
     run_flow,
@@ -38,7 +40,9 @@ class Customer:
         return SimpleNamespace(slots=[])
 
 
-def context(*, order=ORDER, invalid=False, verification=None, session_id=None) -> FlowContext:
+def context(
+    *, order=ORDER, invalid=False, verification=None, session_id=None
+) -> FlowContext:
     return FlowContext(
         session_id=session_id or uuid4(),
         order_number=order,
@@ -74,8 +78,40 @@ def test_the_shipped_flows_load_and_only_use_known_steps() -> None:
         {"f": {"intent": "book_technician", "steps": ["ask_account", "ask_account"]}},
         {"f": {"intent": "book_technician", "steps": ["no_such_step"]}},
         {"f": {"intent": "book_technician", "steps": ["ask_account"], "extra": 1}},
-        {"f": {"intent": "book_technician", "steps": ["ask_account", "review_details"]}},
+        {
+            "f": {
+                "intent": "book_technician",
+                "steps": ["ask_account", "review_details"],
+            }
+        },
         {"f": {"intent": "book_technician", "steps": ["ask_account"]}},
+        {
+            "f": {"intent": "book_technician", "steps": ["verify_account"]},
+            SUPPORT_REQUEST: {
+                "intent": "start_intake",
+                "steps": ["collect_details", "review_details"],
+            },
+        },
+        {
+            "f": {
+                "intent": "book_technician",
+                "steps": ["ask_account", "offer_windows"],
+            },
+            SUPPORT_REQUEST: {
+                "intent": "start_intake",
+                "steps": ["collect_details", "review_details"],
+            },
+        },
+        {
+            "f": {
+                "intent": "book_technician",
+                "steps": ["verify_account", "ask_account", "offer_windows"],
+            },
+            SUPPORT_REQUEST: {
+                "intent": "start_intake",
+                "steps": ["collect_details", "review_details"],
+            },
+        },
         {
             "a": {"intent": "book_technician", "steps": ["ask_account"]},
             "b": {"intent": "book_technician", "steps": ["ask_account"]},
@@ -83,10 +119,14 @@ def test_the_shipped_flows_load_and_only_use_known_steps() -> None:
         },
     ],
 )
-def test_a_missing_or_unrunnable_flows_file_is_rejected(tmp_path: Path, content) -> None:
+def test_a_missing_or_unrunnable_flows_file_is_rejected(
+    tmp_path: Path, content
+) -> None:
     path = tmp_path / "flows.json"
     if content is not None:
-        path.write_text(content if isinstance(content, str) else json.dumps(content), "utf-8")
+        path.write_text(
+            content if isinstance(content, str) else json.dumps(content), "utf-8"
+        )
 
     with pytest.raises(FlowsInvalid):
         load_flows(path)
@@ -102,7 +142,7 @@ def test_the_default_path_is_the_shipped_file() -> None:
 async def test_a_flow_without_an_account_asks_for_it() -> None:
     flow = load_flows()["book_technician"]
 
-    outcome = await run_flow(flow, "ask_account", context(order=None))
+    outcome = await run_flow(flow, context(order=None))
 
     assert outcome.reply == text("auth.order_number_prompt", "en")
     assert outcome.step == "ask_account"
@@ -111,7 +151,7 @@ async def test_a_flow_without_an_account_asks_for_it() -> None:
 async def test_a_malformed_account_is_corrected_not_accepted() -> None:
     flow = load_flows()["book_technician"]
 
-    outcome = await run_flow(flow, "ask_account", context(order=None, invalid=True))
+    outcome = await run_flow(flow, context(order=None, invalid=True))
 
     assert outcome.reply == text("intake.invalid_order", "en")
     assert outcome.step == "ask_account"
@@ -122,7 +162,7 @@ async def test_an_unverified_account_stops_at_verification() -> None:
     verification = VerificationRegistry()
     ctx = context(verification=verification)
 
-    outcome = await run_flow(flow, "ask_account", ctx)
+    outcome = await run_flow(flow, ctx)
 
     assert outcome.reply == text("auth.verification_prompt", "en")
     assert outcome.verification_required is True
@@ -135,29 +175,42 @@ async def test_a_verified_account_runs_on_to_the_last_step_and_finishes() -> Non
     ctx = context(verification=verification)
     verification.record_success(ctx.session_id, ORDER)
 
-    booking = await run_flow(load_flows()["book_technician"], "verify_account", ctx)
-    status = await run_flow(load_flows()["installation_status"], "verify_account", ctx)
+    booking = await run_flow(load_flows()["book_technician"], ctx)
+    status = await run_flow(load_flows()["installation_status"], ctx)
 
     assert booking.reply == text("booking.no_slots", "en") and booking.step is None
-    assert status.reply == render("installation.awaiting_visit", "en", {"order_number": ORDER})
+    assert status.reply == render(
+        "installation.awaiting_visit", "en", {"order_number": ORDER}
+    )
     assert status.step is None
 
 
-async def test_starting_at_verification_without_an_account_asks_for_the_account() -> None:
+async def test_a_malformed_account_is_never_checked_against_a_grant_for_none() -> None:
+    """A malformed account gives "no account" and an unverified session gives "no grant"; they must not match."""
+
+    flow = load_flows()["book_technician"]
+    verification = VerificationRegistry()
+    session_id = uuid4()
+    verification.record_success(
+        session_id, "NS-000999"
+    )  # a grant exists, for another account
+    ctx = context(
+        order=None, invalid=True, verification=verification, session_id=session_id
+    )
+
+    outcome = await run_flow(flow, ctx)
+
+    assert outcome.reply == text("intake.invalid_order", "en")
+    assert outcome.step == "ask_account" and outcome.verification_required is False
+
+
+def test_the_saved_flow_state_is_the_waiting_step_or_nothing() -> None:
     flow = load_flows()["book_technician"]
 
-    expected = {False: text("auth.order_number_prompt", "en"), True: text("intake.invalid_order", "en")}
-    for invalid, reply in expected.items():
-        outcome = await run_flow(flow, "verify_account", context(order=None, invalid=invalid))
+    waiting = flow_state_after(flow, FlowOutcome("ask", "verify_account"))
 
-        assert outcome.reply == reply
-        assert outcome.verification_required is False
-
-
-async def test_an_unknown_stored_step_starts_the_flow_again() -> None:
-    outcome = await run_flow(load_flows()["book_technician"], "removed_step", context(order=None))
-
-    assert outcome.step == "ask_account"
+    assert (waiting.name, waiting.step) == ("book_technician", "verify_account")
+    assert flow_state_after(flow, FlowOutcome("done", None)) is None
 
 
 # --- what feeds a flow ----------------------------------------------------------
@@ -171,8 +224,12 @@ def test_only_a_bare_account_number_feeds_a_running_flow() -> None:
     assert not only_account_number(
         make_extraction(candidates={"order_number": ORDER, "description": "broken"})
     )
-    assert not only_account_number(make_extraction(has_question=True, candidates={"order_number": ORDER}))
-    assert not only_account_number(make_extraction(intent="start_intake", candidates={"order_number": ORDER}))
+    assert not only_account_number(
+        make_extraction(has_question=True, candidates={"order_number": ORDER})
+    )
+    assert not only_account_number(
+        make_extraction(intent="start_intake", candidates={"order_number": ORDER})
+    )
 
 
 # --- the support request ----------------------------------------------------------
@@ -183,12 +240,17 @@ FULL = make_slots(ORDER, "damaged_item", "It arrived broken", "high")
 def intake(*, slots, pending=None, rejected=False) -> FlowContext:
     from dataclasses import replace
 
-    return replace(context(order=None), slots=slots, pending=pending or {}, review_rejected=rejected)
+    return replace(
+        context(order=None),
+        slots=slots,
+        pending=pending or {},
+        review_rejected=rejected,
+    )
 
 
 async def run_intake(ctx):
     flow = load_flows()[SUPPORT_REQUEST]
-    return await run_flow(flow, flow.steps[0], ctx)
+    return await run_flow(flow, ctx)
 
 
 async def test_a_missing_detail_is_asked_for_in_the_fixed_order() -> None:
@@ -199,8 +261,14 @@ async def test_a_missing_detail_is_asked_for_in_the_fixed_order() -> None:
 
 
 async def test_a_pending_problem_is_asked_about_before_anything_missing() -> None:
-    question = Clarification(code="invalid", candidate="x", question="That does not look right.")
-    outcome = await run_intake(intake(slots=make_slots(None, None, None, None), pending={"order_number": question}))
+    question = Clarification(
+        code="invalid", candidate="x", question="That does not look right."
+    )
+    outcome = await run_intake(
+        intake(
+            slots=make_slots(None, None, None, None), pending={"order_number": question}
+        )
+    )
 
     assert outcome.reply == "That does not look right."
     assert INTAKE_STATUS[outcome.step] == "collecting"
@@ -236,7 +304,13 @@ async def test_the_first_pending_problem_in_field_order_is_asked_first() -> None
 async def test_a_pending_problem_wins_over_the_rejection_prompt() -> None:
     conflict = Clarification(code="conflict", candidate="refund", question="C?")
 
-    outcome = await run_intake(intake(slots=make_slots(category="delivery"), pending={"category": conflict}, rejected=True))
+    outcome = await run_intake(
+        intake(
+            slots=make_slots(category="delivery"),
+            pending={"category": conflict},
+            rejected=True,
+        )
+    )
 
     assert outcome.reply == "C?"
 
@@ -247,7 +321,14 @@ async def test_a_pending_problem_wins_over_the_rejection_prompt() -> None:
         (make_slots(), "order_number"),
         (make_slots(order_number="NS-123456"), "category"),
         (make_slots(order_number="NS-123456", category="delivery"), "description"),
-        (make_slots(order_number="NS-123456", category="delivery", description="My order arrived broken"), "urgency"),
+        (
+            make_slots(
+                order_number="NS-123456",
+                category="delivery",
+                description="My order arrived broken",
+            ),
+            "urgency",
+        ),
     ],
 )
 async def test_each_missing_detail_is_asked_for_in_turn(slots, field) -> None:

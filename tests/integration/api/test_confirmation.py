@@ -118,7 +118,9 @@ async def case_valid_review_text_yes(client, provider, session_dir):
     assert disk["confirmation"]["confirmed_at"].endswith("Z")
 
 
-async def case_valid_review_confirm_candidates_equal_accepted_slots(client, provider, session_dir):
+async def case_valid_review_confirm_candidates_equal_accepted_slots(
+    client, provider, session_dir
+):
     session_id = await review_session(client, provider)
     before = read_session(session_dir, session_id)
     calls_before = len(provider.calls)
@@ -222,7 +224,9 @@ async def case_review_yes_plus_policy_question(client, provider, session_dir):
         token=1,
     )
     assert payload["reply"] == RETURN_ANSWER_TEXT
-    assert [citation["source_id"] for citation in payload["citations"]] == ["faq-returns"]
+    assert [citation["source_id"] for citation in payload["citations"]] == [
+        "faq-returns"
+    ]
     assert payload["citations"][0]["title"]
     assert payload["citations"][0]["excerpt"]
     assert payload["citations"][0]["kb_version"]
@@ -245,9 +249,7 @@ async def case_review_no(client, provider, session_dir):
     before = read_session(session_dir, session_id)
     calls_before = len(provider.calls)
     provider.script_extraction(reject_extraction())
-    request_id, response = await send_turn(
-        client, session_id, text=NO_TEXT, revision=1
-    )
+    request_id, response = await send_turn(client, session_id, text=NO_TEXT, revision=1)
     assert response.status_code == 200, response.text
     payload = response.json()
     assert_ledger(provider, calls_before=calls_before, extracts=1, answers=0)

@@ -165,16 +165,12 @@ async def test_completed_session_refuses_a_new_social_intent(
     assert raw_bytes(session_dir, session_id) == before_bytes
 
 
-async def test_revision_conflict_precedes_intent_routing(
-    client, provider, session_dir
-):
+async def test_revision_conflict_precedes_intent_routing(client, provider, session_dir):
     session_id = await start_session(client)
     before_bytes = raw_bytes(session_dir, session_id)
     calls_before = len(provider.calls)
 
-    _, response = await send_turn(
-        client, session_id, text=SOCIAL_GREETING, revision=7
-    )
+    _, response = await send_turn(client, session_id, text=SOCIAL_GREETING, revision=7)
 
     await assert_error(
         response,

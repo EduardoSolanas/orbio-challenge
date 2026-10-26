@@ -144,7 +144,16 @@ def test_help_lists_every_layer_with_scope_and_limits():
     code, output = _main(["help"], run=recorder)
     assert code == 0
     assert recorder.calls == []
-    for layer in ("unit", "integration", "e2e", "e2e-judge", "docker-e2e", "mutation", "coverage", "all"):
+    for layer in (
+        "unit",
+        "integration",
+        "e2e",
+        "e2e-judge",
+        "docker-e2e",
+        "mutation",
+        "coverage",
+        "all",
+    ):
         assert layer in output
     assert "does not prove" in output.lower()
     assert "reports/" in output
@@ -211,7 +220,11 @@ def test_coverage_runs_both_offline_suites_with_reports():
     command = recorder.calls[0]
     joined = " ".join(command)
     assert "tests/unit" in command and "tests/integration" in command
-    assert "--cov=gateway" in command and "--cov=backend_api" in command and "--cov=shared" in command
+    assert (
+        "--cov=gateway" in command
+        and "--cov=backend_api" in command
+        and "--cov=shared" in command
+    )
     assert "reports/coverage.json" in joined
     assert "reports/coverage.xml" in joined
 
@@ -309,7 +322,9 @@ def test_docker_e2e_fails_early_when_the_deployment_is_unreachable(tmp_path):
     _write_dotenv(tmp_path / "tests/e2e/.env.judge", _docker_env())
 
     def unreachable(config):
-        raise RuntimeError("Docker application is unavailable at http://127.0.0.1:8000/health")
+        raise RuntimeError(
+            "Docker application is unavailable at http://127.0.0.1:8000/health"
+        )
 
     recorder = Recorder()
     code, output = _main(["docker-e2e"], root=tmp_path, run=recorder, probe=unreachable)

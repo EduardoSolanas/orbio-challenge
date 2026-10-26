@@ -1,4 +1,5 @@
 """Strict configuration and semantic judge for the real Docker E2E gate."""
+
 from __future__ import annotations
 
 import json
@@ -30,7 +31,9 @@ def _url(value: str, name: str) -> str:
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise ValueError(f"{name} must be an absolute http(s) URL")
     if parsed.path not in {"", "/"} or parsed.query or parsed.fragment:
-        raise ValueError(f"{name} must be an application origin without a path or query")
+        raise ValueError(
+            f"{name} must be an application origin without a path or query"
+        )
     if parsed.username or parsed.password:
         raise ValueError(f"{name} must not contain credentials")
     return f"{parsed.scheme}://{parsed.netloc}"
@@ -48,7 +51,9 @@ def _endpoint(value: str, name: str) -> str:
 def load_config(root: Path | None = None) -> DockerE2EConfig:
     root = root or Path(__file__).resolve().parents[2]
     docker_values = read_dotenv(root / "tests/e2e/.env.docker")
-    app_url = docker_values.get("E2E_DOCKER_BASE_URL") or os.environ.get("E2E_DOCKER_BASE_URL")
+    app_url = docker_values.get("E2E_DOCKER_BASE_URL") or os.environ.get(
+        "E2E_DOCKER_BASE_URL"
+    )
     if not app_url:
         raise RuntimeError(
             "Docker E2E is not configured: set E2E_DOCKER_BASE_URL in "
@@ -57,7 +62,11 @@ def load_config(root: Path | None = None) -> DockerE2EConfig:
 
     judge_values = read_dotenv(root / "tests/e2e/.env.judge")
     judge_values.update(
-        {key: value for key, value in os.environ.items() if key.startswith("E2E_JUDGE_")}
+        {
+            key: value
+            for key, value in os.environ.items()
+            if key.startswith("E2E_JUDGE_")
+        }
     )
     required = (
         "E2E_JUDGE_BASE_URL",
@@ -82,7 +91,9 @@ def load_config(root: Path | None = None) -> DockerE2EConfig:
         max_tokens = int(judge_values["E2E_JUDGE_MAX_TOKENS"])
         temperature = float(judge_values["E2E_JUDGE_TEMPERATURE"])
     except ValueError as exc:
-        raise ValueError("judge timeout, max tokens, and temperature must be numeric") from exc
+        raise ValueError(
+            "judge timeout, max tokens, and temperature must be numeric"
+        ) from exc
     if not 0 < timeout <= 120:
         raise ValueError("E2E_JUDGE_TIMEOUT_SECONDS must be > 0 and <= 120")
     if not 1 <= max_tokens <= 4096:
@@ -100,33 +111,50 @@ def load_config(root: Path | None = None) -> DockerE2EConfig:
         max_tokens=max_tokens,
         temperature=temperature,
         prompt_version=prompt_version,
-        reasoning_effort=parse_reasoning_effort(judge_values.get("E2E_JUDGE_REASONING_EFFORT")),
+        reasoning_effort=parse_reasoning_effort(
+            judge_values.get("E2E_JUDGE_REASONING_EFFORT")
+        ),
     )
     return DockerE2EConfig(app_url=_url(app_url, "E2E_DOCKER_BASE_URL"), judge=judge)
 
 
 def probe(config: DockerE2EConfig) -> None:
     """Fail before browser launch when either real origin is unavailable."""
-    for url, label in ((f"{config.app_url}/health", "Docker application"),
-                       (f"{config.judge.base_url}/models", "LLM judge")):
+    for url, label in (
+        (f"{config.app_url}/health", "Docker application"),
+        (f"{config.judge.base_url}/models", "LLM judge"),
+    ):
         request = urllib.request.Request(url, headers={"Accept": "application/json"})
         try:
-            with urllib.request.urlopen(request, timeout=config.judge.timeout_seconds) as response:
+            with urllib.request.urlopen(
+                request, timeout=config.judge.timeout_seconds
+            ) as response:
                 if response.status != 200:
                     raise RuntimeError(f"{label} returned HTTP {response.status}")
                 payload = json.loads(response.read().decode("utf-8"))
-        except (OSError, urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+        except (
+            OSError,
+            urllib.error.URLError,
+            TimeoutError,
+            json.JSONDecodeError,
+        ) as exc:
             raise RuntimeError(f"{label} is unavailable at {url}: {exc}") from exc
         if label == "Docker application" and payload != {"status": "ok"}:
-            raise RuntimeError(f"Docker application health response is not {{'status': 'ok'}}: {payload}")
+            raise RuntimeError(
+                f"Docker application health response is not {{'status': 'ok'}}: {payload}"
+            )
         if label == "LLM judge":
             models = payload.get("data") if isinstance(payload, dict) else None
             ids = {item.get("id") for item in models or [] if isinstance(item, dict)}
             if config.judge.model not in ids:
-                raise RuntimeError(f"LLM judge model {config.judge.model!r} was not advertised")
+                raise RuntimeError(
+                    f"LLM judge model {config.judge.model!r} was not advertised"
+                )
 
 
-def semantic_judge(config: JudgeConfig, user_turn: str, response: str, context: str) -> dict[str, Any]:
+def semantic_judge(
+    config: JudgeConfig, user_turn: str, response: str, context: str
+) -> dict[str, Any]:
     """Grade one reply against a written rule (the real-provider journeys)."""
 
     system = (
@@ -134,5 +162,14 @@ def semantic_judge(config: JudgeConfig, user_turn: str, response: str, context: 
         "Return only JSON with exactly pass, intent, reason, violations. "
         "Judge relevance and grounding only; deterministic state and citation checks are external."
     )
-    content, verdict = ask_judge(config, system, {"user_turn": user_turn, "response": response, "context": context})
-    return {"model": config.model, "prompt_version": config.prompt_version, "raw_output": content, "verdict": verdict}
+    content, verdict = ask_judge(
+        config,
+        system,
+        {"user_turn": user_turn, "response": response, "context": context},
+    )
+    return {
+        "model": config.model,
+        "prompt_version": config.prompt_version,
+        "raw_output": content,
+        "verdict": verdict,
+    }

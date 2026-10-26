@@ -53,7 +53,7 @@ from tests.integration.support.transcription import (
     snapshot,
     streamed_wire,
 )
-from tests.unit.gateway.providers.provider_support import knowledge_context
+from tests.support.provider_builders import knowledge_context
 
 ANSWER_PAYLOAD = {
     "answerable": True,
@@ -69,7 +69,6 @@ SOURCE = KnowledgeRecord(
 )
 
 MP3 = b"ID3\x03\x00\x00\x00\x00\x00\x00finite-mp3-fixture-bytes"
-
 
 
 def status_responder(status: int, body: bytes = b'{"error":"denied"}', headers=None):
@@ -180,7 +179,9 @@ async def case_llm_rag_json_object_output_mode(session_dir):
         llm_payload = json.loads(harness.recorders["llm"].requests[0].content)
         rag_payload = json.loads(harness.recorders["rag"].requests[0].content)
         assert_emotion_schema(
-            json.loads(llm_payload["messages"][0]["content"].split(SCHEMA_INSTRUCTION, 1)[1])
+            json.loads(
+                llm_payload["messages"][0]["content"].split(SCHEMA_INSTRUCTION, 1)[1]
+            )
         )
         assert llm_payload["response_format"] == {"type": "json_object"}
         assert rag_payload["response_format"] == {"type": "json_object"}
@@ -218,7 +219,9 @@ async def case_llm_rag_prompt_json_output_mode(session_dir):
         payload = json.loads(harness.recorders["llm"].requests[0].content)
         assert "response_format" not in payload
         assert_emotion_schema(
-            json.loads(payload["messages"][0]["content"].split(SCHEMA_INSTRUCTION, 1)[1])
+            json.loads(
+                payload["messages"][0]["content"].split(SCHEMA_INSTRUCTION, 1)[1]
+            )
         )
         assert payload["messages"][0]["content"] == (
             EXTRACTION_SYSTEM_PROMPT
@@ -232,9 +235,7 @@ async def case_llm_rag_prompt_json_output_mode(session_dir):
         # unusable, so the bounded repair runs and the operation fails.
         with pytest.raises(Exception) as excinfo:
             await harness.provider.extract(extraction_context())
-        assert_app_error(
-            excinfo.value, status=502, code="invalid_provider_response"
-        )
+        assert_app_error(excinfo.value, status=502, code="invalid_provider_response")
         assert len(harness.recorders["llm"].requests) == 3
         second = json.loads(harness.recorders["llm"].requests[1].content)
         third = json.loads(harness.recorders["llm"].requests[2].content)
@@ -255,7 +256,9 @@ async def case_four_independent_service_endpoints(session_dir):
             "rag": chat_valid(ANSWER_PAYLOAD),
             "stt": lambda request, attempt: json_wire({"text": "transcribed"}),
             "tts": lambda request, attempt: httpx.Response(
-                200, stream=httpx.ByteStream(MP3), headers={"content-type": "audio/mpeg"}
+                200,
+                stream=httpx.ByteStream(MP3),
+                headers={"content-type": "audio/mpeg"},
             ),
         },
     ) as harness:
@@ -265,9 +268,21 @@ async def case_four_independent_service_endpoints(session_dir):
         await harness.provider.synthesize("Saved reply text.")
 
         expected = {
-            "llm": ("http://llm.test/v1/chat/completions", "llm-model", "Bearer llm-token"),
-            "rag": ("http://rag.test/v1/chat/completions", "rag-model", "Bearer rag-token"),
-            "stt": ("http://stt.test/v1/audio/transcriptions", "stt-model", "Bearer stt-token"),
+            "llm": (
+                "http://llm.test/v1/chat/completions",
+                "llm-model",
+                "Bearer llm-token",
+            ),
+            "rag": (
+                "http://rag.test/v1/chat/completions",
+                "rag-model",
+                "Bearer rag-token",
+            ),
+            "stt": (
+                "http://stt.test/v1/audio/transcriptions",
+                "stt-model",
+                "Bearer stt-token",
+            ),
             "tts": ("http://tts.test/v1/audio/speech", "tts-model", "Bearer tts-token"),
         }
         tokens = {
@@ -314,7 +329,9 @@ async def case_one_shared_host_four_explicit_role_profiles(session_dir):
             "rag": chat_valid(ANSWER_PAYLOAD),
             "stt": lambda request, attempt: json_wire({"text": "transcribed"}),
             "tts": lambda request, attempt: httpx.Response(
-                200, stream=httpx.ByteStream(MP3), headers={"content-type": "audio/mpeg"}
+                200,
+                stream=httpx.ByteStream(MP3),
+                headers={"content-type": "audio/mpeg"},
             ),
         },
     ) as harness:
@@ -347,7 +364,9 @@ async def case_one_shared_host_four_explicit_role_profiles(session_dir):
     assert harness.provider._closed is True
 
 
-async def case_all_empty_rag_profile_real_settings_lifespan_resolution_then(session_dir):
+async def case_all_empty_rag_profile_real_settings_lifespan_resolution_then(
+    session_dir,
+):
     settings = settings_from(
         env(
             session_dir,
@@ -374,8 +393,7 @@ async def case_all_empty_rag_profile_real_settings_lifespan_resolution_then(sess
         assert payload["response_format"]["json_schema"]["name"] == "knowledge_answer"
         assert payload["max_tokens"] == 700
         assert all(
-            "sk-developer-sentinel" not in value
-            and "global-key-sentinel" not in value
+            "sk-developer-sentinel" not in value and "global-key-sentinel" not in value
             for value in request.headers.values()
         )
 
@@ -431,7 +449,9 @@ async def case_auth_mode_none_on_all_roles(session_dir):
             "rag": chat_valid(ANSWER_PAYLOAD),
             "stt": lambda request, attempt: json_wire({"text": "transcribed"}),
             "tts": lambda request, attempt: httpx.Response(
-                200, stream=httpx.ByteStream(MP3), headers={"content-type": "audio/mpeg"}
+                200,
+                stream=httpx.ByteStream(MP3),
+                headers={"content-type": "audio/mpeg"},
             ),
         },
     ) as harness:
@@ -466,7 +486,9 @@ async def case_distinct_bearer_tokens_on_four_roles(session_dir):
             "rag": chat_valid(ANSWER_PAYLOAD),
             "stt": lambda request, attempt: json_wire({"text": "transcribed"}),
             "tts": lambda request, attempt: httpx.Response(
-                200, stream=httpx.ByteStream(MP3), headers={"content-type": "audio/mpeg"}
+                200,
+                stream=httpx.ByteStream(MP3),
+                headers={"content-type": "audio/mpeg"},
             ),
         },
     ) as harness:
@@ -514,7 +536,9 @@ async def case_configuration_status(status, session_dir, caplog):
     settings = settings_from(env(session_dir))
     secret = "sk-leaked-credential-sentinel"
     body = json.dumps({"error": secret}).encode("utf-8")
-    async with adapter_app(settings, {"llm": status_responder(status, body)}) as harness:
+    async with adapter_app(
+        settings, {"llm": status_responder(status, body)}
+    ) as harness:
         with caplog.at_level("DEBUG"):
             with pytest.raises(Exception) as excinfo:
                 await harness.provider.extract(extraction_context())
@@ -640,9 +664,7 @@ def invalid_responder(kind: str):
 
 
 async def assert_invalid_success(settings, session_dir, kind: str):
-    async with adapter_app(
-        settings, {"llm": invalid_responder(kind)}
-    ) as harness:
+    async with adapter_app(settings, {"llm": invalid_responder(kind)}) as harness:
         session_id = await start_session(harness.client)
         before = snapshot(session_dir, session_id)
         response = await harness.client.post(
@@ -660,7 +682,9 @@ async def assert_invalid_success(settings, session_dir, kind: str):
 
 
 async def case_2xx_malformed_json_twice(session_dir):
-    await assert_invalid_success(settings_from(env(session_dir)), session_dir, "malformed")
+    await assert_invalid_success(
+        settings_from(env(session_dir)), session_dir, "malformed"
+    )
 
 
 async def case_2xx_response_choices_on_both_attempts(session_dir):
@@ -670,11 +694,15 @@ async def case_2xx_response_choices_on_both_attempts(session_dir):
 
 
 async def case_2xx_message_tool_calls_nonempty_twice(session_dir):
-    await assert_invalid_success(settings_from(env(session_dir)), session_dir, "tool_calls")
+    await assert_invalid_success(
+        settings_from(env(session_dir)), session_dir, "tool_calls"
+    )
 
 
 async def case_2xx_refusal_nonempty_twice(session_dir):
-    await assert_invalid_success(settings_from(env(session_dir)), session_dir, "refusal")
+    await assert_invalid_success(
+        settings_from(env(session_dir)), session_dir, "refusal"
+    )
 
 
 async def case_2xx_finish_reason_length_on_both_attempts(session_dir):

@@ -31,6 +31,8 @@ def share_one_tls_context() -> Any:
     from httpx._transports import default
 
     patch = pytest.MonkeyPatch()
-    patch.setattr(default, "create_ssl_context", functools.lru_cache(default.create_ssl_context))
+    patch.setattr(
+        default, "create_ssl_context", functools.lru_cache(default.create_ssl_context)
+    )
     yield
     patch.undo()

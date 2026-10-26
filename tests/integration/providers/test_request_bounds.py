@@ -279,7 +279,9 @@ async def case_slow_streaming_json_read(session_dir):
         assert len(harness.recorders["llm"].requests) == 2
         assert len(responder.streams) == 2
         assert all(stream.closed for stream in responder.streams)
-        assert all(stream.bytes_read == len(b'{"choices":[') for stream in responder.streams)
+        assert all(
+            stream.bytes_read == len(b'{"choices":[') for stream in responder.streams
+        )
         assert snapshot(session_dir, session_id) == before
 
 
@@ -493,9 +495,10 @@ async def case_malformed_schema_then_valid_repair_response(session_dir):
         first, second = requests
         first_payload = json.loads(first.content)
         second_payload = json.loads(second.content)
-        assert second_payload["messages"][1]["content"] == first_payload["messages"][1][
-            "content"
-        ]
+        assert (
+            second_payload["messages"][1]["content"]
+            == first_payload["messages"][1]["content"]
+        )
         assert second_payload["messages"][1]["content"] == serialize_context(
             extraction_context()
         )

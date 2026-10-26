@@ -28,13 +28,16 @@ from tests.support.fakes import (
 HOSTILE_TITLE = 'Returns <img src=x onerror="window.__pwned=1">'
 HOSTILE_BODY = (
     "Unused items can be returned. <script>window.__pwned=1</script> <b>bold</b> "
-    "[x](javascript:alert(1)) &amp; <a href=\"javascript:window.__pwned=1\">go</a>"
+    '[x](javascript:alert(1)) &amp; <a href="javascript:window.__pwned=1">go</a>'
 )
 HOSTILE_VERSION = "hostile-2026-10-22"
-HOSTILE_ANSWER = 'You <b>can</b> return it <img src=x onerror="window.__pwned=1"> within 30 days.'
+HOSTILE_ANSWER = (
+    'You <b>can</b> return it <img src=x onerror="window.__pwned=1"> within 30 days.'
+)
 LONG_TOKEN = "UNBROKEN" * 50
 CUSTOMER_PART = (
-    '<img src=x onerror="window.__pwned=1"> My order NS-000123 arrived broken. ' + LONG_TOKEN
+    '<img src=x onerror="window.__pwned=1"> My order NS-000123 arrived broken. '
+    + LONG_TOKEN
 )
 CUSTOMER_QUESTION = "<script>window.__pwned=1</script> Can I return an unused item?"
 SUMMARY = (
@@ -51,7 +54,9 @@ SPANISH_REVIEW = (
     "Confirma estos datos o dime qué cambiar."
 )
 
-pytestmark = pytest.mark.browser_e2e  # controlled-provider browser workflow, never live Docker/provider proof
+pytestmark = (
+    pytest.mark.browser_e2e
+)  # controlled-provider browser workflow, never live Docker/provider proof
 
 NO_OVERFLOW = (
     "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
@@ -80,7 +85,9 @@ def write_hostile_knowledge(path) -> None:
     )
 
 
-@pytest.mark.parametrize("case_id", [pytest.param("keyboard_mobile", id="keyboard_mobile")])
+@pytest.mark.parametrize(
+    "case_id", [pytest.param("keyboard_mobile", id="keyboard_mobile")]
+)
 def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
     knowledge = tmp_path / "hostile-faq.json"
     write_hostile_knowledge(knowledge)
@@ -93,7 +100,9 @@ def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
     provider.script_extract(CUSTOMER_QUESTION, x_question())
     provider.script_answer(
         CUSTOMER_QUESTION,
-        KnowledgeAnswer(answerable=True, answer=HOSTILE_ANSWER, cited_ids=["faq-returns"]),
+        KnowledgeAnswer(
+            answerable=True, answer=HOSTILE_ANSWER, cited_ids=["faq-returns"]
+        ),
     )
     provider.script_extract(CATEGORY, x_category())
     provider.script_extract(HIGH, x_high())
@@ -111,21 +120,29 @@ def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
     def assert_inert_dom() -> None:
         html = ui.log.inner_html()
         assert "<img" not in html and "<script" not in html
-        assert ui.log.locator("img, script, iframe, object, embed, [onerror]").count() == 0
+        assert (
+            ui.log.locator("img, script, iframe, object, embed, [onerror]").count() == 0
+        )
         assert page.locator("img[src='x']").count() == 0
         assert page.evaluate("window.__pwned") is None
-        assert page.evaluate(NO_OVERFLOW), "document must not scroll horizontally at 390 px"
+        assert page.evaluate(NO_OVERFLOW), (
+            "document must not scroll horizontally at 390 px"
+        )
 
     page.set_viewport_size({"width": 390, "height": 844})
     response = page.goto(server.base_url + "/")
     assert response is not None and response.status == 200
     expect(page).to_have_title("Northstar Energy | Powering everyday life")
-    expect(page.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
+    expect(
+        page.get_by_role("dialog", name="Northstar Energy support chat")
+    ).to_be_visible()
     expect(page.get_by_role("button", name="Close chat")).to_have_count(0)
     expect(page.locator(".chat-launch")).to_have_count(0)
     expect(page.get_by_role("navigation")).to_have_count(0)
     page.keyboard.press("Escape")
-    expect(page.get_by_role("dialog", name="Northstar Energy support chat")).to_be_visible()
+    expect(
+        page.get_by_role("dialog", name="Northstar Energy support chat")
+    ).to_be_visible()
     assert page.evaluate("document.documentElement.scrollHeight <= window.innerHeight")
     chat_box = page.locator("#support-chat").bounding_box()
     compose_box = page.locator("#message-form").bounding_box()
@@ -148,16 +165,28 @@ def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
             assert panel_box["width"] == viewport_width and panel_box["height"] == 844
         else:
             expected_width = min(720, viewport_width - 32 - 224 - 16)
-            assert panel_box["width"] == expected_width and panel_box["height"] == 844 - 48
+            assert (
+                panel_box["width"] == expected_width and panel_box["height"] == 844 - 48
+            )
             expect(side).to_be_visible()
             expect(side).to_contain_text("NS-000123")
             side_box = side.bounding_box()
-            assert side_box is not None and side_box["x"] + side_box["width"] <= panel_box["x"]
-            assert abs(side_box["x"] - (viewport_width - (224 + 16 + expected_width)) / 2) <= 1
+            assert (
+                side_box is not None
+                and side_box["x"] + side_box["width"] <= panel_box["x"]
+            )
+            assert (
+                abs(side_box["x"] - (viewport_width - (224 + 16 + expected_width)) / 2)
+                <= 1
+            )
         assert form_box is not None and field_box is not None
         assert field_box["width"] >= form_box["width"] * 0.58
-        assert page.evaluate(NO_OVERFLOW), f"layout must not overflow at {viewport_width}px"
-        assert page.evaluate("document.documentElement.scrollHeight <= window.innerHeight"), f"document must not scroll vertically at {viewport_width}px"
+        assert page.evaluate(NO_OVERFLOW), (
+            f"layout must not overflow at {viewport_width}px"
+        )
+        assert page.evaluate(
+            "document.documentElement.scrollHeight <= window.innerHeight"
+        ), f"document must not scroll vertically at {viewport_width}px"
     page.set_viewport_size({"width": 390, "height": 844})
     ui.message.fill("")
     ui.expect_greeting()
@@ -194,7 +223,9 @@ def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
     expect(sources).to_have_count(1)
     summary = sources.first.locator("summary").first
     ui.tab_to(summary)
-    assert ui.focus_is_visible(summary), "Sources summary needs a visible focus indicator"
+    assert ui.focus_is_visible(summary), (
+        "Sources summary needs a visible focus indicator"
+    )
     page.keyboard.press("Enter")
     expect(sources.first.locator("details").first).to_have_js_property("open", True)
     expect(sources.first).to_contain_text(HOSTILE_TITLE)
@@ -211,7 +242,10 @@ def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
             "kb_version": HOSTILE_VERSION,
         }
     ]
-    assert provider.calls("answer_knowledge")[0]["context"]["sources"][0]["body"] == HOSTILE_BODY
+    assert (
+        provider.calls("answer_knowledge")[0]["context"]["sources"][0]["body"]
+        == HOSTILE_BODY
+    )
     ui.cp("keyboard_mobile.answer-and-sources-escaped-keyboard")
 
     # Finish the intake and reach Play and Confirm with the keyboard alone.
@@ -245,7 +279,7 @@ def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
         "aria-label", en_catalog["actions.choose_wav"]
     )
     expect(ui.page.locator("#playback-disclosure")).to_have_text(
-        f'{en_catalog["speech.disclosure"]} · {en_catalog["site.chat_privacy"]}'
+        f"{en_catalog['speech.disclosure']} · {en_catalog['site.chat_privacy']}"
     )
     expect(play).to_have_attribute("aria-label", "Play reply 5")
     expect(play).to_have_attribute("title", "Play reply 5")
@@ -265,9 +299,11 @@ def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
     expect(ui.button(es_catalog["actions.choose_wav"])).to_have_attribute(
         "aria-label", es_catalog["actions.choose_wav"]
     )
-    expect(page.get_by_role("region", name=es_catalog["ui.review_region"])).to_be_visible()
+    expect(
+        page.get_by_role("region", name=es_catalog["ui.review_region"])
+    ).to_be_visible()
     expect(ui.page.locator("#playback-disclosure")).to_have_text(
-        f'{es_catalog["speech.disclosure"]} · {es_catalog["site.chat_privacy"]}'
+        f"{es_catalog['speech.disclosure']} · {es_catalog['site.chat_privacy']}"
     )
     expect(ui.play_button(review["id"])).to_have_attribute(
         "aria-label", "Reproducir respuesta 5"
@@ -289,7 +325,9 @@ def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
 
     confirm = ui.button("Confirm details")
     ui.tab_to(confirm)
-    assert ui.focus_is_visible(confirm), "Confirm needs a visible keyboard focus indicator"
+    assert ui.focus_is_visible(confirm), (
+        "Confirm needs a visible keyboard focus indicator"
+    )
     with page.expect_response(
         lambda r: r.request.method == "POST" and r.url.endswith("/confirm")
     ) as pending:

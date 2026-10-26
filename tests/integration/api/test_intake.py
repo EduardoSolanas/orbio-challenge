@@ -37,7 +37,6 @@ from tests.integration.support.intake import (
 CHANGE_TEXT = "Actually make the urgency low."
 
 
-
 async def case_full_one_turn(client, provider, session_dir):
     session_id = await start_session(client)
     before = read_session(session_dir, session_id)
@@ -213,7 +212,9 @@ async def case_repeat_part_equal_facts(client, provider, session_dir):
     assert provider.methods() == ["extract", "extract"]
 
 
-async def case_invalid_order_plus_valid_description_urgency(client, provider, session_dir):
+async def case_invalid_order_plus_valid_description_urgency(
+    client, provider, session_dir
+):
     session_id = await start_session(client)
     before = read_session(session_dir, session_id)
     text = "My order NS-12345 arrived broken. It is high urgency; can I return it?"
@@ -514,7 +515,9 @@ async def case_conflict_then_explicit_retain_old_order(client, provider, session
     )
 
 
-async def case_review_then_ambiguous_fields_urgency_null_candidate(client, provider, session_dir):
+async def case_review_then_ambiguous_fields_urgency_null_candidate(
+    client, provider, session_dir
+):
     session_id = await start_session(client)
     before = read_session(session_dir, session_id)
     request_id, response = await post_turn(
@@ -544,14 +547,10 @@ async def case_review_then_ambiguous_fields_urgency_null_candidate(client, provi
         session_id,
         text=text,
         revision=1,
-        extraction=make_extraction(
-            candidates={}, ambiguous_fields=["urgency"]
-        ),
+        extraction=make_extraction(candidates={}, ambiguous_fields=["urgency"]),
     )
     assert response["slots"] == FULL_SLOTS
-    assert_issue(
-        response, "urgency", "ambiguous", None, "Please clarify your urgency."
-    )
+    assert_issue(response, "urgency", "ambiguous", None, "Please clarify your urgency.")
     assert response["status"] == "collecting"
     assert response["summary"] is None
     assert response["pending_review_revision"] is None
@@ -567,7 +566,9 @@ async def case_review_then_ambiguous_fields_urgency_null_candidate(client, provi
     )
 
 
-async def case_existing_pending_issue_followed_by_all_null_extraction(client, provider, session_dir):
+async def case_existing_pending_issue_followed_by_all_null_extraction(
+    client, provider, session_dir
+):
     session_id = await start_session(client)
     before = read_session(session_dir, session_id)
     request_id, response = await post_turn(
@@ -627,13 +628,31 @@ CASES = [
     pytest.param(case_full_one_turn, id="full_one_turn"),
     pytest.param(case_high_then_category_then_part, id="high_then_category_then_part"),
     pytest.param(case_repeat_part_equal_facts, id="repeat_part_equal_facts"),
-    pytest.param(case_invalid_order_plus_valid_description_urgency, id="invalid_order_plus_valid_description_urgency"),
+    pytest.param(
+        case_invalid_order_plus_valid_description_urgency,
+        id="invalid_order_plus_valid_description_urgency",
+    ),
     pytest.param(case_review_then_change, id="review_then_change"),
-    pytest.param(case_review_then_non_explicit_different_order, id="review_then_non_explicit_different_order"),
-    pytest.param(case_conflict_then_explicit_choose_new_order, id="conflict_then_explicit_choose_new_order"),
-    pytest.param(case_conflict_then_explicit_retain_old_order, id="conflict_then_explicit_retain_old_order"),
-    pytest.param(case_review_then_ambiguous_fields_urgency_null_candidate, id="review_then_ambiguous_fields_urgency_null_candidate"),
-    pytest.param(case_existing_pending_issue_followed_by_all_null_extraction, id="existing_pending_issue_followed_by_all_null_extraction"),
+    pytest.param(
+        case_review_then_non_explicit_different_order,
+        id="review_then_non_explicit_different_order",
+    ),
+    pytest.param(
+        case_conflict_then_explicit_choose_new_order,
+        id="conflict_then_explicit_choose_new_order",
+    ),
+    pytest.param(
+        case_conflict_then_explicit_retain_old_order,
+        id="conflict_then_explicit_retain_old_order",
+    ),
+    pytest.param(
+        case_review_then_ambiguous_fields_urgency_null_candidate,
+        id="review_then_ambiguous_fields_urgency_null_candidate",
+    ),
+    pytest.param(
+        case_existing_pending_issue_followed_by_all_null_extraction,
+        id="existing_pending_issue_followed_by_all_null_extraction",
+    ),
 ]
 
 

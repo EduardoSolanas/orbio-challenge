@@ -135,18 +135,24 @@ def validate_review(data: Any, errors: list[str]) -> tuple[str, dict[str, dict]]
             continue
         mutant_id = approval["mutant_id"]
         if not isinstance(mutant_id, str) or not mutant_id:
-            errors.append(f"{label}: approvals[{index}].mutant_id must be a non-empty string")
+            errors.append(
+                f"{label}: approvals[{index}].mutant_id must be a non-empty string"
+            )
             continue
         if mutant_id in by_mutant:
             errors.append(f"{label}: duplicate approval for {mutant_id}")
         kind = approval["status"]
         if kind not in APPROVAL_KINDS:
-            errors.append(f"{label}: {mutant_id} approval status {kind!r} is not allowed")
+            errors.append(
+                f"{label}: {mutant_id} approval status {kind!r} is not allowed"
+            )
         if approval["decision"] != "approved":
             errors.append(f"{label}: {mutant_id} decision is {approval['decision']!r}")
         for field in ("rationale", "verifier", "diff_sha256"):
             if not isinstance(approval[field], str) or not approval[field].strip():
-                errors.append(f"{label}: {mutant_id} {field} must be a non-empty string")
+                errors.append(
+                    f"{label}: {mutant_id} {field} must be a non-empty string"
+                )
         if approval["source_revision"] != revision:
             errors.append(
                 f"{label}: {mutant_id} approval revision {approval['source_revision']!r} "
@@ -186,7 +192,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Gate mutmut results: every non-killed mutant needs review approval."
     )
-    parser.add_argument("--results", required=True, help="captured mutmut results output")
+    parser.add_argument(
+        "--results", required=True, help="captured mutmut results output"
+    )
     parser.add_argument("--run-log", required=True, help="captured mutmut run output")
     parser.add_argument("--review", required=True, help="reports/mutation-review.json")
     args = parser.parse_args(argv)
@@ -307,7 +315,9 @@ def main(argv: list[str] | None = None) -> int:
 
     for mutant_id in approvals:
         if mutant_id not in {entry[0] for entry in entries}:
-            errors.append(f"review: approval for mutant {mutant_id} not present in results")
+            errors.append(
+                f"review: approval for mutant {mutant_id} not present in results"
+            )
 
     expected_revision = gated_input_revision()
     if review_revision and expected_revision and review_revision != expected_revision:

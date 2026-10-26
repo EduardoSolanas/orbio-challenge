@@ -37,10 +37,16 @@ LEGACY_FIXTURE = (
 def build_engine(tmp_path, script=()):
     repository = JsonSessionRepository(tmp_path)
     provider = FakeProvider(script)
-    return ConversationEngine(repository, provider, FakeKnowledgeBase({})), repository, provider
+    return (
+        ConversationEngine(repository, provider, FakeKnowledgeBase({})),
+        repository,
+        provider,
+    )
 
 
-def turn_request(text="My order NS-000123 arrived broken and I am frustrated.", revision=0):
+def turn_request(
+    text="My order NS-000123 arrived broken and I am frustrated.", revision=0
+):
     return TurnRequest(
         request_id=uuid4(),
         expected_revision=revision,
@@ -75,7 +81,9 @@ async def test_turn_persists_customer_labels_and_null_assistant_labels(tmp_path)
         sentiment="negative",
         frustration="present",
     )
-    engine, repository, provider = build_engine(tmp_path, script=[("extract", extraction)])
+    engine, repository, provider = build_engine(
+        tmp_path, script=[("extract", extraction)]
+    )
     created = await engine.create_session()
 
     response = await engine.turn(created.session_id, turn_request())
@@ -99,7 +107,9 @@ async def test_transcript_turns_persist_customer_labels_too(tmp_path):
         sentiment="negative",
         frustration="present",
     )
-    engine, repository, provider = build_engine(tmp_path, script=[("extract", extraction)])
+    engine, repository, provider = build_engine(
+        tmp_path, script=[("extract", extraction)]
+    )
     created = await engine.create_session()
 
     await engine.turn(
@@ -119,9 +129,13 @@ async def test_transcript_turns_persist_customer_labels_too(tmp_path):
     provider.assert_exhausted()
 
 
-async def test_extraction_context_carries_the_committed_flag_and_recent_history(tmp_path):
+async def test_extraction_context_carries_the_committed_flag_and_recent_history(
+    tmp_path,
+):
     extraction = make_extraction(sentiment="neutral", frustration="none")
-    engine, repository, provider = build_engine(tmp_path, script=[("extract", extraction)])
+    engine, repository, provider = build_engine(
+        tmp_path, script=[("extract", extraction)]
+    )
     created = await engine.create_session()
 
     await engine.turn(created.session_id, turn_request("Hello there.", revision=0))
@@ -151,9 +165,7 @@ async def test_confirmation_messages_use_null_labels_and_preserve_the_flag(tmp_p
 
     response = await engine.confirm(
         session.session_id,
-        ConfirmRequest(
-            request_id=uuid4(), expected_revision=0, review_revision=1
-        ),
+        ConfirmRequest(request_id=uuid4(), expected_revision=0, review_revision=1),
     )
 
     stored = await repository.load(session.session_id)
@@ -178,7 +190,9 @@ async def test_legacy_session_labels_stay_null_and_the_next_turn_writes_version_
         sentiment="negative",
         frustration="present",
     )
-    engine, repository, provider = build_engine(tmp_path, script=[("extract", extraction)])
+    engine, repository, provider = build_engine(
+        tmp_path, script=[("extract", extraction)]
+    )
 
     response = await engine.turn(
         UUID(document["session_id"]),
@@ -194,7 +208,10 @@ async def test_legacy_session_labels_stay_null_and_the_next_turn_writes_version_
     saved = json.loads(path.read_text(encoding="utf-8"))
     assert response.revision == 1
     assert response.status == "handed_off"
-    assert response.reply == "I understand this has been frustrating. This demo simulates a transfer to a human support agent. No live agent is connected, and no real support request has been sent."
+    assert (
+        response.reply
+        == "I understand this has been frustrating. This demo simulates a transfer to a human support agent. No live agent is connected, and no real support request has been sent."
+    )
     assert saved["schema_version"] == 2
     assert saved["frustration_active"] is True
     assert stored.messages[0].sentiment is None
@@ -215,19 +232,26 @@ async def test_frustration_present_never_supplies_an_urgency_value(tmp_path):
         sentiment="negative",
         frustration="present",
     )
-    engine, repository, provider = build_engine(tmp_path, script=[("extract", extraction)])
+    engine, repository, provider = build_engine(
+        tmp_path, script=[("extract", extraction)]
+    )
     created = await engine.create_session()
 
     response = await engine.turn(
         created.session_id,
-        turn_request("I have asked three times. This is really frustrating.", revision=0),
+        turn_request(
+            "I have asked three times. This is really frustrating.", revision=0
+        ),
     )
 
     stored = await repository.load(created.session_id)
     assert response.slots.urgency is None
     assert stored.slots.urgency is None
     assert response.status == "handed_off"
-    assert response.reply == "I understand this has been frustrating. This demo simulates a transfer to a human support agent. No live agent is connected, and no real support request has been sent."
+    assert (
+        response.reply
+        == "I understand this has been frustrating. This demo simulates a transfer to a human support agent. No live agent is connected, and no real support request has been sent."
+    )
     assert response.frustration_active is True
     assert stored.frustration_active is True
     assert stored.messages[-2].frustration == "present"
@@ -253,7 +277,9 @@ async def test_second_turn_classifies_with_the_committed_conversation_context(tm
     )
     await engine.turn(
         created.session_id,
-        turn_request("I have asked three times. This is really frustrating.", revision=1),
+        turn_request(
+            "I have asked three times. This is really frustrating.", revision=1
+        ),
     )
 
     context = provider.calls[1][1]

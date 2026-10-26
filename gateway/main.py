@@ -43,7 +43,9 @@ from gateway.storage import JsonSessionRepository
 logger = logging.getLogger(__name__)
 
 DEFAULT_KNOWLEDGE_PATH = Path(__file__).parent / "knowledge" / "northstar-faq.json"
-DEFAULT_SAFETY_EXAMPLES_PATH = Path(__file__).parent / "knowledge" / "safety-examples.json"
+DEFAULT_SAFETY_EXAMPLES_PATH = (
+    Path(__file__).parent / "knowledge" / "safety-examples.json"
+)
 
 
 def _build_provider(settings: Settings) -> OpenAICompatibleProvider:
@@ -145,7 +147,9 @@ def create_app(
                 )
             except SafetyExamplesInvalid:
                 await active_provider.close()
-                raise RuntimeError("The safety examples are missing or invalid.") from None
+                raise RuntimeError(
+                    "The safety examples are missing or invalid."
+                ) from None
             active_safety.warm()
 
         app.state.settings = active_settings

@@ -312,7 +312,9 @@ def test_tool_request_allows_only_the_single_empty_argument_call() -> None:
     assert request.arguments == {}
 
     with pytest.raises(ValidationError):
-        ToolRequest(name="lookup_verified_order", arguments={"order_number": OTHER_ORDER})
+        ToolRequest(
+            name="lookup_verified_order", arguments={"order_number": OTHER_ORDER}
+        )
     with pytest.raises(ValidationError):
         ToolRequest(name="delete_order", arguments={})
     with pytest.raises(ValidationError):
@@ -341,18 +343,19 @@ def test_verification_request_is_strict_about_shape() -> None:
 
     # Empty strings are accepted by the wire model and rejected by the Backend API
     # with the same generic error, so shape and credential errors stay distinct.
-    assert OrderVerificationRequest(
-        delivery_postcode="", verification_code=""
-    ).verification_code == ""
+    assert (
+        OrderVerificationRequest(
+            delivery_postcode="", verification_code=""
+        ).verification_code
+        == ""
+    )
 
     with pytest.raises(ValidationError):
         OrderVerificationRequest(
             delivery_postcode="SW1A 1AA", verification_code="246810", extra=True
         )
     with pytest.raises(ValidationError):
-        OrderVerificationRequest(
-            delivery_postcode="SW1A 1AA", verification_code=246810
-        )
+        OrderVerificationRequest(delivery_postcode="SW1A 1AA", verification_code=246810)
 
 
 def test_localized_auth_strings_are_exact_in_english_and_spanish() -> None:
@@ -371,7 +374,10 @@ def test_localized_auth_strings_are_exact_in_english_and_spanish() -> None:
         "e inténtalo de nuevo."
     )
     assert text("auth.verified", "en") == "Energy account verified for this demo."
-    assert text("auth.verified", "es") == "Cuenta de energía verificada para esta demostración."
+    assert (
+        text("auth.verified", "es")
+        == "Cuenta de energía verificada para esta demostración."
+    )
     assert text("auth.verification_prompt", "en") == (
         "Enter the service postcode and demo verification code for this energy account."
     )

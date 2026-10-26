@@ -17,7 +17,9 @@ from gateway.providers.audio import validate_wav
 LOUD = 1000
 
 
-def chunk(chunk_id: bytes, payload: bytes, *, declared_size: int | None = None) -> bytes:
+def chunk(
+    chunk_id: bytes, payload: bytes, *, declared_size: int | None = None
+) -> bytes:
     size = len(payload) if declared_size is None else declared_size
     padding = b"\x00" if len(payload) % 2 else b""
     return chunk_id + struct.pack("<I", size) + payload + padding
@@ -27,7 +29,9 @@ def fmt_chunk(*, tag=1, channels=1, rate=16000, bits=16) -> bytes:
     block_align = channels * bits // 8
     return chunk(
         b"fmt ",
-        struct.pack("<HHIIHH", tag, channels, rate, rate * block_align, block_align, bits),
+        struct.pack(
+            "<HHIIHH", tag, channels, rate, rate * block_align, block_align, bits
+        ),
     )
 
 
@@ -151,7 +155,9 @@ def test_recording_longer_than_sixty_seconds_is_invalid_audio():
 
 
 def test_data_chunk_declaring_more_frames_than_present_is_invalid_audio():
-    audio = riff(fmt_chunk(), chunk(b"data", struct.pack("<8h", *[LOUD] * 8), declared_size=64))
+    audio = riff(
+        fmt_chunk(), chunk(b"data", struct.pack("<8h", *[LOUD] * 8), declared_size=64)
+    )
     assert code_of(audio) == "invalid_audio"
 
 
@@ -189,7 +195,9 @@ def test_sample_rates_outside_the_window_are_unsupported(rate):
 
 
 def test_every_geometry_violation_together_is_unsupported():
-    assert code_of(wav([LOUD] * 12, channels=3, bits=8, rate=100)) == "unsupported_audio"
+    assert (
+        code_of(wav([LOUD] * 12, channels=3, bits=8, rate=100)) == "unsupported_audio"
+    )
 
 
 # --- silence detection -----------------------------------------------------

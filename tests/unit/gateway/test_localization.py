@@ -109,9 +109,9 @@ def test_spanish_missing_and_invalid_questions_exist_for_every_field():
     for field in FIELD_ORDER:
         assert localization.missing_question(field, "es")
         assert localization.invalid_question(field, "es")
-        assert localization.missing_question(field, "es") != localization.missing_question(
-            field, "en"
-        )
+        assert localization.missing_question(
+            field, "es"
+        ) != localization.missing_question(field, "en")
 
 
 def test_field_labels_are_localized_for_every_field():
@@ -167,9 +167,7 @@ def test_review_reply_appends_the_localized_confirmation_request():
 
 
 def test_conflict_and_ambiguous_templates_interpolate_the_localized_field_label():
-    conflict = localization.conflict_question(
-        "urgency", "low", "high", "es"
-    )
+    conflict = localization.conflict_question("urgency", "low", "high", "es")
     ambiguous = localization.ambiguous_question("description", "es")
 
     assert "low" in conflict and "high" in conflict

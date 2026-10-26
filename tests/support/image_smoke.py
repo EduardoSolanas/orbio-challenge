@@ -145,8 +145,7 @@ def main() -> int:
         missing = getattr(exc, "name", None)
         detail = f": {missing}" if missing else ""
         print(
-            f"image_smoke: application import failed "
-            f"({type(exc).__name__}{detail})",
+            f"image_smoke: application import failed ({type(exc).__name__}{detail})",
             file=sys.stderr,
         )
         return 1
@@ -157,9 +156,7 @@ def main() -> int:
     sock = None
     try:
         with tempfile.TemporaryDirectory(prefix="image-smoke-") as temporary:
-            app = create_app(
-                settings=_settings(Path(temporary)), provider=provider
-            )
+            app = create_app(settings=_settings(Path(temporary)), provider=provider)
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.bind((HOST, 0))

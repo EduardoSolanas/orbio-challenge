@@ -154,7 +154,11 @@ def test_spanish_ambiguous_question_localizes_the_field_label():
 
 def test_merge_defaults_to_english_copy_when_no_language_is_given():
     outcome = merge_extraction(
-        make_slots(), {}, make_extraction(candidates={"category": "paquete misterioso"}, detected_language="en")
+        make_slots(),
+        {},
+        make_extraction(
+            candidates={"category": "paquete misterioso"}, detected_language="en"
+        ),
     )
 
     assert outcome.pending_clarifications["category"].question == (
@@ -167,7 +171,8 @@ def test_spanish_correction_replaces_the_english_accepted_value():
         make_slots(category="delivery"),
         {},
         make_extraction(
-            candidates={"category": "artículo dañado"}, explicit_corrections=["category"]
+            candidates={"category": "artículo dañado"},
+            explicit_corrections=["category"],
         ),
         language="es",
     )

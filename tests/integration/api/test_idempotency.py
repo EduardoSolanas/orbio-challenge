@@ -58,7 +58,6 @@ PART_SLOTS = {
 }
 
 
-
 def turns_url(session_id: str) -> str:
     return f"/api/sessions/{session_id}/turns"
 
@@ -184,7 +183,9 @@ async def case_reuse_request_id_different_text_body(settings, provider, session_
 # discard successful response after commit restart app replay -------------------------------------------------------------------
 
 
-async def case_discard_successful_response_after_commit_restart_app_replay(settings, provider, session_dir):
+async def case_discard_successful_response_after_commit_restart_app_replay(
+    settings, provider, session_dir
+):
     request_id = str(uuid4())
     body = turn_body(PART_TEXT, 0, request_id)
 
@@ -216,7 +217,9 @@ async def case_discard_successful_response_after_commit_restart_app_replay(setti
 # concurrent same session revision distinct ids -------------------------------------------------------------------
 
 
-async def case_concurrent_same_session_revision_distinct_ids(settings, provider, session_dir):
+async def case_concurrent_same_session_revision_distinct_ids(
+    settings, provider, session_dir
+):
     gated = GatedProvider()
     async with app_client(settings, gated) as client:
         session_id = await start_session(client)
@@ -355,15 +358,18 @@ async def case_concurrent_independent_session_ids(settings, provider, session_di
         assert first_disk["slots"] != second_disk["slots"]
         assert first_disk["messages"][1]["text"] == PART_TEXT
         assert second_disk["messages"][1]["text"] == FULL_TEXT
-        assert first_disk["requests"][0]["request_id"] != second_disk["requests"][0][
-            "request_id"
-        ]
+        assert (
+            first_disk["requests"][0]["request_id"]
+            != second_disk["requests"][0]["request_id"]
+        )
 
 
 # same id but changed endpoint turn versus confirm -------------------------------------------------------------------
 
 
-async def case_same_id_but_changed_endpoint_turn_versus_confirm(settings, provider, session_dir):
+async def case_same_id_but_changed_endpoint_turn_versus_confirm(
+    settings, provider, session_dir
+):
     async with app_client(settings, provider) as client:
         # Turn committed first, then a confirm reusing that request ID.
         session_id = await review_session(client, provider)
@@ -473,20 +479,30 @@ async def case_cancel_request_before_atomic_save(settings, provider, session_dir
 
 
 CASES = [
-    ("resend_identical_committed_turn_request", case_resend_identical_committed_turn_request),
+    (
+        "resend_identical_committed_turn_request",
+        case_resend_identical_committed_turn_request,
+    ),
     ("reuse_request_id_different_text_body", case_reuse_request_id_different_text_body),
-    ("discard_successful_response_after_commit_restart_app_replay", case_discard_successful_response_after_commit_restart_app_replay),
-    ("concurrent_same_session_revision_distinct_ids", case_concurrent_same_session_revision_distinct_ids),
+    (
+        "discard_successful_response_after_commit_restart_app_replay",
+        case_discard_successful_response_after_commit_restart_app_replay,
+    ),
+    (
+        "concurrent_same_session_revision_distinct_ids",
+        case_concurrent_same_session_revision_distinct_ids,
+    ),
     ("concurrent_same_exact_id_body", case_concurrent_same_exact_id_body),
     ("concurrent_independent_session_ids", case_concurrent_independent_session_ids),
-    ("same_id_but_changed_endpoint_turn_versus_confirm", case_same_id_but_changed_endpoint_turn_versus_confirm),
+    (
+        "same_id_but_changed_endpoint_turn_versus_confirm",
+        case_same_id_but_changed_endpoint_turn_versus_confirm,
+    ),
     ("cancel_request_before_atomic_save", case_cancel_request_before_atomic_save),
 ]
 
 
-@pytest.mark.parametrize(
-    "case_id,case", CASES, ids=[case_id for case_id, _ in CASES]
-)
+@pytest.mark.parametrize("case_id,case", CASES, ids=[case_id for case_id, _ in CASES])
 async def test_idempotency_and_concurrency(
     case_id, case, settings, provider, session_dir
 ):

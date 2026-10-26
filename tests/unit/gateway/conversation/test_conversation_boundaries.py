@@ -126,7 +126,10 @@ async def test_unrelated_statement_at_valid_review_preserves_summary_and_token(
 ):
     engine, repository, provider = build_engine(
         tmp_path,
-        script=[("extract", FULL_EXTRACTION), ("extract", make_extraction(intent="unrelated"))],
+        script=[
+            ("extract", FULL_EXTRACTION),
+            ("extract", make_extraction(intent="unrelated")),
+        ],
     )
     created = await engine.create_session()
     sid = created.session_id
@@ -161,7 +164,10 @@ async def test_empty_extraction_at_valid_review_redisplays_the_review(tmp_path):
     assert response.status == "awaiting_confirmation"
     assert response.pending_review_revision == 1
     assert response.summary == SUMMARY
-    assert response.reply == SUMMARY + "\nPlease confirm these details or tell me what to change."
+    assert (
+        response.reply
+        == SUMMARY + "\nPlease confirm these details or tell me what to change."
+    )
     provider.assert_exhausted()
 
 
@@ -187,7 +193,10 @@ async def test_empty_extraction_with_complete_slots_creates_a_fresh_review(
     assert response.status == "awaiting_confirmation"
     assert response.pending_review_revision == 3
     assert response.summary == SUMMARY
-    assert response.reply == SUMMARY + "\nPlease confirm these details or tell me what to change."
+    assert (
+        response.reply
+        == SUMMARY + "\nPlease confirm these details or tell me what to change."
+    )
     provider.assert_exhausted()
 
 
@@ -207,7 +216,9 @@ async def test_reject_without_a_review_keeps_the_pending_issue_and_no_flag(
     )
     created = await engine.create_session()
 
-    response = await engine.turn(created.session_id, turn_request("No, it is super urgent"))
+    response = await engine.turn(
+        created.session_id, turn_request("No, it is super urgent")
+    )
 
     assert response.status == "collecting"
     assert response.pending_review_revision is None
@@ -235,7 +246,9 @@ async def test_pure_question_on_a_complete_session_without_review_has_no_follow_
     )
     engine = ConversationEngine(
         repository,
-        FakeProvider([("extract", make_extraction(intent="question", has_question=True))]),
+        FakeProvider(
+            [("extract", make_extraction(intent="question", has_question=True))]
+        ),
         FakeKnowledgeBase({"Which payment methods are accepted?": []}),
     )
 
@@ -420,9 +433,7 @@ async def test_two_distinct_cited_ids_are_accepted_and_snapshotted(tmp_path):
 
 
 async def test_three_cited_ids_are_an_invalid_provider_response(tmp_path):
-    records = [
-        make_record(record_id=f"faq-{index}") for index in range(3)
-    ]
+    records = [make_record(record_id=f"faq-{index}") for index in range(3)]
     engine, repository, provider = build_engine(
         tmp_path,
         script=[
@@ -472,17 +483,21 @@ async def test_reaffirmation_with_an_explicit_correction_list_stays_rejected(
     response = await engine.turn(sid, turn_request("Yes", revision=2))
 
     await assert_state(
-        repository, sid, response, revision=3, status="collecting",
-        rejected=True, token=None, summary=None,
+        repository,
+        sid,
+        response,
+        revision=3,
+        status="collecting",
+        rejected=True,
+        token=None,
+        summary=None,
     )
     assert response.reply == "What would you like to change?"
     provider.assert_exhausted()
 
 
 async def test_reaffirmation_with_a_pending_issue_stays_rejected(tmp_path):
-    extraction = make_extraction(
-        intent="confirm", candidates={"urgency": "bogus"}
-    )
+    extraction = make_extraction(intent="confirm", candidates={"urgency": "bogus"})
     engine, repository, provider, sid = await rejected_after_full_review(
         tmp_path, [("extract", extraction)]
     )
@@ -490,8 +505,14 @@ async def test_reaffirmation_with_a_pending_issue_stays_rejected(tmp_path):
     response = await engine.turn(sid, turn_request("Yes, bogus", revision=2))
 
     await assert_state(
-        repository, sid, response, revision=3, status="collecting",
-        rejected=True, token=None, summary=None,
+        repository,
+        sid,
+        response,
+        revision=3,
+        status="collecting",
+        rejected=True,
+        token=None,
+        summary=None,
     )
     assert response.reply == "Please choose low, normal, or high urgency."
     provider.assert_exhausted()
@@ -519,16 +540,20 @@ async def test_reaffirmation_with_incomplete_slots_stays_rejected(tmp_path):
     response = await engine.turn(sid, turn_request("Yes", revision=2))
 
     await assert_state(
-        repository, sid, response, revision=3, status="collecting",
-        rejected=True, token=None, summary=None,
+        repository,
+        sid,
+        response,
+        revision=3,
+        status="collecting",
+        rejected=True,
+        token=None,
+        summary=None,
     )
     assert response.reply == REJECT_PROMPT
 
 
 async def test_reaffirmation_with_a_changed_candidate_stays_rejected(tmp_path):
-    extraction = make_extraction(
-        intent="confirm", candidates={"urgency": "low"}
-    )
+    extraction = make_extraction(intent="confirm", candidates={"urgency": "low"})
     engine, repository, provider, sid = await rejected_after_full_review(
         tmp_path, [("extract", extraction)]
     )
@@ -536,8 +561,14 @@ async def test_reaffirmation_with_a_changed_candidate_stays_rejected(tmp_path):
     response = await engine.turn(sid, turn_request("Actually low", revision=2))
 
     await assert_state(
-        repository, sid, response, revision=3, status="collecting",
-        rejected=True, token=None, summary=None,
+        repository,
+        sid,
+        response,
+        revision=3,
+        status="collecting",
+        rejected=True,
+        token=None,
+        summary=None,
     )
     assert response.pending_clarifications["urgency"].code == "conflict"
     provider.assert_exhausted()
@@ -567,8 +598,14 @@ async def test_reaffirmation_with_an_invalid_accepted_slot_stays_rejected(
     response = await engine.turn(sid, turn_request("Yes", revision=2))
 
     await assert_state(
-        repository, sid, response, revision=3, status="collecting",
-        rejected=True, token=None, summary=None,
+        repository,
+        sid,
+        response,
+        revision=3,
+        status="collecting",
+        rejected=True,
+        token=None,
+        summary=None,
     )
     assert response.reply == "What would you like to change?"
 
@@ -585,16 +622,20 @@ async def test_reaffirmation_with_alias_equal_candidates_recovers(tmp_path):
     response = await engine.turn(sid, turn_request("Yes, that is right", revision=2))
 
     await assert_state(
-        repository, sid, response, revision=3, status="awaiting_confirmation",
-        rejected=False, token=3, summary=SUMMARY,
+        repository,
+        sid,
+        response,
+        revision=3,
+        status="awaiting_confirmation",
+        rejected=False,
+        token=3,
+        summary=SUMMARY,
     )
     provider.assert_exhausted()
 
 
 async def test_confirmation_with_a_new_pending_issue_does_not_complete(tmp_path):
-    extraction = make_extraction(
-        intent="confirm", candidates={"urgency": "bogus"}
-    )
+    extraction = make_extraction(intent="confirm", candidates={"urgency": "bogus"})
     engine, repository, provider = build_engine(
         tmp_path,
         script=[("extract", FULL_EXTRACTION), ("extract", extraction)],
@@ -684,9 +725,10 @@ async def test_engine_locks_are_per_session_not_global(tmp_path):
     async with repository.locked(first.session_id):
         fetched = await engine.get_session(second.session_id)
         assert fetched.session_id == second.session_id
-        assert await engine.assistant_text(
-            second.session_id, second.messages[0].id
-        ) == GREETING
+        assert (
+            await engine.assistant_text(second.session_id, second.messages[0].id)
+            == GREETING
+        )
         turned = await engine.turn(second.session_id, turn_request())
         assert turned.revision == 1
         confirmed = await engine.confirm(
@@ -797,9 +839,7 @@ async def test_engine_operations_on_other_sessions_do_not_wait_for_a_slow_turn(
     )
     fresh = await fast_engine.create_session()
 
-    slow_turn = asyncio.create_task(
-        engine.turn(slow.session_id, turn_request())
-    )
+    slow_turn = asyncio.create_task(engine.turn(slow.session_id, turn_request()))
     await asyncio.sleep(0.05)
 
     started = time.monotonic()
@@ -826,9 +866,10 @@ async def test_engine_never_uses_a_global_none_lock_key(tmp_path):
     async with repository.locked(None):
         fetched = await engine.get_session(first.session_id)
         assert fetched.session_id == first.session_id
-        assert await engine.assistant_text(
-            first.session_id, first.messages[0].id
-        ) == GREETING
+        assert (
+            await engine.assistant_text(first.session_id, first.messages[0].id)
+            == GREETING
+        )
         created = await engine.create_session()
         assert created.revision == 0
         confirmed = await engine.confirm(

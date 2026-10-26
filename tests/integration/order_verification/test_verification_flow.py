@@ -302,6 +302,4 @@ async def test_changing_the_order_cannot_bypass_the_failure_lockout(
     still_locked = await verify(client, session_id)
 
     assert still_locked.status_code == 429
-    assert still_locked.json()["error"]["code"] == (
-        "too_many_verification_attempts"
-    )
+    assert still_locked.json()["error"]["code"] == ("too_many_verification_attempts")

@@ -14,7 +14,12 @@ from gateway.schemas import Intent
 
 ROOT = Path(__file__).resolve().parents[3]
 CASES = json.loads((ROOT / "tests" / "eval" / "utterances.json").read_text("utf-8"))
-RECORD_IDS = {r.id for r in load_knowledge(ROOT / "gateway" / "knowledge" / "northstar-faq.json").records}
+RECORD_IDS = {
+    r.id
+    for r in load_knowledge(
+        ROOT / "gateway" / "knowledge" / "northstar-faq.json"
+    ).records
+}
 # Context-free intents only: confirm, reject and correction need an open review.
 EVALUATED = set(get_args(Intent)) - {"confirm", "reject", "correction"}
 
@@ -67,7 +72,14 @@ def test_safety_cases_have_both_labels_in_both_languages_and_are_unique() -> Non
     assert all(isinstance(c["concern"], bool) for c in cases)
     for flag in (True, False):
         for language in ("en", "es"):
-            assert sum(1 for c in cases if c["concern"] is flag and c["language"] == language) >= 4
+            assert (
+                sum(
+                    1
+                    for c in cases
+                    if c["concern"] is flag and c["language"] == language
+                )
+                >= 4
+            )
 
 
 def test_category_cases_cover_every_stored_category_in_both_languages() -> None:
@@ -76,8 +88,18 @@ def test_category_cases_cover_every_stored_category_in_both_languages() -> None:
 
     assert len(texts) == len(set(texts))
     assert {c["category"] for c in cases} == {
-        "delivery", "damaged_item", "wrong_item", "return_refund", "other",
+        "delivery",
+        "damaged_item",
+        "wrong_item",
+        "return_refund",
+        "other",
     }
     for category in {c["category"] for c in cases}:
-        assert sum(1 for c in cases if c["category"] == category and c["language"] == "en") >= 3, category
-        assert sum(1 for c in cases if c["category"] == category and c["language"] == "es") >= 2, category
+        assert (
+            sum(1 for c in cases if c["category"] == category and c["language"] == "en")
+            >= 3
+        ), category
+        assert (
+            sum(1 for c in cases if c["category"] == category and c["language"] == "es")
+            >= 2
+        ), category

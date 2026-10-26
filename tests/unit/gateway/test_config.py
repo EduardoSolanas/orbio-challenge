@@ -385,11 +385,14 @@ def test_configured_rag_requires_its_own_valid_output_mode(output_mode):
 
 
 @pytest.mark.parametrize(
-    "field", ["RAG_BASE_URL", "RAG_MODEL", "RAG_AUTH_MODE", "RAG_API_KEY", "RAG_OUTPUT_MODE"]
+    "field",
+    ["RAG_BASE_URL", "RAG_MODEL", "RAG_AUTH_MODE", "RAG_API_KEY", "RAG_OUTPUT_MODE"],
 )
 def test_partial_rag_configuration_is_a_configuration_failure(field):
     environ = valid_environ()
-    environ[field] = "http://rag.internal:9001/v1" if field == "RAG_BASE_URL" else "value"
+    environ[field] = (
+        "http://rag.internal:9001/v1" if field == "RAG_BASE_URL" else "value"
+    )
 
     assert_configuration_invalid(environ)
 
@@ -509,4 +512,3 @@ def test_absent_api_key_is_a_failure_for_bearer_auth(role):
     del environ[f"{role}_API_KEY"]
 
     assert_configuration_invalid(environ)
-

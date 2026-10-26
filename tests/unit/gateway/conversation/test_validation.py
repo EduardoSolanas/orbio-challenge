@@ -151,10 +151,13 @@ def test_alias_matching_collapses_case_and_whitespace(
     alias: str, canonical: str
 ) -> None:
     messy = f"  {alias.upper().replace(' ', '   ')}\t"
-    assert normalize_candidate(
-        "category" if canonical in {c for _, c in CATEGORY_ALIASES} else "urgency",
-        messy,
-    ) == canonical
+    assert (
+        normalize_candidate(
+            "category" if canonical in {c for _, c in CATEGORY_ALIASES} else "urgency",
+            messy,
+        )
+        == canonical
+    )
 
 
 @pytest.mark.parametrize(
@@ -569,9 +572,7 @@ def test_merge_returns_a_new_slots_object_and_leaves_the_input_untouched() -> No
 
 
 def test_summary_uses_canonical_values_and_contract_format() -> None:
-    slots = make_slots(
-        "NS-000123", "damaged_item", "My order arrived broken", "high"
-    )
+    slots = make_slots("NS-000123", "damaged_item", "My order arrived broken", "high")
     assert build_summary(slots) == (
         "Account reference: NS-000123\n"
         "Energy support area: equipment issue\n"
@@ -581,9 +582,7 @@ def test_summary_uses_canonical_values_and_contract_format() -> None:
 
 
 def test_review_reply_is_the_summary_plus_the_review_suffix() -> None:
-    slots = make_slots(
-        "NS-000123", "damaged_item", "My order arrived broken", "high"
-    )
+    slots = make_slots("NS-000123", "damaged_item", "My order arrived broken", "high")
     assert build_review_reply(slots) == build_summary(slots) + REVIEW_SUFFIX
     assert REVIEW_SUFFIX == (
         "\nPlease confirm these details or tell me what to change."

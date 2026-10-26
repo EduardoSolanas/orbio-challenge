@@ -4,6 +4,7 @@
 Usage: python scripts/run_docker_e2e.py
 The application and judge must be isolated deployments configured in ignored files.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -20,7 +21,11 @@ from tests.e2e.docker_config import load_config, probe  # noqa: E402
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--with-deterministic", action="store_true", help="run fake-provider the ten browser journeys first")
+    parser.add_argument(
+        "--with-deterministic",
+        action="store_true",
+        help="run fake-provider the ten browser journeys first",
+    )
     args = parser.parse_args()
     config = load_config(ROOT)
     probe(config)
@@ -44,8 +49,40 @@ def main() -> int:
     )
     commands: list[list[str]] = []
     if args.with_deterministic:
-        commands.append([sys.executable, "-m", "pytest", "tests/e2e", "-q", "-m", "browser_e2e", "--browser", "chromium", "--junitxml=reports/e2e-docker/deterministic.xml"])
-    commands.append([sys.executable, "-m", "pytest", "tests/e2e/test_docker_e2e.py", "tests/e2e/test_docker_flows.py", "--browser", "chromium", "--tracing", "retain-on-failure", "--screenshot", "only-on-failure", "--video", "retain-on-failure", "--output", "reports/e2e-docker/playwright", "--junitxml=reports/e2e-docker/docker.xml"])
+        commands.append(
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/e2e",
+                "-q",
+                "-m",
+                "browser_e2e",
+                "--browser",
+                "chromium",
+                "--junitxml=reports/e2e-docker/deterministic.xml",
+            ]
+        )
+    commands.append(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "tests/e2e/test_docker_e2e.py",
+            "tests/e2e/test_docker_flows.py",
+            "--browser",
+            "chromium",
+            "--tracing",
+            "retain-on-failure",
+            "--screenshot",
+            "only-on-failure",
+            "--video",
+            "retain-on-failure",
+            "--output",
+            "reports/e2e-docker/playwright",
+            "--junitxml=reports/e2e-docker/docker.xml",
+        ]
+    )
     for command in commands:
         completed = subprocess.run(command, cwd=ROOT, check=False)
         if completed.returncode:

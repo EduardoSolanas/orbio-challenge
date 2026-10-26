@@ -144,7 +144,15 @@ def make_transports(
     def tts(request: httpx.Request) -> httpx.Response:
         calls.append(("tts", request))
         if tts_status != 200:
-            return streamed_json({"error": {"message": "denied"}}).copy() if tts_status == 200 else httpx.Response(tts_status, stream=httpx.ByteStream(b"{\"error\":{\"message\":\"denied\"}}"), headers={"content-type": "application/json"})
+            return (
+                streamed_json({"error": {"message": "denied"}}).copy()
+                if tts_status == 200
+                else httpx.Response(
+                    tts_status,
+                    stream=httpx.ByteStream(b'{"error":{"message":"denied"}}'),
+                    headers={"content-type": "application/json"},
+                )
+            )
         return httpx.Response(
             200,
             stream=httpx.ByteStream(MP3_BYTES),
@@ -162,7 +170,9 @@ def make_transports(
     )
 
 
-async def test_run_checks_passes_every_role_with_controlled_transport(tmp_path: Path) -> None:
+async def test_run_checks_passes_every_role_with_controlled_transport(
+    tmp_path: Path,
+) -> None:
     settings = build_settings(tmp_path)
     wav = tmp_path / "spoken.wav"
     wav.write_bytes(make_wav())

@@ -10,7 +10,8 @@ import httpx
 
 from gateway.config import ServiceProfile, SpeechProfile, TextProfile
 from gateway.providers.client import OpenAICompatibleProvider
-from gateway.schemas import ExtractionContext, KnowledgeContext, KnowledgeRecord, Slots
+from gateway.schemas import ExtractionContext, Slots
+from tests.support.provider_builders import SOURCE, knowledge_context, unexpected  # noqa: F401  (re-exported to the unit tests)
 
 ROLES = ("llm", "rag", "stt", "tts")
 
@@ -53,10 +54,10 @@ EXTRACTION_PAYLOAD = {
     },
     "explicit_corrections": [],
     "ambiguous_fields": [],
-"detected_language": "en",
-"requested_language": None,
-"sentiment": "neutral",
-"frustration": "none",
+    "detected_language": "en",
+    "requested_language": None,
+    "sentiment": "neutral",
+    "frustration": "none",
 }
 
 ANSWER_PAYLOAD = {
@@ -65,19 +66,12 @@ ANSWER_PAYLOAD = {
     "cited_ids": ["faq-returns"],
 }
 
-SOURCE = KnowledgeRecord(
-    id="faq-returns",
-    title="Returns and refunds",
-    keywords=["return", "refund"],
-    body="An unused item can be requested for return within 30 calendar days.",
-)
 
-
-def extraction_context(text: str = "My order NS-000123 arrived broken.") -> ExtractionContext:
+def extraction_context(
+    text: str = "My order NS-000123 arrived broken.",
+) -> ExtractionContext:
     return ExtractionContext(
-        slots=Slots(
-            order_number=None, category=None, description=None, urgency=None
-        ),
+        slots=Slots(order_number=None, category=None, description=None, urgency=None),
         pending_clarifications={},
         recent_messages=[],
         current_message=text,
@@ -87,15 +81,9 @@ def extraction_context(text: str = "My order NS-000123 arrived broken.") -> Extr
     )
 
 
-def knowledge_context() -> KnowledgeContext:
-    return KnowledgeContext(
-        question="Can I return an unused item?",
-        kb_version="2026-10-22",
-        sources=[SOURCE],
-    )
-
-
-def chat_envelope(content: object, finish_reason: object = "stop", **message_extra: object):
+def chat_envelope(
+    content: object, finish_reason: object = "stop", **message_extra: object
+):
     message = {"content": content, **message_extra}
     return {"choices": [{"finish_reason": finish_reason, "message": message}]}
 
@@ -108,7 +96,9 @@ def streamed_response(
     return httpx.Response(status, stream=httpx.ByteStream(body), headers=headers or {})
 
 
-def json_response(payload: object, status: int = 200, headers: dict[str, str] | None = None):
+def json_response(
+    payload: object, status: int = 200, headers: dict[str, str] | None = None
+):
     body = payload if isinstance(payload, str) else json.dumps(payload)
     return streamed_response(body.encode("utf-8"), status, headers)
 
@@ -116,7 +106,9 @@ def json_response(payload: object, status: int = 200, headers: dict[str, str] | 
 class RoleTransport:
     """MockTransport that records each request and delegates to a responder."""
 
-    def __init__(self, role: str, responder: Callable[[httpx.Request, int], httpx.Response]):
+    def __init__(
+        self, role: str, responder: Callable[[httpx.Request, int], httpx.Response]
+    ):
         self.role = role
         self.responder = responder
         self.requests: list[httpx.Request] = []
@@ -125,13 +117,6 @@ class RoleTransport:
     def _handle(self, request: httpx.Request) -> httpx.Response:
         self.requests.append(request)
         return self.responder(request, len(self.requests))
-
-
-def unexpected(role: str):
-    def responder(request: httpx.Request, attempt: int) -> httpx.Response:
-        raise AssertionError(f"unexpected {role} wire call")
-
-    return responder
 
 
 class SleepRecorder:
@@ -198,7 +183,9 @@ def padded_envelope(target_bytes: int) -> str:
     return raw
 
 
-def single_response(body: str | bytes, status: int = 200, headers: dict[str, str] | None = None):
+def single_response(
+    body: str | bytes, status: int = 200, headers: dict[str, str] | None = None
+):
     def responder(request: httpx.Request, attempt: int) -> httpx.Response:
         content = body.encode("utf-8") if isinstance(body, str) else body
         return streamed_response(content, status, headers)
@@ -206,7 +193,9 @@ def single_response(body: str | bytes, status: int = 200, headers: dict[str, str
     return responder
 
 
-def audio_responder(body: bytes, headers: dict[str, str] | None = None, status: int = 200):
+def audio_responder(
+    body: bytes, headers: dict[str, str] | None = None, status: int = 200
+):
     resolved = {"content-type": "audio/mpeg"} if headers is None else headers
 
     def responder(request: httpx.Request, attempt: int) -> httpx.Response:

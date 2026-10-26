@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping, NoReturn
+from typing import Any, Callable, Mapping, NoReturn
 from urllib.parse import unquote, urlsplit
 
 from gateway.errors import CONFIGURATION_INVALID_MESSAGE
@@ -245,6 +245,25 @@ class SpeechProfile(ServiceProfile):
     max_input_chars: int = DEFAULT_TTS_MAX_INPUT_CHARS
 
 
+def _role(
+    get: Callable[[str], str],
+    prefix: str,
+    profile_cls: type[ServiceProfile],
+    **extra: Any,
+) -> Any:
+    """Read one model role (``LLM``, ``RAG``, ``STT``, ``TTS``) from its ``<prefix>_*`` settings."""
+
+    profile = profile_cls(
+        base_url=_base_url(get(f"{prefix}_BASE_URL")),
+        model=_model(get(f"{prefix}_MODEL")),
+        auth_mode=get(f"{prefix}_AUTH_MODE"),
+        api_key=_api_key(get(f"{prefix}_API_KEY")),
+        **extra,
+    )
+    _auth(profile.auth_mode, profile.api_key)
+    return profile
+
+
 @dataclass(frozen=True)
 class Settings:
     ai_provider: str
@@ -264,34 +283,33 @@ class Settings:
     def from_env(cls, environ: Mapping[str, str] | None = None) -> Settings:
         env = os.environ if environ is None else environ
 
-        if env.get("AI_PROVIDER", "") != OPENAI_COMPATIBLE:
+        def get(key: str) -> str:
+            return env.get(key, "")
+
+        if get("AI_PROVIDER") != OPENAI_COMPATIBLE:
             _fail()
 
-        raw_llm_output_mode = env.get("LLM_OUTPUT_MODE", "")
-        llm = TextProfile(
-            base_url=_base_url(env.get("LLM_BASE_URL", "")),
-            model=_model(env.get("LLM_MODEL", "")),
-            auth_mode=env.get("LLM_AUTH_MODE", ""),
-            api_key=_api_key(env.get("LLM_API_KEY", "")),
+        raw_llm_output_mode = get("LLM_OUTPUT_MODE")
+        llm = _role(
+            get,
+            "LLM",
+            TextProfile,
             output_mode=(
                 DEFAULT_LLM_OUTPUT_MODE
                 if raw_llm_output_mode == ""
                 else _output_mode(raw_llm_output_mode)
             ),
-            reasoning_effort=_reasoning_effort(env.get("LLM_REASONING_EFFORT", "")),
+            reasoning_effort=_reasoning_effort(get("LLM_REASONING_EFFORT")),
         )
-        _auth(llm.auth_mode, llm.api_key)
 
-        if any(env.get(f"RAG_{field}", "") != "" for field in RAG_FIELDS):
-            rag = TextProfile(
-                base_url=_base_url(env.get("RAG_BASE_URL", "")),
-                model=_model(env.get("RAG_MODEL", "")),
-                auth_mode=env.get("RAG_AUTH_MODE", ""),
-                api_key=_api_key(env.get("RAG_API_KEY", "")),
-                output_mode=_output_mode(env.get("RAG_OUTPUT_MODE", "")),
-                reasoning_effort=_reasoning_effort(env.get("RAG_REASONING_EFFORT", "")),
+        if any(get(f"RAG_{field}") != "" for field in RAG_FIELDS):
+            rag = _role(
+                get,
+                "RAG",
+                TextProfile,
+                output_mode=_output_mode(get("RAG_OUTPUT_MODE")),
+                reasoning_effort=_reasoning_effort(get("RAG_REASONING_EFFORT")),
             )
-            _auth(rag.auth_mode, rag.api_key)
         else:
             rag = TextProfile(
                 base_url=llm.base_url,
@@ -300,34 +318,26 @@ class Settings:
                 api_key=llm.api_key,
                 output_mode=llm.output_mode,
                 reasoning_effort=(
-                    _reasoning_effort(env.get("RAG_REASONING_EFFORT", ""))
+                    _reasoning_effort(get("RAG_REASONING_EFFORT"))
                     or llm.reasoning_effort
                 ),
             )
 
-        stt = ServiceProfile(
-            base_url=_base_url(env.get("STT_BASE_URL", "")),
-            model=_model(env.get("STT_MODEL", "")),
-            auth_mode=env.get("STT_AUTH_MODE", ""),
-            api_key=_api_key(env.get("STT_API_KEY", "")),
-        )
-        _auth(stt.auth_mode, stt.api_key)
+        stt = _role(get, "STT", ServiceProfile)
 
-        audio_format = _audio_format(env.get("TTS_AUDIO_FORMAT", ""))
-        max_input_chars = _tts_max_input_chars(env.get("TTS_MAX_INPUT_CHARS", ""))
+        audio_format = _audio_format(get("TTS_AUDIO_FORMAT"))
+        max_input_chars = _tts_max_input_chars(get("TTS_MAX_INPUT_CHARS"))
         if audio_format == "mp3" and max_input_chars != MAX_TTS_MAX_INPUT_CHARS:
             _fail()
 
-        tts = SpeechProfile(
-            base_url=_base_url(env.get("TTS_BASE_URL", "")),
-            model=_model(env.get("TTS_MODEL", "")),
-            auth_mode=env.get("TTS_AUTH_MODE", ""),
-            api_key=_api_key(env.get("TTS_API_KEY", "")),
-            voice=_required(env.get("TTS_VOICE", "")),
+        tts = _role(
+            get,
+            "TTS",
+            SpeechProfile,
+            voice=_required(get("TTS_VOICE")),
             audio_format=audio_format,
             max_input_chars=max_input_chars,
         )
-        _auth(tts.auth_mode, tts.api_key)
 
         return cls(
             ai_provider=OPENAI_COMPATIBLE,
@@ -335,15 +345,13 @@ class Settings:
             rag=rag,
             stt=stt,
             tts=tts,
-            session_dir=Path(_required(env.get("SESSION_DIR", ""))),
-            provider_max_concurrency=_concurrency(
-                env.get("PROVIDER_MAX_CONCURRENCY", "")
-            ),
-            backend_api_base_url=_base_url(env.get("BACKEND_API_BASE_URL", "")),
+            session_dir=Path(_required(get("SESSION_DIR"))),
+            provider_max_concurrency=_concurrency(get("PROVIDER_MAX_CONCURRENCY")),
+            backend_api_base_url=_base_url(get("BACKEND_API_BASE_URL")),
             backend_api_timeout_seconds=_backend_api_timeout(
-                env.get("BACKEND_API_TIMEOUT_SECONDS", "")
+                get("BACKEND_API_TIMEOUT_SECONDS")
             ),
             tts_es=_tts_es(env),
             embed=_embed(env),
-            embed_min_similarity=_min_similarity(env.get("EMBED_MIN_SIMILARITY", "")),
+            embed_min_similarity=_min_similarity(get("EMBED_MIN_SIMILARITY")),
         )
