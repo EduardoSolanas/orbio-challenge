@@ -768,8 +768,9 @@ class UI:
     def verify_order(self, postcode: str, code: str) -> Response:
         """Submit the dedicated mock-verification form; credentials never enter chat."""
 
-        self.page.get_by_label("Service postcode").fill(postcode)
-        self.page.get_by_label("Verification code").fill(code)
+        # ids, not labels: "Copy verification code" on the test card also contains the field's label
+        self.page.locator("#delivery-postcode").fill(postcode)
+        self.page.locator("#verification-code").fill(code)
         with self.page.expect_response(
             lambda r: (
                 r.request.method == "POST" and r.url.endswith("/order-verification")

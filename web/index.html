@@ -16,10 +16,11 @@
   <h2 id="demo-title" class="side__title" data-i18n="demo.title"></h2>
   <p class="side__text" data-i18n="demo.intro"></p>
   <dl class="side__list">
-    <dt data-i18n="demo.account"></dt><dd>NS-000123</dd>
-    <dt data-i18n="demo.postcode"></dt><dd>SW1A 1AA</dd>
-    <dt data-i18n="demo.code"></dt><dd>246810</dd>
+    <dt data-i18n="demo.account"></dt><dd><span id="demo-account">NS-000123</span><button type="button" class="btn btn--mini skin-outline" data-copy="demo-account" data-i18n-aria-label="demo.copy_account"><svg class="icon icon--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4v14h2V3h10V1zm4 4H8v18h12V5zm-2 16h-8V7h8v14z"/></svg></button></dd>
+    <dt data-i18n="demo.postcode"></dt><dd><span id="demo-postcode">SW1A 1AA</span><button type="button" class="btn btn--mini skin-outline" data-copy="demo-postcode" data-i18n-aria-label="demo.copy_postcode"><svg class="icon icon--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4v14h2V3h10V1zm4 4H8v18h12V5zm-2 16h-8V7h8v14z"/></svg></button></dd>
+    <dt data-i18n="demo.code"></dt><dd><span id="demo-code">246810</span><button type="button" class="btn btn--mini skin-outline" data-copy="demo-code" data-i18n-aria-label="demo.copy_code"><svg class="icon icon--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4v14h2V3h10V1zm4 4H8v18h12V5zm-2 16h-8V7h8v14z"/></svg></button></dd>
   </dl>
+  <p id="demo-copy-status" class="side__text" role="status" hidden></p>
   <p class="side__text text-muted" data-i18n="demo.footer"></p>
   <button type="button" id="clear-storage" class="btn btn--pill skin-outline" data-i18n="demo.clear"></button>
 </aside>

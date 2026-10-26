@@ -67,8 +67,15 @@
 }
 
 .side__list dd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin: 2px 0 10px;
   font-weight: 600;
+}
+
+.side__list dd span {
   user-select: all;
 }
 

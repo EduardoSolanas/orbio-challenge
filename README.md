@@ -27,7 +27,7 @@ docker compose up --build -d --wait --wait-timeout 120
 ```
 
 Open http://127.0.0.1:8000. To try the verified-account flow, use the demo values
-shown in the "Test customer" card beside the chat (fictional account `NS-000123`,
+shown in the "Test customer" card beside the chat, each with a copy button (fictional account `NS-000123`,
 postcode `SW1A 1AA`, code `246810`; phones see the same values in the verification
 form), then ask for the installation status or to book a technician. The request
 you made before verifying is answered as soon as the account is verified, even if
@@ -155,7 +155,7 @@ npm ci && npm test                   # frontend unit tests (Jest)
 |---|---|---|
 | Unit and integration | Validation, state machine, storage, HTTP routes, providers over a real socket, RAG, audio | 1865 unit and 411 integration passed, run as separate layers. Ruff checks and formatting run in CI first (unused imports, import order, undefined names, `ruff format --check`). Exact retry counts after a timeout are pinned without real timing; the real-socket timeout tests only check that the call returns within its bound, never exceeds the configured attempts and starts no work afterwards. |
 | Browser (Playwright) | Eleven Chromium tests of the user journeys, including voice and RAG | 11 passed |
-| Frontend (Jest) | The page's classes in jsdom, using the real `index.html` | 305 passed; 97.7% statements, 92% branches (CI gate 90% / 80%) |
+| Frontend (Jest) | The page's classes in jsdom, using the real `index.html` | 312 passed; 97.7% statements, 92% branches (CI gate 90% / 80%) |
 | Judge journeys | 31 tests with a scripted provider (29 browser journeys and 2 output-format checks); 26 of the journeys record a conversation that a judge LLM grades against a written rule. The greeting, thanks and capability journeys assert their fixed replies exactly and are not judged. Every intent, including verification before account actions, and frustration hand-off | 31 passed; 26 of 26 judged pass. Replies are mostly templates, so this checks wording rules, not model behaviour. |
 | Real Docker end-to-end | 21 tests on the deployed containers against the real LLM, speech services and embeddings, graded by the judge LLM: every intent, RAG with abstention, intake edits, angry and nervous customers in both languages, and every flow end to end (booking, installation status, a full support request, a detour from a support request into a booking and back, leaving a flow on a question, booking in Spanish) | 21 passed, with the same DeepSeek model as judge, so it grades itself. Journeys that touch bookings first reset the deployed booking store (`docker compose exec` into the backend of a dedicated Compose project whose name ends in `-e2e` and whose page is the origin under test; see `docs/docker-e2e.md`); one creates a reservation and checks it is reported back, another starts from a known existing visit. Each judged reply keeps its own numbered file under `reports/e2e-docker/judge/`. A reasoning judge needs `E2E_JUDGE_MAX_TOKENS=4096`. |
 | Live providers | `scripts/check_backends.py` | 5 of 5 (2026-10-24) |

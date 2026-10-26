@@ -83,6 +83,9 @@ export class App {
     dom.confirm.addEventListener("click", () => this.turns.onConfirm());
     dom.newIntake.addEventListener("click", () => this.session.startNewIntake());
     dom.clearStorage.addEventListener("click", () => this.onClearStorage());
+    for (const button of win.document.querySelectorAll("[data-copy]")) {
+      button.addEventListener("click", () => this.onCopyDemo(button));
+    }
     dom.startRecording.addEventListener("click", () => this.voice.startRecording());
     dom.stopRecording.addEventListener("click", () => this.voice.stopRecording());
     dom.wavAttach.addEventListener("click", () => {
@@ -100,6 +103,37 @@ export class App {
     });
     dom.message.addEventListener("input", () => this.onMessageInput());
     win.addEventListener("pagehide", () => this.onPageHide());
+  }
+
+  async onCopyDemo(button) {
+    const { document, navigator } = this.window;
+    const value = document.getElementById(button.dataset.copy).textContent;
+    const status = document.getElementById("demo-copy-status");
+    status.hidden = false;
+    status.textContent = "";
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        // Clipboard API needs HTTPS or localhost; the demo also runs on HTTP LAN addresses.
+        const field = document.createElement("textarea");
+        field.value = value;
+        field.readOnly = true;
+        field.className = "u-sr-only";
+        const focused = document.activeElement;
+        document.body.append(field);
+        try {
+          field.select();
+          if (!document.execCommand?.("copy")) throw new Error("Clipboard unavailable");
+        } finally {
+          field.remove();
+          focused?.focus();
+        }
+      }
+      status.textContent = this.i18n.t(this.state.language, "demo.copied", { value });
+    } catch (_) {
+      status.textContent = this.i18n.t(this.state.language, "demo.copy_failed");
+    }
   }
 
   /** The test card's reset: forget everything this page stored in the browser, then start afresh. */
