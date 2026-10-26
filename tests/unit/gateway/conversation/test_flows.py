@@ -73,6 +73,8 @@ BOOKING = {
     "steps": ["ask_account", "verify_account", "offer_windows"],
 }
 
+NOT_AN_OBJECT = "^the flows file must be a non-empty object of flows$"
+
 
 def with_support(**flows):
     return {**flows, SUPPORT_REQUEST: SUPPORT}
@@ -83,10 +85,10 @@ def with_support(**flows):
     [
         (None, "cannot read flows"),
         ("{not json", "cannot read flows"),
-        ([], "non-empty object"),
-        ([1], "non-empty object"),
-        ('"a string"', "non-empty object"),
-        ({}, "non-empty object"),
+        ([], NOT_AN_OBJECT),
+        ([1], NOT_AN_OBJECT),
+        ('"a string"', NOT_AN_OBJECT),
+        ({}, NOT_AN_OBJECT),
         (
             with_support(f={"intent": "book_technician"}),
             "needs exactly an intent and steps",
@@ -132,7 +134,7 @@ def with_support(**flows):
             "must end with a step that replies",
         ),
         ({"f": BOOKING}, "must define 'support_request'"),
-        (with_support(a=BOOKING, b=BOOKING), "same intent"),
+        (with_support(a=BOOKING, b=BOOKING), "^two flows start on the same intent$"),
     ],
 )
 def test_a_missing_or_unrunnable_flows_file_is_rejected(

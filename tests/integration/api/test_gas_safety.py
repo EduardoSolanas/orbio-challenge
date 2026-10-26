@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import asyncio
 
+import pytest
+
 import gateway.conversation.engine as engine_module
 from gateway.conversation.safety import SafetyExamples, SafetyIndex
 from gateway.errors import app_error
@@ -224,3 +226,18 @@ async def test_with_the_embedding_service_down_an_ordinary_message_is_a_normal_t
     body, _ = await turn(settings, provider, embedding_down, "my bill is high")
 
     assert provider.methods() == ["extract"] and body["citations"] == []
+
+
+async def test_a_turn_that_fails_outright_stops_the_model_call_it_started(
+    settings,
+):
+    async def embedding_broken(texts: list[str]) -> list[list[float]]:
+        raise RuntimeError("not a provider error")
+
+    provider = HangingModel()
+
+    with pytest.raises(RuntimeError):
+        await turn(settings, provider, embedding_broken, "my bill is high")
+    await asyncio.sleep(0.05)
+
+    assert provider.cancelled

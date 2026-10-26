@@ -175,7 +175,8 @@ jobs:
     name: mutation
     needs: unit-integration
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    # a full run is about 4,800 mutants; it took about 70 minutes with four workers
+    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -199,7 +200,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          mutmut run --max-children 2 2>&1 | tee reports/mutation-run.txt
+          mutmut run --max-children 4 2>&1 | tee reports/mutation-run.txt
 
       - name: Mutation report gate
         if: always()

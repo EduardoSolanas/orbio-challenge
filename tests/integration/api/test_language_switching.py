@@ -397,6 +397,26 @@ async def test_spanish_abstention_is_localized_without_citations(client, provide
     assert body["citations"] == []
 
 
+async def test_spanish_unanswerable_question_gets_the_localized_abstention(
+    client, provider
+):
+    from gateway.schemas import KnowledgeAnswer
+
+    session_id = await start_session(client)
+    provider.script_extraction(
+        make_extraction(intent="question", has_question=True, detected_language="es")
+    )
+    provider.script_answer(KnowledgeAnswer(answerable=False, answer="", cited_ids=[]))
+
+    response = await post_turn(
+        client, session_id, text_value="¿Cuánto tarda la entrega?", revision=0
+    )
+
+    body = response.json()
+    assert body["reply"] == text("abstention", "es")
+    assert body["citations"] == []
+
+
 async def test_spanish_transcription_enters_the_same_language_path(
     client, provider, session_dir
 ):
