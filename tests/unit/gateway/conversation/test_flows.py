@@ -143,6 +143,17 @@ async def test_a_verified_account_runs_on_to_the_last_step_and_finishes() -> Non
     assert status.step is None
 
 
+async def test_starting_at_verification_without_an_account_asks_for_the_account() -> None:
+    flow = load_flows()["book_technician"]
+
+    expected = {False: text("auth.order_number_prompt", "en"), True: text("intake.invalid_order", "en")}
+    for invalid, reply in expected.items():
+        outcome = await run_flow(flow, "verify_account", context(order=None, invalid=invalid))
+
+        assert outcome.reply == reply
+        assert outcome.verification_required is False
+
+
 async def test_an_unknown_stored_step_starts_the_flow_again() -> None:
     outcome = await run_flow(load_flows()["book_technician"], "removed_step", context(order=None))
 

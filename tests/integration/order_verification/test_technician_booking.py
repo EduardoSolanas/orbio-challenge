@@ -94,6 +94,27 @@ async def test_the_flow_and_its_step_are_saved_with_the_session_and_end_with_the
     assert second["order_verification_required"] is True
 
 
+async def test_a_malformed_account_number_while_waiting_for_verification_is_corrected(
+    client, provider, session_dir
+):
+    session_id = await create_session(client)
+    provider.script_extraction(intent("book_technician", order_number=FIXTURE_ORDER_NUMBER))
+    first = (await send_turn(client, session_id, "Book a technician", 0)).json()
+    assert first["order_verification_required"] is True
+    # Still waiting for the code, the customer sends another account, and it is malformed.
+    provider.script_extraction(
+        make_extraction(intent="provide_details", candidates={"order_number": "NS-12"})
+    )
+
+    response = await send_turn(client, session_id, "NS-12", first["revision"])
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["reply"] == text("intake.invalid_order", "en")
+    assert body["order_verification_required"] is False and body["slot_options"] == []
+    assert read_session(session_dir, session_id)["flow"] == {"name": "book_technician", "step": "ask_account"}
+
+
 async def test_a_bare_account_number_keeps_the_booking_request_going(client, provider):
     session_id = await create_session(client)
     provider.script_extraction(intent("book_technician"))

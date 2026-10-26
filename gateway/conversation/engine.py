@@ -490,7 +490,8 @@ class ConversationEngine:
         next_active: bool,
     ) -> TurnPlan:
         context = self._flow_context(session, extraction, reply_language)
-        outcome = await run_flow(flow, session.flow.step, context)
+        # Every message re-checks from the first step: the account may just have changed.
+        outcome = await run_flow(flow, flow.steps[0], context)
         session.flow = None if outcome.step is None else FlowState(name=flow.name, step=outcome.step)
         return TurnPlan.keeping_state(
             session,

@@ -95,6 +95,8 @@ async def ask_account(ctx: FlowContext) -> StepResult:
 
 
 async def verify_account(ctx: FlowContext) -> StepResult:
+    if ctx.order_number is None:  # nothing to verify, and "no grant" must not match "no account"
+        return await ask_account(ctx)
     if ctx.verification.grant(ctx.session_id) == ctx.order_number:
         return StepResult()
     ctx.verification.set_pending_order(ctx.session_id, ctx.order_number)

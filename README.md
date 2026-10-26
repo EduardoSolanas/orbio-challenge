@@ -153,7 +153,7 @@ npm ci && npm test                   # frontend unit tests (Jest)
 
 | Layer | What it covers | Result (2026-10-25) |
 |---|---|---|
-| Unit and integration | Validation, state machine, storage, HTTP routes, providers over a real socket, RAG, audio | 1841 unit and 395 integration passed, run as separate layers. Two wall-clock timeout tests can fail when both share one pytest process on a slow machine. |
+| Unit and integration | Validation, state machine, storage, HTTP routes, providers over a real socket, RAG, audio | 1845 unit and 396 integration passed, run as separate layers. Two wall-clock timeout tests can fail when both share one pytest process on a slow machine. |
 | Browser (Playwright) | Eleven Chromium tests of the user journeys, including voice and RAG | 11 passed |
 | Frontend (Jest) | The page's classes in jsdom, using the real `index.html` | 305 passed; 97.7% statements, 92% branches (CI gate 90% / 80%) |
 | Judge journeys | 31 browser tests with a scripted provider; 29 record a conversation that a judge LLM grades against a written rule. Every intent, including verification before account actions, and frustration hand-off | 31 passed; 29 of 29 judged pass. Replies are mostly templates, so this checks wording rules, not model behaviour. |

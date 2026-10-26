@@ -13,7 +13,7 @@ The fake-provider journeys and the real deployment gate are separate suites. The
 python scripts/run_docker_e2e.py --with-deterministic
 ```
 
-The command probes `/health` and the judge `/models` endpoint before launching Chromium. It rejects URLs with paths, query strings, fragments, or embedded credentials, and verifies that the configured model is advertised. It writes the non-secret origin/model/prompt metadata to `reports/e2e-docker/run-config.json`, Playwright output to `reports/e2e-docker/playwright`, JUnit output to `reports/e2e-docker/docker.xml`, and per-node judge artifacts under `reports/e2e-docker/judge/`. Raw judge output is retained in those artifacts; deterministic assertions remain authoritative.
+The command probes `/health` and the judge `/models` endpoint before launching Chromium. It rejects URLs with paths, query strings, fragments, or embedded credentials, and verifies that the configured model is advertised. It writes the non-secret origin/model/prompt metadata to `reports/e2e-docker/run-config.json`, Playwright output to `reports/e2e-docker/playwright`, JUnit output to `reports/e2e-docker/docker.xml`, and judge artifacts under `reports/e2e-docker/judge/`, one numbered file per judged reply (`<test>__01.json`, `__02.json`, ...). Raw judge output is retained in those artifacts; deterministic assertions remain authoritative.
 
 `--with-deterministic` labels and runs the existing fake-provider suite separately (`-m browser_e2e`). The Docker suite is expected to fail early when either local configuration or either deployed service is unavailable; it must not skip or fall back to a fake provider.
 

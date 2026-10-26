@@ -1,6 +1,7 @@
 """Dedicated OpenAI-compatible configuration and client for intent E2E judging."""
 from __future__ import annotations
 
+import glob
 import json
 import os
 import re
@@ -149,10 +150,23 @@ def ask_judge(config: JudgeConfig, system: str, user: dict[str, Any]) -> tuple[s
     return content, verdict
 
 
-def write_artifact(directory: Path, node_id: str, artifact: dict[str, Any]) -> None:
-    """Keep what the judge saw and said, one JSON file per test node."""
+_checkpoints: dict[tuple[Path, str], int] = {}
 
-    path = directory / (re.sub(r"[^A-Za-z0-9_.-]+", "_", node_id) + ".json")
+
+def write_artifact(directory: Path, node_id: str, artifact: dict[str, Any]) -> None:
+    """Keep what the judge saw and said: one numbered JSON file per judged reply of a test.
+
+    A journey judges several replies, so each one gets its own file (``<test>__01.json``, ``__02`` ...).
+    The first write for a test in a run removes that test's files from the previous run.
+    """
+
+    stem = re.sub(r"[^A-Za-z0-9_.-]+", "_", node_id)
+    number = _checkpoints.get((directory, stem), 0) + 1
+    _checkpoints[(directory, stem)] = number
+    if number == 1:
+        for old in [directory / f"{stem}.json", *directory.glob(f"{glob.escape(stem)}__*.json")]:
+            old.unlink(missing_ok=True)
+    path = directory / f"{stem}__{number:02d}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(artifact, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
