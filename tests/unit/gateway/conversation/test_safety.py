@@ -200,18 +200,75 @@ async def test_a_message_far_from_every_example_is_not_flagged_by_a_hair() -> No
     assert await SafetyIndex(EXAMPLES, embed).concerning("tell me a joke") is False
 
 
+async def test_a_message_exactly_at_the_floor_is_flagged_and_a_tie_with_the_ordinary_examples_is_not() -> (
+    None
+):
+    async def at_the_floor(texts: list[str]) -> list[list[float]]:
+        return [{"my bill is high": [0.0, 1.0]}.get(text, [1.0, 0.0]) for text in texts]
+
+    async def everything_the_same(texts: list[str]) -> list[list[float]]:
+        return [[1.0, 0.0] for _ in texts]
+
+    assert await SafetyIndex(EXAMPLES, at_the_floor, floor=1.0).concerning("x") is True
+    assert await SafetyIndex(EXAMPLES, at_the_floor, floor=1.1).concerning("x") is False
+    assert (
+        await SafetyIndex(EXAMPLES, everything_the_same, floor=0.0).concerning("x")
+        is False
+    )
+
+
+async def test_closing_an_index_that_never_warmed_up_does_nothing() -> None:
+    await SafetyIndex(EXAMPLES, keyword_embed()).aclose()
+
+
+async def test_closing_after_the_warm_up_finished_leaves_the_embedded_examples_in_place() -> (
+    None
+):
+    embed = keyword_embed()
+    index = SafetyIndex(EXAMPLES, embed)
+    await index.concerning("a smell")
+
+    await index.aclose()
+    await index.concerning("a smell")
+
+    # the examples were embedded once; only the two questions went out afterwards
+    assert [len(call) for call in embed.calls] == [2, 1, 1]
+
+
+async def test_a_flagged_turn_drops_corrections_and_ambiguities() -> None:
+    original = make_extraction(
+        intent="provide_details",
+        candidates={"description": "smell"},
+        explicit_corrections=["urgency"],
+        ambiguous_fields=["category"],
+    )
+
+    relabelled = as_safety_question(original)
+
+    assert relabelled.explicit_corrections == [] and relabelled.ambiguous_fields == []
+    assert original.explicit_corrections == ["urgency"]
+
+
 async def test_warm_up_starts_early_and_close_cancels_it() -> None:
     started = asyncio.Event()
 
+    cancelled = asyncio.Event()
+
     async def slow(texts: list[str]) -> list[list[float]]:
         started.set()
-        await asyncio.sleep(5)
+        try:
+            await asyncio.sleep(5)
+        except asyncio.CancelledError:
+            cancelled.set()
+            raise
         return []
 
     index = SafetyIndex(EXAMPLES, slow)
     index.warm()
     await asyncio.wait_for(started.wait(), 1)
     await index.aclose()
+
+    await asyncio.wait_for(cancelled.wait(), 1)
 
 
 # --- relabelling -----------------------------------------------------------------

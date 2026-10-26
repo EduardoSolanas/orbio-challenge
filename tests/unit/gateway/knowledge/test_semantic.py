@@ -101,7 +101,9 @@ async def test_a_failed_first_attempt_is_retried_on_the_next_question() -> None:
     assert ids(await index.retrieve("question")) == ["faq-a", "faq-c"]
 
 
-async def test_a_slow_embedding_service_times_out() -> None:
+async def test_a_slow_embedding_service_times_out_inside_the_index(monkeypatch) -> None:
+    monkeypatch.setattr("gateway.knowledge.semantic.EMBED_DEADLINE_SECONDS", 0.01)
+
     async def slow(texts: list[str]) -> list[list[float]]:
         await asyncio.sleep(1)
         return [[1.0]]
@@ -109,8 +111,25 @@ async def test_a_slow_embedding_service_times_out() -> None:
     index = SemanticIndex(RECORDS, slow, min_similarity=0.1)
 
     with pytest.raises(TimeoutError):
-        async with asyncio.timeout(0.01):
-            await index.retrieve("question")
+        await index.retrieve("question")
+
+
+async def test_a_record_exactly_at_the_floor_is_kept() -> None:
+    index = SemanticIndex(RECORDS, fake_embed([1.0, 0.0]), min_similarity=1.0)
+
+    assert ids(await index.retrieve("question")) == ["faq-a"]
+
+
+def test_an_entry_without_an_index_sorts_first_and_a_non_object_entry_is_rejected() -> (
+    None
+):
+    body = json.dumps(
+        {"data": [{"index": 1, "embedding": [2.0]}, {"embedding": [1.0]}]}
+    )
+
+    assert parse_embeddings(body, 2) == [[1.0], [2.0]]
+    with pytest.raises(InvalidContent):
+        parse_embeddings(json.dumps({"data": ["not an object"]}), 1)
 
 
 def test_embeddings_are_returned_in_index_order() -> None:
@@ -182,6 +201,7 @@ async def test_embed_posts_the_model_and_texts_with_the_bearer_key() -> None:
     vectors = await provider.embed(["one", "two"])
 
     request = recorder.requests[0]
+    assert request.method == "POST"
     assert vectors == [[1.0, 0.0], [0.0, 1.0]]
     assert str(request.url) == "http://embed.test/v1/embeddings"
     assert json.loads(request.content) == {
