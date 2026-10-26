@@ -64,6 +64,20 @@ def extraction(**overrides) -> Extraction:
     return Extraction(**values)
 
 
+def test_a_waiting_request_is_remembered_per_session_and_can_be_dropped() -> None:
+    verifier = registry()
+    first, second = uuid4(), uuid4()
+
+    verifier.set_waiting_intent(first, "book_technician")
+
+    assert verifier.waiting_intent(first) == "book_technician"
+    assert verifier.waiting_intent(second) is None
+    verifier.set_waiting_intent(first, None)
+    assert verifier.waiting_intent(first) is None
+    verifier.set_waiting_intent(second, None)  # nothing to drop, nothing created
+    assert verifier.waiting_intent(second) is None
+
+
 def test_grant_is_bound_to_the_session_and_the_verified_order() -> None:
     verifier = registry()
     first, second = uuid4(), uuid4()
@@ -357,11 +371,11 @@ def test_verification_request_is_strict_about_shape() -> None:
 
 def test_localized_auth_strings_are_exact_in_english_and_spanish() -> None:
     assert text("auth.demo_code_notice", "en") == (
-        "Email delivery is simulated. No email is sent. Demo code: 246810."
+        "Demo account NS-000123, postcode SW1A 1AA, code 246810. Email delivery is simulated; no email is sent."
     )
     assert text("auth.demo_code_notice", "es") == (
-        "El envío de correo es simulado. No se envía ningún correo. "
-        "Código de demostración: 246810."
+        "Cuenta de demostración NS-000123, código postal SW1A 1AA, código 246810. "
+        "El envío de correo es simulado; no se envía ningún correo."
     )
     assert text("auth.verification_failed", "en") == (
         "We couldn't verify those details. Check the postcode and code and try again."

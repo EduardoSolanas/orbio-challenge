@@ -388,7 +388,7 @@ AUTH_VERIFICATION_PROMPT = (
     "Enter the service postcode and demo verification code for this energy account."
 )
 AUTH_DEMO_CODE_NOTICE = (
-    "Email delivery is simulated. No email is sent. Demo code: 246810."
+    "Demo account NS-000123, postcode SW1A 1AA, code 246810. Email delivery is simulated; no email is sent."
 )
 AUTH_VERIFICATION_FAILED = (
     "We couldn't verify those details. Check the postcode and code and try again."

@@ -276,7 +276,7 @@ export class TurnController extends Controller {
   }
 
   async onVerifyOrder() {
-    const { state, view, api } = this;
+    const { state, view, presenter, api } = this;
     if (!state.sessionId || !state.orderVerificationRequired || state.verificationPending) return;
     const postcode = view.dom.postcode.value;
     const code = view.dom.code.value;
@@ -304,6 +304,8 @@ export class TurnController extends Controller {
         view.dom.code.value = "";
         view.clearVerificationError();
         view.showVerificationStatus(this.ui("auth.verified"));
+        // The request made before verifying (a booking, an installation check) is answered now.
+        if (data.turn) await presenter.applyTurnResponse(data.turn, null, null, gen);
       } else {
         // One localised message for a wrong code, postcode or unknown order.
         view.setVerificationError(this.ui("auth.verification_failed"));

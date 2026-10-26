@@ -1795,7 +1795,8 @@ to the demo deployment.
    verification code in a dedicated localized form. Normalize
    postcode by trimming surrounding whitespace and ASCII uppercasing only; do
    not fuzzy-match. The UI explains that email delivery is simulated and shows
-   `Demo code: 246810`. No email is sent. Do not add postcode or code to the four
+   the demo account `NS-000123`, postcode `SW1A 1AA` and code `246810`, in the
+   form notice and in a card beside the chat on wide screens. No email is sent. Do not add postcode or code to the four
    issue slots, transcript, model context, application logs, or saved session
    JSON.
 3. Submit verification to the dedicated server endpoint defined below. The
@@ -1966,7 +1967,7 @@ visible or announced string in the flow:
 | Key | English | Spanish |
 |---|---|---|
 | auth.verification_prompt | Enter the service postcode and demo verification code for this energy account. | Introduce el código postal del suministro y el código de demostración de esta cuenta de energía. |
-| auth.demo_code_notice | Email delivery is simulated. No email is sent. Demo code: 246810. | El envío de correo es simulado. No se envía ningún correo. Código de demostración: 246810. |
+| auth.demo_code_notice | Demo account NS-000123, postcode SW1A 1AA, code 246810. Email delivery is simulated; no email is sent. | Cuenta de demostración NS-000123, código postal SW1A 1AA, código 246810. El envío de correo es simulado; no se envía ningún correo. |
 | auth.verification_failed | We couldn't verify those details. Check the postcode and code and try again. | No pudimos verificar esos datos. Comprueba el código postal y el código e inténtalo de nuevo. |
 | auth.verified | Energy account verified for this demo. | Cuenta de energía verificada para esta demostración. |
 | auth.order_result | I found the Northstar Energy account {order_number} for {first_name}: {item_names}. Account status: {status}. | Encontré la cuenta de Northstar Energy {order_number} de {first_name}: {item_names}. Estado de la cuenta: {status}. |

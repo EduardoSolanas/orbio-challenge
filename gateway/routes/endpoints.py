@@ -108,7 +108,8 @@ async def order_verification(session_id: str, request: Request):
     response: OrderVerificationResponse = await request.app.state.engine.verify_order(
         session_uuid, command
     )
-    return JSONResponse(response.model_dump(mode="json"))
+    # `turn` is only present when a waiting request was continued.
+    return JSONResponse(response.model_dump(mode="json", exclude=None if response.turn else {"turn"}))
 
 
 @router.post("/api/transcriptions")

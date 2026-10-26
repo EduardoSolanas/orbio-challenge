@@ -26,6 +26,7 @@ class _SessionState:
     verified_order: str | None = None
     expires_at: float | None = None
     failures: int = 0
+    waiting_intent: str | None = None
 
 
 class VerificationRegistry:
@@ -53,6 +54,17 @@ class VerificationRegistry:
     def pending_order(self, session_id: UUID) -> str | None:
         state = self._sessions.get(session_id)
         return None if state is None else state.pending_order
+
+    def waiting_intent(self, session_id: UUID) -> str | None:
+        """The account request (booking, installation status) still waiting for the account."""
+
+        state = self._sessions.get(session_id)
+        return None if state is None else state.waiting_intent
+
+    def set_waiting_intent(self, session_id: UUID, intent: str | None) -> None:
+        if intent is None and session_id not in self._sessions:
+            return
+        self._state(session_id).waiting_intent = intent
 
     def failures(self, session_id: UUID) -> int:
         state = self._sessions.get(session_id)

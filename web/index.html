@@ -11,6 +11,17 @@
   <link rel="stylesheet" href="/static/css/skins.css">
 </head>
 <body>
+<div class="layout">
+<aside class="side skin-paper skin-frame" aria-labelledby="demo-title">
+  <h2 id="demo-title" class="side__title" data-i18n="demo.title"></h2>
+  <p class="side__text" data-i18n="demo.intro"></p>
+  <dl class="side__list">
+    <dt data-i18n="demo.account"></dt><dd>NS-000123</dd>
+    <dt data-i18n="demo.postcode"></dt><dd>SW1A 1AA</dd>
+    <dt data-i18n="demo.code"></dt><dd>246810</dd>
+  </dl>
+  <p class="side__text text-muted" data-i18n="demo.footer"></p>
+</aside>
 <main class="shell">
   <section class="panel skin-paper skin-frame" id="support-chat" role="dialog" aria-modal="false" aria-label="Northstar Energy support chat" data-i18n-aria-label="site.chat_dialog">
     <header class="bar bar--header skin-forest">
@@ -50,6 +61,7 @@
     <p id="playback-disclosure" class="hint text-muted"><span data-i18n="speech.disclosure"></span><span aria-hidden="true"> · </span><span data-i18n="site.chat_privacy"></span></p>
   </section>
 </main>
+</div>
 <script type="module" src="/static/js/main.js"></script>
 </body>
 </html>

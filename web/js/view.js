@@ -230,9 +230,12 @@ export class ChatView {
 
   // ---- starter buttons -------------------------------------------------------------
 
-  /** True when the last assistant message is one of the replies that lists what it can do. */
+  /** True when the last assistant message lists what it can do or ends by asking if there is more. */
   offersOptions(message) {
-    return [this.ui("capability_reply"), this.ui("capability")].includes(message.text);
+    return (
+      [this.ui("capability_reply"), this.ui("capability")].includes(message.text) ||
+      message.text.endsWith(this.ui("anything_else"))
+    );
   }
 
   /** Starter buttons show on a fresh conversation, under the "what I can do" replies and after a saved request. */

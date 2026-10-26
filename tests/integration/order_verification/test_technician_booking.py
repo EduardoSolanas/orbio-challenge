@@ -16,6 +16,7 @@ from gateway.localization import render, text
 from tests.integration.order_verification.support import (
     VERIFICATION_PROMPT,
     create_session,
+    order_lookup,
     send_turn,
     verify,
 )
@@ -33,8 +34,10 @@ async def verified_session(client, provider) -> tuple[str, int]:
     provider.script_extraction(intent("installation_status", order_number=FIXTURE_ORDER_NUMBER))
     first = await send_turn(client, session_id, "Where is my installation?", 0)
     assert first.json()["order_verification_required"] is True
-    assert (await verify(client, session_id)).json()["verified"] is True
-    return session_id, first.json()["revision"]
+    verified = (await verify(client, session_id)).json()
+    assert verified["verified"] is True
+    # Verifying answers the waiting request in the chat, which moves the revision on.
+    return session_id, verified["turn"]["revision"]
 
 
 async def book(client, session_id: str, revision: int, starts_at: str, request_id=None):
@@ -65,6 +68,70 @@ async def test_installation_status_asks_for_verification_first(client, provider)
     assert body["reply"] == VERIFICATION_PROMPT
     assert body["order_verification_required"] is True
     assert body["slot_options"] == []
+
+
+async def test_a_bare_account_number_keeps_the_booking_request_going(client, provider):
+    session_id = await create_session(client)
+    provider.script_extraction(intent("book_technician"))
+    first = (await send_turn(client, session_id, "I would like to book a technician visit", 0)).json()
+    assert first["reply"] == text("auth.order_number_prompt", "en")
+    # The model sees "NS-000123" alone and calls it plain details, not a booking.
+    provider.script_extraction(
+        make_extraction(intent="provide_details", candidates={"order_number": FIXTURE_ORDER_NUMBER})
+    )
+
+    body = (await send_turn(client, session_id, FIXTURE_ORDER_NUMBER, first["revision"])).json()
+
+    assert body["reply"] == VERIFICATION_PROMPT
+    assert body["order_verification_required"] is True
+    assert body["slots"]["category"] is None
+
+
+async def test_verifying_shows_the_windows_for_the_booking_that_was_asked_for(client, provider):
+    session_id = await create_session(client)
+    provider.script_extraction(intent("book_technician", order_number=FIXTURE_ORDER_NUMBER))
+    first = (await send_turn(client, session_id, "Book a technician", 0)).json()
+
+    verified = (await verify(client, session_id)).json()
+
+    turn = verified["turn"]
+    assert verified["verified"] is True
+    assert turn["reply"] == text("booking.choose", "en")
+    assert len(turn["slot_options"]) == 6
+    assert turn["revision"] == first["revision"] + 1
+    # The chat history keeps the answer.
+    view = (await client.get(f"/api/sessions/{session_id}")).json()
+    assert view["messages"][-1]["text"] == text("booking.choose", "en")
+    assert view["revision"] == turn["revision"]
+
+
+async def test_verifying_with_nothing_waiting_adds_no_reply(client, provider):
+    session_id = await create_session(client)
+    provider.script_extraction(order_lookup(order_number=FIXTURE_ORDER_NUMBER))
+
+    await send_turn(client, session_id, "Where is my order?", 0)
+    verified = (await verify(client, session_id)).json()
+
+    assert verified == {"verified": True, "error": None}
+
+
+async def test_a_different_request_drops_the_waiting_booking(client, provider):
+    session_id = await create_session(client)
+    provider.script_extraction(intent("book_technician"))
+    first = (await send_turn(client, session_id, "Book a technician", 0)).json()
+    provider.script_extraction(make_extraction(intent="start_intake", candidates={"description": "Broken meter"}))
+    second = (await send_turn(client, session_id, "Actually my meter is broken", first["revision"])).json()
+    provider.script_extraction(
+        make_extraction(intent="provide_details", candidates={"order_number": FIXTURE_ORDER_NUMBER})
+    )
+
+    body = (await send_turn(client, session_id, FIXTURE_ORDER_NUMBER, second["revision"])).json()
+
+    # It went into the support request, not back to the booking.
+    assert body["slots"]["order_number"] == FIXTURE_ORDER_NUMBER
+    assert body["slots"]["description"] == "Broken meter"
+    assert body["slot_options"] == []
+    assert body["reply"] != VERIFICATION_PROMPT
 
 
 async def test_installation_status_after_verification_says_a_visit_is_needed(client, provider):

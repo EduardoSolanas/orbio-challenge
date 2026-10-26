@@ -140,12 +140,21 @@ def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
         panel_box = page.locator("#support-chat").bounding_box()
         form_box = page.locator("#message-form").bounding_box()
         field_box = ui.message.bounding_box()
-        # One centred column: the whole screen on a phone, a 720px card from 768px up.
-        expected_width = min(viewport_width, 720)
-        expected_height = 844 if viewport_width < 768 else 844 - 48
-        assert panel_box is not None and panel_box["width"] == expected_width
-        assert panel_box["height"] == expected_height
-        assert abs(panel_box["x"] - (viewport_width - expected_width) / 2) <= 1
+        # The whole screen on a phone. From 768px the test-customer card (224px) sits left of the
+        # chat, which is at most 720px and narrows to make room; the pair is centred.
+        side = page.locator(".side")
+        assert panel_box is not None
+        if viewport_width < 768:
+            expect(side).to_be_hidden()
+            assert panel_box["width"] == viewport_width and panel_box["height"] == 844
+        else:
+            expected_width = min(720, viewport_width - 32 - 224 - 16)
+            assert panel_box["width"] == expected_width and panel_box["height"] == 844 - 48
+            expect(side).to_be_visible()
+            expect(side).to_contain_text("NS-000123")
+            side_box = side.bounding_box()
+            assert side_box is not None and side_box["x"] + side_box["width"] <= panel_box["x"]
+            assert abs(side_box["x"] - (viewport_width - (224 + 16 + expected_width)) / 2) <= 1
         assert form_box is not None and field_box is not None
         assert field_box["width"] >= form_box["width"] * 0.58
         assert page.evaluate(NO_OVERFLOW), f"layout must not overflow at {viewport_width}px"

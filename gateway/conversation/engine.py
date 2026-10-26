@@ -100,6 +100,8 @@ __all__ = [
 ]
 
 ACCOUNT_INTENTS = ("order_lookup", "installation_status", "book_technician")
+# Requests that continue by themselves once the account is verified.
+WAITING_INTENTS = ("installation_status", "book_technician")
 RECENT_MESSAGE_LIMIT = 12
 MAX_COLLECTION_TURNS = 50
 TEXT_TURN_DEADLINE_SECONDS = 25.0
@@ -394,6 +396,7 @@ class ConversationEngine:
                 handoff_plan(session, reply_language),
             )
 
+        extraction = self._resume_waiting_request(session, extraction)
         if extraction.intent in ACCOUNT_INTENTS:
             # Account turns never start intake, accept slots or reach the
             # customer-data API without a matching grant.
@@ -436,6 +439,26 @@ class ConversationEngine:
             next_active=next_active,
         )
         return extraction, outcome, plan
+
+    def _resume_waiting_request(self, session: Session, extraction: Extraction) -> Extraction:
+        """Keep a booking or installation request alive while the customer gives the account.
+
+        "NS-000123" on its own carries no intent, so without this it would start a support
+        request. Any other turn drops the waiting request, so a later account number in a
+        support request is never mistaken for it.
+        """
+
+        waiting = self.verification.waiting_intent(session.session_id)
+        if extraction.intent in ACCOUNT_INTENTS or waiting is None:
+            return extraction
+        candidates = extraction.candidates
+        only_account = candidates.order_number is not None and not (
+            candidates.category or candidates.description or candidates.urgency
+        )
+        if extraction.intent == "provide_details" and only_account and not extraction.has_question:
+            return extraction.model_copy(update={"intent": waiting})
+        self.verification.set_waiting_intent(session.session_id, None)
+        return extraction
 
     async def _embedding_concern(self, message: str) -> bool:
         """The embedding check; any failure means "no opinion", never a failed turn."""
@@ -579,13 +602,55 @@ class ConversationEngine:
                 command.delivery_postcode,
                 command.verification_code,
             )
-            if result.verified:
-                self.verification.record_success(session_id, order_number)
-            else:
+            if not result.verified:
                 self.verification.record_failure(session_id)
-            return OrderVerificationResponse(
-                verified=result.verified, error=result.error
-            )
+                return OrderVerificationResponse(verified=False, error=result.error)
+            self.verification.record_success(session_id, order_number)
+            waiting = self.verification.waiting_intent(session_id)
+            self.verification.set_waiting_intent(session_id, None)
+            turn = None
+            if waiting in WAITING_INTENTS:
+                turn = await self._continue_waiting_request(session, waiting, order_number)
+            return OrderVerificationResponse(verified=True, error=None, turn=turn)
+
+    async def _continue_waiting_request(
+        self, session: Session, intent: str, order_number: str
+    ) -> TurnResponse | None:
+        """Answer the request the customer started before verifying, in the same chat."""
+
+        language = session.reply_language
+        try:
+            if intent == "installation_status":
+                reply = await installation_reply(self.customer_data, order_number, language)
+                slot_options: tuple[SlotOption, ...] = ()
+            else:
+                reply, slot_options = await booking_offer(self.customer_data, order_number, language)
+        except AppError:
+            return None  # the account is verified; the customer can simply ask again
+        now = _now()
+        assistant_message = _message(
+            "assistant", reply, input_mode="system", created_at=now, language=language
+        )
+        response = TurnResponse(
+            session_id=session.session_id,
+            revision=session.revision + 1,
+            status=session.status,
+            reply_language=language,
+            frustration_active=session.frustration_active,
+            reply=reply,
+            message_id=assistant_message.id,
+            slots=session.slots,
+            pending_clarifications=session.pending_clarifications,
+            pending_review_revision=session.pending_review_revision,
+            summary=session.summary,
+            slot_options=list(slot_options),
+        )
+        committed = session.model_copy(deep=True)
+        committed.revision = response.revision
+        committed.updated_at = now
+        committed.messages = [*session.messages, assistant_message]
+        await self.repository.save(committed)
+        return response
 
     async def book_slot(
         self, session_id: UUID, command: BookingRequest
@@ -696,6 +761,9 @@ class ConversationEngine:
         order_number = self._lookup_order_number(session, extraction)
         required = False
         slot_options: tuple[SlotOption, ...] = ()
+        granted = self.verification.grant(session_id)
+        if extraction.intent in WAITING_INTENTS and (granted is None or granted != order_number):
+            self.verification.set_waiting_intent(session_id, extraction.intent)
         if extraction.candidates.order_number is not None and order_number is None:
             reply = text("intake.invalid_order", reply_language)
         elif order_number is None:

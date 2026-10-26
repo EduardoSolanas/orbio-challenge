@@ -270,6 +270,18 @@ describe("after a saved request", () => {
     expect(http.to("POST", NEW_TURNS)).toHaveLength(0);
   });
 
+  test("a booking confirmation that asks if there is more brings the buttons back", async () => {
+    const { app } = await running();
+    await app.presenter.applyTurnResponse(
+      turnResponse({ reply: `Booked for Tuesday. ${EN.anything_else}`, revision: 4 }),
+      "book",
+      "text"
+    );
+
+    expect(app.dom.starters.hidden).toBe(false);
+    expect(labels(app)).toHaveLength(4);
+  });
+
   test("a hand-off offers no buttons", async () => {
     const { app } = await running();
     await app.presenter.applyTurnResponse(turnResponse({ status: "handed_off", reply: "A person will help." }), "angry", "text");

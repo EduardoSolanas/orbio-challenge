@@ -502,6 +502,21 @@ describe("verifying the account", () => {
     expect(app.state.verificationPending).toBe(false);
   });
 
+  test("a verified account shows the answer to the request made before verifying", async () => {
+    const { app, http } = await asking();
+    http.on(
+      "POST",
+      VERIFY,
+      ok({ verified: true, error: null, turn: turnResponse({ reply: "Pick a time.", revision: 5 }) })
+    );
+
+    await app.turns.onVerifyOrder();
+
+    expect(app.state.revision).toBe(5);
+    expect(app.dom.log.textContent).toContain("Pick a time.");
+    expect(app.state.orderVerificationRequired).toBe(false);
+  });
+
   test("a wrong code shows one generic message and keeps the form", async () => {
     const { app, http } = await asking();
     http.on("POST", VERIFY, ok({ verified: false, error: "verification_failed" }));

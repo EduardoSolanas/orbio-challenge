@@ -208,6 +208,7 @@ class OrderVerificationRequest(ContractModel):
 class OrderVerificationResponse(ContractModel):
     verified: StrictBool
     error: Literal["verification_failed"] | None
+    turn: "TurnResponse | None" = None  # the waiting request, answered once verified
 
 
 class Citation(ContractModel):
@@ -277,6 +278,9 @@ class TurnResponse(ContractModel):
     citations: list[Citation] = Field(default_factory=list)
     order_verification_required: StrictBool = False
     slot_options: list[SlotOption] = Field(default_factory=list)
+
+
+OrderVerificationResponse.model_rebuild()
 
 
 class Confirmation(ContractModel):
