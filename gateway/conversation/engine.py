@@ -56,6 +56,7 @@ from gateway.schemas import (
     ConfirmRequest,
     Extraction,
     ExtractionContext,
+    FlowState,
     Frustration,
     KnowledgeAnswer,
     KnowledgeContext,
@@ -85,7 +86,14 @@ from gateway.conversation.validation import (
     validate_field,
 )
 from gateway.conversation.verification import VERIFICATION_FAILED, VerificationRegistry
-from gateway.conversation.visits import booking_offer, installation_reply, visit_text, window_values
+from gateway.conversation.visits import visit_text, window_values
+from gateway.conversation.flows import (
+    FlowContext,
+    FlowDefinition,
+    load_flows,
+    only_account_number,
+    run_flow,
+)
 
 if TYPE_CHECKING:
     from gateway.providers.client import AIProvider
@@ -99,9 +107,7 @@ __all__ = [
     "turn_digest",
 ]
 
-ACCOUNT_INTENTS = ("order_lookup", "installation_status", "book_technician")
-# Requests that continue by themselves once the account is verified.
-WAITING_INTENTS = ("installation_status", "book_technician")
+ACCOUNT_INTENTS = ("order_lookup",)
 RECENT_MESSAGE_LIMIT = 12
 MAX_COLLECTION_TURNS = 50
 TEXT_TURN_DEADLINE_SECONDS = 25.0
@@ -253,6 +259,7 @@ class ConversationEngine:
         verification: VerificationRegistry | None = None,
         semantic_index: SemanticIndex | None = None,
         safety_index: SafetyIndex | None = None,
+        flows: dict[str, FlowDefinition] | None = None,
     ) -> None:
         self.semantic_index = semantic_index
         self.safety_index = safety_index
@@ -261,6 +268,8 @@ class ConversationEngine:
         self.knowledge_base = knowledge_base
         self.speech_languages = speech_languages
         self.customer_data = customer_data
+        self.flows = load_flows() if flows is None else flows
+        self._flow_by_intent = {flow.intent: flow for flow in self.flows.values()}
         self.verification = (
             verification if verification is not None else VerificationRegistry()
         )
@@ -396,7 +405,17 @@ class ConversationEngine:
                 handoff_plan(session, reply_language),
             )
 
-        extraction = self._resume_waiting_request(session, extraction)
+        flow = self._active_flow(session, extraction)
+        if flow is not None:
+            if at_limit:
+                raise app_error("turn_limit")
+            return (
+                extraction,
+                unchanged_outcome(session),
+                await self._plan_flow(
+                    session, flow, extraction, reply_language, next_active=next_active
+                ),
+            )
         if extraction.intent in ACCOUNT_INTENTS:
             # Account turns never start intake, accept slots or reach the
             # customer-data API without a matching grant.
@@ -440,25 +459,61 @@ class ConversationEngine:
         )
         return extraction, outcome, plan
 
-    def _resume_waiting_request(self, session: Session, extraction: Extraction) -> Extraction:
-        """Keep a booking or installation request alive while the customer gives the account.
+    def _active_flow(self, session: Session, extraction: Extraction) -> FlowDefinition | None:
+        """The flow this turn belongs to, updating ``session.flow`` (saved with the turn).
 
-        "NS-000123" on its own carries no intent, so without this it would start a support
-        request. Any other turn drops the waiting request, so a later account number in a
-        support request is never mistaken for it.
+        An intent that names a flow starts it from the first step. While a flow is active,
+        a message that carries only an account number feeds it; any other message leaves it.
         """
 
-        waiting = self.verification.waiting_intent(session.session_id)
-        if extraction.intent in ACCOUNT_INTENTS or waiting is None:
-            return extraction
-        candidates = extraction.candidates
-        only_account = candidates.order_number is not None and not (
-            candidates.category or candidates.description or candidates.urgency
+        started = self._flow_by_intent.get(extraction.intent)
+        if started is not None:
+            session.flow = FlowState(name=started.name, step=started.steps[0])
+            return started
+        active = self.flows.get(session.flow.name) if session.flow is not None else None
+        if active is not None and only_account_number(extraction):
+            return active
+        session.flow = None
+        return None
+
+    async def _plan_flow(
+        self,
+        session: Session,
+        flow: FlowDefinition,
+        extraction: Extraction,
+        reply_language: Language,
+        *,
+        next_active: bool,
+    ) -> TurnPlan:
+        context = self._flow_context(session, extraction, reply_language)
+        outcome = await run_flow(flow, session.flow.step, context)
+        session.flow = None if outcome.step is None else FlowState(name=flow.name, step=outcome.step)
+        return TurnPlan.keeping_state(
+            session,
+            outcome.reply,
+            reply_language,
+            frustration_active=next_active,
+            order_verification_required=outcome.verification_required,
+            slot_options=outcome.slot_options,
         )
-        if extraction.intent == "provide_details" and only_account and not extraction.has_question:
-            return extraction.model_copy(update={"intent": waiting})
-        self.verification.set_waiting_intent(session.session_id, None)
-        return extraction
+
+    def _flow_context(
+        self, session: Session, extraction: Extraction | None, language: Language
+    ) -> FlowContext:
+        order_number = (
+            self._pending_or_slot_order(session)
+            if extraction is None
+            else self._lookup_order_number(session, extraction)
+        )
+        given = extraction is not None and extraction.candidates.order_number is not None
+        return FlowContext(
+            session_id=session.session_id,
+            order_number=order_number,
+            order_invalid=given and order_number is None,
+            language=language,
+            verification=self.verification,
+            customer_data=self.customer_data,
+        )
 
     async def _embedding_concern(self, message: str) -> bool:
         """The embedding check; any failure means "no opinion", never a failed turn."""
@@ -606,30 +661,27 @@ class ConversationEngine:
                 self.verification.record_failure(session_id)
                 return OrderVerificationResponse(verified=False, error=result.error)
             self.verification.record_success(session_id, order_number)
-            waiting = self.verification.waiting_intent(session_id)
-            self.verification.set_waiting_intent(session_id, None)
             turn = None
-            if waiting in WAITING_INTENTS:
-                turn = await self._continue_waiting_request(session, waiting, order_number)
+            if session.flow is not None and session.flow.name in self.flows:
+                turn = await self._continue_flow(session)
             return OrderVerificationResponse(verified=True, error=None, turn=turn)
 
-    async def _continue_waiting_request(
-        self, session: Session, intent: str, order_number: str
-    ) -> TurnResponse | None:
-        """Answer the request the customer started before verifying, in the same chat."""
+    async def _continue_flow(self, session: Session) -> TurnResponse | None:
+        """Run the session's flow on from the verification step, in the same chat."""
 
         language = session.reply_language
+        flow = self.flows[session.flow.name]
         try:
-            if intent == "installation_status":
-                reply = await installation_reply(self.customer_data, order_number, language)
-                slot_options: tuple[SlotOption, ...] = ()
-            else:
-                reply, slot_options = await booking_offer(self.customer_data, order_number, language)
+            outcome = await run_flow(
+                flow, session.flow.step, self._flow_context(session, None, language)
+            )
         except AppError:
             return None  # the account is verified; the customer can simply ask again
+        if outcome.reply is None:
+            return None
         now = _now()
         assistant_message = _message(
-            "assistant", reply, input_mode="system", created_at=now, language=language
+            "assistant", outcome.reply, input_mode="system", created_at=now, language=language
         )
         response = TurnResponse(
             session_id=session.session_id,
@@ -637,18 +689,20 @@ class ConversationEngine:
             status=session.status,
             reply_language=language,
             frustration_active=session.frustration_active,
-            reply=reply,
+            reply=outcome.reply,
             message_id=assistant_message.id,
             slots=session.slots,
             pending_clarifications=session.pending_clarifications,
             pending_review_revision=session.pending_review_revision,
             summary=session.summary,
-            slot_options=list(slot_options),
+            order_verification_required=outcome.verification_required,
+            slot_options=list(outcome.slot_options),
         )
         committed = session.model_copy(deep=True)
         committed.revision = response.revision
         committed.updated_at = now
         committed.messages = [*session.messages, assistant_message]
+        committed.flow = None if outcome.step is None else FlowState(name=flow.name, step=outcome.step)
         await self.repository.save(committed)
         return response
 
@@ -707,6 +761,7 @@ class ConversationEngine:
                 summary=session.summary,
             )
             committed = session.model_copy(deep=True)
+            committed.flow = None
             committed.revision = new_revision
             committed.updated_at = now
             committed.messages = [
@@ -760,10 +815,6 @@ class ConversationEngine:
         session_id = session.session_id
         order_number = self._lookup_order_number(session, extraction)
         required = False
-        slot_options: tuple[SlotOption, ...] = ()
-        granted = self.verification.grant(session_id)
-        if extraction.intent in WAITING_INTENTS and (granted is None or granted != order_number):
-            self.verification.set_waiting_intent(session_id, extraction.intent)
         if extraction.candidates.order_number is not None and order_number is None:
             reply = text("intake.invalid_order", reply_language)
         elif order_number is None:
@@ -772,14 +823,6 @@ class ConversationEngine:
             self.verification.set_pending_order(session_id, order_number)
             reply = text("auth.verification_prompt", reply_language)
             required = True
-        elif extraction.intent == "installation_status":
-            reply = await installation_reply(
-                self.customer_data, order_number, reply_language
-            )
-        elif extraction.intent == "book_technician":
-            reply, slot_options = await booking_offer(
-                self.customer_data, order_number, reply_language
-            )
         elif extraction.tool_request is not None:
             order = await self.customer_data.lookup_order(order_number)
             if order is None:
@@ -796,7 +839,6 @@ class ConversationEngine:
             reply_language,
             frustration_active=next_active,
             order_verification_required=required,
-            slot_options=slot_options,
         )
 
     def _lookup_order_number(

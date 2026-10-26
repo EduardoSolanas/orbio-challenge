@@ -294,6 +294,13 @@ class ReplayRecord(ContractModel):
     response: TurnResponse
 
 
+class FlowState(ContractModel):
+    """Where a session is inside a flow from gateway/flows.json."""
+
+    name: StrictStr
+    step: StrictStr
+
+
 class Session(ContractModel):
     schema_version: StrictInt
     session_id: CanonicalUUID
@@ -312,6 +319,7 @@ class Session(ContractModel):
     summary: StrictStr | None
     confirmation: Confirmation | None
     requests: list[ReplayRecord]
+    flow: FlowState | None = None
 
     @field_validator("schema_version")
     @classmethod

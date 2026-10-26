@@ -1,0 +1,10 @@
+{
+  "installation_status": {
+    "intent": "installation_status",
+    "steps": ["ask_account", "verify_account", "show_installation"]
+  },
+  "book_technician": {
+    "intent": "book_technician",
+    "steps": ["ask_account", "verify_account", "offer_windows"]
+  }
+}

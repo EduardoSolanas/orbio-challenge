@@ -20,7 +20,7 @@ from tests.integration.order_verification.support import (
     send_turn,
     verify,
 )
-from tests.integration.support.api import make_extraction
+from tests.integration.support.api import make_extraction, read_session
 
 
 def intent(name: str, *, order_number: str | None = None):
@@ -68,6 +68,30 @@ async def test_installation_status_asks_for_verification_first(client, provider)
     assert body["reply"] == VERIFICATION_PROMPT
     assert body["order_verification_required"] is True
     assert body["slot_options"] == []
+
+
+async def test_the_flow_and_its_step_are_saved_with_the_session_and_end_with_the_booking(
+    client, provider, session_dir
+):
+    session_id = await create_session(client)
+    provider.script_extraction(intent("book_technician"))
+    first = (await send_turn(client, session_id, "Book a technician", 0)).json()
+    assert read_session(session_dir, session_id)["flow"] == {
+        "name": "book_technician",
+        "step": "ask_account",
+    }
+
+    provider.script_extraction(intent("book_technician", order_number=FIXTURE_ORDER_NUMBER))
+    second = (await send_turn(client, session_id, FIXTURE_ORDER_NUMBER, first["revision"])).json()
+    assert read_session(session_dir, session_id)["flow"]["step"] == "verify_account"
+
+    turn = (await verify(client, session_id)).json()["turn"]
+    # The windows are on offer; choosing one finishes the booking and the flow.
+    assert read_session(session_dir, session_id)["flow"] is None
+    booked = await book(client, session_id, turn["revision"], turn["slot_options"][0]["starts_at"])
+    assert booked.status_code == 200
+    assert read_session(session_dir, session_id)["flow"] is None
+    assert second["order_verification_required"] is True
 
 
 async def test_a_bare_account_number_keeps_the_booking_request_going(client, provider):

@@ -64,20 +64,6 @@ def extraction(**overrides) -> Extraction:
     return Extraction(**values)
 
 
-def test_a_waiting_request_is_remembered_per_session_and_can_be_dropped() -> None:
-    verifier = registry()
-    first, second = uuid4(), uuid4()
-
-    verifier.set_waiting_intent(first, "book_technician")
-
-    assert verifier.waiting_intent(first) == "book_technician"
-    assert verifier.waiting_intent(second) is None
-    verifier.set_waiting_intent(first, None)
-    assert verifier.waiting_intent(first) is None
-    verifier.set_waiting_intent(second, None)  # nothing to drop, nothing created
-    assert verifier.waiting_intent(second) is None
-
-
 def test_grant_is_bound_to_the_session_and_the_verified_order() -> None:
     verifier = registry()
     first, second = uuid4(), uuid4()
