@@ -31,6 +31,7 @@ describe("copying test customer details", () => {
 
     expect(writeText).toHaveBeenCalledWith(value);
     expect(document.getElementById("demo-copy-status").textContent).toBe(EN["demo.copied"].replace("{value}", value));
+    expect(document.getElementById("demo-copy-status").classList.contains("u-sr-only")).toBe(true);
   });
 
   test("reports a denied clipboard write without claiming success", async () => {
@@ -42,6 +43,7 @@ describe("copying test customer details", () => {
     await flush();
 
     expect(document.getElementById("demo-copy-status").textContent).toBe(EN["demo.copy_failed"]);
+    expect(document.getElementById("demo-copy-status").classList.contains("u-sr-only")).toBe(false);
   });
 
   test("copies on HTTP pages without the Clipboard API and restores focus", async () => {

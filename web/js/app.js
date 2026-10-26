@@ -130,8 +130,11 @@ export class App {
           focused?.focus();
         }
       }
+      // Success is announced to screen readers only; a failure has to be seen.
+      status.classList.add("u-sr-only");
       status.textContent = this.i18n.t(this.state.language, "demo.copied", { value });
     } catch (_) {
+      status.classList.remove("u-sr-only");
       status.textContent = this.i18n.t(this.state.language, "demo.copy_failed");
     }
   }
