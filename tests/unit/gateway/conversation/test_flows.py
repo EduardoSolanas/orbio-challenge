@@ -11,7 +11,9 @@ import pytest
 
 from gateway.conversation.flows import (
     DEFAULT_FLOWS_PATH,
+    INTAKE_STATUS,
     STEPS,
+    SUPPORT_REQUEST,
     FlowContext,
     FlowsInvalid,
     load_flows,
@@ -19,8 +21,9 @@ from gateway.conversation.flows import (
     run_flow,
 )
 from gateway.conversation.verification import VerificationRegistry
-from gateway.localization import render, text
-from tests.support.unit_fakes import make_extraction
+from gateway.localization import build_review_reply, missing_question, render, text
+from gateway.schemas import Clarification
+from tests.support.unit_fakes import make_extraction, make_slots
 
 ORDER = "NS-000123"
 
@@ -55,6 +58,7 @@ def test_the_shipped_flows_load_and_only_use_known_steps() -> None:
     assert {"installation_status", "book_technician"} <= set(flows)
     assert all(step in STEPS for flow in flows.values() for step in flow.steps)
     assert flows["book_technician"].steps[:2] == ("ask_account", "verify_account")
+    assert flows[SUPPORT_REQUEST].steps == ("collect_details", "review_details")
 
 
 @pytest.mark.parametrize(
@@ -70,9 +74,12 @@ def test_the_shipped_flows_load_and_only_use_known_steps() -> None:
         {"f": {"intent": "book_technician", "steps": ["ask_account", "ask_account"]}},
         {"f": {"intent": "book_technician", "steps": ["no_such_step"]}},
         {"f": {"intent": "book_technician", "steps": ["ask_account"], "extra": 1}},
+        {"f": {"intent": "book_technician", "steps": ["ask_account", "review_details"]}},
+        {"f": {"intent": "book_technician", "steps": ["ask_account"]}},
         {
             "a": {"intent": "book_technician", "steps": ["ask_account"]},
             "b": {"intent": "book_technician", "steps": ["ask_account"]},
+            SUPPORT_REQUEST: {"intent": "start_intake", "steps": ["collect_details"]},
         },
     ],
 )
@@ -155,3 +162,48 @@ def test_only_a_bare_account_number_feeds_a_running_flow() -> None:
     )
     assert not only_account_number(make_extraction(has_question=True, candidates={"order_number": ORDER}))
     assert not only_account_number(make_extraction(intent="start_intake", candidates={"order_number": ORDER}))
+
+
+# --- the support request ----------------------------------------------------------
+
+FULL = make_slots(ORDER, "damaged_item", "It arrived broken", "high")
+
+
+def intake(*, slots, pending=None, rejected=False) -> FlowContext:
+    from dataclasses import replace
+
+    return replace(context(order=None), slots=slots, pending=pending or {}, review_rejected=rejected)
+
+
+async def run_intake(ctx):
+    flow = load_flows()[SUPPORT_REQUEST]
+    return await run_flow(flow, flow.steps[0], ctx)
+
+
+async def test_a_missing_detail_is_asked_for_in_the_fixed_order() -> None:
+    outcome = await run_intake(intake(slots=make_slots(ORDER, None, None, None)))
+
+    assert outcome.reply == missing_question("category", "en")
+    assert INTAKE_STATUS[outcome.step] == "collecting"
+
+
+async def test_a_pending_problem_is_asked_about_before_anything_missing() -> None:
+    question = Clarification(code="invalid", candidate="x", question="That does not look right.")
+    outcome = await run_intake(intake(slots=make_slots(None, None, None, None), pending={"order_number": question}))
+
+    assert outcome.reply == "That does not look right."
+    assert INTAKE_STATUS[outcome.step] == "collecting"
+
+
+async def test_a_rejected_review_goes_back_to_collecting_even_when_complete() -> None:
+    outcome = await run_intake(intake(slots=FULL, rejected=True))
+
+    assert outcome.reply == text("reject_prompt", "en")
+    assert INTAKE_STATUS[outcome.step] == "collecting"
+
+
+async def test_complete_details_go_to_the_review_and_wait_for_confirmation() -> None:
+    outcome = await run_intake(intake(slots=FULL))
+
+    assert outcome.reply == build_review_reply(FULL, "en")
+    assert INTAKE_STATUS[outcome.step] == "awaiting_confirmation"

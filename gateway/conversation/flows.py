@@ -18,10 +18,27 @@ from uuid import UUID
 from gateway.backend_client import BackendApiClient
 from gateway.conversation.verification import VerificationRegistry
 from gateway.conversation.visits import booking_offer, installation_reply
-from gateway.localization import text
-from gateway.schemas import Extraction, Intent, Language, SlotOption
+from gateway.conversation.plans import first_issue, first_missing
+from gateway.localization import build_review_reply, text
+from gateway.schemas import (
+    Clarification,
+    Extraction,
+    FieldName,
+    Intent,
+    Language,
+    SlotOption,
+    Slots,
+)
 
 DEFAULT_FLOWS_PATH = Path(__file__).resolve().parents[1] / "flows.json"
+
+# The support request is the default conversation: nothing starts it, so the engine finds
+# it by name. Its step is not stored as a flow; the session's `status` is the step.
+SUPPORT_REQUEST = "support_request"
+INTAKE_STATUS = {
+    "collect_details": "collecting",
+    "review_details": "awaiting_confirmation",
+}
 
 
 class FlowsInvalid(ValueError):
@@ -45,6 +62,10 @@ class FlowContext:
     language: Language
     verification: VerificationRegistry
     customer_data: BackendApiClient | None
+    # Only the support-request steps look at these.
+    slots: Slots | None = None
+    pending: dict[FieldName, Clarification] | None = None
+    review_rejected: bool = False
 
 
 @dataclass(frozen=True)
@@ -90,7 +111,34 @@ async def offer_windows(ctx: FlowContext) -> StepResult:
     return StepResult(reply, slot_options=slots, finish=True)
 
 
+async def collect_details(ctx: FlowContext) -> StepResult:
+    """Ask about the first thing still wrong or missing; nothing to ask moves on to the review."""
+
+    if ctx.pending:
+        return StepResult(first_issue(ctx.pending).question)
+    if ctx.review_rejected:
+        return StepResult(text("reject_prompt", ctx.language))
+    missing = first_missing(ctx.slots, ctx.language)
+    return StepResult() if missing is None else StepResult(missing)
+
+
+async def review_details(ctx: FlowContext) -> StepResult:
+    return StepResult(build_review_reply(ctx.slots, ctx.language))
+
+
+# Which kind of context each step needs; a flow may not mix them.
+STEP_KINDS = {
+    "ask_account": "account",
+    "verify_account": "account",
+    "show_installation": "account",
+    "offer_windows": "account",
+    "collect_details": "intake",
+    "review_details": "intake",
+}
+
 STEPS: dict[str, Callable[[FlowContext], Awaitable[StepResult]]] = {
+    "collect_details": collect_details,
+    "review_details": review_details,
     "ask_account": ask_account,
     "verify_account": verify_account,
     "show_installation": show_installation,
@@ -120,7 +168,11 @@ def load_flows(path: Path = DEFAULT_FLOWS_PATH) -> dict[str, FlowDefinition]:
         unknown = [step for step in steps if step not in STEPS]
         if unknown:
             raise FlowsInvalid(f"flow {name!r} uses unknown steps {unknown}")
+        if len({STEP_KINDS[step] for step in steps}) != 1:
+            raise FlowsInvalid(f"flow {name!r} mixes account steps and support-request steps")
         flows[name] = FlowDefinition(name, intent, tuple(steps))
+    if SUPPORT_REQUEST not in flows:
+        raise FlowsInvalid(f"the flows file must define {SUPPORT_REQUEST!r}")
     starting = [flow.intent for flow in flows.values()]
     if len(set(starting)) != len(starting):
         raise FlowsInvalid("two flows start on the same intent")

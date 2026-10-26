@@ -11,6 +11,7 @@ Pure helpers live beside it: ``intent`` (turn analysis), ``plans`` (reply plans)
 from __future__ import annotations
 
 import asyncio
+from dataclasses import replace
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Literal, Protocol, Sequence
 from uuid import UUID, uuid4
@@ -33,15 +34,12 @@ from gateway.conversation.intent import (
     is_pure_question,
     is_pure_social,
     is_pure_unrelated,
-    slots_complete,
     transition_frustration,
 )
-from gateway.localization import build_review_reply, build_summary, render, text, request_reference
+from gateway.localization import build_summary, render, text, request_reference
 from gateway.conversation.plans import (
     TurnPlan,
     choose_reply_language,
-    first_issue,
-    first_missing,
     handoff_plan,
     unchanged_outcome,
     unsupported_plan,
@@ -88,6 +86,8 @@ from gateway.conversation.validation import (
 from gateway.conversation.verification import VERIFICATION_FAILED, VerificationRegistry
 from gateway.conversation.visits import visit_text, window_values
 from gateway.conversation.flows import (
+    INTAKE_STATUS,
+    SUPPORT_REQUEST,
     FlowContext,
     FlowDefinition,
     load_flows,
@@ -269,7 +269,11 @@ class ConversationEngine:
         self.speech_languages = speech_languages
         self.customer_data = customer_data
         self.flows = load_flows() if flows is None else flows
-        self._flow_by_intent = {flow.intent: flow for flow in self.flows.values()}
+        self.support_flow = self.flows[SUPPORT_REQUEST]
+        # Nothing starts the support request; it is what a turn falls back to.
+        self._flow_by_intent = {
+            flow.intent: flow for flow in self.flows.values() if flow is not self.support_flow
+        }
         self.verification = (
             verification if verification is not None else VerificationRegistry()
         )
@@ -951,37 +955,34 @@ class ConversationEngine:
             reply = text("nothing_to_confirm", reply_language)
         elif pure_unrelated:
             reply = text("capability", reply_language)
-        elif pending:
-            reply = first_issue(pending).question
-            status = "collecting"
-            summary = None
-            review_revision = None
-            intake_directed = True
-        elif review_rejected:
-            reply = text("reject_prompt", reply_language)
-            status = "collecting"
-            summary = None
-            review_revision = None
-            intake_directed = True
-        elif slots_complete(outcome.slots):
-            intake_directed = True
-            reply = build_review_reply(outcome.slots, reply_language)
-            status = "awaiting_confirmation"
-            summary = build_summary(outcome.slots, reply_language)
-            unchanged_valid_review = (
-                review_valid and not outcome.accepted_fields and not recovered_this_turn
-            )
-            review_revision = (
-                session.pending_review_revision
-                if unchanged_valid_review
-                else new_revision
-            )
         else:
-            reply = first_missing(outcome.slots, reply_language)
-            status = "collecting"
-            summary = None
-            review_revision = None
+            # The support request: its steps come from flows.json and the step sets the status.
+            step = await run_flow(
+                self.support_flow,
+                self.support_flow.steps[0],
+                replace(
+                    self._flow_context(session, None, reply_language),
+                    slots=outcome.slots,
+                    pending=pending,
+                    review_rejected=review_rejected,
+                ),
+            )
+            reply = step.reply
+            status = INTAKE_STATUS[step.step]
             intake_directed = True
+            if status == "awaiting_confirmation":
+                summary = build_summary(outcome.slots, reply_language)
+                unchanged_valid_review = (
+                    review_valid and not outcome.accepted_fields and not recovered_this_turn
+                )
+                review_revision = (
+                    session.pending_review_revision
+                    if unchanged_valid_review
+                    else new_revision
+                )
+            else:
+                summary = None
+                review_revision = None
 
         if extraction.has_question and intake_directed:
             reply = f"{reply} {text('policy_question_suffix', reply_language)}"

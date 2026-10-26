@@ -6,5 +6,9 @@
   "book_technician": {
     "intent": "book_technician",
     "steps": ["ask_account", "verify_account", "offer_windows"]
+  },
+  "support_request": {
+    "intent": "start_intake",
+    "steps": ["collect_details", "review_details"]
   }
 }
