@@ -20,7 +20,7 @@
         "complete_intake.fresh-greeting",
         "complete_intake.social-acknowledgment-no-intake-prompt",
         "complete_intake.mixed-greeting-facts-start-intake",
-        "complete_intake.category-asks-urgency",
+        "complete_intake.category-opens-review-with-normal-urgency",
         "complete_intake.review-four-slots",
         "complete_intake.confirmed-local-receipt",
         "complete_intake.reload-completed-read-only",

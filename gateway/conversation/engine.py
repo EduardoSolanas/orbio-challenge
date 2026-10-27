@@ -353,7 +353,7 @@ class ConversationEngine:
             verification if verification is not None else VerificationRegistry()
         )
 
-    async def create_session(self) -> SessionView:
+    async def create_session(self, language: Language = "en") -> SessionView:
         now = _now()
         session_id = uuid4()
         session = Session(
@@ -363,7 +363,7 @@ class ConversationEngine:
             created_at=now,
             updated_at=now,
             status="collecting",
-            reply_language="en",
+            reply_language=language,
             frustration_active=False,
             slots=Slots(
                 order_number=None,
@@ -374,10 +374,10 @@ class ConversationEngine:
             messages=[
                 _message(
                     "assistant",
-                    text("greeting", "en"),
+                    text("greeting", language),
                     input_mode="system",
                     created_at=now,
-                    language="en",
+                    language=language,
                 )
             ],
             pending_clarifications={},

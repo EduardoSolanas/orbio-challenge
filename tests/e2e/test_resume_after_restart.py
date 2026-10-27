@@ -10,7 +10,6 @@ from playwright.sync_api import expect
 from tests.e2e.conftest import SESSION_ITEM, body_of, wait_until
 from tests.support.fakes import (
     ASK_CATEGORY,
-    ASK_URGENCY,
     CAPABILITY_Q,
     CATEGORY,
     GREETING_STANDING_CHARGE_Q,
@@ -75,7 +74,6 @@ def test_resume_after_restart(case_id, ui, server, provider):
     expect(ui.log).to_contain_text(
         "I can answer questions about Northstar Energy bills, tariffs, meter readings, moving home, and supply issues. I can also help you report a service problem and, once you verify the demo account, check an installation or book a technician. What do you need help with?"
     )
-    expect(ui.log).not_to_contain_text(ASK_URGENCY)
     context_before = ui.transcript_text()
     saved_bytes = server.session_bytes(sid)
     ui.cp("resume_after_restart.capability-and-unrelated-do-not-start-intake")
@@ -149,7 +147,6 @@ def test_resume_after_restart(case_id, ui, server, provider):
         "urgency": None,
     }
     assert ui.disk(sid)["revision"] == 4
-    expect(ui.log).not_to_contain_text(ASK_URGENCY)
 
     # Explicit resume follows the pending clarification before new intake work.
     provider.script_extract(RESUME, x_start_intake())
@@ -161,7 +158,7 @@ def test_resume_after_restart(case_id, ui, server, provider):
     # Finish through review and confirmation on the restarted server.
     provider.script_extract(CATEGORY, x_category())
     assert ui.send(CATEGORY).status == 200
-    expect(ui.log).to_contain_text(ASK_URGENCY)
+    expect(ui.review).to_contain_text("Urgency: normal")
     provider.script_extract(HIGH, x_high())
     assert ui.send(HIGH).status == 200
     expect(ui.review).to_be_visible()

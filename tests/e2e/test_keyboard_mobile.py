@@ -12,7 +12,6 @@ from gateway.schemas import KnowledgeAnswer
 from tests.e2e.conftest import body_of
 from tests.support.fakes import (
     ASK_CATEGORY,
-    ASK_URGENCY,
     CATEGORY,
     GREETING,
     HIGH,
@@ -50,7 +49,7 @@ SPANISH_REVIEW = (
     "Referencia de cuenta: NS-000123\n"
     "Área de asistencia energética: problema con el equipo\n"
     "Problema: My order arrived broken\n"
-    "Urgencia: high\n"
+    "Urgencia: alta\n"
     "Confirma estos datos o dime qué cambiar."
 )
 
@@ -250,7 +249,7 @@ def test_keyboard_mobile(case_id, server_factory, make_ui, provider, tmp_path):
 
     # Finish the intake and reach Play and Confirm with the keyboard alone.
     assert send_with_keyboard(CATEGORY).status == 200
-    expect(ui.log).to_contain_text(ASK_URGENCY)
+    expect(ui.review).to_contain_text("Urgency: normal")
     assert send_with_keyboard(HIGH).status == 200
     expect(ui.review).to_be_visible()
     assert ui.disk(sid)["summary"] == SUMMARY

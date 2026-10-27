@@ -12,7 +12,6 @@ from gateway.localization import text
 from tests.e2e.conftest import body_of, response_of, wait_until
 from tests.support.fakes import (
     ASK_CATEGORY,
-    ASK_URGENCY,
     AUTH_DEMO_CODE_NOTICE,
     AUTH_ORDER_RESULT,
     AUTH_VERIFICATION_FAILED,
@@ -118,15 +117,17 @@ def test_complete_intake(case_id, ui, server, provider):
     assert body_of(first)["input_mode"] == "text"
     ui.cp("complete_intake.mixed-greeting-facts-start-intake")
 
-    # CATEGORY: asks for urgency.
+    # CATEGORY: urgency is not asked, it defaults to normal and the review opens.
     assert ui.send(CATEGORY).status == 200
-    expect(ui.log).to_contain_text(ASK_URGENCY)
+    expect(ui.review).to_contain_text("Urgency: normal")
     saved = ui.disk(sid)
     assert saved["revision"] == 3 and saved["slots"]["category"] == "damaged_item"
-    assert saved["pending_review_revision"] is None
-    ui.cp("complete_intake.category-asks-urgency")
+    assert saved["slots"]["urgency"] == "normal"
+    assert saved["pending_review_revision"] == 3
+    ui.cp("complete_intake.category-opens-review-with-normal-urgency")
 
-    # HIGH: review with exactly the four slots, bound to the resulting revision.
+    # HIGH: stating the urgency replaces the default; review with exactly the four slots,
+    # bound to the resulting revision.
     assert ui.send(HIGH).status == 200
     expect(ui.review).to_be_visible()
     for line in SUMMARY.split("\n"):
@@ -356,20 +357,20 @@ def test_complete_intake(case_id, ui, server, provider):
         "urgency": None,
     }
 
-    # The verified order never skips the normal issue interview.
+    # The verified order never skips the normal issue interview: the category completes it
+    # and the urgency defaults to normal.
     provider.script_extract(CATEGORY, x_category())
     assert ui.send(CATEGORY).status == 200
-    expect(ui.log).to_contain_text(ASK_URGENCY)
+    expect(ui.review).to_contain_text("Urgency: normal")
     expect(ui.verification).to_be_hidden()
-    expect(ui.review).to_be_hidden()
     saved = ui.disk(new_sid)
     assert saved["slots"] == {
         "order_number": "NS-000123",
         "category": "damaged_item",
         "description": "My order arrived broken",
-        "urgency": None,
+        "urgency": "normal",
     }
-    assert saved["pending_review_revision"] is None
+    assert saved["pending_review_revision"] == 10
     serialized = json.dumps(saved)
     for secret in (
         "SW1A",

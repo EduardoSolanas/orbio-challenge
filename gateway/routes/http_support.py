@@ -11,7 +11,8 @@ from pydantic import ValidationError
 from starlette.datastructures import UploadFile
 
 from gateway.errors import INPUT_TOO_LARGE, INVALID_REQUEST, AppError, app_error
-from gateway.schemas import CanonicalUUID, ContractModel, TurnResponse
+from gateway.localization import DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES
+from gateway.schemas import CanonicalUUID, ContractModel, Language, TurnResponse
 
 MAX_JSON_BODY_BYTES = 64 * 1024
 MAX_AUDIO_FILE_BYTES = 10 * 1024 * 1024
@@ -24,6 +25,25 @@ class SpeechRequest(ContractModel):
     """Speech request: only a saved assistant message ID, never caller text."""
 
     message_id: CanonicalUUID
+
+
+def preferred_language(accept_language: str | None) -> Language:
+    """The best supported language in an Accept-Language header, else the default."""
+
+    ranked = []
+    for position, part in enumerate((accept_language or "").split(",")):
+        tag, _, params = part.partition(";")
+        quality = 1.0
+        if params.strip().startswith("q="):
+            try:
+                quality = float(params.strip()[2:])
+            except ValueError:
+                quality = 0.0
+        ranked.append((-quality, position, tag.strip().lower().split("-")[0]))
+    for negative_quality, _, language in sorted(ranked):
+        if negative_quality < 0 and language in SUPPORTED_LANGUAGES:
+            return language
+    return DEFAULT_LANGUAGE
 
 
 def canonical_uuid(value: str) -> UUID:

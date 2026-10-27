@@ -61,7 +61,8 @@ def test_every_semantic_key_has_both_languages_and_no_blank_copy():
     for key, value in english.items():
         assert value.strip(), key
         assert spanish[key].strip(), key
-        assert spanish[key] != value or key.startswith("intake.field_"), key
+        same_word = key.startswith("intake.field_") or key == "urgency.normal"
+        assert spanish[key] != value or same_word, key
 
 
 def test_english_copy_is_the_single_source_for_the_existing_prompt_constants():
@@ -129,14 +130,14 @@ def test_field_labels_are_localized_for_every_field():
     ]
 
 
-def test_spanish_summary_localizes_framing_and_category_label():
+def test_spanish_summary_localizes_framing_category_and_urgency_labels():
     summary = build_summary(SLOTS, "es")
 
     assert summary == (
         "Referencia de cuenta: NS-000123\n"
         "Área de asistencia energética: problema con el equipo\n"
         "Problema: My order arrived broken\n"
-        "Urgencia: high"
+        "Urgencia: alta"
     )
     assert "NS-000123" in summary
     assert "problema con el equipo" in summary

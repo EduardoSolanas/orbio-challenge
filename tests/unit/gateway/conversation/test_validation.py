@@ -612,3 +612,70 @@ def test_review_reply_is_the_summary_plus_the_review_suffix() -> None:
 def test_summary_is_never_built_with_a_missing_field(slots: Slots) -> None:
     with pytest.raises(ValueError):
         build_summary(slots)
+
+
+REST_OF_THE_REQUEST = {
+    "order_number": "NS-123456",
+    "category": "delivery",
+    "description": "My order arrived broken",
+}
+
+
+def test_urgency_defaults_to_normal_once_the_rest_is_settled_and_nothing_is_pending() -> (
+    None
+):
+    outcome = merge_extraction(make_slots(), {}, make_extraction(REST_OF_THE_REQUEST))
+
+    assert outcome.slots.urgency == "normal"
+    assert outcome.pending_clarifications == {}
+    assert "urgency" not in outcome.accepted_fields
+
+
+def test_a_stated_urgency_is_kept_over_the_default() -> None:
+    outcome = merge_extraction(
+        make_slots(),
+        {},
+        make_extraction({**REST_OF_THE_REQUEST, "urgency": "low"}),
+    )
+
+    assert outcome.slots.urgency == "low"
+
+
+def test_urgency_is_not_defaulted_while_something_else_is_missing() -> None:
+    outcome = merge_extraction(
+        make_slots(), {}, make_extraction({"order_number": "NS-123456"})
+    )
+
+    assert outcome.slots.urgency is None
+
+
+def test_urgency_is_not_defaulted_while_an_issue_is_pending() -> None:
+    outcome = merge_extraction(
+        make_slots(),
+        {},
+        make_extraction({**REST_OF_THE_REQUEST, "urgency": "sometime"}),
+    )
+
+    assert outcome.slots.urgency is None
+    assert outcome.pending_clarifications["urgency"].code == "invalid"
+
+
+def test_a_stated_urgency_replaces_the_default_without_a_conflict_question() -> None:
+    slots = make_slots(**REST_OF_THE_REQUEST, urgency="normal")
+
+    outcome = merge_extraction(slots, {}, make_extraction({"urgency": "high"}))
+
+    assert outcome.slots.urgency == "high"
+    assert outcome.pending_clarifications == {}
+    assert "urgency" in outcome.accepted_fields
+
+
+def test_a_stated_urgency_other_than_normal_still_conflicts_with_a_different_one() -> (
+    None
+):
+    slots = make_slots(**REST_OF_THE_REQUEST, urgency="low")
+
+    outcome = merge_extraction(slots, {}, make_extraction({"urgency": "high"}))
+
+    assert outcome.slots.urgency == "low"
+    assert outcome.pending_clarifications["urgency"].code == "conflict"

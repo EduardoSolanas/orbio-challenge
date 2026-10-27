@@ -14,6 +14,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from gateway.errors import ERRORS
+from gateway.localization import text
 from gateway.providers.prompts import CAPABILITY, GREETING
 from tests.integration.support.api import (
     ScriptedProvider,
@@ -144,6 +145,19 @@ async def case_post_sessions(client, app, provider, session_dir):
     assert view["messages"][0]["text"] == GREETING
     assert len(session_files(session_dir)) == 1
     assert_no_calls(provider)
+
+
+async def case_post_sessions_greets_in_the_browser_language(
+    client, app, provider, session_dir
+):
+    response = await client.post(
+        "/api/sessions", json={}, headers={"accept-language": "es-ES,es;q=0.9,en;q=0.8"}
+    )
+    view = response.json()
+    assert response.status_code == 201
+    assert view["reply_language"] == "es"
+    assert view["messages"][0]["text"] == text("greeting", "es")
+    assert read_session(session_dir, view["session_id"])["reply_language"] == "es"
 
 
 async def case_post_sessions_unknown_field(client, app, provider, session_dir):
@@ -532,6 +546,10 @@ async def case_post_speech_oversized_body_against_saved_assistant_message(
 CASES = [
     pytest.param(case_post_sessions_empty_body, id="post_sessions_empty_body"),
     pytest.param(case_post_sessions, id="post_sessions"),
+    pytest.param(
+        case_post_sessions_greets_in_the_browser_language,
+        id="post_sessions_greets_in_the_browser_language",
+    ),
     pytest.param(case_post_sessions_unknown_field, id="post_sessions_unknown_field"),
     pytest.param(case_get_existing_partial_session, id="get_existing_partial_session"),
     pytest.param(

@@ -8,7 +8,6 @@ from playwright.sync_api import expect
 from tests.e2e.conftest import body_of
 from tests.support.fakes import (
     ASK_CATEGORY,
-    ASK_URGENCY,
     BAD_ORDER,
     CATEGORY,
     CHANGE,
@@ -94,7 +93,7 @@ def test_rejected_review_recovery(case_id, ui, server, provider):
     ui.cp("rejected_review_recovery.order-corrected")
 
     assert ui.send(CATEGORY).status == 200
-    expect(ui.log).to_contain_text(ASK_URGENCY)
+    expect(ui.review).to_contain_text("Urgency: normal")
     assert ui.send(HIGH).status == 200
     expect(ui.review).to_be_visible()
     expect(ui.enabled_button("Confirm details")).to_have_count(1)

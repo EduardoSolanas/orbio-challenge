@@ -22,7 +22,7 @@ from uuid import uuid4
 
 import pytest
 
-from gateway.providers.prompts import GREETING, INVALID_URGENCY, MISSING_URGENCY
+from gateway.providers.prompts import GREETING, INVALID_URGENCY
 from gateway.schemas import Session
 from tests.integration.support.api import (
     make_extraction,
@@ -43,6 +43,7 @@ from tests.integration.support.confirmation import (
 from tests.integration.support.intake import (
     CATEGORY_TEXT,
     FULL_SLOTS,
+    FULL_SUMMARY,
     PART_TEXT,
     REVIEW_SUFFIX,
     category_extraction,
@@ -193,11 +194,17 @@ async def case_stop_app_new_instance_same_directory_resume_partial(
             revision=1,
             extraction=category_extraction(),
         )
-        assert continued["slots"] == {**PART_SLOTS, "category": "damaged_item"}
-        assert continued["reply"] == MISSING_URGENCY
+        assert continued["slots"] == {
+            **PART_SLOTS,
+            "category": "damaged_item",
+            "urgency": "normal",
+        }
+        assert (
+            continued["reply"] == FULL_SUMMARY.replace("high", "normal") + REVIEW_SUFFIX
+        )
         assert continued["revision"] == 2
-        assert continued["status"] == "collecting"
-        assert continued["pending_review_revision"] is None
+        assert continued["status"] == "awaiting_confirmation"
+        assert continued["pending_review_revision"] == 2
         disk = read_session(session_dir, session_id)
         assert disk["messages"][:3] == served_messages(view["messages"])
         assert disk["revision"] == 2
@@ -271,7 +278,11 @@ async def case_scoped_os_replace_failure_during_turn_save(
         assert retry.status_code == 200, retry.text
         payload = retry.json()
         assert payload["revision"] == 2
-        assert payload["slots"] == {**PART_SLOTS, "category": "damaged_item"}
+        assert payload["slots"] == {
+            **PART_SLOTS,
+            "category": "damaged_item",
+            "urgency": "normal",
+        }
         disk = read_session(session_dir, session_id)
         assert disk["revision"] == 2
         assert len(disk["messages"]) == len(original_disk["messages"]) + 2

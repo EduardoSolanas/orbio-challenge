@@ -118,7 +118,13 @@ async def test_verification_during_an_issue_intake_resumes_without_reasking_the_
     provider.script_extraction(make_extraction(candidates={"category": "damaged_item"}))
     second = await send_turn(client, session_id, "It is a damaged item.", 2)
     body = second.json()
-    assert body["reply"] == text("intake.urgency", "en")
+    normal_urgency = Slots(
+        order_number=FIXTURE_ORDER_NUMBER,
+        category="damaged_item",
+        description="My order arrived broken",
+        urgency="normal",
+    )
+    assert body["reply"] == build_review_reply(normal_urgency, "en")
     assert body["order_verification_required"] is False
     assert body["slots"]["order_number"] == FIXTURE_ORDER_NUMBER
     assert body["slots"]["category"] == "damaged_item"

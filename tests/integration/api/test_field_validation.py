@@ -27,7 +27,6 @@ from tests.integration.support.intake import (
 )
 
 MISSING_ORDER = "What is your energy account reference? Use NS- followed by six digits, for example NS-123456."
-MISSING_URGENCY = "How urgent is this: low, normal, or high?"
 INVALID_CATEGORY = (
     "Choose a bill, supply issue, meter reading, moving home, or other energy issue."
 )
@@ -364,7 +363,7 @@ async def case_description_equal_category_alias_damaged_item(
     )
 
 
-async def case_all_other_fields_valid_urgency_missing(client, provider, session_dir):
+async def case_urgency_not_given_defaults_to_normal(client, provider, session_dir):
     session_id = await start_session(client)
     before = await _disk(session_dir, session_id)
     text = "My order NS-000123 arrived broken. It is a damaged item."
@@ -382,13 +381,13 @@ async def case_all_other_fields_valid_urgency_missing(client, provider, session_
             }
         ),
     )
-    assert response["slots"] == {**FULL_SLOTS, "urgency": None}
-    assert response["slots"]["urgency"] is None
+    normal_summary = FULL_SUMMARY.replace("high", "normal")
+    assert response["slots"] == {**FULL_SLOTS, "urgency": "normal"}
     assert response["pending_clarifications"] == {}
-    assert response["reply"] == MISSING_URGENCY
-    assert response["status"] == "collecting"
-    assert response["summary"] is None
-    assert response["pending_review_revision"] is None
+    assert response["reply"] == normal_summary + REVIEW_SUFFIX
+    assert response["status"] == "awaiting_confirmation"
+    assert response["summary"] == normal_summary
+    assert response["pending_review_revision"] == 1
     assert_normal_turn(
         session_dir=session_dir,
         session_id=session_id,
@@ -595,8 +594,8 @@ CASES = [
         id="description_equal_category_alias_damaged_item",
     ),
     pytest.param(
-        case_all_other_fields_valid_urgency_missing,
-        id="all_other_fields_valid_urgency_missing",
+        case_urgency_not_given_defaults_to_normal,
+        id="urgency_not_given_defaults_to_normal",
     ),
     pytest.param(
         case_raw_urgency_purple_after_accepted_high,

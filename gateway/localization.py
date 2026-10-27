@@ -154,6 +154,12 @@ CATEGORY_LABEL_KEYS: dict[str, str] = {
     "other": "category.other_energy_issue",
 }
 
+URGENCY_LABEL_KEYS: dict[str, str] = {
+    "low": "urgency.low",
+    "normal": "urgency.normal",
+    "high": "urgency.high",
+}
+
 
 def text(key: str, language: str = DEFAULT_LANGUAGE) -> str:
     """Return the reviewed copy for ``key`` in ``language``."""
@@ -211,6 +217,10 @@ def build_summary(slots: Slots, language: str = DEFAULT_LANGUAGE) -> str:
     if category_key is None:
         raise ValueError("summary requires a canonical support category")
     values["category"] = text(category_key, language)
+    urgency_key = URGENCY_LABEL_KEYS.get(str(values["urgency"]))
+    if urgency_key is None:
+        raise ValueError("summary requires a canonical urgency")
+    values["urgency"] = text(urgency_key, language)
     return render("summary", language, values)
 
 

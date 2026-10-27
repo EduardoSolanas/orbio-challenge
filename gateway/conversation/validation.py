@@ -98,6 +98,8 @@ URGENCY_ALIAS_TO_CANONICAL: dict[str, str] = {
     "urgente": "high",
 }
 
+DEFAULT_URGENCY = "normal"
+
 CATEGORY_CANONICAL = frozenset(CATEGORY_ALIAS_TO_CANONICAL.values())
 URGENCY_CANONICAL = frozenset(URGENCY_ALIAS_TO_CANONICAL.values())
 
@@ -195,7 +197,9 @@ def merge_extraction(
             accepted.add(field)
             if existing is not None:
                 cleared.add(field)
-        elif field in extraction.explicit_corrections:
+        elif field in extraction.explicit_corrections or (
+            field == "urgency" and old == DEFAULT_URGENCY
+        ):  # a stated urgency replaces the default without a question
             setattr(merged, field, candidate)
             accepted.add(field)
             if existing is not None:
@@ -206,6 +210,13 @@ def merge_extraction(
                 candidate=candidate,
                 question=conflict_question(field, old, candidate, language),
             )
+    # Urgency is never asked for: once the rest is settled and nothing is unclear, it is normal.
+    if (
+        merged.urgency is None
+        and not pending
+        and None not in (merged.order_number, merged.category, merged.description)
+    ):
+        merged.urgency = DEFAULT_URGENCY
     return MergeOutcome(
         slots=merged,
         pending_clarifications=pending,

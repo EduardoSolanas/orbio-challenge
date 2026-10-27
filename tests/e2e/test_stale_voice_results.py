@@ -12,7 +12,6 @@ from playwright.sync_api import expect
 from tests.e2e.conftest import body_of, wait_until
 from tests.support.fakes import (
     ASK_CATEGORY,
-    ASK_URGENCY,
     CATEGORY,
     GREETING,
     HIGH,
@@ -20,6 +19,8 @@ from tests.support.fakes import (
     STT_TEXT,
     Gate,
     make_wav,
+    review_reply,
+    summary_text,
     x_category,
     x_high,
     x_part,
@@ -29,6 +30,10 @@ pytestmark = (
     pytest.mark.browser_e2e
 )  # controlled-provider browser workflow, never live Docker/provider proof
 
+# Urgency is not asked: the category turn opens the review with urgency normal (reply B).
+REVIEW_NORMAL = review_reply(
+    summary_text("NS-000123", "damaged_item", "My order arrived broken", "normal")
+)
 NEXT_TASK = "() => new Promise(resolve => setTimeout(resolve, 0))"
 PLAYING = """() => {
   const audio = document.querySelector('[data-testid="reply-audio"]');
@@ -49,7 +54,7 @@ def test_stale_voice_results(case_id, ui, server, provider, tmp_path):
     provider.script_extract(PART, x_part())
     provider.script_extract(CATEGORY, x_category())
     provider.script_synthesize(ASK_CATEGORY, hold=tts_a_gate)  # reply A
-    provider.script_synthesize(ASK_URGENCY)  # reply B
+    provider.script_synthesize(REVIEW_NORMAL)  # reply B
     provider.script_extract(HIGH, x_high())
 
     ui.open()
@@ -104,10 +109,10 @@ def test_stale_voice_results(case_id, ui, server, provider, tmp_path):
     assert ui.send(PART).status == 200
     expect(ui.log).to_contain_text(ASK_CATEGORY)
     assert ui.send(CATEGORY).status == 200
-    expect(ui.log).to_contain_text(ASK_URGENCY)
+    expect(ui.review).to_contain_text("Urgency: normal")
     replies = ui.assistant_messages(new_sid)
     reply_a, reply_b = replies[1], replies[2]
-    assert (reply_a["text"], reply_b["text"]) == (ASK_CATEGORY, ASK_URGENCY)
+    assert (reply_a["text"], reply_b["text"]) == (ASK_CATEGORY, REVIEW_NORMAL)
     before_audio = server.session_bytes(new_sid)
     ui.cp("stale_voice_results.saved-replies-a-b")
 
@@ -135,7 +140,7 @@ def test_stale_voice_results(case_id, ui, server, provider, tmp_path):
     ]
     assert [c["text"] for c in provider.calls("synthesize")] == [
         ASK_CATEGORY,
-        ASK_URGENCY,
+        REVIEW_NORMAL,
     ]
     expect(ui.audio).to_have_attribute("src", src_b)
     spy = ui.spy()

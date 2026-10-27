@@ -16,6 +16,7 @@ from gateway.routes.http_support import (
     canonical_uuid,
     json_body,
     parse_model,
+    preferred_language,
     read_upload,
     turn_payload,
 )
@@ -55,7 +56,10 @@ async def health(request: Request):
 async def create_session(request: Request):
     if json_body(await request.body()) != {}:
         raise app_error(INVALID_REQUEST)
-    view: SessionView = await request.app.state.engine.create_session()
+    # The welcome message follows the browser's language.
+    view: SessionView = await request.app.state.engine.create_session(
+        preferred_language(request.headers.get("accept-language"))
+    )
     return JSONResponse(view.model_dump(mode="json"), status_code=201)
 
 

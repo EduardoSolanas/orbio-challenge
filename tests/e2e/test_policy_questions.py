@@ -12,7 +12,6 @@ from tests.e2e.conftest import body_of
 from tests.support.fakes import (
     ABSTENTION,
     ASK_CATEGORY,
-    ASK_URGENCY,
     CATEGORY,
     GREETING_STANDING_CHARGE_Q,
     HIGH,
@@ -122,7 +121,7 @@ def test_policy_questions(case_id, ui, server, provider):
 
     # Finish the intake.
     assert ui.send(CATEGORY).status == 200
-    expect(ui.log).to_contain_text(ASK_URGENCY)
+    expect(ui.review).to_contain_text("Urgency: normal")
     assert ui.send(HIGH).status == 200
     expect(ui.review).to_be_visible()
     saved = ui.disk(sid)
