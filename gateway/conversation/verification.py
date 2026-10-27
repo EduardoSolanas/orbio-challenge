@@ -116,6 +116,13 @@ class VerificationRegistry:
         state.expires_at = now + self.ttl_seconds
         state.failures = 0
 
+    def clear_pending(self, session_id: UUID) -> None:
+        """Close the form for an order that was never verified; a grant and the failures stay."""
+
+        state = self._sessions.get(session_id)
+        if state is not None and state.verified_order != state.pending_order:
+            state.pending_order = None
+
     def clear_grant(self, session_id: UUID) -> None:
         """Drop the pending order and any grant, keeping the failure count."""
 

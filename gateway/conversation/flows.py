@@ -206,11 +206,11 @@ def load_flows(path: Path = DEFAULT_FLOWS_PATH) -> dict[str, FlowDefinition]:
 
 
 def only_account_number(extraction: Extraction) -> bool:
-    """A message that carries nothing but an account number, such as "NS-000123"."""
+    """A message that carries nothing but an account number: "NS-000123", or "sorry, I meant NS-000123"."""
 
     candidates = extraction.candidates
     return (
-        extraction.intent == "provide_details"
+        extraction.intent in ("provide_details", "correction")
         and not extraction.has_question
         and candidates.order_number is not None
         and not (candidates.category or candidates.description or candidates.urgency)

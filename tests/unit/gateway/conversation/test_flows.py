@@ -275,6 +275,17 @@ def test_only_a_bare_account_number_feeds_a_running_flow() -> None:
     assert not only_account_number(
         make_extraction(intent="start_intake", candidates={"order_number": ORDER})
     )
+    # "sorry, I meant NS-000123" corrects the account of the running flow
+    assert only_account_number(
+        make_extraction(
+            intent="correction",
+            explicit_corrections=["order_number"],
+            candidates={"order_number": ORDER},
+        )
+    )
+    assert not only_account_number(
+        make_extraction(intent="reject", candidates={"order_number": ORDER})
+    )
 
 
 # --- the support request ----------------------------------------------------------

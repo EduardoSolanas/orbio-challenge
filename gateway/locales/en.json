@@ -35,7 +35,7 @@
   "category.meter_reading": "meter reading issue",
   "category.other_energy_issue": "other energy issue",
   "category.supply_issue": "supply issue",
-  "booking.change_offer": "To change the date, choose another time below, or keep this visit.",
+  "booking.change_offer": "To change the date, choose another time below, or keep this visit. I can't cancel a visit.",
   "booking.changed": "Done: your technician visit is moved to {date} between {start} and {end}. Your booking reference stays {reference}. Is there anything else I can help with?",
   "booking.choose": "Here are the next available technician times. Choose one below.",
   "booking.confirmed": "Booked: a technician will visit on {date} between {start} and {end}. Your booking reference is {reference}. Is there anything else I can help with?",

@@ -25,7 +25,8 @@ FIELD_ORDER: tuple[FieldName, ...] = (
     "urgency",
 )
 
-ORDER_NUMBER_PATTERN = re.compile(r"(?i)(?:NS-)?[0-9]{6}")
+# "NS-123456", "NS123456", "NS 123456", "NS - 123456" or just the six digits
+ORDER_NUMBER_PATTERN = re.compile(r"(?i)(?:NS(?:\s*-\s*|\s*))?[0-9]{6}")
 
 CATEGORY_ALIAS_TO_CANONICAL: dict[str, str] = {
     "delivery": "delivery",

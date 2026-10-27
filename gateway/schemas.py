@@ -205,6 +205,20 @@ class OrderVerificationRequest(ContractModel):
     delivery_postcode: Annotated[StrictStr, Field(max_length=64)]
     verification_code: Annotated[StrictStr, Field(max_length=64)]
 
+    @field_validator("delivery_postcode", mode="before")
+    @classmethod
+    def _canonical_postcode_spacing(cls, value: object) -> object:
+        """ "sw1a1aa" and " SW1A  1AA " are the postcode SW1A 1AA; the backend still compares exactly."""
+        if not isinstance(value, str):
+            return value
+        compact = "".join(value.split())
+        return f"{compact[:-3]} {compact[-3:]}" if len(compact) > 3 else compact
+
+    @field_validator("verification_code", mode="before")
+    @classmethod
+    def _trim_code(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
 
 class OrderVerificationResponse(ContractModel):
     verified: StrictBool

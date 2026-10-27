@@ -112,6 +112,8 @@ __all__ = [
 ]
 
 ACCOUNT_INTENTS = ("order_lookup",)
+# Messages that say nothing about the request in hand: they do not end a flow waiting for verification.
+ASIDE_INTENTS = ("question", "capability", "social", "gratitude", "unrelated")
 RECENT_MESSAGE_LIMIT = 12
 MAX_COLLECTION_TURNS = 50
 TEXT_TURN_DEADLINE_SECONDS = 25.0
@@ -123,6 +125,16 @@ class KnowledgeBase(Protocol):
     version: str
 
     def retrieve(self, question: str) -> list[KnowledgeRecord]: ...
+
+
+def _is_aside(extraction: Extraction) -> bool:
+    """A question, thanks or small talk that carries no facts; a safety report is never an aside."""
+
+    return (
+        extraction.intent in ASIDE_INTENTS
+        and not extraction.safety_concern
+        and not any(extraction.candidates.model_dump().values())
+    )
 
 
 def _now() -> datetime:
@@ -535,7 +547,9 @@ class ConversationEngine:
         """The flow this turn belongs to, updating ``session.flow`` (saved with the turn).
 
         An intent that names a flow starts it from the first step. While a flow is active,
-        a message that carries only an account number feeds it; any other message leaves it.
+        a message that carries only an account number feeds it; any other message leaves it,
+        except an aside (a question, thanks, small talk) while the verification form is open:
+        the form is still on screen, so the request keeps waiting for it.
         """
 
         started = self._flow_by_intent.get(extraction.intent)
@@ -544,8 +558,24 @@ class ConversationEngine:
         active = self.flows.get(session.flow.name) if session.flow is not None else None
         if active is not None and only_account_number(extraction):
             return active
+        if (
+            active is not None
+            and self._awaiting_verification(session)
+            and _is_aside(extraction)
+        ):
+            return None
+        if session.flow is not None:
+            # The request that was waiting for verification is dropped, so its form closes too.
+            self.verification.clear_pending(session.session_id)
         session.flow = None
         return None
+
+    def _awaiting_verification(self, session: Session) -> bool:
+        pending = self.verification.pending_order(session.session_id)
+        return (
+            pending is not None
+            and self.verification.grant(session.session_id) != pending
+        )
 
     async def _plan_flow(
         self,

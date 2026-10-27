@@ -395,3 +395,37 @@ def test_localized_auth_strings_are_exact_in_english_and_spanish() -> None:
     assert text("errors.backend_api_timeout", "es") == (
         "El servicio interno agotó el tiempo de espera. Inténtalo de nuevo."
     )
+
+
+def test_clear_pending_closes_the_form_for_an_unverified_order_and_keeps_the_failures() -> (
+    None
+):
+    verifier = registry()
+    session_id = uuid4()
+    verifier.set_pending_order(session_id, FIXTURE_ORDER_NUMBER)
+    verifier.record_failure(session_id)
+
+    verifier.clear_pending(session_id)
+
+    assert verifier.pending_order(session_id) is None
+    assert verifier.failures(session_id) == 1
+
+
+def test_clear_pending_leaves_a_verified_order_alone() -> None:
+    verifier = registry()
+    session_id = uuid4()
+    verifier.set_pending_order(session_id, FIXTURE_ORDER_NUMBER)
+    verifier.record_success(session_id, FIXTURE_ORDER_NUMBER)
+
+    verifier.clear_pending(session_id)
+
+    assert verifier.pending_order(session_id) == FIXTURE_ORDER_NUMBER
+    assert verifier.grant(session_id) == FIXTURE_ORDER_NUMBER
+
+
+def test_clear_pending_on_an_unknown_session_is_a_no_op() -> None:
+    verifier = registry()
+
+    verifier.clear_pending(uuid4())
+
+    assert verifier._sessions == {}
