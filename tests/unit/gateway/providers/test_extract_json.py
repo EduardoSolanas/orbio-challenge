@@ -1,6 +1,7 @@
 """A model's JSON answer is read whatever it wraps around it."""
 
 import json
+import time
 
 import pytest
 
@@ -98,3 +99,45 @@ def test_a_deeply_nested_answer_fails_as_invalid_content() -> None:
         parse_extraction(_envelope('{"a":' * 100000))
     with pytest.raises(InvalidContent):
         parse_extraction("[" * 100000)
+
+
+# 100,000 repeats is about 700 KB, below the 1 MB response limit.
+SLOW_SHAPES = {
+    "unclosed_openers": ("<think>", 100000),
+    "openers_then_brace": ("<think>{", 100000),
+    "braces": ("{", 300000),
+    "braces_and_quotes": ('{"', 200000),
+    "tiny_invalid_objects": ("{1}", 200000),
+}
+
+
+@pytest.mark.parametrize("shape", SLOW_SHAPES)
+def test_a_malformed_reply_is_refused_in_bounded_time(shape) -> None:
+    unit, count = SLOW_SHAPES[shape]
+    content = unit * count
+    started = time.perf_counter()
+
+    with pytest.raises(ValueError):
+        extract_json(content)
+    with pytest.raises(InvalidContent):
+        parse_extraction(_envelope(content))
+
+    assert time.perf_counter() - started < 2
+
+
+def test_many_closed_reasoning_blocks_are_skipped_in_bounded_time() -> None:
+    content = "<think>x</think>" * 50000 + '{"a": 1}'
+    started = time.perf_counter()
+
+    assert extract_json(content) == {"a": 1}
+    assert time.perf_counter() - started < 2
+
+
+def test_an_unclosed_reasoning_block_runs_to_the_end() -> None:
+    assert extract_json('{"a": 1} <think>and then some thoughts') == {"a": 1}
+    with pytest.raises(ValueError):
+        extract_json('<think>thinking out loud {"a": 1}')
+
+
+def test_the_object_is_found_after_a_few_stray_braces() -> None:
+    assert extract_json("{oops} " * 10 + '{"a": 1}') == {"a": 1}

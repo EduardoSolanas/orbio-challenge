@@ -30,7 +30,10 @@ SCHEMA_INSTRUCTION = "Return one JSON object matching this schema: "
 MAX_TRANSCRIPT_CHARS = 4000
 
 
-THINK_BLOCK = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
+THINK_TAG = re.compile(r"</?think>", re.IGNORECASE)
+# ponytail: a failed decode costs O(its position), so a reply made of braces would take
+# quadratic time; the real object is one of the first few "{" outside reasoning.
+MAX_OBJECT_ATTEMPTS = 32
 
 
 class InvalidContent(Exception):
@@ -85,6 +88,28 @@ def text_payload(
     return payload
 
 
+def _reasoning_spans(text: str) -> list[tuple[int, int]]:
+    """Where the model was thinking: each <think> up to the next </think>, in one pass.
+
+    An opener that is never closed runs to the end, so one malformed reply cannot make
+    this rescan the rest of the text for every opener (a regex does, and a long enough
+    reply would block the event loop).
+    """
+
+    spans: list[tuple[int, int]] = []
+    begin: int | None = None
+    for tag in THINK_TAG.finditer(text):
+        closing = tag.group()[1] == "/"
+        if begin is None and not closing:
+            begin = tag.start()
+        elif begin is not None and closing:
+            spans.append((begin, tag.end()))
+            begin = None
+    if begin is not None:
+        spans.append((begin, len(text)))
+    return spans
+
+
 def extract_json(content: str) -> object:
     """The JSON object in a model's answer, however the model wrapped it.
 
@@ -103,17 +128,25 @@ def extract_json(content: str) -> object:
         pass
     except RecursionError:
         raise ValueError("JSON nested too deeply") from None
-    reasoning = [match.span() for match in THINK_BLOCK.finditer(text)]
+    spans = _reasoning_spans(text)
     decoder = json.JSONDecoder()
-    for start, char in enumerate(text):
-        if char != "{" or any(begin <= start < end for begin, end in reasoning):
+    skipped = 0
+    attempts = 0
+    start = text.find("{")
+    while start != -1 and attempts < MAX_OBJECT_ATTEMPTS:
+        while skipped < len(spans) and spans[skipped][1] <= start:
+            skipped += 1
+        if skipped < len(spans) and spans[skipped][0] <= start:
+            start = text.find("{", spans[skipped][1])
             continue
+        attempts += 1
         try:
             return decoder.raw_decode(text, start)[0]
         except ValueError:
-            continue
+            pass
         except RecursionError:
             raise ValueError("JSON nested too deeply") from None
+        start = text.find("{", start + 1)
     raise ValueError("no JSON object in the answer")
 
 
