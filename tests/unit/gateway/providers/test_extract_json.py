@@ -5,7 +5,12 @@ import time
 
 import pytest
 
-from gateway.providers.wire import InvalidContent, extract_json, parse_extraction
+from gateway.providers.wire import (
+    MAX_OBJECT_ATTEMPTS,
+    InvalidContent,
+    extract_json,
+    parse_extraction,
+)
 from tests.support.unit_fakes import make_extraction
 
 OBJECT = {"a": 1, "b": {"c": [1, 2]}}
@@ -88,9 +93,13 @@ def test_a_think_tag_inside_a_json_string_is_kept(wrap) -> None:
     assert extract_json(content) == INSIDE_A_STRING
 
 
-@pytest.mark.parametrize("opener", ["[", '{"a":'], ids=["array", "object"])
-def test_a_deeply_nested_answer_is_refused_not_raised(opener) -> None:
-    with pytest.raises(ValueError):
+@pytest.mark.parametrize(
+    ("opener", "reason"),
+    [("[", "no JSON object in the answer"), ('{"a":', "JSON nested too deeply")],
+    ids=["array", "object"],
+)
+def test_a_deeply_nested_answer_is_refused_not_raised(opener, reason) -> None:
+    with pytest.raises(ValueError, match=f"^{reason}$"):
         extract_json(opener * 100000)
 
 
@@ -141,3 +150,38 @@ def test_an_unclosed_reasoning_block_runs_to_the_end() -> None:
 
 def test_the_object_is_found_after_a_few_stray_braces() -> None:
     assert extract_json("{oops} " * 10 + '{"a": 1}') == {"a": 1}
+
+
+def test_only_the_first_candidate_objects_are_tried() -> None:
+    stray = "{oops} "
+
+    assert extract_json(stray * (MAX_OBJECT_ATTEMPTS - 1) + '{"a": 1}') == {"a": 1}
+    with pytest.raises(ValueError, match="^no JSON object in the answer$"):
+        extract_json(stray * MAX_OBJECT_ATTEMPTS + '{"a": 1}')
+
+
+def test_an_object_right_inside_the_stray_one_is_found() -> None:
+    assert extract_json('{{"a": 1}') == {"a": 1}
+
+
+def test_an_object_in_a_later_reasoning_block_is_skipped() -> None:
+    content = '<think>a</think><think>{"x": 1}</think>{"a": 2}'
+
+    assert extract_json(content) == {"a": 2}
+
+
+def test_an_object_in_reasoning_stays_skipped_after_a_stray_brace() -> None:
+    with pytest.raises(ValueError):
+        extract_json('<think>{"a": 1}</think>{bad')
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        '</think>{"a": 1}',
+        '<think>{"x": 1} <think>y</think>{"a": 1}',
+    ],
+    ids=["closer_without_opener", "opener_inside_a_block"],
+)
+def test_misplaced_reasoning_tags_do_not_hide_the_answer(content) -> None:
+    assert extract_json(content) == {"a": 1}

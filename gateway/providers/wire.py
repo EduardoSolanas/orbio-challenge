@@ -120,14 +120,6 @@ def extract_json(content: str) -> object:
     """
 
     text = content.strip()
-    try:
-        value = json.loads(text)
-        if isinstance(value, dict):
-            return value
-    except ValueError:
-        pass
-    except RecursionError:
-        raise ValueError("JSON nested too deeply") from None
     spans = _reasoning_spans(text)
     decoder = json.JSONDecoder()
     skipped = 0
