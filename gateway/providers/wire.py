@@ -89,30 +89,38 @@ def extract_json(content: str) -> object:
     """The JSON object in a model's answer, however the model wrapped it.
 
     Models differ in what they put around it: a ``` fence, a <think> block, a lead-in
-    line. Raises ValueError when there is no JSON object to find.
+    line. Reasoning is skipped, never cut out of the text: removing a <think> tag first
+    would also remove it from inside a JSON string and change what the customer said.
+    Raises ValueError when there is no JSON object to find or it is nested too deeply.
     """
 
-    text = THINK_BLOCK.sub("", content).strip()
+    text = content.strip()
     try:
         value = json.loads(text)
         if isinstance(value, dict):
             return value
     except ValueError:
         pass
+    except RecursionError:
+        raise ValueError("JSON nested too deeply") from None
+    reasoning = [match.span() for match in THINK_BLOCK.finditer(text)]
     decoder = json.JSONDecoder()
     for start, char in enumerate(text):
-        if char == "{":
-            try:
-                return decoder.raw_decode(text, start)[0]
-            except ValueError:
-                continue
+        if char != "{" or any(begin <= start < end for begin, end in reasoning):
+            continue
+        try:
+            return decoder.raw_decode(text, start)[0]
+        except ValueError:
+            continue
+        except RecursionError:
+            raise ValueError("JSON nested too deeply") from None
     raise ValueError("no JSON object in the answer")
 
 
 def _loads(raw: str) -> object:
     try:
         return json.loads(raw)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, RecursionError):
         raise InvalidContent from None
 
 

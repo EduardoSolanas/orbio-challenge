@@ -1,5 +1,7 @@
 """A model's JSON answer is read whatever it wraps around it."""
 
+import json
+
 import pytest
 
 from gateway.providers.wire import InvalidContent, extract_json, parse_extraction
@@ -65,3 +67,34 @@ def test_a_fenced_extraction_is_parsed_into_the_schema() -> None:
 def test_unusable_answers_still_fail_as_invalid_content(content) -> None:
     with pytest.raises(InvalidContent):
         parse_extraction(_envelope(content))
+
+
+INSIDE_A_STRING = {"description": "tell them <think>x</think>replace the valve", "a": 1}
+
+
+@pytest.mark.parametrize(
+    "wrap",
+    [
+        "{body}",
+        "```json\n{body}\n```",
+        '<think>maybe {{"x": 1}}</think>{body}',
+        "Result: {body} done",
+    ],
+)
+def test_a_think_tag_inside_a_json_string_is_kept(wrap) -> None:
+    content = wrap.format(body=json.dumps(INSIDE_A_STRING))
+
+    assert extract_json(content) == INSIDE_A_STRING
+
+
+@pytest.mark.parametrize("opener", ["[", '{"a":'], ids=["array", "object"])
+def test_a_deeply_nested_answer_is_refused_not_raised(opener) -> None:
+    with pytest.raises(ValueError):
+        extract_json(opener * 100000)
+
+
+def test_a_deeply_nested_answer_fails_as_invalid_content() -> None:
+    with pytest.raises(InvalidContent):
+        parse_extraction(_envelope('{"a":' * 100000))
+    with pytest.raises(InvalidContent):
+        parse_extraction("[" * 100000)
