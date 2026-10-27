@@ -179,9 +179,14 @@ def test_an_object_in_reasoning_stays_skipped_after_a_stray_brace() -> None:
     "content",
     [
         '</think>{"a": 1}',
+        '{bad </think>{"a": 1}',
         '<think>{"x": 1} <think>y</think>{"a": 1}',
     ],
-    ids=["closer_without_opener", "opener_inside_a_block"],
+    ids=[
+        "closer_without_opener",
+        "closer_after_a_stray_brace",
+        "opener_inside_a_block",
+    ],
 )
 def test_misplaced_reasoning_tags_do_not_hide_the_answer(content) -> None:
     assert extract_json(content) == {"a": 1}
