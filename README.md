@@ -41,7 +41,7 @@ you typed only the account number in between. Stop with
 | Requirement | Where |
 |---|---|
 | Natural conversation, one question at a time, several answers per message | `gateway/conversation/engine.py`, `gateway/providers/prompts.py` |
-| Collect order/account reference, category, description, urgency | `gateway/conversation/validation.py`, `gateway/schemas.py` |
+| Collect order/account reference, category, description, urgency (normal unless the customer says otherwise) | `gateway/conversation/validation.py`, `gateway/schemas.py` |
 | Extract and validate into structured output | LLM extraction with strict schema, then deterministic validators |
 | Error handling and edge cases | Bounded retries, clear error codes, state never changes on a failed turn |
 | Conversation context | Saved transcript plus accepted fields; sessions resume after a restart |
@@ -50,7 +50,7 @@ you typed only the account number in between. Stop with
 | RAG | Embedding retrieval (keyword matching if no embedding model is set) over `gateway/knowledge/northstar-faq.json`, validated citations, abstention |
 | Account actions (extra) | After verifying the demo account: installation status, booking a technician and changing the date of the booked visit (`backend_api/`, `gateway/conversation/visits.py`) |
 | Sentiment (bonus) | The extraction call also labels sentiment and frustration; clear frustration hands off to a simulated agent |
-| Multiple languages (bonus) | English and Spanish |
+| Multiple languages (bonus) | English and Spanish. A new chat greets in the browser's language (`Accept-Language`, English if it is neither); after that each reply follows the language of the customer's message |
 | Multi-turn memory (bonus) | Within a session |
 
 ## Models used
