@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 
 from tests.e2e.judge_config import (
     JudgeConfig,
+    app_llm_settings,
     ask_judge,
     parse_reasoning_effort,
     read_dotenv,
@@ -49,6 +50,7 @@ def _endpoint(value: str, name: str) -> str:
 
 
 def load_config(root: Path | None = None) -> DockerE2EConfig:
+    root_given = root is not None
     root = root or Path(__file__).resolve().parents[2]
     docker_values = read_dotenv(root / "tests/e2e/.env.docker")
     app_url = docker_values.get("E2E_DOCKER_BASE_URL") or os.environ.get(
@@ -60,7 +62,13 @@ def load_config(root: Path | None = None) -> DockerE2EConfig:
             "tests/e2e/.env.docker (see .env.docker.example)."
         )
 
-    judge_values = read_dotenv(root / "tests/e2e/.env.judge")
+    # The judge is the app's own LLM server unless .env.judge or E2E_JUDGE_* say otherwise.
+    llm = {} if root_given else app_llm_settings()
+    judge_values = {
+        "E2E_JUDGE_BASE_URL": llm.get("LLM_BASE_URL", ""),
+        "E2E_JUDGE_MODEL": llm.get("LLM_MODEL", ""),
+    }
+    judge_values.update(read_dotenv(root / "tests/e2e/.env.judge"))
     judge_values.update(
         {
             key: value

@@ -8,6 +8,7 @@ retry or repair inside its bounded operation (PC §3, IC §11, RAG §4).
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Sequence
 
 from pydantic import BaseModel, ValidationError
@@ -27,6 +28,9 @@ REPAIR_LINE = (
 )
 SCHEMA_INSTRUCTION = "Return one JSON object matching this schema: "
 MAX_TRANSCRIPT_CHARS = 4000
+
+
+THINK_BLOCK = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
 
 
 class InvalidContent(Exception):
@@ -81,6 +85,30 @@ def text_payload(
     return payload
 
 
+def extract_json(content: str) -> object:
+    """The JSON object in a model's answer, however the model wrapped it.
+
+    Models differ in what they put around it: a ``` fence, a <think> block, a lead-in
+    line. Raises ValueError when there is no JSON object to find.
+    """
+
+    text = THINK_BLOCK.sub("", content).strip()
+    try:
+        value = json.loads(text)
+        if isinstance(value, dict):
+            return value
+    except ValueError:
+        pass
+    decoder = json.JSONDecoder()
+    for start, char in enumerate(text):
+        if char == "{":
+            try:
+                return decoder.raw_decode(text, start)[0]
+            except ValueError:
+                continue
+    raise ValueError("no JSON object in the answer")
+
+
 def _loads(raw: str) -> object:
     try:
         return json.loads(raw)
@@ -111,7 +139,10 @@ def _message_content(envelope: object) -> str:
 
 
 def _parse_model(body: str, model: type[BaseModel]):
-    payload = _loads(_message_content(_loads(body)).strip())
+    try:
+        payload = extract_json(_message_content(_loads(body)))
+    except ValueError:
+        raise InvalidContent from None
     if not isinstance(payload, dict):
         raise InvalidContent
     try:

@@ -208,9 +208,12 @@ async def case_llm_rag_prompt_json_output_mode(session_dir):
         env(session_dir, LLM_OUTPUT_MODE="prompt_json", RAG_OUTPUT_MODE="prompt_json")
     )
     prose = "Here is the result: " + json.dumps(EXTRACTION_PAYLOAD)
+    fenced = "```json\n" + json.dumps(EXTRACTION_PAYLOAD) + "\n```"
 
     def responder(request: httpx.Request, attempt: int) -> httpx.Response:
-        content = json.dumps(EXTRACTION_PAYLOAD) if attempt == 1 else prose
+        content = {1: json.dumps(EXTRACTION_PAYLOAD), 2: prose, 3: fenced}.get(
+            attempt, "Sorry, I cannot answer that."
+        )
         return json_wire(chat_envelope(content))
 
     async with adapter_app(settings, {"llm": responder}) as harness:
@@ -231,14 +234,21 @@ async def case_llm_rag_prompt_json_output_mode(session_dir):
         )
         assert len(harness.recorders["llm"].requests) == 1
 
-        # No substring/regex extraction: prose around a valid JSON object is
-        # unusable, so the bounded repair runs and the operation fails.
+        # Models wrap their JSON differently: prose or a code fence around a valid
+        # object is read without a repair call.
+        expected = Extraction.model_validate(EXTRACTION_PAYLOAD)
+        assert await harness.provider.extract(extraction_context()) == expected
+        assert await harness.provider.extract(extraction_context()) == expected
+        assert len(harness.recorders["llm"].requests) == 3
+
+        # An answer with no JSON object is unusable, so the bounded repair runs and
+        # the operation fails.
         with pytest.raises(Exception) as excinfo:
             await harness.provider.extract(extraction_context())
         assert_app_error(excinfo.value, status=502, code="invalid_provider_response")
-        assert len(harness.recorders["llm"].requests) == 3
-        second = json.loads(harness.recorders["llm"].requests[1].content)
-        third = json.loads(harness.recorders["llm"].requests[2].content)
+        assert len(harness.recorders["llm"].requests) == 5
+        second = json.loads(harness.recorders["llm"].requests[3].content)
+        third = json.loads(harness.recorders["llm"].requests[4].content)
         assert "response_format" not in second
         assert REPAIR_LINE not in second["messages"][0]["content"]
         assert REPAIR_LINE in third["messages"][0]["content"]

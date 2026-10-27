@@ -59,7 +59,7 @@ All three services are configured independently in `.env`; nothing is hard-coded
 
 | Role | Model | Why |
 |---|---|---|
-| LLM (extraction, RAG answers) | `DeepSeek-V4.1-Flash-1017`, self-hosted, JSON via `prompt_json` | Fast and cheap enough for one call per turn; no provider-side structured output needed |
+| LLM (extraction, RAG answers) | Any OpenAI-compatible chat model, set by `LLM_BASE_URL` and `LLM_MODEL` (now `GLM-5.3-Flash-EXL3`, self-hosted, JSON via `prompt_json`) | Fast and cheap enough for one call per turn; no provider-side structured output needed. To swap models change those variables, recreate the gateway and run `python scripts/evaluate.py`; the gateway reads JSON wrapped in code fences or `<think>` blocks, and the judged tests use the same server unless `E2E_JUDGE_*` is set |
 | Speech-to-text | `whisper-large-v3-turbo` on Groq | Low latency |
 | Text-to-speech | `canopylabs/orpheus-v1-english` on Groq, voice `troy`, WAV | Natural voice; replies are chunked and joined |
 | Embeddings (optional) | `nvidia/nemotron-3-embed-1b:free` on OpenRouter (`EMBED_*`); any OpenAI-compatible `/v1/embeddings` model works | Semantic FAQ retrieval, handles Spanish; free tier, so rate-limited |

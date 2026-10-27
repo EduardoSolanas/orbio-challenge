@@ -14,8 +14,10 @@ from typing import Any
 from urllib.parse import urlparse
 
 from gateway.config import REASONING_EFFORTS
+from gateway.providers.wire import extract_json
 
 PROMPT_VERSION = "intent-judge-v2"
+REPO_ENV = Path(__file__).resolve().parents[2] / ".env"
 
 
 @dataclass(frozen=True)
@@ -68,8 +70,28 @@ def read_dotenv(path: Path) -> dict[str, str]:
     return values
 
 
-def load_config(path: Path | None = None) -> JudgeConfig:
-    values = read_dotenv(path or Path(__file__).with_name(".env.judge"))
+def app_llm_settings() -> dict[str, str]:
+    """The app's own LLM_* settings (the repo .env, then the environment)."""
+
+    values = read_dotenv(REPO_ENV)
+    values.update(
+        {key: value for key, value in os.environ.items() if key.startswith("LLM_")}
+    )
+    return values
+
+
+def load_config(
+    path: Path | None = None, llm: dict[str, str] | None = None
+) -> JudgeConfig:
+    """E2E_JUDGE_* settings; the judge is the app's own LLM server unless told otherwise."""
+
+    if llm is None:
+        llm = app_llm_settings() if path is None else {}
+    values = {
+        "E2E_JUDGE_BASE_URL": llm.get("LLM_BASE_URL", ""),
+        "E2E_JUDGE_MODEL": llm.get("LLM_MODEL", ""),
+    }
+    values.update(read_dotenv(path or Path(__file__).with_name(".env.judge")))
     values.update(
         {
             key: value
@@ -172,7 +194,7 @@ def ask_judge(
                 "the judge ran out of tokens before answering (a reasoning model spends them "
                 "thinking); raise E2E_JUDGE_MAX_TOKENS"
             )
-        verdict = validate_verdict(json.loads(content))
+        verdict = validate_verdict(extract_json(content))
     except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
         raise AssertionError(f"judge returned invalid structured JSON: {exc}") from exc
     return content, verdict

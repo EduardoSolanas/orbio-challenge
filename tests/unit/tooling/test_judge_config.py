@@ -132,3 +132,49 @@ def test_the_reasoning_effort_setting_is_read_and_validated(tmp_path):
     config_file.write_text(base + "E2E_JUDGE_REASONING_EFFORT=loud\n", encoding="utf-8")
     with pytest.raises(ValueError, match="E2E_JUDGE_REASONING_EFFORT"):
         load_config(config_file)
+
+
+class _Fenced(_Response):
+    def read(self) -> bytes:
+        verdict = {
+            "pass": True,
+            "intent": "social",
+            "reason": "Greeting.",
+            "violations": [],
+        }
+        content = "```json\n" + json.dumps(verdict, indent=2) + "\n```"
+        return json.dumps({"choices": [{"message": {"content": content}}]}).encode()
+
+
+def test_a_verdict_wrapped_in_a_code_fence_is_still_read():
+    with patch("tests.e2e.judge_config.urllib.request.urlopen", return_value=_Fenced()):
+        result = judge(_config(), "ASSISTANT Hello", "brief greeting")
+
+    assert result["verdict"]["pass"] is True
+    assert result["verdict"]["intent"] == "social"
+
+
+def test_the_judge_defaults_to_the_apps_own_llm_server(tmp_path):
+    missing = tmp_path / ".env.judge"
+
+    config = load_config(
+        missing,
+        llm={"LLM_BASE_URL": "http://llm.local/v1/", "LLM_MODEL": "some-model"},
+    )
+
+    assert (config.base_url, config.model) == ("http://llm.local/v1", "some-model")
+
+
+def test_judge_settings_win_over_the_apps_llm_server(tmp_path):
+    config_file = tmp_path / ".env.judge"
+    config_file.write_text(
+        "E2E_JUDGE_BASE_URL=http://judge.local/v1\nE2E_JUDGE_MODEL=judge-model\n",
+        encoding="utf-8",
+    )
+
+    config = load_config(
+        config_file,
+        llm={"LLM_BASE_URL": "http://llm.local/v1", "LLM_MODEL": "some-model"},
+    )
+
+    assert (config.base_url, config.model) == ("http://judge.local/v1", "judge-model")
