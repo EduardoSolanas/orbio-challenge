@@ -62,6 +62,7 @@ All three services are configured independently in `.env`; nothing is hard-coded
 | LLM (extraction, RAG answers) | Any OpenAI-compatible chat model, set by `LLM_BASE_URL` and `LLM_MODEL` (now `GLM-5.3-Flash-EXL3`, self-hosted, JSON via `prompt_json`) | Fast and cheap enough for one call per turn; no provider-side structured output needed. To swap models change those variables, recreate the gateway and run `python scripts/evaluate.py`; the gateway reads JSON wrapped in code fences or `<think>` blocks, and the judged tests use the same server unless `E2E_JUDGE_*` is set |
 | Speech-to-text | `whisper-large-v3-turbo` on Groq | Low latency |
 | Text-to-speech | `canopylabs/orpheus-v1-english` on Groq, voice `troy`, WAV | Natural voice; replies are chunked and joined |
+| Spanish text-to-speech (optional) | `TTS_ES_*`, for example `eleven_multilingual_v2` on ElevenLabs (`TTS_ES_AUTH_MODE=elevenlabs`, mp3) | The English voice cannot speak Spanish; without this block Spanish replies have no audio |
 | Embeddings (optional) | `nvidia/nemotron-3-embed-1b:free` on OpenRouter (`EMBED_*`); any OpenAI-compatible `/v1/embeddings` model works | Semantic FAQ retrieval, handles Spanish; free tier, so rate-limited |
 
 `scripts/check_backends.py` ran against these services on 2026-10-24 and passed all

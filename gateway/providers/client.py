@@ -17,11 +17,13 @@ import random
 import time
 from dataclasses import dataclass
 from typing import Awaitable, Callable, Literal, Mapping, Protocol, TypeVar
+from urllib.parse import quote
 
 import httpx
 
 from gateway.config import (
     DEFAULT_PROVIDER_MAX_CONCURRENCY,
+    ELEVENLABS,
     ServiceProfile,
     SpeechProfile,
     TextProfile,
@@ -78,6 +80,7 @@ SPEECH_ROLE_BY_LANGUAGE: dict[str, Role] = {"en": "tts", "es": SPANISH_SPEECH_RO
 CHAT_COMPLETIONS_SUFFIX = "/chat/completions"
 TRANSCRIPTIONS_SUFFIX = "/audio/transcriptions"
 SPEECH_SUFFIX = "/audio/speech"
+ELEVENLABS_QUERY = "?output_format=mp3_44100_128"
 EMBEDDINGS_SUFFIX = "/embeddings"
 
 EXTRACTION_MAX_TOKENS = 1200
@@ -163,6 +166,13 @@ def _join(base_url: str, suffix: str) -> str:
     return base_url.rstrip("/") + suffix
 
 
+def _speech_url(profile: SpeechProfile) -> str:
+    if profile.auth_mode == ELEVENLABS:
+        voice = quote(profile.voice, safe="")
+        return _join(profile.base_url, f"/text-to-speech/{voice}{ELEVENLABS_QUERY}")
+    return _join(profile.base_url, SPEECH_SUFFIX)
+
+
 def _media_type(response: httpx.Response) -> str:
     return response.headers.get("content-type", "").split(";")[0].strip().lower()
 
@@ -234,6 +244,8 @@ class OpenAICompatibleProvider:
         headers = {"Accept-Encoding": "identity"}
         if profile.auth_mode == "bearer":
             headers["Authorization"] = f"Bearer {profile.api_key}"
+        elif profile.auth_mode == ELEVENLABS:
+            headers["xi-api-key"] = profile.api_key
         return httpx.AsyncClient(
             transport=None if transports is None else transports.get(role),
             follow_redirects=False,
@@ -344,7 +356,7 @@ class OpenAICompatibleProvider:
                 raise app_error("provider_configuration")
             deadline = self._clock() + TTS_BUDGET.total_deadline
             client = self._clients[role]
-            url = _join(profile.base_url, SPEECH_SUFFIX)
+            url = _speech_url(profile)
             if profile.audio_format == "mp3":
                 audio = await self._speech_request(
                     client, url, profile, chunks[0], deadline, TTS_LIMIT
@@ -389,12 +401,16 @@ class OpenAICompatibleProvider:
         deadline: float,
         limit: int,
     ) -> bytes:
-        payload = {
-            "model": profile.model,
-            "voice": profile.voice,
-            "input": text,
-            "response_format": profile.audio_format,
-        }
+        payload = (
+            {"text": text, "model_id": profile.model}
+            if profile.auth_mode == ELEVENLABS
+            else {
+                "model": profile.model,
+                "voice": profile.voice,
+                "input": text,
+                "response_format": profile.audio_format,
+            }
+        )
         allowed = WAV_MEDIA_TYPES if profile.audio_format == "wav" else MP3_MEDIA_TYPES
         remaining = deadline - self._clock()
         if remaining <= 0:

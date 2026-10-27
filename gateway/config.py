@@ -26,6 +26,8 @@ MAX_TTS_MAX_INPUT_CHARS = 4000
 AUDIO_FORMATS = ("mp3", "wav")
 OPENAI_COMPATIBLE = "openai_compatible"
 AUTH_MODES = ("none", "bearer")
+# Speech only: the xi-api-key header and ElevenLabs' own text-to-speech route, mp3 replies.
+ELEVENLABS = "elevenlabs"
 OUTPUT_MODES = ("json_schema", "json_object", "prompt_json")
 REASONING_EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
 MAX_MODEL_LENGTH = 200
@@ -90,10 +92,15 @@ def _api_key(value: str) -> str:
     return value
 
 
-def _auth(auth_mode: str, api_key: str) -> None:
-    if auth_mode not in AUTH_MODES:
+def _auth(auth_mode: str, api_key: str, audio_format: str | None = None) -> None:
+    """``audio_format`` is given for speech roles, the only ones that may use ElevenLabs."""
+
+    speech = audio_format is not None
+    if auth_mode not in AUTH_MODES and not (speech and auth_mode == ELEVENLABS):
         _fail()
-    if auth_mode == "bearer" and not api_key:
+    if auth_mode == ELEVENLABS and audio_format != "mp3":
+        _fail()
+    if auth_mode in ("bearer", ELEVENLABS) and not api_key:
         _fail()
     if auth_mode == "none" and api_key:
         _fail()
@@ -212,7 +219,7 @@ def _tts_es(env: Mapping[str, str]) -> SpeechProfile | None:
         _fail()
     if raw_format == "mp3" and max_input_chars != MAX_TTS_MAX_INPUT_CHARS:
         _fail()
-    _auth(values["AUTH_MODE"], values["API_KEY"])
+    _auth(values["AUTH_MODE"], values["API_KEY"], raw_format)
     return SpeechProfile(
         base_url=_base_url(values["BASE_URL"]),
         model=_model(values["MODEL"]),
@@ -260,7 +267,7 @@ def _role(
         api_key=_api_key(get(f"{prefix}_API_KEY")),
         **extra,
     )
-    _auth(profile.auth_mode, profile.api_key)
+    _auth(profile.auth_mode, profile.api_key, getattr(profile, "audio_format", None))
     return profile
 
 
