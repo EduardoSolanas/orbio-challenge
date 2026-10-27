@@ -2,7 +2,7 @@
 
 Validation is explicit and offline: no dotenv load, no network probe. Any
 invalid or missing setting raises the exact startup RuntimeError from
-implementation-contract section 11, never leaking the offending value.
+the configuration rules, never leaking the offending value.
 """
 
 from __future__ import annotations

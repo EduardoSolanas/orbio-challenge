@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Operator-invoked live backend compatibility smoke (provider-compatibility §5).
+"""Operator-invoked live backend compatibility smoke .
 
 This is never a startup hook and never runs in automatic CI: an operator runs it
 explicitly against the profiles resolved from the process environment. It uses

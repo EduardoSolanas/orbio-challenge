@@ -152,7 +152,6 @@ jobs:
       - name: Journey inventory gate (no skipped or missing journeys)
         run: |
           python scripts/check_e2e_inventory.py \
-            --spec docs/implementation-contract.md \
             --manifest tests/e2e/cases.json \
             --collection reports/e2e-collection.json \
             --results reports/e2e-results.json

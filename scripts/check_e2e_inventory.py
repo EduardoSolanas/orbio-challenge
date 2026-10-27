@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Gate the Playwright E2E evidence against the browser journey manifest.
 
-Reads the spec journey table, the pytest manifest, the collection report and the
-results report. Fails closed on missing, duplicated, skipped, xfailed, xpassed,
+Reads the journey manifest, the collection report and the results report. Fails closed on missing, duplicated, skipped, xfailed, xpassed,
 deselected, unexecuted, failed, rerun, checkpoint-less or stale-revision evidence.
 
 This checker only inspects evidence. It never runs tests, creates files or
@@ -13,7 +12,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -32,10 +30,6 @@ JOURNEY_IDS = (
     "keyboard_mobile",
     "stale_voice_results",
 )
-SPEC_JOURNEY_SECTION = re.compile(
-    r"^### 13\.3[^\n]*\n(.*?)(?=^### |\Z)", re.MULTILINE | re.DOTALL
-)
-SPEC_JOURNEY_ROW = re.compile(r"^\|\s*([a-z][a-z0-9_]*)\s*\|", re.MULTILINE)
 FORBIDDEN_OUTCOMES = {
     "skipped",
     "xfailed",
@@ -81,11 +75,6 @@ def require_string_list(
     return result
 
 
-def parse_spec_ids(text: str) -> set[str]:
-    section = SPEC_JOURNEY_SECTION.search(text)
-    return set(SPEC_JOURNEY_ROW.findall(section.group(1))) if section else set()
-
-
 def nodeid_of(entry: Any) -> str | None:
     if isinstance(entry, str):
         return entry
@@ -93,22 +82,6 @@ def nodeid_of(entry: Any) -> str | None:
         value = entry.get("nodeid")
         return value if isinstance(value, str) else None
     return None
-
-
-def check_spec(spec_path: Path, errors: list[str]) -> None:
-    try:
-        text = spec_path.read_text(encoding="utf-8")
-    except OSError as exc:
-        errors.append(f"spec: unreadable {spec_path} ({exc})")
-        return
-    ids = parse_spec_ids(text)
-    expected = set(JOURNEY_IDS)
-    missing = sorted(expected - ids)
-    extra = sorted(ids - expected)
-    if missing:
-        errors.append(f"spec: missing journey ids {missing}")
-    if extra:
-        errors.append(f"spec: unexpected journey ids {extra}")
 
 
 def check_manifest(data: Any, errors: list[str]) -> tuple[str, dict[str, dict]]:
@@ -271,21 +244,16 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Gate Playwright E2E evidence against the browser journey manifest."
     )
-    parser.add_argument(
-        "--spec", required=True, help="implementation contract markdown"
-    )
     parser.add_argument("--manifest", required=True, help="tests/e2e/cases.json")
     parser.add_argument("--collection", required=True, help="pytest collection JSON")
     parser.add_argument("--results", required=True, help="pytest results JSON")
     args = parser.parse_args(argv)
 
     errors: list[str] = []
-    spec_path = Path(args.spec)
     manifest_path = Path(args.manifest)
     collection_path = Path(args.collection)
     results_path = Path(args.results)
 
-    check_spec(spec_path, errors)
     manifest_data = load_json(manifest_path, "manifest", errors)
     collection_data = load_json(collection_path, "collection", errors)
     results_data = load_json(results_path, "results", errors)

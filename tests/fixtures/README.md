@@ -9,7 +9,7 @@ are released under the same terms as the repository (fictional demo data).
 - Source: ffmpeg `lavfi` 440 Hz sine generator, authored once on 2026-10-23 with
   `ffmpeg 7.1.1-1ubuntu1.3` (fixture-authoring tooling only; ffmpeg is **not** an
   application, CI or runtime requirement once this file is committed).
-- Command (testing-contract section 3, verbatim):
+- Command:
 
   ```bash
   ffmpeg -f lavfi -i sine=frequency=440:duration=1:sample_rate=24000 -ac 1 -c:a libmp3lame -b:a 64k tests/fixtures/reply.mp3
@@ -39,4 +39,4 @@ Boundary files use the same generator with explicit `rate`, `channels`, `width` 
 ## Fake STT text
 
 The E2E fake `transcribe` returns `Order NS-000123 arrived broken and this is urgent`
-(testing-contract section 3) unless a test scripts a different text.
+unless a test scripts a different text.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Container image smoke harness (testing-contract §8 image-build).
+"""Container image smoke harness .
 
 Run inside the built image with ``tests/`` mounted read-only at ``/checks``:
 

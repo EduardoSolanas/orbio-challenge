@@ -25,8 +25,6 @@ GATED_INPUTS = (
     "tests",
     "scripts",
     "pyproject.toml",
-    "docs/implementation-contract.md",
-    "docs/testing-contract.md",
 )
 # The E2E manifest is evidence about the journeys, not a gated input: it lives
 # under tests/ but its own revision stamp must not move the expected revision.

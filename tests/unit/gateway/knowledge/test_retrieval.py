@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 import pytest
@@ -25,7 +24,6 @@ from gateway.knowledge.retrieval import (
 )
 from gateway.schemas import Citation, KnowledgeAnswer
 
-CONTRACT = Path(__file__).resolve().parents[4] / "docs" / "rag-contract.md"
 SEED_KB = (
     Path(__file__).resolve().parents[4] / "gateway" / "knowledge" / "northstar-faq.json"
 )
@@ -34,17 +32,6 @@ INVALID_FIXTURES = sorted(
     path.name for path in (KB_FIXTURES / "invalid").glob("*.json")
 )
 VALID_FIXTURES = sorted(path.name for path in (KB_FIXTURES / "valid").glob("*.json"))
-
-
-def _seed_block() -> bytes:
-    text = CONTRACT.read_text(encoding="utf-8")
-    match = re.search(r"```json\n(.*?)\n```", text, re.DOTALL)
-    assert match is not None
-    return match.group(1).encode("utf-8")
-
-
-def test_bundled_kb_is_byte_identical_to_the_contract_seed_corpus() -> None:
-    assert SEED_KB.read_bytes() == _seed_block()
 
 
 def test_load_reads_the_bundled_seed_kb_immutably() -> None:

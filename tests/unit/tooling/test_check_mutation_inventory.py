@@ -1,6 +1,6 @@
 """Tests for scripts/check_mutation_inventory.py and scripts/export_mutation_inventory.py.
 
-Fixtures mirror the real evidence formats named by docs/testing-contract.md 10:
+Fixtures mirror the real evidence formats:
   * coverage.py JSON produced with ``show_contexts = true`` and ``--cov-context=test``
   * mutmut 3.8.0 per-source-file state under ``mutants/<path>.meta``
   * the inventory manifest ``{ "source_revision": ..., "functions": [...] }``

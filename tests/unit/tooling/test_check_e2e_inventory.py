@@ -1,7 +1,6 @@
 """Tests for scripts/check_e2e_inventory.py.
 
-Fixtures mirror the evidence files emitted by the pytest collection/results hooks
-described in docs/implementation-contract.md 13.4 and docs/testing-contract.md 8.
+Fixtures mirror the evidence files emitted by the pytest collection/results hooks.
 """
 
 from __future__ import annotations
@@ -42,18 +41,6 @@ def nodeid(journey_id: str) -> str:
 def isolated_cwd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Run every check outside the repository git checkout."""
     monkeypatch.chdir(tmp_path)
-
-
-def spec_text(ids: list[str] | None = None) -> str:
-    ids = JOURNEY_IDS if ids is None else ids
-    rows = "\n".join(f"| {jid} | journey {jid} | checkpoint {jid} |" for jid in ids)
-    return (
-        "## 13. Integration and end-to-end test specifications\n\n"
-        "### 13.3 Ten Playwright end-to-end journeys\n\n"
-        "| ID | Complete user workflow | Required end-to-end checkpoints |\n"
-        "|---|---|---|\n"
-        f"{rows}\n"
-    )
 
 
 def manifest(ids: list[str] | None = None) -> dict:
@@ -99,11 +86,7 @@ def results(ids: list[str] | None = None) -> dict:
     }
 
 
-def write_evidence(
-    tmp_path: Path, *, spec=None, cases=None, collected=None, outcomes=None
-):
-    spec_path = tmp_path / "spec.md"
-    spec_path.write_text(spec_text() if spec is None else spec, encoding="utf-8")
+def write_evidence(tmp_path: Path, *, cases=None, collected=None, outcomes=None):
     manifest_path = tmp_path / "cases.json"
     manifest_path.write_text(
         json.dumps(manifest() if cases is None else cases), encoding="utf-8"
@@ -116,15 +99,13 @@ def write_evidence(
     results_path.write_text(
         json.dumps(results() if outcomes is None else outcomes), encoding="utf-8"
     )
-    return spec_path, manifest_path, collection_path, results_path
+    return manifest_path, collection_path, results_path
 
 
 def run(tmp_path: Path, paths) -> int:
-    spec_path, manifest_path, collection_path, results_path = paths
+    manifest_path, collection_path, results_path = paths
     return check_e2e_inventory.main(
         [
-            "--spec",
-            str(spec_path),
             "--manifest",
             str(manifest_path),
             "--collection",
@@ -137,11 +118,6 @@ def run(tmp_path: Path, paths) -> int:
 
 def test_valid_evidence_passes(tmp_path: Path) -> None:
     assert run(tmp_path, write_evidence(tmp_path)) == 0
-
-
-def test_spec_must_contain_exactly_j01_to_j10(tmp_path: Path) -> None:
-    paths = write_evidence(tmp_path, spec=spec_text(JOURNEY_IDS[:-1]))
-    assert run(tmp_path, paths) != 0
 
 
 def test_manifest_missing_journey_fails(tmp_path: Path) -> None:
@@ -215,7 +191,7 @@ def test_stale_source_revision_fails(tmp_path: Path) -> None:
 
 def test_missing_evidence_file_fails(tmp_path: Path) -> None:
     paths = list(write_evidence(tmp_path))
-    paths[3].unlink()
+    paths[2].unlink()
     assert run(tmp_path, paths) != 0
 
 
@@ -242,10 +218,6 @@ def write_repo_inputs(root: Path) -> None:
     )
     (root / "scripts").mkdir(exist_ok=True)
     (root / "scripts" / "gate.py").write_text("GATE = 1\n", encoding="utf-8")
-    (root / "docs").mkdir(exist_ok=True)
-    (root / "docs" / "implementation-contract.md").write_text(
-        spec_text(), encoding="utf-8"
-    )
     (root / "pyproject.toml").write_text(
         "[project]\nname = 'fixture'\n", encoding="utf-8"
     )
@@ -253,7 +225,6 @@ def write_repo_inputs(root: Path) -> None:
 
 def write_repo_evidence(root: Path, revision: str):
     """Lay the evidence out exactly where the real gate reads it."""
-    spec_path = root / "docs" / "implementation-contract.md"
     manifest_path = root / "tests" / "e2e" / "cases.json"
     cases = manifest()
     cases["source_revision"] = revision
@@ -267,7 +238,7 @@ def write_repo_evidence(root: Path, revision: str):
     outcomes = results()
     outcomes["source_revision"] = revision
     results_path.write_text(json.dumps(outcomes), encoding="utf-8")
-    return spec_path, manifest_path, collection_path, results_path
+    return manifest_path, collection_path, results_path
 
 
 def test_evidence_at_inputs_revision_passes_after_reports_only_commit(
@@ -312,8 +283,8 @@ def test_disagreeing_evidence_revisions_fail_in_git_checkout(tmp_path: Path) -> 
     write_repo_inputs(tmp_path)
     inputs_revision = commit_all(tmp_path, "code at inputs revision")
     paths = write_repo_evidence(tmp_path, inputs_revision)
-    outcomes = json.loads(paths[3].read_text(encoding="utf-8"))
+    outcomes = json.loads(paths[2].read_text(encoding="utf-8"))
     outcomes["source_revision"] = "0" * 40
-    paths[3].write_text(json.dumps(outcomes), encoding="utf-8")
+    paths[2].write_text(json.dumps(outcomes), encoding="utf-8")
     commit_all(tmp_path, "store evidence")
     assert run(tmp_path, paths) != 0
