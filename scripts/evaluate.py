@@ -55,6 +55,10 @@ def load_dotenv() -> None:
     for line in env_file.read_text(encoding="utf-8").splitlines():
         if line and not line.startswith("#") and "=" in line:
             key, _, value = line.partition("=")
+            if len(value) > 1 and value[0] == value[-1] and value[0] in "'\"":
+                value = value[
+                    1:-1
+                ]  # the quotes Compose strips, e.g. LLM_HEADERS='{...}'
             os.environ.setdefault(key, value)
     # Compose supplies these two; a local run does not need them to be real.
     os.environ.setdefault(
