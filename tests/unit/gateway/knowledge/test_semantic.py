@@ -114,6 +114,71 @@ async def test_a_slow_embedding_service_times_out_inside_the_index(monkeypatch) 
         await index.retrieve("question")
 
 
+SPANISH = {"faq-b": "Beta ES. beta en español", "faq-ghost": "Sin registro"}
+
+
+def spanish_embed(query_vector: list[float], calls: list[list[str]]):
+    vectors = {
+        **VECTORS,
+        "Beta ES. beta en español": [0.0, 1.0],
+        "Sin registro": [1.0, 1.0],
+    }
+
+    async def embed(texts: list[str]) -> list[list[float]]:
+        calls.append(texts)
+        if texts[0] in vectors:
+            return [vectors[text] for text in texts]
+        return [query_vector]
+
+    return embed
+
+
+async def test_a_question_close_to_the_spanish_text_finds_the_record() -> None:
+    calls: list[list[str]] = []
+    # Far from every English text, close to the Spanish text of faq-b.
+    index = SemanticIndex(
+        RECORDS,
+        spanish_embed([0.0, 1.0], calls),
+        min_similarity=0.9,
+        alternates=SPANISH,
+    )
+
+    assert ids(await index.retrieve("pregunta")) == ["faq-b"]
+    plain = SemanticIndex(RECORDS, fake_embed([0.0, 1.0]), min_similarity=0.9)
+    assert ids(await plain.retrieve("pregunta")) == [
+        "faq-b"
+    ]  # English text matches too
+
+
+async def test_the_alternate_decides_when_the_english_text_is_further_away() -> None:
+    calls: list[list[str]] = []
+    query = [0.0, 1.0]
+    with_alt = SemanticIndex(
+        [RECORDS[0], RECORDS[1]],
+        spanish_embed(query, calls),
+        min_similarity=0.95,
+        alternates={"faq-a": "Beta ES. beta en español"},
+    )
+
+    # faq-a's English text is orthogonal to the query; its alternate is identical to it.
+    assert ids(await with_alt.retrieve("q")) == ["faq-a", "faq-b"]
+
+
+async def test_records_and_their_alternates_are_embedded_in_one_call() -> None:
+    calls: list[list[str]] = []
+    index = SemanticIndex(
+        RECORDS,
+        spanish_embed([1.0, 0.0], calls),
+        min_similarity=0.1,
+        alternates=SPANISH,
+    )
+
+    await index.retrieve("question")
+
+    # Three records, then only the alternate of a record that exists ("faq-ghost" is ignored).
+    assert calls[0] == ["A. alpha", "B. beta", "C. gamma", "Beta ES. beta en español"]
+
+
 async def test_a_record_exactly_at_the_floor_is_kept() -> None:
     index = SemanticIndex(RECORDS, fake_embed([1.0, 0.0]), min_similarity=1.0)
 

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import math
-from typing import Awaitable, Callable, Sequence
+from typing import Awaitable, Callable, Mapping, Sequence
 
 from gateway.errors import app_error
 from gateway.knowledge.retrieval import TOP_K
@@ -31,11 +31,26 @@ def cosine(left: Sequence[float], right: Sequence[float]) -> float:
 
 class SemanticIndex:
     def __init__(
-        self, records: Sequence[KnowledgeRecord], embed: Embed, *, min_similarity: float
+        self,
+        records: Sequence[KnowledgeRecord],
+        embed: Embed,
+        *,
+        min_similarity: float,
+        alternates: Mapping[str, str] | None = None,
     ) -> None:
+        """``alternates`` maps a record id to a second text for it (its Spanish version).
+
+        A record scores as its better match, so a question in either language finds it.
+        """
+
         self._records = tuple(records)
         self._embed = embed
         self._min_similarity = min_similarity
+        self._alternates = {
+            record.id: alternates[record.id]
+            for record in self._records
+            if alternates and record.id in alternates
+        }
         self._vectors: list[list[float]] | None = None
 
     async def retrieve(self, question: str) -> list[KnowledgeRecord]:
@@ -45,11 +60,21 @@ class SemanticIndex:
             if self._vectors is None:
                 self._vectors = await self._embed(
                     [f"{record.title}. {record.body}" for record in self._records]
+                    + list(self._alternates.values())
                 )
             (query,) = await self._embed([question])
+        # Vectors come in record order, then the alternates in the order they were given.
+        extra = dict(zip(self._alternates, self._vectors[len(self._records) :]))
         ranked = sorted(
             (
-                (cosine(query, vector), record.id, record)
+                (
+                    max(
+                        cosine(query, vector),
+                        cosine(query, extra[record.id]) if record.id in extra else -1.0,
+                    ),
+                    record.id,
+                    record,
+                )
                 for vector, record in zip(self._vectors, self._records)
             ),
             key=lambda item: (-item[0], item[1]),

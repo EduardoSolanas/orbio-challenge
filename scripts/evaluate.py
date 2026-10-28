@@ -272,7 +272,10 @@ async def evaluate_retrieval(
         print("  embedding  skipped: EMBED_* is not configured")
         return report
     index = SemanticIndex(
-        knowledge.records, provider.embed, min_similarity=settings.embed_min_similarity
+        knowledge.records,
+        provider.embed,
+        min_similarity=settings.embed_min_similarity,
+        alternates=knowledge.spanish_texts(),
     )
     results = []
     for case in cases:

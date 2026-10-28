@@ -137,6 +137,7 @@ def create_app(
                 knowledge_base.records,
                 active_provider.embed,
                 min_similarity=active_settings.embed_min_similarity,
+                alternates=knowledge_base.spanish_texts(),
             )
 
         active_safety = safety_index

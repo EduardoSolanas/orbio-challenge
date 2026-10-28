@@ -188,7 +188,8 @@ Either way the model only sees the retrieved records, and the app checks the cit
 (`gateway/knowledge/`).
 
 Each record also has a Spanish title and body (`es` in `northstar-faq.json`). They are shown to the
-model and cited when the reply is Spanish; ranking reads the English text, and the ids and
+model and cited when the reply is Spanish. Embedding retrieval reads both texts and a record scores
+as its better match; keyword retrieval reads the English text plus a fixed Spanish word map. The ids and
 numbers are the same. The Spanish text is a translation written for this demo, not reviewed policy.
 
 Records:

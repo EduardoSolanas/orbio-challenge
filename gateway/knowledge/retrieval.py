@@ -247,6 +247,11 @@ class KnowledgeBase:
             for record in self.records
         }
 
+    def spanish_texts(self) -> dict[str, str]:
+        """Record id to its Spanish \"title. body\", for the records that have one."""
+
+        return {id_: f"{title}. {body}" for id_, (title, body) in self._spanish.items()}
+
     def localize(self, record: KnowledgeRecord, language: str) -> KnowledgeRecord:
         """The record with its Spanish title and body when it has them and Spanish is asked for."""
 
