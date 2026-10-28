@@ -19,6 +19,11 @@ def env(**overrides):
     return {**BASE_ENV, **overrides}
 
 
+def test_a_valid_model_named_xxxx_is_not_treated_as_a_placeholder():
+    settings = Settings.from_env(env(**{**COMPLETE, "EMBED_MODEL": "XXXX"}))
+    assert settings.embed.model == "XXXX"
+
+
 def test_blank_embedding_settings_keep_keyword_retrieval():
     settings = Settings.from_env(env())
 

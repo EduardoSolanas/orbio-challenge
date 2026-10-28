@@ -44,6 +44,12 @@ def env(**overrides):
     return {**BASE_ENV, **overrides}
 
 
+@pytest.mark.parametrize("field", ["MODEL", "VOICE"])
+def test_valid_spanish_profile_values_named_xxxx_are_accepted(field):
+    settings = Settings.from_env(env(**{**COMPLETE_ES, f"TTS_ES_{field}": "XXXX"}))
+    assert getattr(settings.tts_es, field.lower()) == "XXXX"
+
+
 def test_all_blank_spanish_tts_fields_leave_the_profile_absent():
     settings = Settings.from_env(env())
 

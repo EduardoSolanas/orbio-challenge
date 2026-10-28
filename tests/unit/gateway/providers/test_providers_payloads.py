@@ -19,6 +19,7 @@ from gateway.providers.prompts import (
     KNOWLEDGE_PROMPT,
     serialize_context,
 )
+from gateway.providers.wire import InvalidContent, parse_embeddings
 from gateway.schemas import Extraction, KnowledgeAnswer
 from tests.unit.gateway.providers.provider_support import (
     ANSWER_PAYLOAD,
@@ -448,3 +449,10 @@ async def test_answerable_false_with_text_is_invalid_provider_response():
 
     assert caught.value.code == "invalid_provider_response"
     assert len(recorders["rag"].requests) == 2
+
+
+def test_a_malformed_embedding_entry_is_rejected_before_returning_any_vectors():
+    # Both entries are untrusted: reject the malformed item instead of leaking a numeric overflow.
+    body = json.dumps({"data": [None, {"index": 0.5, "embedding": [10**400]}]})
+    with pytest.raises(InvalidContent):
+        parse_embeddings(body, expected=2)

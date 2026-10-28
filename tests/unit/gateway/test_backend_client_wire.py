@@ -35,6 +35,27 @@ async def refused(call) -> str:
     return caught.value.code
 
 
+@pytest.mark.parametrize("prefix", ["/apiX", "/apiXXX/", "/prefix/X/"])
+async def test_base_url_preserves_prefix_characters_when_removing_trailing_slashes(
+    prefix,
+):
+    seen = []
+
+    def handler(request):
+        seen.append(request.url.path)
+        return httpx.Response(404)
+
+    client = BackendApiClient(
+        f"http://backend.test{prefix}", transport=httpx.MockTransport(handler)
+    )
+    try:
+        assert await client.lookup_order("NS-000123") is None
+    finally:
+        await client.aclose()
+
+    assert seen == [f"{prefix.rstrip('/')}/internal/v1/orders/NS-000123"]
+
+
 async def test_each_call_uses_its_own_http_method() -> None:
     seen: list[httpx.Request] = []
     client = client_answering(404, {}, seen)
@@ -108,3 +129,33 @@ async def test_a_successful_booking_is_returned() -> None:
     )
 
     assert appointment.reference == "BK-0D8B3C88"
+
+
+async def test_a_conflict_cannot_smuggle_a_valid_account_record_as_success():
+    body = {
+        "order_number": "NS-000123",
+        "first_name": "Demo",
+        "item_names": ["Meter"],
+        "status": "active",
+        "dispatch_date": None,
+        "delivery_date": None,
+    }
+    client = client_answering(409, body)
+    try:
+        assert (
+            await refused(client.lookup_order("NS-000123"))
+            == "invalid_backend_api_response"
+        )
+    finally:
+        await client.aclose()
+
+
+async def test_a_booking_error_cannot_smuggle_a_valid_appointment_as_success():
+    client = client_answering(400, APPOINTMENT)
+    try:
+        assert (
+            await refused(client.book("NS-000123", "2026-11-02T09:00"))
+            == "invalid_backend_api_response"
+        )
+    finally:
+        await client.aclose()

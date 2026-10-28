@@ -1,6 +1,7 @@
 """A model's JSON answer is read whatever it wraps around it."""
 
 import json
+import signal
 import time
 
 import pytest
@@ -14,6 +15,27 @@ from gateway.providers.wire import (
 from tests.support.unit_fakes import make_extraction
 
 OBJECT = {"a": 1, "b": {"c": [1, 2]}}
+
+
+@pytest.fixture(autouse=True)
+def parser_deadline():
+    # A check after the call cannot fail an infinite loop. Linux mutation runs
+    # enforce the same two-second budget while the parser is still executing.
+    if not hasattr(signal, "setitimer"):
+        yield
+        return
+
+    def expired(*_):
+        pytest.fail("JSON parser exceeded its two-second test budget", pytrace=False)
+
+    previous_handler = signal.signal(signal.SIGALRM, expired)
+    previous_timer = signal.setitimer(signal.ITIMER_REAL, 2)
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous_handler)
+        signal.setitimer(signal.ITIMER_REAL, *previous_timer)
 
 
 @pytest.mark.parametrize(

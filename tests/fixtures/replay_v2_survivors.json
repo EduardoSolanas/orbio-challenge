@@ -1,0 +1,395 @@
+[
+  {
+    "operation": "turn",
+    "command": {
+      "request_id": "d7fc9c4b-3834-401c-a647-0c3fc0727e92",
+      "expected_revision": 0,
+      "text": "Hello",
+      "input_mode": "text"
+    },
+    "session": {
+      "schema_version": 2,
+      "session_id": "6e8590ac-4d2f-4627-b2d7-63f0732b2933",
+      "revision": 1,
+      "created_at": "2026-10-26T22:58:23Z",
+      "updated_at": "2026-10-26T22:58:23Z",
+      "status": "collecting",
+      "reply_language": "en",
+      "frustration_active": false,
+      "slots": {
+        "order_number": null,
+        "category": null,
+        "description": null,
+        "urgency": null
+      },
+      "messages": [
+        {
+          "id": "a7782560-887a-4d62-b9a9-06acb247c4ed",
+          "role": "assistant",
+          "text": "Hi, welcome to Northstar Energy. How can I help you today?",
+          "input_mode": "system",
+          "created_at": "2026-10-26T22:58:23Z",
+          "citations": [],
+          "language": "en",
+          "sentiment": null,
+          "frustration": null
+        },
+        {
+          "id": "3c68f2df-f90f-439a-84ff-aefe9a5c30ec",
+          "role": "user",
+          "text": "Hello",
+          "input_mode": "text",
+          "created_at": "2026-10-26T22:58:23Z",
+          "citations": [],
+          "language": "en",
+          "sentiment": "neutral",
+          "frustration": "none"
+        },
+        {
+          "id": "958fd2b2-cee6-4b14-b726-8df1e13e7384",
+          "role": "assistant",
+          "text": "Hello! How can I help with Northstar Energy?",
+          "input_mode": "system",
+          "created_at": "2026-10-26T22:58:23Z",
+          "citations": [],
+          "language": "en",
+          "sentiment": null,
+          "frustration": null
+        }
+      ],
+      "pending_clarifications": {},
+      "pending_review_revision": null,
+      "review_rejected": false,
+      "collection_turn_count": 1,
+      "summary": null,
+      "confirmation": null,
+      "requests": [
+        {
+          "request_id": "d7fc9c4b-3834-401c-a647-0c3fc0727e92",
+          "input_digest": "33df1cc9fa02d72f71623ee65208327f88cce5599f33183f2d6a2425b31fe2cb",
+          "response": {
+            "session_id": "6e8590ac-4d2f-4627-b2d7-63f0732b2933",
+            "revision": 1,
+            "status": "collecting",
+            "reply_language": "en",
+            "frustration_active": false,
+            "reply": "Hello! How can I help with Northstar Energy?",
+            "message_id": "958fd2b2-cee6-4b14-b726-8df1e13e7384",
+            "slots": {
+              "order_number": null,
+              "category": null,
+              "description": null,
+              "urgency": null
+            },
+            "pending_clarifications": {},
+            "pending_review_revision": null,
+            "summary": null,
+            "citations": [],
+            "order_verification_required": false,
+            "slot_options": []
+          }
+        }
+      ],
+      "flow": null
+    },
+    "response": {
+      "session_id": "6e8590ac-4d2f-4627-b2d7-63f0732b2933",
+      "revision": 1,
+      "status": "collecting",
+      "reply_language": "en",
+      "frustration_active": false,
+      "reply": "Hello! How can I help with Northstar Energy?",
+      "message_id": "958fd2b2-cee6-4b14-b726-8df1e13e7384",
+      "slots": {
+        "order_number": null,
+        "category": null,
+        "description": null,
+        "urgency": null
+      },
+      "pending_clarifications": {},
+      "pending_review_revision": null,
+      "summary": null,
+      "citations": [],
+      "order_verification_required": false,
+      "slot_options": []
+    }
+  },
+  {
+    "operation": "confirm",
+    "command": {
+      "request_id": "e53e9421-2c9a-4769-a1cc-cdf6d20ed7d5",
+      "expected_revision": 1,
+      "review_revision": 1
+    },
+    "session": {
+      "schema_version": 2,
+      "session_id": "0065f2f3-af86-43d7-965f-1fe4690a542d",
+      "revision": 2,
+      "created_at": "2026-10-26T22:58:23Z",
+      "updated_at": "2026-10-26T22:58:23Z",
+      "status": "completed",
+      "reply_language": "en",
+      "frustration_active": false,
+      "slots": {
+        "order_number": "NS-000123",
+        "category": "damaged_item",
+        "description": "My order arrived broken",
+        "urgency": "high"
+      },
+      "messages": [
+        {
+          "id": "3b5e5c84-6431-40d7-8dfd-a7641483aae0",
+          "role": "assistant",
+          "text": "Hi, welcome to Northstar Energy. How can I help you today?",
+          "input_mode": "system",
+          "created_at": "2026-10-26T22:58:23Z",
+          "citations": [],
+          "language": "en",
+          "sentiment": null,
+          "frustration": null
+        },
+        {
+          "id": "8c7dffd8-c46b-4549-8217-e68811640674",
+          "role": "user",
+          "text": "My account NS-000123 has damaged equipment and this is high urgency.",
+          "input_mode": "text",
+          "created_at": "2026-10-26T22:58:23Z",
+          "citations": [],
+          "language": "en",
+          "sentiment": "neutral",
+          "frustration": "none"
+        },
+        {
+          "id": "663e39bb-01f2-456f-b2e9-d87016dab0c8",
+          "role": "assistant",
+          "text": "Account reference: NS-000123\nEnergy support area: equipment issue\nIssue: My order arrived broken\nUrgency: high\nPlease confirm these details or tell me what to change.",
+          "input_mode": "system",
+          "created_at": "2026-10-26T22:58:23Z",
+          "citations": [],
+          "language": "en",
+          "sentiment": null,
+          "frustration": null
+        },
+        {
+          "id": "29791460-a99b-4826-9e84-6a324c68bf4a",
+          "role": "user",
+          "text": "Confirm these details",
+          "input_mode": "system",
+          "created_at": "2026-10-26T22:58:23Z",
+          "citations": [],
+          "language": "en",
+          "sentiment": null,
+          "frustration": null
+        },
+        {
+          "id": "be1605d1-50c8-4baf-b400-fc8eb0c924da",
+          "role": "assistant",
+          "text": "Saved locally as REQ-0065F2F3. No request has been sent to a real support team. Is there anything else I can help with?",
+          "input_mode": "system",
+          "created_at": "2026-10-26T22:58:23Z",
+          "citations": [],
+          "language": "en",
+          "sentiment": null,
+          "frustration": null
+        }
+      ],
+      "pending_clarifications": {},
+      "pending_review_revision": null,
+      "review_rejected": false,
+      "collection_turn_count": 1,
+      "summary": "Account reference: NS-000123\nEnergy support area: equipment issue\nIssue: My order arrived broken\nUrgency: high",
+      "confirmation": {
+        "confirmed_at": "2026-10-26T22:58:23Z",
+        "review_revision": 1
+      },
+      "requests": [
+        {
+          "request_id": "13385618-9dd6-4bf8-ab32-d99f975862c6",
+          "input_digest": "3c18cb4c31a679adc636b524c3c4c5c8723084a1e6e138607d98a71425989fce",
+          "response": {
+            "session_id": "0065f2f3-af86-43d7-965f-1fe4690a542d",
+            "revision": 1,
+            "status": "awaiting_confirmation",
+            "reply_language": "en",
+            "frustration_active": false,
+            "reply": "Account reference: NS-000123\nEnergy support area: equipment issue\nIssue: My order arrived broken\nUrgency: high\nPlease confirm these details or tell me what to change.",
+            "message_id": "663e39bb-01f2-456f-b2e9-d87016dab0c8",
+            "slots": {
+              "order_number": "NS-000123",
+              "category": "damaged_item",
+              "description": "My order arrived broken",
+              "urgency": "high"
+            },
+            "pending_clarifications": {},
+            "pending_review_revision": 1,
+            "summary": "Account reference: NS-000123\nEnergy support area: equipment issue\nIssue: My order arrived broken\nUrgency: high",
+            "citations": [],
+            "order_verification_required": false,
+            "slot_options": []
+          }
+        },
+        {
+          "request_id": "e53e9421-2c9a-4769-a1cc-cdf6d20ed7d5",
+          "input_digest": "862cf0636bb1208ba2e8df41708996e4a94a5c067985573cfd1a12d2236fa365",
+          "response": {
+            "session_id": "0065f2f3-af86-43d7-965f-1fe4690a542d",
+            "revision": 2,
+            "status": "completed",
+            "reply_language": "en",
+            "frustration_active": false,
+            "reply": "Saved locally as REQ-0065F2F3. No request has been sent to a real support team. Is there anything else I can help with?",
+            "message_id": "be1605d1-50c8-4baf-b400-fc8eb0c924da",
+            "slots": {
+              "order_number": "NS-000123",
+              "category": "damaged_item",
+              "description": "My order arrived broken",
+              "urgency": "high"
+            },
+            "pending_clarifications": {},
+            "pending_review_revision": null,
+            "summary": "Account reference: NS-000123\nEnergy support area: equipment issue\nIssue: My order arrived broken\nUrgency: high",
+            "citations": [],
+            "order_verification_required": false,
+            "slot_options": []
+          }
+        }
+      ],
+      "flow": null
+    },
+    "response": {
+      "session_id": "0065f2f3-af86-43d7-965f-1fe4690a542d",
+      "revision": 2,
+      "status": "completed",
+      "reply_language": "en",
+      "frustration_active": false,
+      "reply": "Saved locally as REQ-0065F2F3. No request has been sent to a real support team. Is there anything else I can help with?",
+      "message_id": "be1605d1-50c8-4baf-b400-fc8eb0c924da",
+      "slots": {
+        "order_number": "NS-000123",
+        "category": "damaged_item",
+        "description": "My order arrived broken",
+        "urgency": "high"
+      },
+      "pending_clarifications": {},
+      "pending_review_revision": null,
+      "summary": "Account reference: NS-000123\nEnergy support area: equipment issue\nIssue: My order arrived broken\nUrgency: high",
+      "citations": [],
+      "order_verification_required": false,
+      "slot_options": []
+    }
+  },
+  {
+    "operation": "book_slot",
+    "command": {
+      "request_id": "301dfef4-040e-4432-98e1-b5858fc15598",
+      "expected_revision": 0,
+      "starts_at": "2026-11-02T09:00"
+    },
+    "session": {
+      "schema_version": 2,
+      "session_id": "e4ddd13b-1654-45a1-8de5-c7218804305e",
+      "revision": 1,
+      "created_at": "2026-10-26T22:58:23Z",
+      "updated_at": "2026-10-26T22:58:23Z",
+      "status": "collecting",
+      "reply_language": "en",
+      "frustration_active": false,
+      "slots": {
+        "order_number": null,
+        "category": null,
+        "description": null,
+        "urgency": null
+      },
+      "messages": [
+        {
+          "id": "fbf98909-cee5-42ca-9614-f58cfe26bcdf",
+          "role": "assistant",
+          "text": "Hi, welcome to Northstar Energy. How can I help you today?",
+          "input_mode": "system",
+          "created_at": "2026-10-26T22:58:23Z",
+          "citations": [],
+          "language": "en",
+          "sentiment": null,
+          "frustration": null
+        },
+        {
+          "id": "193154e6-cc2c-4bbb-8b0f-9ab7cd2c009d",
+          "role": "user",
+          "text": "I choose the technician visit on 2026-11-02 at 09:00.",
+          "input_mode": "system",
+          "created_at": "2026-10-26T22:58:23Z",
+          "citations": [],
+          "language": "en",
+          "sentiment": null,
+          "frustration": null
+        },
+        {
+          "id": "3682530b-e0a8-4457-b9cf-8dfb56761c09",
+          "role": "assistant",
+          "text": "Booked: a technician will visit on 2026-11-02 between 09:00 and 11:00. Your booking reference is BK-0D8B3C88. Is there anything else I can help with?",
+          "input_mode": "system",
+          "created_at": "2026-10-26T22:58:23Z",
+          "citations": [],
+          "language": "en",
+          "sentiment": null,
+          "frustration": null
+        }
+      ],
+      "pending_clarifications": {},
+      "pending_review_revision": null,
+      "review_rejected": false,
+      "collection_turn_count": 0,
+      "summary": null,
+      "confirmation": null,
+      "requests": [
+        {
+          "request_id": "301dfef4-040e-4432-98e1-b5858fc15598",
+          "input_digest": "401239825cc481b9138a41da01f4f5c89216505f1afb7a872f27ea8c404bc10b",
+          "response": {
+            "session_id": "e4ddd13b-1654-45a1-8de5-c7218804305e",
+            "revision": 1,
+            "status": "collecting",
+            "reply_language": "en",
+            "frustration_active": false,
+            "reply": "Booked: a technician will visit on 2026-11-02 between 09:00 and 11:00. Your booking reference is BK-0D8B3C88. Is there anything else I can help with?",
+            "message_id": "3682530b-e0a8-4457-b9cf-8dfb56761c09",
+            "slots": {
+              "order_number": null,
+              "category": null,
+              "description": null,
+              "urgency": null
+            },
+            "pending_clarifications": {},
+            "pending_review_revision": null,
+            "summary": null,
+            "citations": [],
+            "order_verification_required": false,
+            "slot_options": []
+          }
+        }
+      ],
+      "flow": null
+    },
+    "response": {
+      "session_id": "e4ddd13b-1654-45a1-8de5-c7218804305e",
+      "revision": 1,
+      "status": "collecting",
+      "reply_language": "en",
+      "frustration_active": false,
+      "reply": "Booked: a technician will visit on 2026-11-02 between 09:00 and 11:00. Your booking reference is BK-0D8B3C88. Is there anything else I can help with?",
+      "message_id": "3682530b-e0a8-4457-b9cf-8dfb56761c09",
+      "slots": {
+        "order_number": null,
+        "category": null,
+        "description": null,
+        "urgency": null
+      },
+      "pending_clarifications": {},
+      "pending_review_revision": null,
+      "summary": null,
+      "citations": [],
+      "order_verification_required": false,
+      "slot_options": []
+    }
+  }
+]

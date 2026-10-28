@@ -10,6 +10,7 @@ import pytest
 from backend_api.main import FIXTURE_ORDER_NUMBER
 from gateway.errors import app_error
 from gateway.localization import missing_question, text
+from shared.models import Appointment, InstallationRecord
 from tests.integration.order_verification.support import (
     ORDER_STATUS_Q,
     book,
@@ -269,3 +270,88 @@ async def test_an_already_booked_refusal_with_no_visit_on_record_is_passed_on(
 
     assert response.status_code == 409
     assert response.json()["error"]["code"] == "already_booked"
+
+
+@pytest.mark.parametrize(
+    ("error_code", "same_window", "status"),
+    [
+        ("already_booked", True, 200),
+        ("already_booked", False, 409),
+        ("slot_unavailable", True, 409),
+        ("backend_api_unavailable", True, 503),
+    ],
+)
+async def test_booking_recovers_only_an_already_booked_matching_window(
+    client, provider, app, session_dir, monkeypatch, error_code, same_window, status
+):
+    session_id = await create_session(client)
+    provider.script_extraction(booking(order_number=FIXTURE_ORDER_NUMBER))
+    await send_turn(client, session_id, "Book a technician", 0)
+    turn = (await verify(client, session_id)).json()["turn"]
+    selected = turn["slot_options"][0]
+    recorded = selected if same_window else turn["slot_options"][1]
+    visit = Appointment(**recorded, reference="BK-RECOVERED")
+    before = read_session(session_dir, session_id)
+
+    class BookingCommittedAfterPrecheck:
+        attempted = False
+
+        async def installation(self, order_number):
+            if not self.attempted or order_number != FIXTURE_ORDER_NUMBER:
+                return None
+            return InstallationRecord(
+                order_number=order_number, stage="visit_booked", appointment=visit
+            )
+
+        async def book(self, order_number, starts_at, *, replace=False):
+            self.attempted = True
+            raise app_error(error_code)
+
+    monkeypatch.setattr(
+        app.state.engine, "customer_data", BookingCommittedAfterPrecheck()
+    )
+
+    response = await book(client, session_id, turn["revision"], selected["starts_at"])
+
+    assert response.status_code == status
+    if status == 200:
+        assert visit.reference in response.json()["reply"]
+        assert response.json()["revision"] == turn["revision"] + 1
+        assert read_session(session_dir, session_id)["revision"] == turn["revision"] + 1
+    else:
+        assert response.json()["error"]["code"] == error_code
+        assert read_session(session_dir, session_id) == before
+
+
+@pytest.mark.parametrize("flow_intent", ["installation_status", "book_technician"])
+async def test_an_aside_after_verified_flow_fetch_failure_ends_the_old_request(
+    client, provider, app, monkeypatch, flow_intent
+):
+    session_id = await create_session(client)
+    provider.script_extraction(
+        make_extraction(
+            intent=flow_intent, candidates={"order_number": FIXTURE_ORDER_NUMBER}
+        )
+    )
+    asked = (await send_turn(client, session_id, "Help with my visit", 0)).json()
+    assert asked["order_verification_required"] is True
+
+    async def unavailable(order_number):
+        raise app_error("backend_api_unavailable")
+
+    with monkeypatch.context() as fault:
+        fault.setattr(app.state.engine.customer_data, "installation", unavailable)
+        verified = (await verify(client, session_id)).json()
+    assert verified["verified"] is True
+    assert verified.get("turn") is None
+
+    provider.script_extraction(make_extraction(intent="gratitude"))
+    aside = await send_turn(client, session_id, "Thanks", asked["revision"])
+    assert aside.status_code == 200
+    assert aside.json()["order_verification_required"] is False
+
+    # Verifying again must not resurrect a request ended by the intervening turn.
+    repeated = await verify(client, session_id)
+    assert repeated.status_code == 200
+    assert repeated.json()["verified"] is True
+    assert repeated.json().get("turn") is None
