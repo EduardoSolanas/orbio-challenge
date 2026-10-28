@@ -1,0 +1,10 @@
+# backend_api.bookings.xǁBookingStoreǁ_seed__mutmut_33: survived
+--- backend_api/bookings.py
++++ backend_api/bookings.py
+@@ -14,5 +14,5 @@
+         )
+     with self._db:
+         self._db.executemany(
+-            "INSERT OR IGNORE INTO slots (starts_at, ends_at) VALUES (?, ?)", rows
++            "INSERT OR IGNORE INTO SLOTS (STARTS_AT, ENDS_AT) VALUES (?, ?)", rows
+         )

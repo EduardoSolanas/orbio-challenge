@@ -1,0 +1,12 @@
+# gateway.conversation.engine.x__saved_copy__mutmut_2: survived
+--- gateway/conversation/engine.py
++++ gateway/conversation/engine.py
+@@ -3,7 +3,7 @@
+ ) -> Session:
+     """The session as it will be stored: one revision on, with ``messages`` added to the chat."""
+ 
+-    committed = session.model_copy(deep=True)
++    committed = session.model_copy(deep=None)
+     committed.revision = response.revision
+     committed.updated_at = now
+     committed.messages = [*session.messages, *messages]

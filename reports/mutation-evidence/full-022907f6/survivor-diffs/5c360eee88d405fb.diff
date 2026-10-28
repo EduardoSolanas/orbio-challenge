@@ -1,0 +1,12 @@
+# gateway.providers.client.xǁOpenAICompatibleProviderǁembed__mutmut_42: survived
+--- gateway/providers/client.py
++++ gateway/providers/client.py
+@@ -17,7 +17,7 @@
+             return parse_embeddings(body, len(texts))
+ 
+         return await self._retry(
+-            TEXT_BUDGET, deadline, attempt, repair_on_invalid=False
++            TEXT_BUDGET, deadline, attempt, repair_on_invalid=True
+         )
+     finally:
+         self._release()

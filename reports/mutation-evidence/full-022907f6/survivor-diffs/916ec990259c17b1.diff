@@ -1,0 +1,11 @@
+# gateway.providers.client.x__reject_encoded__mutmut_8: survived
+--- gateway/providers/client.py
++++ gateway/providers/client.py
+@@ -1,6 +1,6 @@
+ def _reject_encoded(response: httpx.Response) -> None:
+     """Successful responses must not be compressed (IC section 12)."""
+ 
+-    encoding = response.headers.get("content-encoding", "").strip().lower()
++    encoding = response.headers.get("CONTENT-ENCODING", "").strip().lower()
+     if encoding and encoding != "identity":
+         raise InvalidContent

@@ -1,0 +1,11 @@
+# gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_21: survived
+--- gateway/providers/client.py
++++ gateway/providers/client.py
+@@ -10,7 +10,6 @@
+         headers["Authorization"] = f"Bearer {profile.api_key}"
+     return httpx.AsyncClient(
+         transport=None if transports is None else transports.get(role),
+-        follow_redirects=False,
+         trust_env=False,
+         headers=headers,
+         timeout=httpx.Timeout(budget.attempt_timeout),

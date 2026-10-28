@@ -47,14 +47,5 @@ pytest_add_cli_args_test_selection = ["tests/unit", "tests/integration"]
 pytest_add_cli_args = ["--ignore=tests/unit/tooling"]
 also_copy = ["web/", "tests/", "scripts/", "examples/", "docs/", "README.md", "pyproject.toml", "compose.yaml"]
 mutate_only_covered_lines = false
-# Mutations no test can observe, so they are not worth a survivor each: SQL keyword case, the codec
-# name when reading the project's own JSON files, HTTP verb case, deep versus shallow copy (the
-# copy's lists are replaced straight away), and the one default for a missing setting.
-do_not_mutate_patterns = [
-    '"(SELECT|UPDATE|INSERT OR IGNORE|DELETE FROM|CREATE (UNIQUE )?(TABLE|INDEX)) ',
-    '^\s*"\s?(WHERE|ORDER BY|FROM|AND|ON) ',
-    'read_text\((encoding=)?"utf-8"\)',
-    '^\s*"(GET|POST)",$',
-    'model_copy\(deep=True\)',
-    'return env\.get\(key, ""\)',
-]
+# Review exact generated variants instead of excluding entire runtime statements.
+do_not_mutate_patterns = []

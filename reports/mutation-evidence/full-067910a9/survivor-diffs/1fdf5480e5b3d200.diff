@@ -1,0 +1,12 @@
+# gateway.backend_client.xǁBackendApiClientǁinstallation__mutmut_9: survived
+--- gateway/backend_client.py
++++ gateway/backend_client.py
+@@ -2,7 +2,7 @@
+     """Installation progress for the account, or None when it is unknown."""
+ 
+     response = await self._request(
+-        "GET",
++        "get",
+         f"{ORDERS_PATH}/{quote(order_number, safe='')}/installation",
+         allow_not_found=True,
+     )

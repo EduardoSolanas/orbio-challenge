@@ -1,0 +1,19 @@
+{
+  "framework": "mutmut",
+  "framework_version": "3.8.0",
+  "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+  "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+  "complete_project_run": true,
+  "generated": 4887,
+  "executed": 4887,
+  "killed": 4770,
+  "equivalent_survivors": 115,
+  "invalid_variants": 2,
+  "unresolved": 0,
+  "raw_kill_percent": 97.6059,
+  "non_equivalent_mutation_score_percent": 100.0,
+  "gate": "passed",
+  "unit_integration_passed": 2420,
+  "scope": "All configured eligible runtime functions in gateway/, backend_api/ and shared/; no statement-wide regex exclusions. Documented wiring/schema/prompt files and module-level declarations are outside mutation operator scope.",
+  "note": "115 equivalents are independently reviewed, not kills. Two type-only Protocol variants are invalid, not kills. No incomplete exploratory results are included in these totals."
+}

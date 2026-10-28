@@ -1,0 +1,10 @@
+# gateway.backend_client.xǁBackendApiClientǁverify_order__mutmut_16: survived
+--- gateway/backend_client.py
++++ gateway/backend_client.py
+@@ -8,5 +8,5 @@
+         "delivery_postcode": delivery_postcode,
+         "verification_code": verification_code,
+     }
+-    response = await self._request("POST", VERIFICATIONS_PATH, json=payload)
++    response = await self._request("post", VERIFICATIONS_PATH, json=payload)
+     return self._validated(OrderVerificationResult, response)

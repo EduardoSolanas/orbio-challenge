@@ -1,0 +1,10 @@
+# gateway.conversation.flows.x_load_flows__mutmut_61: not checked
+--- gateway/conversation/flows.py
++++ gateway/conversation/flows.py
+@@ -38,5 +38,5 @@
+         raise FlowsInvalid(f"the flows file must define {SUPPORT_REQUEST!r}")
+     starting = [flow.intent for flow in flows.values()]
+     if len(set(starting)) != len(starting):
+-        raise FlowsInvalid("two flows start on the same intent")
++        raise FlowsInvalid("XXtwo flows start on the same intentXX")
+     return flows

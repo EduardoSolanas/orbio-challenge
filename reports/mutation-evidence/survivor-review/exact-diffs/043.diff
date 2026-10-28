@@ -1,0 +1,12 @@
+# gateway.conversation.engine.xǁConversationEngineǁ_extract_with_safety_triage__mutmut_22: killed
+--- gateway/conversation/engine.py
++++ gateway/conversation/engine.py
+@@ -29,7 +29,7 @@
+                 raise
+             return fallback_extraction(session.reply_language)
+     finally:
+-        if not extraction_call.done():
++        if extraction_call.done():
+             extraction_call.cancel()
+     if concern or extraction.safety_concern:
+         return as_safety_question(extraction)

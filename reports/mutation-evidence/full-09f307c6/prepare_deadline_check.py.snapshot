@@ -1,0 +1,7 @@
+import shutil
+from pathlib import Path
+source=Path('/work');target=Path('/tmp/orbio-deadline-check')
+shutil.copytree(source,target,ignore=shutil.ignore_patterns('mutants','reports','__pycache__','.pytest_cache'))
+(target/'reports').mkdir()
+shutil.copyfile(source/'deadline-test.py',target/'tests/unit/gateway/providers/test_extract_json.py')
+p=target/'pyproject.toml';text=p.read_text();before='pytest_add_cli_args_test_selection = ["tests/unit", "tests/integration"]';after='pytest_add_cli_args_test_selection = ["tests/unit/gateway/providers/test_extract_json.py"]';assert before in text;p.write_text(text.replace(before,after))

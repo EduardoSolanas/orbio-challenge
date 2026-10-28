@@ -1,0 +1,2235 @@
+{
+  "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+  "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+  "mutation_run_commit": "14b0d9fd2f57907d7d0ec7a3718c7976ae497b75",
+  "snapshot_manifest": "reports/mutation-evidence/full-022907f6/snapshot.json",
+  "revision_note": "source_revision follows the repository policy: last committed gated-input revision. Actual uncommitted tested content is identified by source_snapshot_revision and the archived 345-file hash manifest, not represented as a clean checkout of that commit.",
+  "review_note": "Each exact current diff, function and shipped application context was independently reviewed. No automatic or function-level approvals. The six variants in the verifier-authored storage repair were killed and have no exclusions.",
+  "approvals": [
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁ__init____mutmut_16",
+      "status": "equivalent",
+      "rationale": "Only an HTTP header name changes case; its value is unchanged. The HTTPX Headers mapping is case-insensitive and HTTP header-name case has no protocol meaning. Callers use that mapping, not a case-sensitive raw-name comparison.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/backend_client.py",
+      "source_sha256": "700e782be9428f77ef9f459f7e287811054cf5dc583cc6f0a20cb1f7e1f70705",
+      "function_ast_sha256": "b1430ceac57ce7340ccb5598a479f5818cabdc830e55c26cf2bc7be5e075faa9",
+      "diff_sha256": "22843c66df414589c13365a644bcf551ef65d0088a1db6690b7f74fbea487747",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/21a44b68d0246aa4.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁ__init____mutmut_17",
+      "status": "equivalent",
+      "rationale": "Only an HTTP header name changes case; its value is unchanged. The HTTPX Headers mapping is case-insensitive and HTTP header-name case has no protocol meaning. Callers use that mapping, not a case-sensitive raw-name comparison.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/backend_client.py",
+      "source_sha256": "700e782be9428f77ef9f459f7e287811054cf5dc583cc6f0a20cb1f7e1f70705",
+      "function_ast_sha256": "b1430ceac57ce7340ccb5598a479f5818cabdc830e55c26cf2bc7be5e075faa9",
+      "diff_sha256": "34341107c165911fd92892a021fd2edc918d8a8071aff620e7f3e0334b1865a0",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/841998fc3ebcd3f0.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁverify_order__mutmut_16",
+      "status": "equivalent",
+      "rationale": "Only GET/POST changes to lower case. Every affected call reaches HTTPX, which normalizes the method to uppercase before sending; URL, headers, payload, response validation and retry policy are unchanged.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/backend_client.py",
+      "source_sha256": "700e782be9428f77ef9f459f7e287811054cf5dc583cc6f0a20cb1f7e1f70705",
+      "function_ast_sha256": "e1908f9b40e3a65c94c66daf18c19bce95f66a478da09130bb3ce8f53eff443e",
+      "diff_sha256": "13df12e4051e829602936e4ff71936289f68d69e0ecd48eebbf5a59abeeb9110",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/3dcd7fb78237db85.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁlookup_order__mutmut_9",
+      "status": "equivalent",
+      "rationale": "Only GET/POST changes to lower case. Every affected call reaches HTTPX, which normalizes the method to uppercase before sending; URL, headers, payload, response validation and retry policy are unchanged.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/backend_client.py",
+      "source_sha256": "700e782be9428f77ef9f459f7e287811054cf5dc583cc6f0a20cb1f7e1f70705",
+      "function_ast_sha256": "1c02c34bc9b1ebad1bb2fe4ecef59859c983bda96a9f2e6dc624e934f5a243c6",
+      "diff_sha256": "1063369cfd56bc84a973567393a749b07a0ae82a725f0a00f6e4383fec84f3a0",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/8c4eb12ebbaa7bfd.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁlookup_order__mutmut_14",
+      "status": "equivalent",
+      "rationale": "The additional safe characters are only X. ASCII letters are already in urllib.parse.quote's always-safe unreserved set, even with safe=\"\". Slash remains escaped; quoting any account reference therefore produces exactly the same path.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/backend_client.py",
+      "source_sha256": "700e782be9428f77ef9f459f7e287811054cf5dc583cc6f0a20cb1f7e1f70705",
+      "function_ast_sha256": "1c02c34bc9b1ebad1bb2fe4ecef59859c983bda96a9f2e6dc624e934f5a243c6",
+      "diff_sha256": "5108d6b15a5c4ca22ad73fe82c88f6ce7caf086d74bffdac287b3770cbbbcd63",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/59a88b73f187f57d.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁinstallation__mutmut_9",
+      "status": "equivalent",
+      "rationale": "HTTPX 0.28.1 normalizes the request method to uppercase in Request.__init__. Changing this fixed HTTP verb to lowercase therefore sends the same method, path and payload for every supported request; transport errors and response handling are unchanged.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/backend_client.py",
+      "source_sha256": "700e782be9428f77ef9f459f7e287811054cf5dc583cc6f0a20cb1f7e1f70705",
+      "function_ast_sha256": "5525b386687b93406b14c19c26a486c321cacaa2b3c0030ab8739627fb066750",
+      "diff_sha256": "c6886d8f0386dc2958b0d3bfbe44458f6a34f4ea56f589c3dcc765cfcf494bd2",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/1fdf5480e5b3d200.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁinstallation__mutmut_14",
+      "status": "equivalent",
+      "rationale": "The additional safe characters are only X. ASCII letters are already in urllib.parse.quote's always-safe unreserved set, even with safe=\"\". Slash remains escaped; quoting any account reference therefore produces exactly the same path.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/backend_client.py",
+      "source_sha256": "700e782be9428f77ef9f459f7e287811054cf5dc583cc6f0a20cb1f7e1f70705",
+      "function_ast_sha256": "5525b386687b93406b14c19c26a486c321cacaa2b3c0030ab8739627fb066750",
+      "diff_sha256": "cfac26d3a72ca6290300fc918c56951e3cf3960051177ea2a75cf66eeede19d9",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/10e78a5771192595.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁavailability__mutmut_10",
+      "status": "equivalent",
+      "rationale": "Only GET/POST changes to lower case. Every affected call reaches HTTPX, which normalizes the method to uppercase before sending; URL, headers, payload, response validation and retry policy are unchanged.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/backend_client.py",
+      "source_sha256": "700e782be9428f77ef9f459f7e287811054cf5dc583cc6f0a20cb1f7e1f70705",
+      "function_ast_sha256": "1ee7c5ac000e8882a711326c3bbc9290d8b64a76fbabe5e8d18e6fec989ceaf8",
+      "diff_sha256": "c79395e795b9cfb05ce02eab280d7885ee98197c4922914db28d9d7dd570238b",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/cb75524ffbe40349.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁbook__mutmut_21",
+      "status": "equivalent",
+      "rationale": "HTTPX 0.28.1 normalizes the request method to uppercase in Request.__init__. Changing this fixed HTTP verb to lowercase therefore sends the same method, path and payload for every supported request; transport errors and response handling are unchanged.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/backend_client.py",
+      "source_sha256": "700e782be9428f77ef9f459f7e287811054cf5dc583cc6f0a20cb1f7e1f70705",
+      "function_ast_sha256": "526095aa55cdedac25d52163986260f67e7f621b70d2a6b757abbb080a84d696",
+      "diff_sha256": "1d43ca307098cd77886de254bc60faa3d3aa3792ccadbbb682bce9420b527591",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/a09fd684f6d8fa2c.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.backend_client.xǁBackendApiClientǁbook__mutmut_28",
+      "status": "equivalent",
+      "rationale": "Only the fallback for an unparseable conflict body changes, from None to an empty string. Both are outside the two recognized error codes and become the same fixed invalid_backend_api_response AppError. The new replace-booking payload does not change this error mapping.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/backend_client.py",
+      "source_sha256": "700e782be9428f77ef9f459f7e287811054cf5dc583cc6f0a20cb1f7e1f70705",
+      "function_ast_sha256": "526095aa55cdedac25d52163986260f67e7f621b70d2a6b757abbb080a84d696",
+      "diff_sha256": "395db49c0237a9911a5cae95ede2c0d71f7db4853e52c7b05fe6f95aace47d47",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/f8bb76ab38c3ce17.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.localization.x__read_dictionary__mutmut_4",
+      "status": "equivalent",
+      "rationale": "UTF-8 and utf-8 resolve to the same Python codec for every input byte sequence. This changes only the case of the explicit encoding name, not its presence. The same Unicode text or decoding failure reaches the same existing handler under every host locale. The separate encoding=None variants are not equivalent and are covered by the new real-locale regressions.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/localization.py",
+      "source_sha256": "2a3da9946517632b20b32dd0720e5ef5a3a06ad9b4e0ad263f09c74b88514589",
+      "function_ast_sha256": "3370138b995f5d6cb8c572c7001cb1e6a4f0d021c874184c0993ae322eee1ab1",
+      "diff_sha256": "37516b8fc4c754b67f15008c149833791f3bfc9203f355853c709c5a1b6f2460",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/f7b4fad3ce39b98c.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.localization.x_build_summary__mutmut_17",
+      "status": "equivalent",
+      "rationale": "Only the internal ValueError diagnostic changes. Valid canonical categories never enter this branch. For corrupted/noncanonical state reaching it, the HTTP exception handler discards that diagnostic and emits the same fixed internal-error payload and exception-type log; no consumer uses this message as a business value.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/localization.py",
+      "source_sha256": "2a3da9946517632b20b32dd0720e5ef5a3a06ad9b4e0ad263f09c74b88514589",
+      "function_ast_sha256": "a690964ec7ce5e3d424bf99dea4c1404fc184dd6846bcebb68c31ced80fa7eb1",
+      "diff_sha256": "ac65dfe28c84ac3bb32de26226f1e86080208812e6642a73a9c0dae4a87e49f3",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/61d517a36e4c82dd.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.localization.x_build_summary__mutmut_18",
+      "status": "equivalent",
+      "rationale": "Only the internal ValueError diagnostic changes. Valid canonical categories never enter this branch. For corrupted/noncanonical state reaching it, the HTTP exception handler discards that diagnostic and emits the same fixed internal-error payload and exception-type log; no consumer uses this message as a business value.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/localization.py",
+      "source_sha256": "2a3da9946517632b20b32dd0720e5ef5a3a06ad9b4e0ad263f09c74b88514589",
+      "function_ast_sha256": "a690964ec7ce5e3d424bf99dea4c1404fc184dd6846bcebb68c31ced80fa7eb1",
+      "diff_sha256": "3288c7d6882f46acf70453cf99504379a94b0381099a39c42033edb763926813",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/f09e74f1e7d4e767.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.localization.x_build_summary__mutmut_19",
+      "status": "equivalent",
+      "rationale": "Only the internal ValueError diagnostic changes. Valid canonical categories never enter this branch. For corrupted/noncanonical state reaching it, the HTTP exception handler discards that diagnostic and emits the same fixed internal-error payload and exception-type log; no consumer uses this message as a business value.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/localization.py",
+      "source_sha256": "2a3da9946517632b20b32dd0720e5ef5a3a06ad9b4e0ad263f09c74b88514589",
+      "function_ast_sha256": "a690964ec7ce5e3d424bf99dea4c1404fc184dd6846bcebb68c31ced80fa7eb1",
+      "diff_sha256": "52242116e75c930e86b274ff476b998799c87ac01b9b6ef3658264e4a56c30b1",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/7fb44461e3a7176f.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.localization.x_request_reference__mutmut_10",
+      "status": "equivalent",
+      "rationale": "The parameter is a validated UUID. Its canonical string begins with eight hexadecimal characters; its first dash is at offset 8. Replacing dashes differently cannot affect the first eight characters used for the REQ reference.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/localization.py",
+      "source_sha256": "2a3da9946517632b20b32dd0720e5ef5a3a06ad9b4e0ad263f09c74b88514589",
+      "function_ast_sha256": "c0b39d34fae13d16046c1c087f972a66515ce20f70eb8bd15b6a3e05e0e10976",
+      "diff_sha256": "d5fa60e934f68e3f0088d258f6be1806560abea3745f33233b6b02a71070d83e",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/d1188175708aac89.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.localization.x_request_reference__mutmut_11",
+      "status": "equivalent",
+      "rationale": "The parameter is a validated UUID. Its canonical string begins with eight hexadecimal characters; its first dash is at offset 8. Replacing dashes differently cannot affect the first eight characters used for the REQ reference.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/localization.py",
+      "source_sha256": "2a3da9946517632b20b32dd0720e5ef5a3a06ad9b4e0ad263f09c74b88514589",
+      "function_ast_sha256": "c0b39d34fae13d16046c1c087f972a66515ce20f70eb8bd15b6a3e05e0e10976",
+      "diff_sha256": "e24efb975f4669c21c208451b5b13914abe75b05794e6b0f1f079fd04a1bbab0",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/0a6162ab4b54457d.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.x_migrate_session_document__mutmut_7",
+      "status": "equivalent",
+      "rationale": "Only the text inside a ValueError changes. The repository load boundary catches ValueError and converts it to the fixed storage_corrupt AppError, suppressing the original diagnostic. The same file inputs are rejected, with the same API code, status and unchanged file contents.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "8b22394f26a1223a6a261486334ca7b520675abbab4854c58b4cd6cc0cc9a1a0",
+      "diff_sha256": "cb519c3f4939a6d5feaf005a4cccd7f0160477c3fd2b0fb2ba45abff85e768d4",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/cf9e3bde9b0d46d4.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.x_migrate_session_document__mutmut_8",
+      "status": "equivalent",
+      "rationale": "Only the text inside a ValueError changes. The repository load boundary catches ValueError and converts it to the fixed storage_corrupt AppError, suppressing the original diagnostic. The same file inputs are rejected, with the same API code, status and unchanged file contents.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "8b22394f26a1223a6a261486334ca7b520675abbab4854c58b4cd6cc0cc9a1a0",
+      "diff_sha256": "50d007ec86cbf7b41cb8be42dc535380d86847385215aab41371fefd1762b533",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/3f1c4adce85a1f56.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.x_migrate_session_document__mutmut_9",
+      "status": "equivalent",
+      "rationale": "Only the text inside a ValueError changes. The repository load boundary catches ValueError and converts it to the fixed storage_corrupt AppError, suppressing the original diagnostic. The same file inputs are rejected, with the same API code, status and unchanged file contents.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "8b22394f26a1223a6a261486334ca7b520675abbab4854c58b4cd6cc0cc9a1a0",
+      "diff_sha256": "7df9101f539e53965f368c0099f2e588b9035cacc746898906f89bc34b3516d7",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/d0b95b71a8345b16.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.x_migrate_session_document__mutmut_18",
+      "status": "equivalent",
+      "rationale": "Only the text inside a ValueError changes. The repository load boundary catches ValueError and converts it to the fixed storage_corrupt AppError, suppressing the original diagnostic. The same file inputs are rejected, with the same API code, status and unchanged file contents.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "8b22394f26a1223a6a261486334ca7b520675abbab4854c58b4cd6cc0cc9a1a0",
+      "diff_sha256": "d5aecaa92598128181620a15e4672335b3b616ecf85ac429463fdafd6ada22a6",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/11f89cdce717010f.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.x_migrate_session_document__mutmut_19",
+      "status": "equivalent",
+      "rationale": "Only the text inside a ValueError changes. The repository load boundary catches ValueError and converts it to the fixed storage_corrupt AppError, suppressing the original diagnostic. The same file inputs are rejected, with the same API code, status and unchanged file contents.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "8b22394f26a1223a6a261486334ca7b520675abbab4854c58b4cd6cc0cc9a1a0",
+      "diff_sha256": "d73d79f967409721811b2981906cdbe69d7a2ac673b7ee7c743c5582a3db448f",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/b3dda67f43c257be.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.x_migrate_session_document__mutmut_20",
+      "status": "equivalent",
+      "rationale": "Only the text inside a ValueError changes. The repository load boundary catches ValueError and converts it to the fixed storage_corrupt AppError, suppressing the original diagnostic. The same file inputs are rejected, with the same API code, status and unchanged file contents.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "8b22394f26a1223a6a261486334ca7b520675abbab4854c58b4cd6cc0cc9a1a0",
+      "diff_sha256": "9f4e419ce0f14f8d8050355ef8dc2c50dc01a10858a3d1a7a80a5f724bbd9ff3",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/bbd5ba335d7ef372.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.x__upgrade_legacy_document__mutmut_33",
+      "status": "equivalent",
+      "rationale": "These are plain dictionaries from JSON/migration. dict.setdefault(key) and dict.setdefault(key, None) have exactly the same default and preserve existing values identically.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "c99fad56fccd19dc15dfbd9b41160c8f9e761e2e4164ff016a3054dd666a411f",
+      "diff_sha256": "345c20eba98daf287e9b72cb9f574ad4163d19ea3201adeacb9501be96a0b3a2",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/5565cceddf3167ab.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.x__upgrade_legacy_document__mutmut_38",
+      "status": "equivalent",
+      "rationale": "These are plain dictionaries from JSON/migration. dict.setdefault(key) and dict.setdefault(key, None) have exactly the same default and preserve existing values identically.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "c99fad56fccd19dc15dfbd9b41160c8f9e761e2e4164ff016a3054dd666a411f",
+      "diff_sha256": "76996730731b50581ce38646d32195e437e6108d67527893ba55d28f8125bbb3",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/ea5437b4d43ce573.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.x__fill_emotion_metadata__mutmut_14",
+      "status": "equivalent",
+      "rationale": "These are plain dictionaries from JSON/migration. dict.setdefault(key) and dict.setdefault(key, None) have exactly the same default and preserve existing values identically.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "695e837c834102de17b6216881e5a62ebf107f619c61b345518ebae510483729",
+      "diff_sha256": "89e5f22582f1d24f101aa3e29d4e2bb61d7e04bb769acc4be82ed512b93122f3",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/e3205ade8c51ad6e.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.x__fill_emotion_metadata__mutmut_19",
+      "status": "equivalent",
+      "rationale": "These are plain dictionaries from JSON/migration. dict.setdefault(key) and dict.setdefault(key, None) have exactly the same default and preserve existing values identically.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "695e837c834102de17b6216881e5a62ebf107f619c61b345518ebae510483729",
+      "diff_sha256": "d118ee9d6030e4973a3ae30831cc3b38322a26a50fbb80d7109ee99e047e5f3f",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/acb3e501c6290801.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_13",
+      "status": "equivalent",
+      "rationale": "Only the text inside a ValueError changes. The repository load boundary catches ValueError and converts it to the fixed storage_corrupt AppError, suppressing the original diagnostic. The same file inputs are rejected, with the same API code, status and unchanged file contents.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "e227e3c30cc9dcb597cadf39b6ea12d68e3f35703a917127e43dad41caa1dbb1",
+      "diff_sha256": "c4e9ebc3616eab422078a9e1bfcc03d25056a33076e4632ea189b6120edb8b4b",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/5f833339345b40bb.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_14",
+      "status": "equivalent",
+      "rationale": "Only the text inside a ValueError changes. The repository load boundary catches ValueError and converts it to the fixed storage_corrupt AppError, suppressing the original diagnostic. The same file inputs are rejected, with the same API code, status and unchanged file contents.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "e227e3c30cc9dcb597cadf39b6ea12d68e3f35703a917127e43dad41caa1dbb1",
+      "diff_sha256": "e343438a3b8a6e85f0ceeea31cc1b79d38eeb5ab155b081d76e9f79dfc325dc9",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/0165beb11a7cf790.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_15",
+      "status": "equivalent",
+      "rationale": "Only the text inside a ValueError changes. The repository load boundary catches ValueError and converts it to the fixed storage_corrupt AppError, suppressing the original diagnostic. The same file inputs are rejected, with the same API code, status and unchanged file contents.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "e227e3c30cc9dcb597cadf39b6ea12d68e3f35703a917127e43dad41caa1dbb1",
+      "diff_sha256": "8504427670567c9e1a5804c4177b3d33ca65287eb4d3d1906e750d6a721ffa2f",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/1fed2a03a4197ae1.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_16",
+      "status": "equivalent",
+      "rationale": "Only the text inside a ValueError changes. The repository load boundary catches ValueError and converts it to the fixed storage_corrupt AppError, suppressing the original diagnostic. The same file inputs are rejected, with the same API code, status and unchanged file contents.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "e227e3c30cc9dcb597cadf39b6ea12d68e3f35703a917127e43dad41caa1dbb1",
+      "diff_sha256": "31289efb11be57e7df70f51a0ce8f1a396adf0c8eb5f47985ff8f79c618dad6d",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/0ecfa117a4576272.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_4",
+      "status": "equivalent",
+      "rationale": "json.dumps uses the truth value of ensure_ascii to select escaping. None and False both disable ASCII escaping. The serialized JSON is identical, including non-ASCII descriptions and the resulting persisted bytes/digests.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "1148407663bcfee2518b359fbdc9adbe0124a828280aa044adec7d2d4b72a5ed",
+      "diff_sha256": "6330e615b560144e82adaaeef78650c2b5758811e9f5ff71a1514c07e5cfdd7e",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/f2419cdbc72df960.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_15",
+      "status": "equivalent",
+      "rationale": "UTF-8 codec lookup is case-insensitive and normalizes these aliases to the same codec. All byte sequences decode/encode identically and the same invalid sequences raise the same Unicode error.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "1148407663bcfee2518b359fbdc9adbe0124a828280aa044adec7d2d4b72a5ed",
+      "diff_sha256": "2ef1b62035cd5d6aefb07de9fff40afc5f0f7a9868c063257ce919241d177ef1",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/796ac223fc50d490.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_17",
+      "status": "equivalent",
+      "rationale": "Only the staging marker before assignment or after successful os.replace becomes an empty string. The finally block may additionally try unlink(\"\"); an empty filename cannot name a file and its OSError is caught. No session or temporary file is changed by that extra failed cleanup attempt; the original success/error result is unchanged.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "1148407663bcfee2518b359fbdc9adbe0124a828280aa044adec7d2d4b72a5ed",
+      "diff_sha256": "880313c921ef76950c599ee36e30adc4743608dbfe80a66b8952cfdffaadfde6",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/06374ee62437d0b1.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_20",
+      "status": "equivalent",
+      "rationale": "NamedTemporaryFile tests delete by truth value. None and False both keep the file after close; the application then performs the same explicit unlink/replace. No caller inspects the private delete attribute.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "1148407663bcfee2518b359fbdc9adbe0124a828280aa044adec7d2d4b72a5ed",
+      "diff_sha256": "551ab359f1adc8e14f80d7f89b8c8c2154b4ac885d4799f38e45d1316f1f78cc",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/c059c98a19b0bc75.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_33",
+      "status": "equivalent",
+      "rationale": "Only the staging marker before assignment or after successful os.replace becomes an empty string. The finally block may additionally try unlink(\"\"); an empty filename cannot name a file and its OSError is caught. No session or temporary file is changed by that extra failed cleanup attempt; the original success/error result is unchanged.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/storage.py",
+      "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+      "function_ast_sha256": "1148407663bcfee2518b359fbdc9adbe0124a828280aa044adec7d2d4b72a5ed",
+      "diff_sha256": "dd766f4c3be9d59c82495fa7de971c8efac3ad105913940af5d94e068cce98f7",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/f9710a44f9a94339.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.x__saved_copy__mutmut_2",
+      "status": "equivalent",
+      "rationale": "For every shipped caller, the shallow copy has the same serialized value as the deep copy. _saved_copy replaces messages and changes scalar fields. Confirm, continuation, booking and turn application replace their updated lists/models/flow rather than modifying shared nested values in place; _remember_request replaces requests. JsonSessionRepository loads a fresh session under the request lock and serializes the committed copy, retaining no original object aliases across requests. The response and saved JSON are identical; arbitrary private object-identity inspection is outside the application contract.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/engine.py",
+      "source_sha256": "3831fe96554b72b633b941b09588e459a89755fa38b5f47219c55bfa82341ca5",
+      "function_ast_sha256": "61ff7521e8a7c6ea65794a8f7db281c89b32e306c3df228d9f615c8227a2ea18",
+      "diff_sha256": "2928eea37ab9a3fcbac2ae8cf7931d0f4baca71e43cfc1bdda21e08c19091507",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/0ec93d0b0ae23ef2.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.x__saved_copy__mutmut_3",
+      "status": "equivalent",
+      "rationale": "For every shipped caller, the shallow copy has the same serialized value as the deep copy. _saved_copy replaces messages and changes scalar fields. Confirm, continuation, booking and turn application replace their updated lists/models/flow rather than modifying shared nested values in place; _remember_request replaces requests. JsonSessionRepository loads a fresh session under the request lock and serializes the committed copy, retaining no original object aliases across requests. The response and saved JSON are identical; arbitrary private object-identity inspection is outside the application contract.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/engine.py",
+      "source_sha256": "3831fe96554b72b633b941b09588e459a89755fa38b5f47219c55bfa82341ca5",
+      "function_ast_sha256": "61ff7521e8a7c6ea65794a8f7db281c89b32e306c3df228d9f615c8227a2ea18",
+      "diff_sha256": "ec3651fd0cfa0dfc3a74ace4855c9e4ae54977a6f86d386d39c8aacf293e46c2",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/ca13badc05687072.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁcreate_session__mutmut_24",
+      "status": "equivalent",
+      "rationale": "The removed argument is exactly the documented English default: Session.reply_language defaults to en, and localization.text defaults to DEFAULT_LANGUAGE=en. Newly created sessions, greeting text and persistence are identical.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/engine.py",
+      "source_sha256": "3831fe96554b72b633b941b09588e459a89755fa38b5f47219c55bfa82341ca5",
+      "function_ast_sha256": "6d75bcbe5d37a27a3aaa997ae8cd1983b3f3d31b49902cc0398b33e859829713",
+      "diff_sha256": "c19d8df6d8a184c495a65cd98246917de3af5223c100f9ed074e99cddc1ffc25",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/3abe57b1106ad48c.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁcreate_session__mutmut_60",
+      "status": "equivalent",
+      "rationale": "The removed argument is exactly the documented English default: Session.reply_language defaults to en, and localization.text defaults to DEFAULT_LANGUAGE=en. Newly created sessions, greeting text and persistence are identical.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/engine.py",
+      "source_sha256": "3831fe96554b72b633b941b09588e459a89755fa38b5f47219c55bfa82341ca5",
+      "function_ast_sha256": "6d75bcbe5d37a27a3aaa997ae8cd1983b3f3d31b49902cc0398b33e859829713",
+      "diff_sha256": "1cfd99b5814dc244bdbe67c3d68d8d0a630b5a8e3b19c6de45d5a1b958124bd6",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/d875155e4b722284.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_select_plan__mutmut_91",
+      "status": "equivalent",
+      "rationale": "At these two call sites, recovery implies the loaded review was rejected, making current_review_valid false. A newly rejected review has intent=reject and cannot satisfy confirmation. is_pure_confirmation therefore already rejects every reachable case where either omitted flag is true; otherwise False and None are both falsy.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/engine.py",
+      "source_sha256": "3831fe96554b72b633b941b09588e459a89755fa38b5f47219c55bfa82341ca5",
+      "function_ast_sha256": "729c9a4a4eb342fe0b12f6c43fd6e32cf162981976554536c6d8ff387d398fdd",
+      "diff_sha256": "e33c7f3f21620d2285feda222212fb71197b151266546a83616338a32a8c7090",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/8cd2b681f827bdcc.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_select_plan__mutmut_92",
+      "status": "equivalent",
+      "rationale": "At these two call sites, recovery implies the loaded review was rejected, making current_review_valid false. A newly rejected review has intent=reject and cannot satisfy confirmation. is_pure_confirmation therefore already rejects every reachable case where either omitted flag is true; otherwise False and None are both falsy.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/engine.py",
+      "source_sha256": "3831fe96554b72b633b941b09588e459a89755fa38b5f47219c55bfa82341ca5",
+      "function_ast_sha256": "729c9a4a4eb342fe0b12f6c43fd6e32cf162981976554536c6d8ff387d398fdd",
+      "diff_sha256": "baef110018eb928c7a0d79476b65394f8a2f502ce98c69e425c4e124d78faf1f",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/75c1c1fdc0932e0f.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁconfirm__mutmut_62",
+      "status": "equivalent",
+      "rationale": "Dedicated confirmation first rejects any pending clarification. The response helper inherits the session pending_clarifications, which is consequently already empty; omitting the explicit empty override preserves the exact response.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/engine.py",
+      "source_sha256": "3831fe96554b72b633b941b09588e459a89755fa38b5f47219c55bfa82341ca5",
+      "function_ast_sha256": "9b5fc1db91ee4dcb40ee63252a1f07eb3fe1a59409461339d6eab21cfc2c4949",
+      "diff_sha256": "6add6b2ca48ecfa723cb5136cf59430b5e640e8b474c77c64cee2385b97fa740",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/e6b411ea17563f73.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁconfirm__mutmut_64",
+      "status": "equivalent",
+      "rationale": "The response has no citations for a dedicated confirmation. TurnResponse.citations defaults to a new empty list, so dropping the explicit empty list changes no serialized field.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/engine.py",
+      "source_sha256": "3831fe96554b72b633b941b09588e459a89755fa38b5f47219c55bfa82341ca5",
+      "function_ast_sha256": "9b5fc1db91ee4dcb40ee63252a1f07eb3fe1a59409461339d6eab21cfc2c4949",
+      "diff_sha256": "9f287420693e323c71a6bdebc61deb4f6a741b042047a47fc98edd69c3599bcc",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/e1dfde9e2317e353.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_continue_flow__mutmut_29",
+      "status": "equivalent",
+      "rationale": "This continuation is entered only just after recording successful verification for the same pending account, under the session lock. With the shipped account flows and positive fixed TTL, ask/verify are satisfied before any I/O; the terminal read/offer returns verification_required=False. Omitting that value uses the identical response default.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/engine.py",
+      "source_sha256": "3831fe96554b72b633b941b09588e459a89755fa38b5f47219c55bfa82341ca5",
+      "function_ast_sha256": "ac4158eca0f2516fec793fb6a79d54ff5d4058604078f0dd06f42a1bbe8de15e",
+      "diff_sha256": "c51cb0f1d61c14dd9e1b729b248177224f6d956af38173057b1a5ce39c93ad1c",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/23faa4022d2cb205.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_continue_flow__mutmut_41",
+      "status": "equivalent",
+      "rationale": "With the shipped installation/booking flows, successful continuation ends on a terminal step, whose outcome.step is None. flow_state_after then returns None without reading the definition, so replacing the whole result with None or passing None as the unused definition gives the same stored flow.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/engine.py",
+      "source_sha256": "3831fe96554b72b633b941b09588e459a89755fa38b5f47219c55bfa82341ca5",
+      "function_ast_sha256": "ac4158eca0f2516fec793fb6a79d54ff5d4058604078f0dd06f42a1bbe8de15e",
+      "diff_sha256": "9ef29980e0464dee8e9c622a29f3475c07aecd92bc2bdd2bb9c5b1e0a9e79b81",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/c36bf3f8300a4b33.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_continue_flow__mutmut_42",
+      "status": "equivalent",
+      "rationale": "With the shipped installation/booking flows, successful continuation ends on a terminal step, whose outcome.step is None. flow_state_after then returns None without reading the definition, so replacing the whole result with None or passing None as the unused definition gives the same stored flow.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/engine.py",
+      "source_sha256": "3831fe96554b72b633b941b09588e459a89755fa38b5f47219c55bfa82341ca5",
+      "function_ast_sha256": "ac4158eca0f2516fec793fb6a79d54ff5d4058604078f0dd06f42a1bbe8de15e",
+      "diff_sha256": "65e52697199ab5bfd20b6e4ea19e579d3c09c83ac5db582902946c96ad016730",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/7b3ce7480a418d10.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_34",
+      "status": "equivalent",
+      "rationale": "At these two call sites, recovery implies the loaded review was rejected, making current_review_valid false. A newly rejected review has intent=reject and cannot satisfy confirmation. is_pure_confirmation therefore already rejects every reachable case where either omitted flag is true; otherwise False and None are both falsy.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/engine.py",
+      "source_sha256": "3831fe96554b72b633b941b09588e459a89755fa38b5f47219c55bfa82341ca5",
+      "function_ast_sha256": "022fe3fc6c77366fa6ce2de3182eefcdfe4ebbc55a8d9eae27d3d5095ab6fc16",
+      "diff_sha256": "634511483e9dc566c136f0f397c2011029ea8c7cdfb8e462ef3b9ae4fe5900ff",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/a0565166b1585ad3.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_35",
+      "status": "equivalent",
+      "rationale": "At these two call sites, recovery implies the loaded review was rejected, making current_review_valid false. A newly rejected review has intent=reject and cannot satisfy confirmation. is_pure_confirmation therefore already rejects every reachable case where either omitted flag is true; otherwise False and None are both falsy.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/engine.py",
+      "source_sha256": "3831fe96554b72b633b941b09588e459a89755fa38b5f47219c55bfa82341ca5",
+      "function_ast_sha256": "022fe3fc6c77366fa6ce2de3182eefcdfe4ebbc55a8d9eae27d3d5095ab6fc16",
+      "diff_sha256": "9ef4e36988991f28fda8664c91f9caec4a4751611983a0535ee98a25bff01e58",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/7a2f682e693deb66.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_48",
+      "status": "equivalent",
+      "rationale": "These transient private variables are consumed only through truth tests. completed is set to True explicitly on the completion branch; otherwise False/None select the same noncompletion path. intake_directed is used only to decide the FAQ suffix. Neither initial sentinel is serialized as a public field.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/engine.py",
+      "source_sha256": "3831fe96554b72b633b941b09588e459a89755fa38b5f47219c55bfa82341ca5",
+      "function_ast_sha256": "022fe3fc6c77366fa6ce2de3182eefcdfe4ebbc55a8d9eae27d3d5095ab6fc16",
+      "diff_sha256": "0f881c49a6326c54ec8beab2f5e4c663a29da317b2f62d28d8d926cd72279ef4",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/c9a7114dae964088.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_50",
+      "status": "equivalent",
+      "rationale": "These transient private variables are consumed only through truth tests. completed is set to True explicitly on the completion branch; otherwise False/None select the same noncompletion path. intake_directed is used only to decide the FAQ suffix. Neither initial sentinel is serialized as a public field.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/engine.py",
+      "source_sha256": "3831fe96554b72b633b941b09588e459a89755fa38b5f47219c55bfa82341ca5",
+      "function_ast_sha256": "022fe3fc6c77366fa6ce2de3182eefcdfe4ebbc55a8d9eae27d3d5095ab6fc16",
+      "diff_sha256": "6f6a98dd0678afb46c03c51fb6f4d9b4e50478197bfa1b7736b25b135277be8b",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/22ba02d468765052.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.flows.x_collect_details__mutmut_15",
+      "status": "equivalent",
+      "rationale": "When no detail is missing, the original returns StepResult() and the variant returns StepResult(None). None is exactly the reply default; every other StepResult field keeps the same default. Nonempty missing-field strings follow the same branch in both.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/flows.py",
+      "source_sha256": "eebb16886aa8a5feebae3ce6555edbd3b5601d91ce44b04670818dea97f998a3",
+      "function_ast_sha256": "5379a4817fd8fb6ab3255a1a9977230dce08d03168495ed0d8918291141fd85d",
+      "diff_sha256": "7be3eaca5ce6442f3960d99864882197a9276779c516ea82f4d076fa88da2e3b",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/ee6dc896547281aa.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.flows.x_load_flows__mutmut_5",
+      "status": "equivalent",
+      "rationale": "UTF-8 and utf-8 resolve to the same Python codec for every input byte sequence. This changes only the case of the explicit encoding name, not its presence. The same Unicode text or decoding failure reaches the same existing handler under every host locale. The separate encoding=None variants are not equivalent and are covered by the new real-locale regressions.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/flows.py",
+      "source_sha256": "eebb16886aa8a5feebae3ce6555edbd3b5601d91ce44b04670818dea97f998a3",
+      "function_ast_sha256": "297bccaea8da556a95426421dc3fe86b78dfb4c3a0e99d12c3d8f7fd5feefb80",
+      "diff_sha256": "25a90708bb19094078851b311f78e6b8cbc3025d4b0e6788b8beec227be02245",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/2049d3d504d7dbbb.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.replay.x__digest__mutmut_5",
+      "status": "equivalent",
+      "rationale": "json.dumps uses the truth value of ensure_ascii to select escaping. None and False both disable ASCII escaping. The serialized JSON is identical, including non-ASCII descriptions and the resulting persisted bytes/digests.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/replay.py",
+      "source_sha256": "6915ddde6cf981d51eea252ed4c336a9ff33e940c018ffc60ed35555abdb96ff",
+      "function_ast_sha256": "e0886ccc1ba46efaa84fe370171a033c358ca53025e78fa7609503e28c1de005",
+      "diff_sha256": "d85281299484ed6baeadc3836381ee4d43cdb0eb37c8d067408e8c572424bf0b",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/b586394cbd36fa37.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.replay.x__digest__mutmut_22",
+      "status": "equivalent",
+      "rationale": "UTF-8 codec lookup is case-insensitive and normalizes these aliases to the same codec. All byte sequences decode/encode identically and the same invalid sequences raise the same Unicode error.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/replay.py",
+      "source_sha256": "6915ddde6cf981d51eea252ed4c336a9ff33e940c018ffc60ed35555abdb96ff",
+      "function_ast_sha256": "e0886ccc1ba46efaa84fe370171a033c358ca53025e78fa7609503e28c1de005",
+      "diff_sha256": "6ab6bdb46192eee99b275090b40e2e5d2a449ba9cf760658cb8c232fcc5c48e6",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/a72c7bc41b3260e0.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.safety.x_load_examples__mutmut_6",
+      "status": "equivalent",
+      "rationale": "UTF-8 and utf-8 resolve to the same Python codec for every input byte sequence. This changes only the case of the explicit encoding name, not its presence. The same Unicode text or decoding failure reaches the same existing handler under every host locale. The separate encoding=None variants are not equivalent and are covered by the new real-locale regressions.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/safety.py",
+      "source_sha256": "064753e8e864cf43c81d5da90195365454dbba5c7fa1dd7a7f2dc062663e9d90",
+      "function_ast_sha256": "ac47741bd6a47fd51d0bfd167aa6ef3fd21e3e4e0728c020499d65bb125fe2a9",
+      "diff_sha256": "fa0ae1cd2b658af6bdfe6fda4cd80534ed654a20869f4bd5dd6bb2f01271681f",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/95ab665eb5d661d8.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.visits.x_window_values__mutmut_7",
+      "status": "equivalent",
+      "rationale": "The application contract supplies YYYY-MM-DDTHH:MM timestamps from the backend store (16 characters). For those permitted timestamps, a slice ending at 17 is truncated at the same string end as a slice ending at 16. This approval does not claim equivalence for arbitrary malformed or seconds-bearing timestamp strings.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/visits.py",
+      "source_sha256": "73b60040312d090a0899021a52037d4e910004b233d03a8a96d4859b37fc4276",
+      "function_ast_sha256": "86abb676649be6ee1d062df3b31691bc968952b749846e71e9d832157b401bff",
+      "diff_sha256": "341fc288c014bb9cf0e53d904d33c58e980a7f9955e59a7030e84f32b97638c5",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/485ccd7b87f4ae3a.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.conversation.visits.x_window_values__mutmut_11",
+      "status": "equivalent",
+      "rationale": "The application contract supplies YYYY-MM-DDTHH:MM timestamps from the backend store (16 characters). For those permitted timestamps, a slice ending at 17 is truncated at the same string end as a slice ending at 16. This approval does not claim equivalence for arbitrary malformed or seconds-bearing timestamp strings.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/conversation/visits.py",
+      "source_sha256": "73b60040312d090a0899021a52037d4e910004b233d03a8a96d4859b37fc4276",
+      "function_ast_sha256": "86abb676649be6ee1d062df3b31691bc968952b749846e71e9d832157b401bff",
+      "diff_sha256": "87a8a52473b89301ce41267e869d93679cba74f0bf04651e8c6cd2626c399d56",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/e2432623d36f9102.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.knowledge.retrieval.x_load_knowledge__mutmut_13",
+      "status": "equivalent",
+      "rationale": "UTF-8 codec lookup is case-insensitive and normalizes these aliases to the same codec. All byte sequences decode/encode identically and the same invalid sequences raise the same Unicode error.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/knowledge/retrieval.py",
+      "source_sha256": "cce4f31f34ac6c377e49753fe7f76abe7d934ac45975bb56c2987af91a095300",
+      "function_ast_sha256": "93da24278cac5581d55fde80192c6252d2f8ca3cd54097bb31e4bb4ee141b984",
+      "diff_sha256": "cac1bd907a24290c6b4ab79554e499e941bb609a388c24e633728a9b5b5db958",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/aea7470f4c7f4670.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.audio.x__fmt_fields__mutmut_4",
+      "status": "equivalent",
+      "rationale": "The loop-bound difference is only an eight-byte header at the end of the input with no payload. A fmt header there fails the required 16-byte payload check; any other final header eventually reaches the same INVALID_AUDIO failure. No accepted PCM geometry or user-visible error code changes.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/audio.py",
+      "source_sha256": "7743b8ad9209e668798874a176e33cf160d755b0c773723168d1d44c196d5fbd",
+      "function_ast_sha256": "4c3199e30a5b9d5e0d657fe43544df3479c75db5bf562ad33194b25459be9828",
+      "diff_sha256": "d164fa45c3e90e5f97d95563f5e2de8ebf1b256306158da325b5664e93b0b46a",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/00bfc1cc272517a9.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.audio.x__fmt_fields__mutmut_5",
+      "status": "equivalent",
+      "rationale": "The loop-bound difference is only an eight-byte header at the end of the input with no payload. A fmt header there fails the required 16-byte payload check; any other final header eventually reaches the same INVALID_AUDIO failure. No accepted PCM geometry or user-visible error code changes.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/audio.py",
+      "source_sha256": "7743b8ad9209e668798874a176e33cf160d755b0c773723168d1d44c196d5fbd",
+      "function_ast_sha256": "4c3199e30a5b9d5e0d657fe43544df3479c75db5bf562ad33194b25459be9828",
+      "diff_sha256": "66e24ef30b374dace4c811db45db62c6c3becb0ca9d66c382dc6fe2270fc5aa5",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/657d66c0a8bed629.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.audio.x__fmt_fields__mutmut_38",
+      "status": "equivalent",
+      "rationale": "Signed versus unsigned unpacking differs only above the signed limits. Accepted format=1, channels=1/2, bits=16 and rate=8000..48000 all fit both representations. Every value that changes sign fails the same geometry/format checks; discarded byte-rate/block-alignment values are never used.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/audio.py",
+      "source_sha256": "7743b8ad9209e668798874a176e33cf160d755b0c773723168d1d44c196d5fbd",
+      "function_ast_sha256": "4c3199e30a5b9d5e0d657fe43544df3479c75db5bf562ad33194b25459be9828",
+      "diff_sha256": "ab961a2ab2c6943b35a234e84446ad61f1aa0397c0726400c479c1cca1eaddd0",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/49edb752e1cef92a.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.audio.x_validate_wav__mutmut_48",
+      "status": "equivalent",
+      "rationale": "The initial maximum changes from 0 to 1. For actual sample peaks >=1 the final maximum is identical; for peak=0, both 0 and 1 remain below the fixed silence threshold 128. Every audio acceptance/silence result is unchanged.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/audio.py",
+      "source_sha256": "7743b8ad9209e668798874a176e33cf160d755b0c773723168d1d44c196d5fbd",
+      "function_ast_sha256": "618488e3bb29c255ddbf5aff0f02c209f5e4b4d9f02f01214222225bbfd5b74e",
+      "diff_sha256": "9c14d6046c4625d8fde34faad5e2f388f6db6982cb1cadb51a598ca2abfc52f9",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/a2d2afbc438f0c90.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.audio.x_validate_wav__mutmut_59",
+      "status": "equivalent",
+      "rationale": "PCM samples are signed integers. The changed sign test differs only at zero, where -0 equals 0. The computed magnitude, maximum and silence decision are identical.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/audio.py",
+      "source_sha256": "7743b8ad9209e668798874a176e33cf160d755b0c773723168d1d44c196d5fbd",
+      "function_ast_sha256": "618488e3bb29c255ddbf5aff0f02c209f5e4b4d9f02f01214222225bbfd5b74e",
+      "diff_sha256": "1fe36d26b1d9ca8547c4a0ef7661ba4d5d71c9a481d79d8f8a730618e6a17d2f",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/45aeb40b97b74d5c.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.audio.x_validate_wav__mutmut_60",
+      "status": "equivalent",
+      "rationale": "PCM samples are signed integers. The changed sign test differs only at zero, where -0 equals 0. The computed magnitude, maximum and silence decision are identical.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/audio.py",
+      "source_sha256": "7743b8ad9209e668798874a176e33cf160d755b0c773723168d1d44c196d5fbd",
+      "function_ast_sha256": "618488e3bb29c255ddbf5aff0f02c209f5e4b4d9f02f01214222225bbfd5b74e",
+      "diff_sha256": "8bd9e390c258185ba7fede6aa8894c2d7388d21935ce308db10e4e702937d037",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/ac61d56ed70ce3b9.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.audio.x_validate_wav__mutmut_61",
+      "status": "equivalent",
+      "rationale": "The added equality case assigns magnitude to peak only when both already have the same integer value. The maximum after every iteration is identical.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/audio.py",
+      "source_sha256": "7743b8ad9209e668798874a176e33cf160d755b0c773723168d1d44c196d5fbd",
+      "function_ast_sha256": "618488e3bb29c255ddbf5aff0f02c209f5e4b4d9f02f01214222225bbfd5b74e",
+      "diff_sha256": "b89e8d996ca454d407561fd6b909e5b4f0f78b840dd1ae9f5d106124b21dafe3",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/d4faa00bac4e120b.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁAIProviderǁsynthesize__mutmut_1",
+      "status": "invalid",
+      "rationale": "This exact mutation changes only a default on a typing.Protocol declaration whose body is ellipsis. Production dispatch uses the concrete provider implementation, with its own default; no executable implementation is mutated. The no-tests status alone is not the justification.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "2f28aa97c5b846b2937afc8a28b4ae11c06dcd7e4e4a469c30ccb714a698b51c",
+      "diff_sha256": "42966b38b64ead060a33cd61d4a4771de09d230c2babba047ef38877fedf56e8",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/598a7dc995eab124.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁAIProviderǁsynthesize__mutmut_2",
+      "status": "invalid",
+      "rationale": "This exact mutation changes only a default on a typing.Protocol declaration whose body is ellipsis. Production dispatch uses the concrete provider implementation, with its own default; no executable implementation is mutated. The no-tests status alone is not the justification.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "2f28aa97c5b846b2937afc8a28b4ae11c06dcd7e4e4a469c30ccb714a698b51c",
+      "diff_sha256": "9f8cf6b625ccffa7e545d3b2a333135afe8329da20b35997c04529cb5f092a5d",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/b4c2aef67b24569b.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.x__media_type__mutmut_8",
+      "status": "equivalent",
+      "rationale": "Only an HTTP header name changes case; its value is unchanged. The HTTPX Headers mapping is case-insensitive and HTTP header-name case has no protocol meaning. Callers use that mapping, not a case-sensitive raw-name comparison.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "8eac1211a82bc42a3f03035dfb9c75b585ccc382065cbc975b783847ee90276a",
+      "diff_sha256": "e3b22af944e10c089c937aada6ff06aec7bd06498181d59e72b79f27df084d08",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/6515afce8d5cdfa5.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.x__media_type__mutmut_9",
+      "status": "equivalent",
+      "rationale": "This default is used only for a missing Content-Type. Both the empty string and xxxx are outside every accepted JSON/speech media type. Both paths produce the same bounded invalid-content/error handling; neither default is returned as customer data.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "8eac1211a82bc42a3f03035dfb9c75b585ccc382065cbc975b783847ee90276a",
+      "diff_sha256": "559b8ff3ab3b2d0e17a17b53742aac0e3b06eec2e183c70e39ebd88e16ab1762",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/7347b79aded83a19.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.x__reject_encoded__mutmut_8",
+      "status": "equivalent",
+      "rationale": "Only an HTTP header name changes case; its value is unchanged. The HTTPX Headers mapping is case-insensitive and HTTP header-name case has no protocol meaning. Callers use that mapping, not a case-sensitive raw-name comparison.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "16e8d9008018201a190455bfe73778fc28b11005f75fc63096dcac8faad589fc",
+      "diff_sha256": "0a97702c88cf03edebd278285d565554c56f791ec0dc8ff9e3af6d967c169947",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/916ec990259c17b1.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.x__success_json_body__mutmut_14",
+      "status": "equivalent",
+      "rationale": "UTF-8 codec lookup is case-insensitive and normalizes these aliases to the same codec. All byte sequences decode/encode identically and the same invalid sequences raise the same Unicode error.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "604dfe6509fb72c8c49e2d2ea9ec4ef1a5d2e3a861396dec3a6615abb58e991d",
+      "diff_sha256": "7ae5a2690f2ec827f7b4807d01167bb7b8892182694786618569ca10d8561c07",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/642261046d156941.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ__init____mutmut_17",
+      "status": "equivalent",
+      "rationale": "The private _closed and repair flags are tested only by truth value. None and False select the same branches; close later assigns True, and repair is overwritten by the same retry policy before any repair request. The flags are not serialized or exposed as application results.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "7de0cbfe045c95b14f0c1fcb6c7f7fd11244e895a4e188e4999bf47023745f56",
+      "diff_sha256": "3994b8d951af8c07fb9dfbd2653f414fbf993aa0188a7360487d64f660fda50a",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/939d0ce1af5c8077.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_4",
+      "status": "equivalent",
+      "rationale": "Only an HTTP header name changes case; its value is unchanged. The HTTPX Headers mapping is case-insensitive and HTTP header-name case has no protocol meaning. Callers use that mapping, not a case-sensitive raw-name comparison.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "85e6a04bbf90d582351cf8b27c3da3e94a7e2785cc7fa173cbb93f532c236868",
+      "diff_sha256": "12f88b575d69b8ab10c75e37ef3b884c2b4e34d478ea372ef6f0ddef7a791016",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/abc2faeef4a3c21b.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_5",
+      "status": "equivalent",
+      "rationale": "Only an HTTP header name changes case; its value is unchanged. The HTTPX Headers mapping is case-insensitive and HTTP header-name case has no protocol meaning. Callers use that mapping, not a case-sensitive raw-name comparison.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "85e6a04bbf90d582351cf8b27c3da3e94a7e2785cc7fa173cbb93f532c236868",
+      "diff_sha256": "49a90e5aa3798077d5dd1c55ec7ec723403b7be4fd496474b3639cfefa01711a",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/7fb27a73cb899273.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_13",
+      "status": "equivalent",
+      "rationale": "Only an HTTP header name changes case; its value is unchanged. The HTTPX Headers mapping is case-insensitive and HTTP header-name case has no protocol meaning. Callers use that mapping, not a case-sensitive raw-name comparison.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "85e6a04bbf90d582351cf8b27c3da3e94a7e2785cc7fa173cbb93f532c236868",
+      "diff_sha256": "6c15a9352316642f900814b3f6a5229c682caa7f856db569a8b6ff1be8344d37",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/c69fe6e3f3402f27.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_14",
+      "status": "equivalent",
+      "rationale": "Only an HTTP header name changes case; its value is unchanged. The HTTPX Headers mapping is case-insensitive and HTTP header-name case has no protocol meaning. Callers use that mapping, not a case-sensitive raw-name comparison.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "85e6a04bbf90d582351cf8b27c3da3e94a7e2785cc7fa173cbb93f532c236868",
+      "diff_sha256": "be9f7d06f5952e812311af57f431a42952a0c075c72ae75fde4cfd5183498057",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/6a72dd4ab15da4bd.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_21",
+      "status": "equivalent",
+      "rationale": "The pinned HTTPX AsyncClient already defaults follow_redirects to False. No other argument supplies a different redirect policy, so omitting this explicit default preserves requests and redirect rejection.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "85e6a04bbf90d582351cf8b27c3da3e94a7e2785cc7fa173cbb93f532c236868",
+      "diff_sha256": "df96ab4029e296e2b72d4337691cd0e6ddf5656977200836838c00813974e9bd",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/78c967e6bf1e1d72.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁembed__mutmut_27",
+      "status": "equivalent",
+      "rationale": "Only GET/POST changes to lower case. Every affected call reaches HTTPX, which normalizes the method to uppercase before sending; URL, headers, payload, response validation and retry policy are unchanged.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "15b605a01dcca60646ac54146066a446149d190021649b8c6afe4f9c171e9024",
+      "diff_sha256": "0d068cfc299fb82ad0e159a40aa0fbd50fedb19d66b38984b207269fee51cef2",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/3545da61046f2bd4.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁembed__mutmut_37",
+      "status": "equivalent",
+      "rationale": "The embedding/audio attempt closures ignore their repair parameter and always construct the same non-text request. Changing repair_on_invalid only changes that unused parameter on a retry; the same attempts, payloads, parser and final error are retained.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "15b605a01dcca60646ac54146066a446149d190021649b8c6afe4f9c171e9024",
+      "diff_sha256": "71322b7cb906dddc2cbda1c13175ad0702472de98d4a69fcd14aba6ff8fc5291",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/89f5b710ac3b5629.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁembed__mutmut_42",
+      "status": "equivalent",
+      "rationale": "The embedding/audio attempt closures ignore their repair parameter and always construct the same non-text request. Changing repair_on_invalid only changes that unused parameter on a retry; the same attempts, payloads, parser and final error are retained.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "15b605a01dcca60646ac54146066a446149d190021649b8c6afe4f9c171e9024",
+      "diff_sha256": "7dc86656a4243b04996acf02909e724ed603c4624c2bdc0e9485bfd2b4604d2b",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/5c360eee88d405fb.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_speech_request__mutmut_35",
+      "status": "equivalent",
+      "rationale": "Only GET/POST changes to lower case. Every affected call reaches HTTPX, which normalizes the method to uppercase before sending; URL, headers, payload, response validation and retry policy are unchanged.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "78b0e2592980db1b8a052e8cec98b8cb315897fe08f97e65969f2d04b93d2492",
+      "diff_sha256": "f71a2df7c3396ed6ee431e8eef8a11e46aa04a61f97c6e0c5e21c9ddf269f448",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/23ce773d48691ffc.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_text_operation__mutmut_16",
+      "status": "equivalent",
+      "rationale": "Only GET/POST changes to lower case. Every affected call reaches HTTPX, which normalizes the method to uppercase before sending; URL, headers, payload, response validation and retry policy are unchanged.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "69d958b1c997bee1034298c90939a38d4147fd01b63c787e95a3907e26b04371",
+      "diff_sha256": "e3687c9ccffb1907f5c0a2c61682215ae99e6f82df2281733cbd7cbdda38f309",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/21926ccae3e0a1ef.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_audio_operation__mutmut_18",
+      "status": "equivalent",
+      "rationale": "Only GET/POST changes to lower case. Every affected call reaches HTTPX, which normalizes the method to uppercase before sending; URL, headers, payload, response validation and retry policy are unchanged.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "9baa4f27f54a2252b1aefaa7c24599ad2e0c20699fd10ae372291556bd71a720",
+      "diff_sha256": "b9dcaba20074741f6664ce9b01da48dc0948d63f26723f52b11a391e667d9e4e",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/0953f936d3ac5c1e.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_audio_operation__mutmut_25",
+      "status": "equivalent",
+      "rationale": "The embedding/audio attempt closures ignore their repair parameter and always construct the same non-text request. Changing repair_on_invalid only changes that unused parameter on a retry; the same attempts, payloads, parser and final error are retained.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "9baa4f27f54a2252b1aefaa7c24599ad2e0c20699fd10ae372291556bd71a720",
+      "diff_sha256": "428d58ddb6600d0afc13476c1234d0f1bb398a0d94896f7ea664cddccdb7f3fc",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/54bf987ff0b563f4.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_audio_operation__mutmut_30",
+      "status": "equivalent",
+      "rationale": "The embedding/audio attempt closures ignore their repair parameter and always construct the same non-text request. Changing repair_on_invalid only changes that unused parameter on a retry; the same attempts, payloads, parser and final error are retained.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "9baa4f27f54a2252b1aefaa7c24599ad2e0c20699fd10ae372291556bd71a720",
+      "diff_sha256": "af9276e888a457a804ee2f83801bdf31c5c6aef5896b98dcd32342d6e90e4daf",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/12849b7268367f77.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_1",
+      "status": "equivalent",
+      "rationale": "The private _closed and repair flags are tested only by truth value. None and False select the same branches; close later assigns True, and repair is overwritten by the same retry policy before any repair request. The flags are not serialized or exposed as application results.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "fa2cf1e151c368ba75f5968de92a77aaca4c620e3907939d7ecd0105e56c3d1f",
+      "diff_sha256": "c50d33c9191cc37205b9f063eeb266cd680324608dfee680e0df3b6bf613cbaf",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/5e1f83c9b63ae753.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_9",
+      "status": "equivalent",
+      "rationale": "All production role budgets have a positive fixed attempt count. On its final permitted iteration every retry branch returns or raises, including invalid content, decoding, timeout, transport and AppError. The extra loop iteration and the raise after the loop are unreachable for every supported role budget.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "fa2cf1e151c368ba75f5968de92a77aaca4c620e3907939d7ecd0105e56c3d1f",
+      "diff_sha256": "fa0629544e2fd2b477279a77152b4e2e793fc61c9aecfb510f8c097953230db4",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/559e783c96d20920.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_45",
+      "status": "equivalent",
+      "rationale": "All production role budgets have a positive fixed attempt count. On its final permitted iteration every retry branch returns or raises, including invalid content, decoding, timeout, transport and AppError. The extra loop iteration and the raise after the loop are unreachable for every supported role budget.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "fa2cf1e151c368ba75f5968de92a77aaca4c620e3907939d7ecd0105e56c3d1f",
+      "diff_sha256": "11f7c37726896ade7166151c5362b74772c35ba71d22ca68289e09c7fae43ea3",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/fadc4d45dd53d000.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_46",
+      "status": "equivalent",
+      "rationale": "All production role budgets have a positive fixed attempt count. On its final permitted iteration every retry branch returns or raises, including invalid content, decoding, timeout, transport and AppError. The extra loop iteration and the raise after the loop are unreachable for every supported role budget.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "fa2cf1e151c368ba75f5968de92a77aaca4c620e3907939d7ecd0105e56c3d1f",
+      "diff_sha256": "d23875bacc1cbd0be18e37b936ebccfe5fd8ed40585ac8b8e8cc04f8d053638e",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/9a7de9cdae380253.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_47",
+      "status": "equivalent",
+      "rationale": "All production role budgets have a positive fixed attempt count. On its final permitted iteration every retry branch returns or raises, including invalid content, decoding, timeout, transport and AppError. The extra loop iteration and the raise after the loop are unreachable for every supported role budget.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/client.py",
+      "source_sha256": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+      "function_ast_sha256": "fa2cf1e151c368ba75f5968de92a77aaca4c620e3907939d7ecd0105e56c3d1f",
+      "diff_sha256": "be856ae538884432f1b6f7be42ed8d29df2c2602739b206b67508ccbc0f9a4fb",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/ad821007247fd0c2.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_3",
+      "status": "equivalent",
+      "rationale": "The only changed input length is a twelve-byte RIFF/WAVE header with no chunks. The original exits its loop with the same undecodable-WAV ValueError that the variant raises at the initial check; no accepted payload changes.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/speech_wav.py",
+      "source_sha256": "19611f4b03c5d0401c8e619b5023275d36c4c5131bfa531ad46d1970c82213ab",
+      "function_ast_sha256": "eb2b22e1ac0440beeafde49fc1e2e4241a98baefcf0ac5b0692895f00b54d7f1",
+      "diff_sha256": "29f132634f0e08e85af8c9fcf8f11524afea7133278dbd9ea4e531b538f17c1d",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/eba6dcfb0536acc7.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_4",
+      "status": "equivalent",
+      "rationale": "The only changed input length is a twelve-byte RIFF/WAVE header with no chunks. The original exits its loop with the same undecodable-WAV ValueError that the variant raises at the initial check; no accepted payload changes.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/speech_wav.py",
+      "source_sha256": "19611f4b03c5d0401c8e619b5023275d36c4c5131bfa531ad46d1970c82213ab",
+      "function_ast_sha256": "eb2b22e1ac0440beeafde49fc1e2e4241a98baefcf0ac5b0692895f00b54d7f1",
+      "diff_sha256": "e8f2cf0b26e314ab140f78a8dd7f1a0b555f2cab590031a6e82354108784b4dc",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/2dd48faae0d956d1.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_25",
+      "status": "equivalent",
+      "rationale": "The weakened guard only reaches an incomplete final chunk header. Such a header cannot contain the required fmt payload or nonempty frame-aligned data; size/geometry/payload checks still reject it, and the bounded loop terminates. The provider maps either internal ValueError diagnostic to the same fixed invalid-provider-response result.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/speech_wav.py",
+      "source_sha256": "19611f4b03c5d0401c8e619b5023275d36c4c5131bfa531ad46d1970c82213ab",
+      "function_ast_sha256": "eb2b22e1ac0440beeafde49fc1e2e4241a98baefcf0ac5b0692895f00b54d7f1",
+      "diff_sha256": "f30647a2257a1d9de9e46d45f5188b6e0625e6bd8fd4e1c095f47502605819cc",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/28edb628d4572a5c.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_53",
+      "status": "equivalent",
+      "rationale": "The changed equality case makes a fmt chunk end exactly at EOF. With no following data chunk, the original also finishes with undecodable-WAV failure. A valid WAV with frames has its fmt chunk ending strictly before EOF, so its parsing is unchanged.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/speech_wav.py",
+      "source_sha256": "19611f4b03c5d0401c8e619b5023275d36c4c5131bfa531ad46d1970c82213ab",
+      "function_ast_sha256": "eb2b22e1ac0440beeafde49fc1e2e4241a98baefcf0ac5b0692895f00b54d7f1",
+      "diff_sha256": "9a070c7443623ccf7a3a89189c9cc70c248e4f45c267553baf69556400da08be",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/26ff96158040b60e.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.wire.x__schema_instruction__mutmut_3",
+      "status": "equivalent",
+      "rationale": "json.dumps uses the truth value of ensure_ascii to select escaping. None and False both disable ASCII escaping. The serialized JSON is identical, including non-ASCII descriptions and the resulting persisted bytes/digests.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/wire.py",
+      "source_sha256": "3aa827c56b282cfe9d056ceed53fad08c471d6659c5e857688df1aad27d18559",
+      "function_ast_sha256": "2a429af64eba2e30c1c0e92c293cb05a6f86213023cf0b71fff130530dff79f2",
+      "diff_sha256": "1da5b71b0ae75a7b273b033cd08fde295c7947a8443bef12cc42434c4b5a8f0d",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/631a9f552812d498.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.wire.x__schema_instruction__mutmut_5",
+      "status": "equivalent",
+      "rationale": "Only the fixed Extraction and KnowledgeAnswer schema classes reach this helper in the application. Their generated schema text is ASCII; enabling/defaulting ASCII escaping therefore changes no request text. Adding non-ASCII schema metadata requires a fresh review for that source revision.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/wire.py",
+      "source_sha256": "3aa827c56b282cfe9d056ceed53fad08c471d6659c5e857688df1aad27d18559",
+      "function_ast_sha256": "2a429af64eba2e30c1c0e92c293cb05a6f86213023cf0b71fff130530dff79f2",
+      "diff_sha256": "f665b63adb2adb52f157ef210553f71fc6b441cfb86375f13d179c1a1031c442",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/82261860e83fdf77.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "gateway.providers.wire.x__schema_instruction__mutmut_6",
+      "status": "equivalent",
+      "rationale": "Only the fixed Extraction and KnowledgeAnswer schema classes reach this helper in the application. Their generated schema text is ASCII; enabling/defaulting ASCII escaping therefore changes no request text. Adding non-ASCII schema metadata requires a fresh review for that source revision.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "gateway/providers/wire.py",
+      "source_sha256": "3aa827c56b282cfe9d056ceed53fad08c471d6659c5e857688df1aad27d18559",
+      "function_ast_sha256": "2a429af64eba2e30c1c0e92c293cb05a6f86213023cf0b71fff130530dff79f2",
+      "diff_sha256": "3f61950a7c0c8b5fbb935d68c97c151c567c74d7e0b0b01b8037e46a1ec88252",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/cf754f9c479e179a.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingRefusedǁ__init____mutmut_1",
+      "status": "equivalent",
+      "rationale": "The caught BookingRefused exception still stores the same .code; only Exception.args changes. The backend handler constructs its refusal JSON from .code, not str/args, and handles the exception without exposing its diagnostic. Every supported HTTP refusal response is identical.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "effc2b2a6b19340822104c828a13869d44a03c0a1ee05cb4cbd90db37b5ed3d7",
+      "diff_sha256": "473c705225373fa9644e73c059f9deb242d4e33b670ec87d59fe8469f7004b20",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/035df7671bff0884.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁ_seed__mutmut_5",
+      "status": "equivalent",
+      "rationale": "UTF-8 and utf-8 resolve to the same Python codec for every input byte sequence. This changes only the case of the explicit encoding name, not its presence. The same Unicode text or decoding failure reaches the same existing handler under every host locale. The separate encoding=None variants are not equivalent and are covered by the new real-locale regressions.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "e54c03eed77181691ab9c5e7f270365b200266a91fe7057f4c8125e395d1ca90",
+      "diff_sha256": "0359c3fcd44d384f7c68eaa2d0d5b594e29cc6eb7274094d7888de436336cf2c",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/64532dabbfc48c58.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁ_seed__mutmut_32",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "e54c03eed77181691ab9c5e7f270365b200266a91fe7057f4c8125e395d1ca90",
+      "diff_sha256": "5275c14c7b5958c871a634039c75f2a0ad204742d7b7a38ed6ea04cdf70006d3",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/f12691e310a617f6.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁ_seed__mutmut_33",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "e54c03eed77181691ab9c5e7f270365b200266a91fe7057f4c8125e395d1ca90",
+      "diff_sha256": "1678f2d29e3cbac4c58ac41e8afe3f2bbb343649fc2109d6962aaf038f699ed7",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/c3481d77b0c1994e.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁopen_slots__mutmut_7",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "36c52ea792b5a546d929709d533469b93877a1907777d42ec9fd82d9f9929aac",
+      "diff_sha256": "74a2a941dc946700c757acd15306790218a52272cdf6e76da185a1c495ce03f3",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/babe0002d2b53ff9.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁopen_slots__mutmut_8",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "36c52ea792b5a546d929709d533469b93877a1907777d42ec9fd82d9f9929aac",
+      "diff_sha256": "cbc08b564a1d60bcdbe3ff6fcb4bb0041af78dd4ea9abb207b0026a575db8bed",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/bf6692a7c72b20ee.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁopen_slots__mutmut_10",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "36c52ea792b5a546d929709d533469b93877a1907777d42ec9fd82d9f9929aac",
+      "diff_sha256": "282b6fe7d97cab811295c7429314ab72d5ca741ba5f5287005110497421f88f5",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/de86b198f35fe9dd.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁopen_slots__mutmut_11",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "36c52ea792b5a546d929709d533469b93877a1907777d42ec9fd82d9f9929aac",
+      "diff_sha256": "f7b54eb30d9bcecf11bd9b126df52339f13066d62d001d637d31ac5b8bb524da",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/d9f9d3e21d0f5e1a.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁopen_slots__mutmut_13",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "36c52ea792b5a546d929709d533469b93877a1907777d42ec9fd82d9f9929aac",
+      "diff_sha256": "6ca2477367fdc9849e7a5779f17a25cdf7273a5d38f7b8d0b917ab36ac325ede",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/5a105239a4589873.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁopen_slots__mutmut_14",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "36c52ea792b5a546d929709d533469b93877a1907777d42ec9fd82d9f9929aac",
+      "diff_sha256": "0005592685766c7ca1df65b29585b8e921bc700b2eea3e18b269c0902e539139",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/e194a32b5215c6f4.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁappointment__mutmut_7",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "884c6ae6fa06527350c7b5bfde745e14fb5d2287f0ac275f5812c9360e202718",
+      "diff_sha256": "37b76eb047beb24287c875728ea8683b6e166a7b230337d25b3ee7102e5adce3",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/c155c5ba103951d2.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁappointment__mutmut_8",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "884c6ae6fa06527350c7b5bfde745e14fb5d2287f0ac275f5812c9360e202718",
+      "diff_sha256": "1cbc05ecd02ccd96a0a8a9373ecbf6d353f3a8435479055001de2ffc2cdc5476",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/e6925134361f4aaf.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁbook__mutmut_26",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "f62bfad32e67a5a80ed5da82a174d01f85e765d7cf1d7a42d85a60adf6ebe455",
+      "diff_sha256": "599551dd2b15a16646067a6307f865e43c467a533d77388efb5189410e5c4d06",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/f71ffaf720b3b321.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁbook__mutmut_27",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "f62bfad32e67a5a80ed5da82a174d01f85e765d7cf1d7a42d85a60adf6ebe455",
+      "diff_sha256": "41d59bce763a33f3e48e267a569dcdc2a799c2e0ed0011e2001950ac8dc371cb",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/34adf8e25186c081.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁbook__mutmut_29",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "f62bfad32e67a5a80ed5da82a174d01f85e765d7cf1d7a42d85a60adf6ebe455",
+      "diff_sha256": "90ccff431077d713e130302581391ef3f38d99f7d87677c880794ba6653d84bc",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/b38578a28d30aa42.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁbook__mutmut_30",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "f62bfad32e67a5a80ed5da82a174d01f85e765d7cf1d7a42d85a60adf6ebe455",
+      "diff_sha256": "fe772f64b90f3d3b61bbd0342c381a1198255d4667b60f04f8409d737b3de2d0",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/d32c907622c5b288.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁbook__mutmut_37",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "f62bfad32e67a5a80ed5da82a174d01f85e765d7cf1d7a42d85a60adf6ebe455",
+      "diff_sha256": "db81492f2baaa64924b791f3f75ac11741a96d9c61e6ff67fc4d5cd6bf05e3c7",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/1b488f8f2fcf6655.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁbook__mutmut_38",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "f62bfad32e67a5a80ed5da82a174d01f85e765d7cf1d7a42d85a60adf6ebe455",
+      "diff_sha256": "ba018da1494a72e34d4fe8a916c8af962e6bf9b4c3a92fbaeeb88e2586d04438",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/80d1de92c2303e5b.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁbook__mutmut_40",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "f62bfad32e67a5a80ed5da82a174d01f85e765d7cf1d7a42d85a60adf6ebe455",
+      "diff_sha256": "8c478a28a11e176a54214cf773dfa15ce83a62e6e6cfd67d257f9b949d1e3ec9",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/71f5466d38b8374b.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    },
+    {
+      "mutant_id": "backend_api.bookings.xǁBookingStoreǁbook__mutmut_41",
+      "status": "equivalent",
+      "rationale": "This exact diff changes only ASCII SQL keyword/identifier case. SQLite treats these unquoted keywords, table names and column identifiers case-insensitively. There are no SQL string-value literals in the changed fragment; placeholders and bound order/time/reference values are untouched. The store consumes positional result tuples, then constructs response keys in Python, so result-label case cannot escape. Query filtering, ordering, row counts, transaction rollback and the serialized booking/availability result are identical for every supported database state.",
+      "source_revision": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+      "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+      "source_path": "backend_api/bookings.py",
+      "source_sha256": "bcc3e322d546f2b38208ff8f856567525cf1b83fb9bb1e8b5e1cc2320b34d13f",
+      "function_ast_sha256": "f62bfad32e67a5a80ed5da82a174d01f85e765d7cf1d7a42d85a60adf6ebe455",
+      "diff_sha256": "c509bcfe27afa51d80e771306bed8a42d19097a14790f8d0b5e17ce0a7699446",
+      "diff_evidence": "reports/mutation-evidence/full-022907f6/survivor-diffs/ad5f64b3d4df5f6f.diff",
+      "verifier": "Codex independent manual review of the original runtime implementation in this exact frozen snapshot",
+      "decision": "approved",
+      "test_evidence": [
+        "reports/mutation-evidence/full-022907f6/baseline.txt",
+        "reports/mutation-evidence/full-022907f6/mutation-run.txt",
+        "reports/mutation-evidence/full-022907f6/review-context.json"
+      ]
+    }
+  ],
+  "function_approvals": [],
+  "proposals": []
+}

@@ -1,0 +1,12 @@
+# gateway.conversation.engine.xǁConversationEngineǁcreate_session__mutmut_60: survived
+--- gateway/conversation/engine.py
++++ gateway/conversation/engine.py
+@@ -19,7 +19,7 @@
+         messages=[
+             _message(
+                 "assistant",
+-                text("greeting", "en"),
++                text("greeting", ),
+                 input_mode="system",
+                 created_at=now,
+                 language="en",

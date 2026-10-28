@@ -1,0 +1,12 @@
+# gateway.conversation.engine.xǁConversationEngineǁbook_slot__mutmut_52: survived
+--- gateway/conversation/engine.py
++++ gateway/conversation/engine.py
+@@ -26,7 +26,7 @@
+                 raise
+             record = await self.customer_data.installation(order_number)
+             appointment = None if record is None else record.appointment
+-            if appointment is None or appointment.starts_at != command.starts_at:
++            if appointment is None or appointment.starts_at == command.starts_at:
+                 raise
+ 
+         now = _now()

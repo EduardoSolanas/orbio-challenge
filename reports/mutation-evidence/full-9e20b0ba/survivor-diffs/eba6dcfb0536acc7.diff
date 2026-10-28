@@ -1,0 +1,12 @@
+# gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_3: survived
+--- gateway/providers/speech_wav.py
++++ gateway/providers/speech_wav.py
+@@ -7,7 +7,7 @@
+     when they exceed the buffer.
+     """
+ 
+-    if len(data) < 12 or data[0:4] != b"RIFF" or data[8:12] != b"WAVE":
++    if len(data) <= 12 or data[0:4] != b"RIFF" or data[8:12] != b"WAVE":
+         raise ValueError("not a decodable PCM WAV")
+     offset = 12
+     geometry: tuple[int, int, int] | None = None

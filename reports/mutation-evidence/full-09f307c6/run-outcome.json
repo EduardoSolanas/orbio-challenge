@@ -1,0 +1,29 @@
+{
+  "complete_project_run": false,
+  "reason": "Superseded after a real run found four infinite-loop timeouts and two non-equivalent verification-flow survivors. Existing parser two-second budget is now enforced during each parser test; two functional integration cases cover continuation failure after a successful grant. A new full snapshot uses these repairs.",
+  "superseded_by_snapshot": "snapshot:9e20b0ba06ee69b3d759455dc231fc6d0b29ff6b1f5943bb39267ea33d8bb27b",
+  "framework_exit_code": 0,
+  "framework_counts": {
+    "generated": 5017,
+    "executed": 4405,
+    "killed": 4297,
+    "no_tests": 2,
+    "timeout": 4,
+    "suspicious": 0,
+    "survived": 102,
+    "skipped": 0,
+    "caught_by_type_check": 0
+  },
+  "status_counts": {
+    "killed": 4297,
+    "survived": 102,
+    "not checked": 612,
+    "no tests": 2,
+    "timeout": 4
+  },
+  "diagnostic_followup": {
+    "selected": 6,
+    "killed": 6,
+    "scope": "Parser-unit and verification-flow integration tests only; separate fresh diagnostic cache. Not a complete-project result."
+  }
+}

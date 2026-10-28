@@ -1,0 +1,9 @@
+# gateway.conversation.replay.x__digest__mutmut_22: survived
+--- gateway/conversation/replay.py
++++ gateway/conversation/replay.py
+@@ -5,4 +5,4 @@
+         separators=(",", ":"),
+         ensure_ascii=False,
+     )
+-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
++    return hashlib.sha256(canonical.encode("UTF-8")).hexdigest()

@@ -1,0 +1,11 @@
+# gateway.conversation.engine.xǁConversationEngineǁcreate_session__mutmut_24: survived
+--- gateway/conversation/engine.py
++++ gateway/conversation/engine.py
+@@ -8,7 +8,6 @@
+         created_at=now,
+         updated_at=now,
+         status="collecting",
+-        reply_language="en",
+         frustration_active=False,
+         slots=Slots(
+             order_number=None,

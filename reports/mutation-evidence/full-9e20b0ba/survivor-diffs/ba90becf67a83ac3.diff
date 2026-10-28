@@ -1,0 +1,11 @@
+# gateway.localization.x_build_summary__mutmut_33: survived
+--- gateway/localization.py
++++ gateway/localization.py
+@@ -8,6 +8,6 @@
+     values["category"] = text(category_key, language)
+     urgency_key = URGENCY_LABEL_KEYS.get(str(values["urgency"]))
+     if urgency_key is None:
+-        raise ValueError("summary requires a canonical urgency")
++        raise ValueError(None)
+     values["urgency"] = text(urgency_key, language)
+     return render("summary", language, values)

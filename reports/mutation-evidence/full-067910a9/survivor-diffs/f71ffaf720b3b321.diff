@@ -1,0 +1,12 @@
+# backend_api.bookings.xǁBookingStoreǁbook__mutmut_26: survived
+--- backend_api/bookings.py
++++ backend_api/bookings.py
+@@ -18,7 +18,7 @@
+         with self._db:
+             if current is not None:
+                 self._db.execute(
+-                    "UPDATE slots SET order_number = NULL, reference = NULL"
++                    "update slots set order_number = null, reference = null"
+                     " WHERE order_number = ?",
+                     (order_number,),
+                 )

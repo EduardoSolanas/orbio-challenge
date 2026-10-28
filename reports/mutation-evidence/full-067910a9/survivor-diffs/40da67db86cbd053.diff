@@ -1,0 +1,12 @@
+# gateway.conversation.engine.xǁConversationEngineǁbook_slot__mutmut_44: survived
+--- gateway/conversation/engine.py
++++ gateway/conversation/engine.py
+@@ -24,7 +24,7 @@
+             # A lost response may already have booked this exact window.
+             if error.code != "already_booked":
+                 raise
+-            record = await self.customer_data.installation(order_number)
++            record = None
+             appointment = None if record is None else record.appointment
+             if appointment is None or appointment.starts_at != command.starts_at:
+                 raise

@@ -1,0 +1,12 @@
+# backend_api.bookings.xǁBookingStoreǁ_seed__mutmut_3: survived
+--- backend_api/bookings.py
++++ backend_api/bookings.py
+@@ -1,7 +1,7 @@
+ def _seed(self) -> None:
+     """Add the weekday windows from ``availability.json`` for the coming days."""
+ 
+-    config = json.loads(AVAILABILITY_PATH.read_text("utf-8"))
++    config = json.loads(AVAILABILITY_PATH.read_text(None))
+     first = self._clock()
+     rows = []
+     for offset in range(config["days_ahead"] + 1):

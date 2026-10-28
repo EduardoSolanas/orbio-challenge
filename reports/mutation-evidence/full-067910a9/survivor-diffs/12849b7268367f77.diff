@@ -1,0 +1,9 @@
+# gateway.providers.client.xǁOpenAICompatibleProviderǁ_audio_operation__mutmut_30: survived
+--- gateway/providers/client.py
++++ gateway/providers/client.py
+@@ -16,4 +16,4 @@
+             body = await _success_json_body(response)
+         return parse(body)
+ 
+-    return await self._retry(budget, deadline, attempt, repair_on_invalid=False)
++    return await self._retry(budget, deadline, attempt, repair_on_invalid=True)

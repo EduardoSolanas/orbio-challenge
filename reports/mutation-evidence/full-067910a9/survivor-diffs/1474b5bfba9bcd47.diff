@@ -1,0 +1,12 @@
+# gateway.conversation.engine.xǁConversationEngineǁbook_slot__mutmut_41: survived
+--- gateway/conversation/engine.py
++++ gateway/conversation/engine.py
+@@ -22,7 +22,7 @@
+             )
+         except AppError as error:
+             # A lost response may already have booked this exact window.
+-            if error.code != "already_booked":
++            if error.code == "already_booked":
+                 raise
+             record = await self.customer_data.installation(order_number)
+             appointment = None if record is None else record.appointment

@@ -1,0 +1,12 @@
+# gateway.providers.client.xǁOpenAICompatibleProviderǁembed__mutmut_27: survived
+--- gateway/providers/client.py
++++ gateway/providers/client.py
+@@ -12,7 +12,7 @@
+         client = self._clients[EMBED_ROLE]
+ 
+         async def attempt(repair: bool) -> list[list[float]]:
+-            async with client.stream("POST", url, json=payload) as response:
++            async with client.stream("post", url, json=payload) as response:
+                 body = await _success_json_body(response)
+             return parse_embeddings(body, len(texts))
+ 

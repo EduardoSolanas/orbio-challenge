@@ -1,0 +1,12 @@
+# backend_api.bookings.xǁBookingStoreǁopen_slots__mutmut_7: survived
+--- backend_api/bookings.py
++++ backend_api/bookings.py
+@@ -2,7 +2,7 @@
+     """The next free windows, earliest first."""
+ 
+     rows = self._db.execute(
+-        "SELECT starts_at, ends_at FROM slots"
++        "select starts_at, ends_at from slots"
+         " WHERE order_number IS NULL AND starts_at > ?"
+         " ORDER BY starts_at LIMIT ?",
+         (self._clock().strftime(TIME_FORMAT), OFFER_LIMIT),

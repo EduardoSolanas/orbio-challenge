@@ -1,0 +1,12 @@
+# gateway.providers.wire.x_extract_json__mutmut_33: killed
+--- gateway/providers/wire.py
++++ gateway/providers/wire.py
+@@ -17,7 +17,7 @@
+         while skipped < len(spans) and spans[skipped][1] <= start:
+             skipped += 1
+         if skipped < len(spans) and spans[skipped][0] <= start:
+-            start = text.find("{", spans[skipped][1])
++            start = text.find("{", )
+             continue
+         attempts += 1
+         try:

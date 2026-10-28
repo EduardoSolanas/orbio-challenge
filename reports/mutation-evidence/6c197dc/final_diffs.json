@@ -1,0 +1,1217 @@
+[
+ {
+  "id": "gateway.backend_client.xǁBackendApiClientǁ__init____mutmut_13",
+  "status": "survived",
+  "diff_sha256": "295c821ac2e070d809855109547876cfe32a4c2bf5a182702f25216b4b99f3fc",
+  "removed": [
+   "base_url=base_url.rstrip(\"/\"),"
+  ],
+  "added": [
+   "base_url=base_url.rstrip(\"XX/XX\"),"
+  ]
+ },
+ {
+  "id": "gateway.backend_client.xǁBackendApiClientǁ__init____mutmut_16",
+  "status": "survived",
+  "diff_sha256": "22843c66df414589c13365a644bcf551ef65d0088a1db6690b7f74fbea487747",
+  "removed": [
+   "headers={\"Accept\": \"application/json\"},"
+  ],
+  "added": [
+   "headers={\"accept\": \"application/json\"},"
+  ]
+ },
+ {
+  "id": "gateway.backend_client.xǁBackendApiClientǁ__init____mutmut_17",
+  "status": "survived",
+  "diff_sha256": "34341107c165911fd92892a021fd2edc918d8a8071aff620e7f3e0334b1865a0",
+  "removed": [
+   "headers={\"Accept\": \"application/json\"},"
+  ],
+  "added": [
+   "headers={\"ACCEPT\": \"application/json\"},"
+  ]
+ },
+ {
+  "id": "gateway.backend_client.xǁBackendApiClientǁverify_order__mutmut_16",
+  "status": "survived",
+  "diff_sha256": "13df12e4051e829602936e4ff71936289f68d69e0ecd48eebbf5a59abeeb9110",
+  "removed": [
+   "response = await self._request(\"POST\", VERIFICATIONS_PATH, json=payload)"
+  ],
+  "added": [
+   "response = await self._request(\"post\", VERIFICATIONS_PATH, json=payload)"
+  ]
+ },
+ {
+  "id": "gateway.backend_client.xǁBackendApiClientǁlookup_order__mutmut_9",
+  "status": "survived",
+  "diff_sha256": "1063369cfd56bc84a973567393a749b07a0ae82a725f0a00f6e4383fec84f3a0",
+  "removed": [
+   "\"GET\", f\"{ORDERS_PATH}/{quote(order_number, safe='')}\", allow_not_found=True"
+  ],
+  "added": [
+   "\"get\", f\"{ORDERS_PATH}/{quote(order_number, safe='')}\", allow_not_found=True"
+  ]
+ },
+ {
+  "id": "gateway.backend_client.xǁBackendApiClientǁlookup_order__mutmut_14",
+  "status": "survived",
+  "diff_sha256": "5108d6b15a5c4ca22ad73fe82c88f6ce7caf086d74bffdac287b3770cbbbcd63",
+  "removed": [
+   "\"GET\", f\"{ORDERS_PATH}/{quote(order_number, safe='')}\", allow_not_found=True"
+  ],
+  "added": [
+   "\"GET\", f\"{ORDERS_PATH}/{quote(order_number, safe='XXXX')}\", allow_not_found=True"
+  ]
+ },
+ {
+  "id": "gateway.backend_client.xǁBackendApiClientǁinstallation__mutmut_9",
+  "status": "survived",
+  "diff_sha256": "bcd764980ea88d0fc5722eb4aefc8f5a43498f599edcbaa181a74f3fba8045d0",
+  "removed": [
+   "f\"{ORDERS_PATH}/{quote(order_number, safe='')}/installation\","
+  ],
+  "added": [
+   "f\"{ORDERS_PATH}/{quote(order_number, safe='XXXX')}/installation\","
+  ]
+ },
+ {
+  "id": "gateway.backend_client.xǁBackendApiClientǁavailability__mutmut_10",
+  "status": "survived",
+  "diff_sha256": "c79395e795b9cfb05ce02eab280d7885ee98197c4922914db28d9d7dd570238b",
+  "removed": [
+   "Availability, await self._request(\"GET\", AVAILABILITY_PATH)"
+  ],
+  "added": [
+   "Availability, await self._request(\"get\", AVAILABILITY_PATH)"
+  ]
+ },
+ {
+  "id": "gateway.backend_client.xǁBackendApiClientǁbook__mutmut_17",
+  "status": "survived",
+  "diff_sha256": "759845f0637126fe7c985ad1ab999a3151a08d32ec6cd4f25f90f2c15a53caf6",
+  "removed": [
+   "code = None"
+  ],
+  "added": [
+   "code = \"\""
+  ]
+ },
+ {
+  "id": "gateway.backend_client.xǁBackendApiClientǁ_request__mutmut_2",
+  "status": "survived",
+  "diff_sha256": "06d42ad1bb7b253753cf5c718a057986743199a3c4e57acb72089a7aa9c50065",
+  "removed": [
+   "allow_conflict: bool = False,"
+  ],
+  "added": [
+   "allow_conflict: bool = True,"
+  ]
+ },
+ {
+  "id": "gateway.backend_client.xǁBackendApiClientǁ_request__mutmut_23",
+  "status": "survived",
+  "diff_sha256": "032360fd9842345a0677e377b15b913257b3937d6c4de92589e381a9ebeeeae3",
+  "removed": [
+   "if response.status_code == 409 and allow_conflict:"
+  ],
+  "added": [
+   "if response.status_code == 409 or allow_conflict:"
+  ]
+ },
+ {
+  "id": "gateway.config.x__embed__mutmut_12",
+  "status": "survived",
+  "diff_sha256": "529251a0caf10ee13ae700d925fde6cb6eda98caab03a57f49e129027ecc0fa4",
+  "removed": [
+   "if any(values[field] == \"\" for field in (\"BASE_URL\", \"MODEL\", \"AUTH_MODE\")):"
+  ],
+  "added": [
+   "if any(values[field] == \"XXXX\" for field in (\"BASE_URL\", \"MODEL\", \"AUTH_MODE\")):"
+  ]
+ },
+ {
+  "id": "gateway.config.x__tts_es__mutmut_12",
+  "status": "survived",
+  "diff_sha256": "86f6570acfe56fd1d01f1e92e921c09bd9209ea92aa78e27ff2554ccbc8fbfe1",
+  "removed": [
+   "if any(values[field] == \"\" for field in TTS_ES_FIELDS if field != \"API_KEY\"):"
+  ],
+  "added": [
+   "if any(values[field] == \"XXXX\" for field in TTS_ES_FIELDS if field != \"API_KEY\"):"
+  ]
+ },
+ {
+  "id": "gateway.localization.x_build_summary__mutmut_17",
+  "status": "survived",
+  "diff_sha256": "ac65dfe28c84ac3bb32de26226f1e86080208812e6642a73a9c0dae4a87e49f3",
+  "removed": [
+   "raise ValueError(\"summary requires a canonical support category\")"
+  ],
+  "added": [
+   "raise ValueError(None)"
+  ]
+ },
+ {
+  "id": "gateway.localization.x_build_summary__mutmut_18",
+  "status": "survived",
+  "diff_sha256": "3288c7d6882f46acf70453cf99504379a94b0381099a39c42033edb763926813",
+  "removed": [
+   "raise ValueError(\"summary requires a canonical support category\")"
+  ],
+  "added": [
+   "raise ValueError(\"XXsummary requires a canonical support categoryXX\")"
+  ]
+ },
+ {
+  "id": "gateway.localization.x_build_summary__mutmut_19",
+  "status": "survived",
+  "diff_sha256": "52242116e75c930e86b274ff476b998799c87ac01b9b6ef3658264e4a56c30b1",
+  "removed": [
+   "raise ValueError(\"summary requires a canonical support category\")"
+  ],
+  "added": [
+   "raise ValueError(\"SUMMARY REQUIRES A CANONICAL SUPPORT CATEGORY\")"
+  ]
+ },
+ {
+  "id": "gateway.localization.x_request_reference__mutmut_10",
+  "status": "survived",
+  "diff_sha256": "d5fa60e934f68e3f0088d258f6be1806560abea3745f33233b6b02a71070d83e",
+  "removed": [
+   "return \"REQ-\" + str(session_id).replace(\"-\", \"\")[:8].upper()"
+  ],
+  "added": [
+   "return \"REQ-\" + str(session_id).replace(\"XX-XX\", \"\")[:8].upper()"
+  ]
+ },
+ {
+  "id": "gateway.localization.x_request_reference__mutmut_11",
+  "status": "survived",
+  "diff_sha256": "e24efb975f4669c21c208451b5b13914abe75b05794e6b0f1f079fd04a1bbab0",
+  "removed": [
+   "return \"REQ-\" + str(session_id).replace(\"-\", \"\")[:8].upper()"
+  ],
+  "added": [
+   "return \"REQ-\" + str(session_id).replace(\"-\", \"XXXX\")[:8].upper()"
+  ]
+ },
+ {
+  "id": "gateway.storage.x_migrate_session_document__mutmut_7",
+  "status": "survived",
+  "diff_sha256": "cb519c3f4939a6d5feaf005a4cccd7f0160477c3fd2b0fb2ba45abff85e768d4",
+  "removed": [
+   "raise ValueError(\"unsupported session schema_version\")"
+  ],
+  "added": [
+   "raise ValueError(None)"
+  ]
+ },
+ {
+  "id": "gateway.storage.x_migrate_session_document__mutmut_8",
+  "status": "survived",
+  "diff_sha256": "50d007ec86cbf7b41cb8be42dc535380d86847385215aab41371fefd1762b533",
+  "removed": [
+   "raise ValueError(\"unsupported session schema_version\")"
+  ],
+  "added": [
+   "raise ValueError(\"XXunsupported session schema_versionXX\")"
+  ]
+ },
+ {
+  "id": "gateway.storage.x_migrate_session_document__mutmut_9",
+  "status": "survived",
+  "diff_sha256": "7df9101f539e53965f368c0099f2e588b9035cacc746898906f89bc34b3516d7",
+  "removed": [
+   "raise ValueError(\"unsupported session schema_version\")"
+  ],
+  "added": [
+   "raise ValueError(\"UNSUPPORTED SESSION SCHEMA_VERSION\")"
+  ]
+ },
+ {
+  "id": "gateway.storage.x_migrate_session_document__mutmut_18",
+  "status": "survived",
+  "diff_sha256": "d5aecaa92598128181620a15e4672335b3b616ecf85ac429463fdafd6ada22a6",
+  "removed": [
+   "raise ValueError(\"unsupported session schema_version\")"
+  ],
+  "added": [
+   "raise ValueError(None)"
+  ]
+ },
+ {
+  "id": "gateway.storage.x_migrate_session_document__mutmut_19",
+  "status": "survived",
+  "diff_sha256": "d73d79f967409721811b2981906cdbe69d7a2ac673b7ee7c743c5582a3db448f",
+  "removed": [
+   "raise ValueError(\"unsupported session schema_version\")"
+  ],
+  "added": [
+   "raise ValueError(\"XXunsupported session schema_versionXX\")"
+  ]
+ },
+ {
+  "id": "gateway.storage.x_migrate_session_document__mutmut_20",
+  "status": "survived",
+  "diff_sha256": "9f4e419ce0f14f8d8050355ef8dc2c50dc01a10858a3d1a7a80a5f724bbd9ff3",
+  "removed": [
+   "raise ValueError(\"unsupported session schema_version\")"
+  ],
+  "added": [
+   "raise ValueError(\"UNSUPPORTED SESSION SCHEMA_VERSION\")"
+  ]
+ },
+ {
+  "id": "gateway.storage.x__upgrade_legacy_document__mutmut_33",
+  "status": "survived",
+  "diff_sha256": "345c20eba98daf287e9b72cb9f574ad4163d19ea3201adeacb9501be96a0b3a2",
+  "removed": [
+   "message.setdefault(\"sentiment\", None)"
+  ],
+  "added": [
+   "message.setdefault(\"sentiment\", )"
+  ]
+ },
+ {
+  "id": "gateway.storage.x__upgrade_legacy_document__mutmut_38",
+  "status": "survived",
+  "diff_sha256": "76996730731b50581ce38646d32195e437e6108d67527893ba55d28f8125bbb3",
+  "removed": [
+   "message.setdefault(\"frustration\", None)"
+  ],
+  "added": [
+   "message.setdefault(\"frustration\", )"
+  ]
+ },
+ {
+  "id": "gateway.storage.x__fill_emotion_metadata__mutmut_14",
+  "status": "survived",
+  "diff_sha256": "89e5f22582f1d24f101aa3e29d4e2bb61d7e04bb769acc4be82ed512b93122f3",
+  "removed": [
+   "message.setdefault(\"sentiment\", None)"
+  ],
+  "added": [
+   "message.setdefault(\"sentiment\", )"
+  ]
+ },
+ {
+  "id": "gateway.storage.x__fill_emotion_metadata__mutmut_19",
+  "status": "survived",
+  "diff_sha256": "d118ee9d6030e4973a3ae30831cc3b38322a26a50fbb80d7109ee99e047e5f3f",
+  "removed": [
+   "message.setdefault(\"frustration\", None)"
+  ],
+  "added": [
+   "message.setdefault(\"frustration\", )"
+  ]
+ },
+ {
+  "id": "gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_13",
+  "status": "survived",
+  "diff_sha256": "c4e9ebc3616eab422078a9e1bfcc03d25056a33076e4632ea189b6120edb8b4b",
+  "removed": [
+   "raise ValueError(\"session document must be a JSON object\")"
+  ],
+  "added": [
+   "raise ValueError(None)"
+  ]
+ },
+ {
+  "id": "gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_14",
+  "status": "survived",
+  "diff_sha256": "e343438a3b8a6e85f0ceeea31cc1b79d38eeb5ab155b081d76e9f79dfc325dc9",
+  "removed": [
+   "raise ValueError(\"session document must be a JSON object\")"
+  ],
+  "added": [
+   "raise ValueError(\"XXsession document must be a JSON objectXX\")"
+  ]
+ },
+ {
+  "id": "gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_15",
+  "status": "survived",
+  "diff_sha256": "8504427670567c9e1a5804c4177b3d33ca65287eb4d3d1906e750d6a721ffa2f",
+  "removed": [
+   "raise ValueError(\"session document must be a JSON object\")"
+  ],
+  "added": [
+   "raise ValueError(\"session document must be a json object\")"
+  ]
+ },
+ {
+  "id": "gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_16",
+  "status": "survived",
+  "diff_sha256": "31289efb11be57e7df70f51a0ce8f1a396adf0c8eb5f47985ff8f79c618dad6d",
+  "removed": [
+   "raise ValueError(\"session document must be a JSON object\")"
+  ],
+  "added": [
+   "raise ValueError(\"SESSION DOCUMENT MUST BE A JSON OBJECT\")"
+  ]
+ },
+ {
+  "id": "gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_4",
+  "status": "survived",
+  "diff_sha256": "6330e615b560144e82adaaeef78650c2b5758811e9f5ff71a1514c07e5cfdd7e",
+  "removed": [
+   "session.model_dump(mode=\"json\"), ensure_ascii=False, indent=2"
+  ],
+  "added": [
+   "session.model_dump(mode=\"json\"), ensure_ascii=None, indent=2"
+  ]
+ },
+ {
+  "id": "gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_15",
+  "status": "survived",
+  "diff_sha256": "2ef1b62035cd5d6aefb07de9fff40afc5f0f7a9868c063257ce919241d177ef1",
+  "removed": [
+   ").encode(\"utf-8\")"
+  ],
+  "added": [
+   ").encode(\"UTF-8\")"
+  ]
+ },
+ {
+  "id": "gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_17",
+  "status": "survived",
+  "diff_sha256": "880313c921ef76950c599ee36e30adc4743608dbfe80a66b8952cfdffaadfde6",
+  "removed": [
+   "staged_name: str | None = None"
+  ],
+  "added": [
+   "staged_name: str | None = \"\""
+  ]
+ },
+ {
+  "id": "gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_20",
+  "status": "survived",
+  "diff_sha256": "551ab359f1adc8e14f80d7f89b8c8c2154b4ac885d4799f38e45d1316f1f78cc",
+  "removed": [
+   "handle = tempfile.NamedTemporaryFile(dir=self.directory, delete=False)"
+  ],
+  "added": [
+   "handle = tempfile.NamedTemporaryFile(dir=self.directory, delete=None)"
+  ]
+ },
+ {
+  "id": "gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_33",
+  "status": "survived",
+  "diff_sha256": "dd766f4c3be9d59c82495fa7de971c8efac3ad105913940af5d94e068cce98f7",
+  "removed": [
+   "staged_name = None"
+  ],
+  "added": [
+   "staged_name = \"\""
+  ]
+ },
+ {
+  "id": "gateway.storage.xǁJsonSessionRepositoryǁcheck_writable__mutmut_4",
+  "status": "survived",
+  "diff_sha256": "e805c5ba957797fae18e266f8a0cb96db8b4a827f9f20f9a2ece33d8cfd0352e",
+  "removed": [
+   "handle = tempfile.NamedTemporaryFile(dir=self.directory, delete=False)"
+  ],
+  "added": [
+   "handle = tempfile.NamedTemporaryFile(dir=self.directory, delete=None)"
+  ]
+ },
+ {
+  "id": "gateway.storage.xǁJsonSessionRepositoryǁcheck_writable__mutmut_9",
+  "status": "survived",
+  "diff_sha256": "a5b89d32d61ba451f93e80a8a66179355940e608c0d795144083d83821390f9e",
+  "removed": [
+   "handle.write(b\"\")"
+  ],
+  "added": [
+   "handle.write(b\"XXXX\")"
+  ]
+ },
+ {
+  "id": "gateway.conversation.engine.xǁConversationEngineǁcreate_session__mutmut_24",
+  "status": "survived",
+  "diff_sha256": "c19d8df6d8a184c495a65cd98246917de3af5223c100f9ed074e99cddc1ffc25",
+  "removed": [
+   "reply_language=\"en\","
+  ],
+  "added": []
+ },
+ {
+  "id": "gateway.conversation.engine.xǁConversationEngineǁcreate_session__mutmut_60",
+  "status": "survived",
+  "diff_sha256": "1cfd99b5814dc244bdbe67c3d68d8d0a630b5a8e3b19c6de45d5a1b958124bd6",
+  "removed": [
+   "text(\"greeting\", \"en\"),"
+  ],
+  "added": [
+   "text(\"greeting\", ),"
+  ]
+ },
+ {
+  "id": "gateway.conversation.engine.xǁConversationEngineǁ_select_plan__mutmut_91",
+  "status": "survived",
+  "diff_sha256": "e33c7f3f21620d2285feda222212fb71197b151266546a83616338a32a8c7090",
+  "removed": [
+   "review_rejected=review_rejected,"
+  ],
+  "added": [
+   "review_rejected=None,"
+  ]
+ },
+ {
+  "id": "gateway.conversation.engine.xǁConversationEngineǁ_select_plan__mutmut_92",
+  "status": "survived",
+  "diff_sha256": "baef110018eb928c7a0d79476b65394f8a2f502ce98c69e425c4e124d78faf1f",
+  "removed": [
+   "recovered_this_turn=recovered_this_turn,"
+  ],
+  "added": [
+   "recovered_this_turn=None,"
+  ]
+ },
+ {
+  "id": "gateway.conversation.engine.xǁConversationEngineǁ_extract_with_safety_triage__mutmut_22",
+  "status": "survived",
+  "diff_sha256": "449ba7880dafd0f5db134d00cfd087c95092b30408a768c47ce0295e53297b56",
+  "removed": [
+   "if not extraction_call.done():"
+  ],
+  "added": [
+   "if extraction_call.done():"
+  ]
+ },
+ {
+  "id": "gateway.conversation.engine.xǁConversationEngineǁconfirm__mutmut_62",
+  "status": "survived",
+  "diff_sha256": "6add6b2ca48ecfa723cb5136cf59430b5e640e8b474c77c64cee2385b97fa740",
+  "removed": [
+   "pending_clarifications={},"
+  ],
+  "added": []
+ },
+ {
+  "id": "gateway.conversation.engine.xǁConversationEngineǁconfirm__mutmut_64",
+  "status": "survived",
+  "diff_sha256": "9f287420693e323c71a6bdebc61deb4f6a741b042047a47fc98edd69c3599bcc",
+  "removed": [
+   "citations=[],",
+   ")"
+  ],
+  "added": [
+   ")"
+  ]
+ },
+ {
+  "id": "gateway.conversation.engine.xǁConversationEngineǁ_continue_flow__mutmut_29",
+  "status": "survived",
+  "diff_sha256": "c51cb0f1d61c14dd9e1b729b248177224f6d956af38173057b1a5ce39c93ad1c",
+  "removed": [
+   "order_verification_required=outcome.verification_required,"
+  ],
+  "added": []
+ },
+ {
+  "id": "gateway.conversation.engine.xǁConversationEngineǁ_continue_flow__mutmut_41",
+  "status": "survived",
+  "diff_sha256": "9ef29980e0464dee8e9c622a29f3475c07aecd92bc2bdd2bb9c5b1e0a9e79b81",
+  "removed": [
+   "committed.flow = flow_state_after(flow, outcome)"
+  ],
+  "added": [
+   "committed.flow = None"
+  ]
+ },
+ {
+  "id": "gateway.conversation.engine.xǁConversationEngineǁ_continue_flow__mutmut_42",
+  "status": "survived",
+  "diff_sha256": "65e52697199ab5bfd20b6e4ea19e579d3c09c83ac5db582902946c96ad016730",
+  "removed": [
+   "committed.flow = flow_state_after(flow, outcome)"
+  ],
+  "added": [
+   "committed.flow = flow_state_after(None, outcome)"
+  ]
+ },
+ {
+  "id": "gateway.conversation.engine.xǁConversationEngineǁbook_slot__mutmut_5",
+  "status": "survived",
+  "diff_sha256": "06158d0841346e4f9705f3018500eb1d31269deafa3150be66570bc12b9d4c13",
+  "removed": [
+   "digest = booking_digest(session_id, command)"
+  ],
+  "added": [
+   "digest = booking_digest(None, command)"
+  ]
+ },
+ {
+  "id": "gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_34",
+  "status": "survived",
+  "diff_sha256": "634511483e9dc566c136f0f397c2011029ea8c7cdfb8e462ef3b9ae4fe5900ff",
+  "removed": [
+   "review_rejected=review_rejected,"
+  ],
+  "added": [
+   "review_rejected=None,"
+  ]
+ },
+ {
+  "id": "gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_35",
+  "status": "survived",
+  "diff_sha256": "9ef4e36988991f28fda8664c91f9caec4a4751611983a0535ee98a25bff01e58",
+  "removed": [
+   "recovered_this_turn=recovered_this_turn,"
+  ],
+  "added": [
+   "recovered_this_turn=None,"
+  ]
+ },
+ {
+  "id": "gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_48",
+  "status": "survived",
+  "diff_sha256": "0f881c49a6326c54ec8beab2f5e4c663a29da317b2f62d28d8d926cd72279ef4",
+  "removed": [
+   "completed = False"
+  ],
+  "added": [
+   "completed = None"
+  ]
+ },
+ {
+  "id": "gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_50",
+  "status": "survived",
+  "diff_sha256": "6f6a98dd0678afb46c03c51fb6f4d9b4e50478197bfa1b7736b25b135277be8b",
+  "removed": [
+   "intake_directed = False"
+  ],
+  "added": [
+   "intake_directed = None"
+  ]
+ },
+ {
+  "id": "gateway.conversation.engine.xǁConversationEngineǁ_answer_policy_question__mutmut_43",
+  "status": "survived",
+  "diff_sha256": "19cb26bf91ce354058f4a33038d32ac9e19b3c87767376ea1424dd609b34455c",
+  "removed": [
+   "return text(\"abstention\", reply_language), ()"
+  ],
+  "added": [
+   "return text(\"abstention\", ), ()"
+  ]
+ },
+ {
+  "id": "gateway.conversation.flows.x_collect_details__mutmut_15",
+  "status": "survived",
+  "diff_sha256": "7be3eaca5ce6442f3960d99864882197a9276779c516ea82f4d076fa88da2e3b",
+  "removed": [
+   "return StepResult() if missing is None else StepResult(missing)"
+  ],
+  "added": [
+   "return StepResult() if (missing is None) and False else StepResult(missing)"
+  ]
+ },
+ {
+  "id": "gateway.conversation.flows.x_load_flows__mutmut_6",
+  "status": "survived",
+  "diff_sha256": "9daff05a09157a5de1e231760d5f362c9a34e8bffaa8993621d93131291c9555",
+  "removed": [
+   "raise FlowsInvalid(\"the flows file must be a non-empty object of flows\")"
+  ],
+  "added": [
+   "raise FlowsInvalid(\"XXthe flows file must be a non-empty object of flowsXX\")"
+  ]
+ },
+ {
+  "id": "gateway.conversation.flows.x_load_flows__mutmut_61",
+  "status": "survived",
+  "diff_sha256": "13b84a604e99acdd7dd981b66a80e5adbd0a21d4bac3150c6b07491ae3cfefdc",
+  "removed": [
+   "raise FlowsInvalid(\"two flows start on the same intent\")"
+  ],
+  "added": [
+   "raise FlowsInvalid(\"XXtwo flows start on the same intentXX\")"
+  ]
+ },
+ {
+  "id": "gateway.conversation.replay.x__digest__mutmut_5",
+  "status": "survived",
+  "diff_sha256": "d85281299484ed6baeadc3836381ee4d43cdb0eb37c8d067408e8c572424bf0b",
+  "removed": [
+   "ensure_ascii=False,"
+  ],
+  "added": [
+   "ensure_ascii=None,"
+  ]
+ },
+ {
+  "id": "gateway.conversation.replay.x__digest__mutmut_22",
+  "status": "survived",
+  "diff_sha256": "6ab6bdb46192eee99b275090b40e2e5d2a449ba9cf760658cb8c232fcc5c48e6",
+  "removed": [
+   "return hashlib.sha256(canonical.encode(\"utf-8\")).hexdigest()"
+  ],
+  "added": [
+   "return hashlib.sha256(canonical.encode(\"UTF-8\")).hexdigest()"
+  ]
+ },
+ {
+  "id": "gateway.conversation.replay.x_booking_digest__mutmut_1",
+  "status": "survived",
+  "diff_sha256": "75475e66a00e79d279d8c4edce3641aa69841c5962d6fe94dea2beb460d5edac",
+  "removed": [
+   "BOOKING_ENDPOINT,"
+  ],
+  "added": [
+   "None,"
+  ]
+ },
+ {
+  "id": "gateway.conversation.replay.x_booking_digest__mutmut_7",
+  "status": "survived",
+  "diff_sha256": "580b87f53dab0c78109f0b98128667994514cbec33ef45a1bcf5b8c2f40cda96",
+  "removed": [
+   "\"request_id\": str(command.request_id),"
+  ],
+  "added": [
+   "\"XXrequest_idXX\": str(command.request_id),"
+  ]
+ },
+ {
+  "id": "gateway.conversation.replay.x_booking_digest__mutmut_8",
+  "status": "survived",
+  "diff_sha256": "1074064eb0ea3268189190d2998c21bea4d740854693165deca1dae3e2a3f3b2",
+  "removed": [
+   "\"request_id\": str(command.request_id),"
+  ],
+  "added": [
+   "\"REQUEST_ID\": str(command.request_id),"
+  ]
+ },
+ {
+  "id": "gateway.conversation.replay.x_booking_digest__mutmut_10",
+  "status": "survived",
+  "diff_sha256": "0931c2d9497dcd9a13205322f6c82f6930b762b657062715cf8daa898e860e51",
+  "removed": [
+   "\"expected_revision\": command.expected_revision,"
+  ],
+  "added": [
+   "\"XXexpected_revisionXX\": command.expected_revision,"
+  ]
+ },
+ {
+  "id": "gateway.conversation.replay.x_booking_digest__mutmut_11",
+  "status": "survived",
+  "diff_sha256": "ec7b7b2f4114853d788459ff34ffc62ef9baee94863567d43efebebbd6838fd8",
+  "removed": [
+   "\"expected_revision\": command.expected_revision,"
+  ],
+  "added": [
+   "\"EXPECTED_REVISION\": command.expected_revision,"
+  ]
+ },
+ {
+  "id": "gateway.conversation.replay.x_booking_digest__mutmut_12",
+  "status": "survived",
+  "diff_sha256": "3475fbe57917153ed941af2e3d4369bb9e62ac1ea94be8292491be81ca9c24c4",
+  "removed": [
+   "\"starts_at\": command.starts_at,"
+  ],
+  "added": [
+   "\"XXstarts_atXX\": command.starts_at,"
+  ]
+ },
+ {
+  "id": "gateway.conversation.replay.x_booking_digest__mutmut_13",
+  "status": "survived",
+  "diff_sha256": "d6b4a11d654ebcd61c0cb7852c6345cfddc694e2aae163b62cdfbe8a013d071e",
+  "removed": [
+   "\"starts_at\": command.starts_at,"
+  ],
+  "added": [
+   "\"STARTS_AT\": command.starts_at,"
+  ]
+ },
+ {
+  "id": "gateway.conversation.visits.x_window_values__mutmut_7",
+  "status": "survived",
+  "diff_sha256": "341fc288c014bb9cf0e53d904d33c58e980a7f9955e59a7030e84f32b97638c5",
+  "removed": [
+   "return {\"date\": starts_at[:10], \"start\": starts_at[11:16], \"end\": ends_at[11:16]}"
+  ],
+  "added": [
+   "return {\"date\": starts_at[:10], \"start\": starts_at[11:17], \"end\": ends_at[11:16]}"
+  ]
+ },
+ {
+  "id": "gateway.conversation.visits.x_window_values__mutmut_11",
+  "status": "survived",
+  "diff_sha256": "87a8a52473b89301ce41267e869d93679cba74f0bf04651e8c6cd2626c399d56",
+  "removed": [
+   "return {\"date\": starts_at[:10], \"start\": starts_at[11:16], \"end\": ends_at[11:16]}"
+  ],
+  "added": [
+   "return {\"date\": starts_at[:10], \"start\": starts_at[11:16], \"end\": ends_at[11:17]}"
+  ]
+ },
+ {
+  "id": "gateway.knowledge.retrieval.x_load_knowledge__mutmut_13",
+  "status": "survived",
+  "diff_sha256": "cac1bd907a24290c6b4ab79554e499e941bb609a388c24e633728a9b5b5db958",
+  "removed": [
+   "document: Any = json.loads(raw.decode(\"utf-8\"))"
+  ],
+  "added": [
+   "document: Any = json.loads(raw.decode(\"UTF-8\"))"
+  ]
+ },
+ {
+  "id": "gateway.providers.audio.x__fmt_fields__mutmut_4",
+  "status": "survived",
+  "diff_sha256": "d164fa45c3e90e5f97d95563f5e2de8ebf1b256306158da325b5664e93b0b46a",
+  "removed": [
+   "while offset + 8 <= len(audio):"
+  ],
+  "added": [
+   "while offset + 9 <= len(audio):"
+  ]
+ },
+ {
+  "id": "gateway.providers.audio.x__fmt_fields__mutmut_5",
+  "status": "survived",
+  "diff_sha256": "66e24ef30b374dace4c811db45db62c6c3becb0ca9d66c382dc6fe2270fc5aa5",
+  "removed": [
+   "while offset + 8 <= len(audio):"
+  ],
+  "added": [
+   "while offset + 8 < len(audio):"
+  ]
+ },
+ {
+  "id": "gateway.providers.audio.x__fmt_fields__mutmut_38",
+  "status": "survived",
+  "diff_sha256": "ab961a2ab2c6943b35a234e84446ad61f1aa0397c0726400c479c1cca1eaddd0",
+  "removed": [
+   "\"<HHIIHH\", audio[payload_start : payload_start + FMT_CHUNK_SIZE]"
+  ],
+  "added": [
+   "\"<hhiihh\", audio[payload_start : payload_start + FMT_CHUNK_SIZE]"
+  ]
+ },
+ {
+  "id": "gateway.providers.audio.x_validate_wav__mutmut_48",
+  "status": "survived",
+  "diff_sha256": "9c14d6046c4625d8fde34faad5e2f388f6db6982cb1cadb51a598ca2abfc52f9",
+  "removed": [
+   "peak = 0"
+  ],
+  "added": [
+   "peak = 1"
+  ]
+ },
+ {
+  "id": "gateway.providers.audio.x_validate_wav__mutmut_59",
+  "status": "survived",
+  "diff_sha256": "1fe36d26b1d9ca8547c4a0ef7661ba4d5d71c9a481d79d8f8a730618e6a17d2f",
+  "removed": [
+   "magnitude = -sample if sample < 0 else sample"
+  ],
+  "added": [
+   "magnitude = -sample if sample <= 0 else sample"
+  ]
+ },
+ {
+  "id": "gateway.providers.audio.x_validate_wav__mutmut_60",
+  "status": "survived",
+  "diff_sha256": "8bd9e390c258185ba7fede6aa8894c2d7388d21935ce308db10e4e702937d037",
+  "removed": [
+   "magnitude = -sample if sample < 0 else sample"
+  ],
+  "added": [
+   "magnitude = -sample if sample < 1 else sample"
+  ]
+ },
+ {
+  "id": "gateway.providers.audio.x_validate_wav__mutmut_61",
+  "status": "survived",
+  "diff_sha256": "b89e8d996ca454d407561fd6b909e5b4f0f78b840dd1ae9f5d106124b21dafe3",
+  "removed": [
+   "if magnitude > peak:"
+  ],
+  "added": [
+   "if magnitude >= peak:"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁAIProviderǁsynthesize__mutmut_1",
+  "status": "no tests",
+  "diff_sha256": "42966b38b64ead060a33cd61d4a4771de09d230c2babba047ef38877fedf56e8",
+  "removed": [
+   "async def synthesize(self, text: str, language: str = \"en\") -> SynthesizedAudio: ..."
+  ],
+  "added": [
+   "async def synthesize(self, text: str, language: str = \"XXenXX\") -> SynthesizedAudio: ..."
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁAIProviderǁsynthesize__mutmut_2",
+  "status": "no tests",
+  "diff_sha256": "9f8cf6b625ccffa7e545d3b2a333135afe8329da20b35997c04529cb5f092a5d",
+  "removed": [
+   "async def synthesize(self, text: str, language: str = \"en\") -> SynthesizedAudio: ..."
+  ],
+  "added": [
+   "async def synthesize(self, text: str, language: str = \"EN\") -> SynthesizedAudio: ..."
+  ]
+ },
+ {
+  "id": "gateway.providers.client.x__media_type__mutmut_8",
+  "status": "survived",
+  "diff_sha256": "e3b22af944e10c089c937aada6ff06aec7bd06498181d59e72b79f27df084d08",
+  "removed": [
+   "return response.headers.get(\"content-type\", \"\").split(\";\")[0].strip().lower()"
+  ],
+  "added": [
+   "return response.headers.get(\"CONTENT-TYPE\", \"\").split(\";\")[0].strip().lower()"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.x__media_type__mutmut_9",
+  "status": "survived",
+  "diff_sha256": "559b8ff3ab3b2d0e17a17b53742aac0e3b06eec2e183c70e39ebd88e16ab1762",
+  "removed": [
+   "return response.headers.get(\"content-type\", \"\").split(\";\")[0].strip().lower()"
+  ],
+  "added": [
+   "return response.headers.get(\"content-type\", \"XXXX\").split(\";\")[0].strip().lower()"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.x__reject_encoded__mutmut_8",
+  "status": "survived",
+  "diff_sha256": "0a97702c88cf03edebd278285d565554c56f791ec0dc8ff9e3af6d967c169947",
+  "removed": [
+   "encoding = response.headers.get(\"content-encoding\", \"\").strip().lower()"
+  ],
+  "added": [
+   "encoding = response.headers.get(\"CONTENT-ENCODING\", \"\").strip().lower()"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.x__success_json_body__mutmut_14",
+  "status": "survived",
+  "diff_sha256": "7ae5a2690f2ec827f7b4807d01167bb7b8892182694786618569ca10d8561c07",
+  "removed": [
+   "return (await _read_bounded(response, SUCCESS_JSON_LIMIT)).decode(\"utf-8\")"
+  ],
+  "added": [
+   "return (await _read_bounded(response, SUCCESS_JSON_LIMIT)).decode(\"UTF-8\")"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ__init____mutmut_17",
+  "status": "survived",
+  "diff_sha256": "3994b8d951af8c07fb9dfbd2653f414fbf993aa0188a7360487d64f660fda50a",
+  "removed": [
+   "self._closed = False"
+  ],
+  "added": [
+   "self._closed = None"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_4",
+  "status": "survived",
+  "diff_sha256": "12f88b575d69b8ab10c75e37ef3b884c2b4e34d478ea372ef6f0ddef7a791016",
+  "removed": [
+   "headers = {\"Accept-Encoding\": \"identity\"}"
+  ],
+  "added": [
+   "headers = {\"accept-encoding\": \"identity\"}"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_5",
+  "status": "survived",
+  "diff_sha256": "49a90e5aa3798077d5dd1c55ec7ec723403b7be4fd496474b3639cfefa01711a",
+  "removed": [
+   "headers = {\"Accept-Encoding\": \"identity\"}"
+  ],
+  "added": [
+   "headers = {\"ACCEPT-ENCODING\": \"identity\"}"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_13",
+  "status": "survived",
+  "diff_sha256": "6c15a9352316642f900814b3f6a5229c682caa7f856db569a8b6ff1be8344d37",
+  "removed": [
+   "headers[\"Authorization\"] = f\"Bearer {profile.api_key}\""
+  ],
+  "added": [
+   "headers[\"authorization\"] = f\"Bearer {profile.api_key}\""
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_14",
+  "status": "survived",
+  "diff_sha256": "be9f7d06f5952e812311af57f431a42952a0c075c72ae75fde4cfd5183498057",
+  "removed": [
+   "headers[\"Authorization\"] = f\"Bearer {profile.api_key}\""
+  ],
+  "added": [
+   "headers[\"AUTHORIZATION\"] = f\"Bearer {profile.api_key}\""
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_21",
+  "status": "survived",
+  "diff_sha256": "df96ab4029e296e2b72d4337691cd0e6ddf5656977200836838c00813974e9bd",
+  "removed": [
+   "follow_redirects=False,"
+  ],
+  "added": []
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁembed__mutmut_27",
+  "status": "survived",
+  "diff_sha256": "0d068cfc299fb82ad0e159a40aa0fbd50fedb19d66b38984b207269fee51cef2",
+  "removed": [
+   "async with client.stream(\"POST\", url, json=payload) as response:"
+  ],
+  "added": [
+   "async with client.stream(\"post\", url, json=payload) as response:"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁembed__mutmut_37",
+  "status": "survived",
+  "diff_sha256": "71322b7cb906dddc2cbda1c13175ad0702472de98d4a69fcd14aba6ff8fc5291",
+  "removed": [
+   "TEXT_BUDGET, deadline, attempt, repair_on_invalid=False"
+  ],
+  "added": [
+   "TEXT_BUDGET, deadline, attempt, repair_on_invalid=None"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁembed__mutmut_42",
+  "status": "survived",
+  "diff_sha256": "7dc86656a4243b04996acf02909e724ed603c4624c2bdc0e9485bfd2b4604d2b",
+  "removed": [
+   "TEXT_BUDGET, deadline, attempt, repair_on_invalid=False"
+  ],
+  "added": [
+   "TEXT_BUDGET, deadline, attempt, repair_on_invalid=True"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_speech_request__mutmut_35",
+  "status": "survived",
+  "diff_sha256": "f71a2df7c3396ed6ee431e8eef8a11e46aa04a61f97c6e0c5e21c9ddf269f448",
+  "removed": [
+   "async with client.stream(\"POST\", url, json=payload) as response:"
+  ],
+  "added": [
+   "async with client.stream(\"post\", url, json=payload) as response:"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_text_operation__mutmut_16",
+  "status": "survived",
+  "diff_sha256": "e3687c9ccffb1907f5c0a2c61682215ae99e6f82df2281733cbd7cbdda38f309",
+  "removed": [
+   "async with client.stream(\"POST\", url, json=build(repair)) as response:"
+  ],
+  "added": [
+   "async with client.stream(\"post\", url, json=build(repair)) as response:"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_audio_operation__mutmut_18",
+  "status": "survived",
+  "diff_sha256": "b9dcaba20074741f6664ce9b01da48dc0948d63f26723f52b11a391e667d9e4e",
+  "removed": [
+   "async with client.stream(\"POST\", url, files=files, data=data) as response:"
+  ],
+  "added": [
+   "async with client.stream(\"post\", url, files=files, data=data) as response:"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_audio_operation__mutmut_25",
+  "status": "survived",
+  "diff_sha256": "428d58ddb6600d0afc13476c1234d0f1bb398a0d94896f7ea664cddccdb7f3fc",
+  "removed": [
+   "return await self._retry(budget, deadline, attempt, repair_on_invalid=False)"
+  ],
+  "added": [
+   "return await self._retry(budget, deadline, attempt, repair_on_invalid=None)"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_audio_operation__mutmut_30",
+  "status": "survived",
+  "diff_sha256": "af9276e888a457a804ee2f83801bdf31c5c6aef5896b98dcd32342d6e90e4daf",
+  "removed": [
+   "return await self._retry(budget, deadline, attempt, repair_on_invalid=False)"
+  ],
+  "added": [
+   "return await self._retry(budget, deadline, attempt, repair_on_invalid=True)"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_1",
+  "status": "survived",
+  "diff_sha256": "c50d33c9191cc37205b9f063eeb266cd680324608dfee680e0df3b6bf613cbaf",
+  "removed": [
+   "repair = False"
+  ],
+  "added": [
+   "repair = None"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_9",
+  "status": "survived",
+  "diff_sha256": "fa0629544e2fd2b477279a77152b4e2e793fc61c9aecfb510f8c097953230db4",
+  "removed": [
+   "for attempt_number in range(1, budget.attempts + 1):"
+  ],
+  "added": [
+   "for attempt_number in range(1, budget.attempts + 2):"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_45",
+  "status": "survived",
+  "diff_sha256": "11f7c37726896ade7166151c5362b74772c35ba71d22ca68289e09c7fae43ea3",
+  "removed": [
+   "raise app_error(\"provider_timeout\")"
+  ],
+  "added": [
+   "raise app_error(None)"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_46",
+  "status": "survived",
+  "diff_sha256": "d23875bacc1cbd0be18e37b936ebccfe5fd8ed40585ac8b8e8cc04f8d053638e",
+  "removed": [
+   "raise app_error(\"provider_timeout\")"
+  ],
+  "added": [
+   "raise app_error(\"XXprovider_timeoutXX\")"
+  ]
+ },
+ {
+  "id": "gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_47",
+  "status": "survived",
+  "diff_sha256": "be856ae538884432f1b6f7be42ed8d29df2c2602739b206b67508ccbc0f9a4fb",
+  "removed": [
+   "raise app_error(\"provider_timeout\")"
+  ],
+  "added": [
+   "raise app_error(\"PROVIDER_TIMEOUT\")"
+  ]
+ },
+ {
+  "id": "gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_3",
+  "status": "survived",
+  "diff_sha256": "29f132634f0e08e85af8c9fcf8f11524afea7133278dbd9ea4e531b538f17c1d",
+  "removed": [
+   "if len(data) < 12 or data[0:4] != b\"RIFF\" or data[8:12] != b\"WAVE\":"
+  ],
+  "added": [
+   "if len(data) <= 12 or data[0:4] != b\"RIFF\" or data[8:12] != b\"WAVE\":"
+  ]
+ },
+ {
+  "id": "gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_4",
+  "status": "survived",
+  "diff_sha256": "e8f2cf0b26e314ab140f78a8dd7f1a0b555f2cab590031a6e82354108784b4dc",
+  "removed": [
+   "if len(data) < 12 or data[0:4] != b\"RIFF\" or data[8:12] != b\"WAVE\":"
+  ],
+  "added": [
+   "if len(data) < 13 or data[0:4] != b\"RIFF\" or data[8:12] != b\"WAVE\":"
+  ]
+ },
+ {
+  "id": "gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_25",
+  "status": "survived",
+  "diff_sha256": "f30647a2257a1d9de9e46d45f5188b6e0625e6bd8fd4e1c095f47502605819cc",
+  "removed": [
+   "if offset + 8 > len(data):"
+  ],
+  "added": [
+   "if offset - 8 > len(data):"
+  ]
+ },
+ {
+  "id": "gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_53",
+  "status": "survived",
+  "diff_sha256": "9a070c7443623ccf7a3a89189c9cc70c248e4f45c267553baf69556400da08be",
+  "removed": [
+   "if size < 16 or body + size > len(data):"
+  ],
+  "added": [
+   "if size < 16 or body + size >= len(data):"
+  ]
+ },
+ {
+  "id": "gateway.providers.wire.x__schema_instruction__mutmut_3",
+  "status": "survived",
+  "diff_sha256": "1da5b71b0ae75a7b273b033cd08fde295c7947a8443bef12cc42434c4b5a8f0d",
+  "removed": [
+   "schema.model_json_schema(), ensure_ascii=False"
+  ],
+  "added": [
+   "schema.model_json_schema(), ensure_ascii=None"
+  ]
+ },
+ {
+  "id": "gateway.providers.wire.x__schema_instruction__mutmut_5",
+  "status": "survived",
+  "diff_sha256": "f665b63adb2adb52f157ef210553f71fc6b441cfb86375f13d179c1a1031c442",
+  "removed": [
+   "schema.model_json_schema(), ensure_ascii=False",
+   ")"
+  ],
+  "added": [
+   "schema.model_json_schema(), )"
+  ]
+ },
+ {
+  "id": "gateway.providers.wire.x__schema_instruction__mutmut_6",
+  "status": "survived",
+  "diff_sha256": "3f61950a7c0c8b5fbb935d68c97c151c567c74d7e0b0b01b8037e46a1ec88252",
+  "removed": [
+   "schema.model_json_schema(), ensure_ascii=False"
+  ],
+  "added": [
+   "schema.model_json_schema(), ensure_ascii=True"
+  ]
+ },
+ {
+  "id": "gateway.providers.wire.x_parse_embeddings__mutmut_27",
+  "status": "survived",
+  "diff_sha256": "633c44999dc9634b41a2ca197c19ac6fb68098c4cb7cb70c50cd0ec301681078",
+  "removed": [
+   "items, key=lambda entry: entry.get(\"index\", 0) if isinstance(entry, dict) else 0"
+  ],
+  "added": [
+   "items, key=lambda entry: entry.get(\"index\", 0) if isinstance(entry, dict) else 1"
+  ]
+ },
+ {
+  "id": "backend_api.bookings.xǁBookingRefusedǁ__init____mutmut_1",
+  "status": "survived",
+  "diff_sha256": "473c705225373fa9644e73c059f9deb242d4e33b670ec87d59fe8469f7004b20",
+  "removed": [
+   "super().__init__(code)"
+  ],
+  "added": [
+   "super().__init__(None)"
+  ]
+ }
+]

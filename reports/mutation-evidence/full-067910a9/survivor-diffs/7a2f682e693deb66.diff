@@ -1,0 +1,12 @@
+# gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_35: survived
+--- gateway/conversation/engine.py
++++ gateway/conversation/engine.py
+@@ -26,7 +26,7 @@
+             extraction,
+             outcome,
+             review_rejected=review_rejected,
+-            recovered_this_turn=recovered_this_turn,
++            recovered_this_turn=None,
+             current_review_valid=review_valid,
+         )
+         and not language_only

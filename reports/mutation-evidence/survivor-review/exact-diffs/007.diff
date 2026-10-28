@@ -1,0 +1,10 @@
+# gateway.backend_client.xǁBackendApiClientǁavailability__mutmut_10: survived
+--- gateway/backend_client.py
++++ gateway/backend_client.py
+@@ -2,5 +2,5 @@
+     """The next free technician windows."""
+ 
+     return self._validated(
+-        Availability, await self._request("GET", AVAILABILITY_PATH)
++        Availability, await self._request("get", AVAILABILITY_PATH)
+     )

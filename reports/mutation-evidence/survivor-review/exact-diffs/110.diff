@@ -1,0 +1,8 @@
+# backend_api.bookings.xǁBookingRefusedǁ__init____mutmut_1: survived
+--- backend_api/bookings.py
++++ backend_api/bookings.py
+@@ -1,3 +1,3 @@
+ def __init__(self, code: str) -> None:
+-    super().__init__(code)
++    super().__init__(None)
+     self.code = code

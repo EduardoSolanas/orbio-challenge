@@ -1,0 +1,9 @@
+# gateway.providers.wire.x__schema_instruction__mutmut_3: survived
+--- gateway/providers/wire.py
++++ gateway/providers/wire.py
+@@ -1,4 +1,4 @@
+ def _schema_instruction(schema: type[BaseModel]) -> str:
+     return SCHEMA_INSTRUCTION + json.dumps(
+-        schema.model_json_schema(), ensure_ascii=False
++        schema.model_json_schema(), ensure_ascii=None
+     )

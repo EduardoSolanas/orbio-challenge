@@ -1,0 +1,11 @@
+{
+  "base_revision": "56b0bfa74c6e646cfea328fe10f7653be0d1bce5",
+  "complete_project_run": false,
+  "files": {
+    "gateway/storage.py": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+    "tests/unit/gateway/test_storage.py": "78aefcb40978b0a5dcab8b69c1779e5796ac45a222937a58f03ce503afa5bed3",
+    "pyproject.toml": "ad17b859ebbe1fee1bfa02e331ef834c86f76f31205384ee2563e69c932353bf",
+    "requirements-dev.txt": "04401dccab11c22b8a6541edf762bee88bb50229e7d9c1c98c2734473859ffc9",
+    "tests/integration/startup/test_startup.py": "368c340c00f1b46bbe5679e910e6397086b9b197fd401362a3b39a669205b9bd"
+  }
+}

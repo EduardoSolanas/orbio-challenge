@@ -1,0 +1,12 @@
+# backend_api.bookings.xǁBookingStoreǁopen_slots__mutmut_13: survived
+--- backend_api/bookings.py
++++ backend_api/bookings.py
+@@ -4,7 +4,7 @@
+     rows = self._db.execute(
+         "SELECT starts_at, ends_at FROM slots"
+         " WHERE order_number IS NULL AND starts_at > ?"
+-        " ORDER BY starts_at LIMIT ?",
++        " order by starts_at limit ?",
+         (self._clock().strftime(TIME_FORMAT), OFFER_LIMIT),
+     )
+     return [{"starts_at": starts, "ends_at": ends} for starts, ends in rows]

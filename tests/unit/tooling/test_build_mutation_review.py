@@ -1,4 +1,4 @@
-"""scripts/build_mutation_review.py approves only mutants that provably cannot matter."""
+"""Mutation drafts must preserve evidence without approving their own exclusions."""
 
 from __future__ import annotations
 
@@ -8,170 +8,141 @@ from pathlib import Path
 
 import pytest
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(REPO_ROOT / "scripts"))
-
-import build_mutation_review as builder  # noqa: E402
-import check_mutation_report  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
+import build_mutation_review as builder
+import check_mutation_report as gate
 
 
-def mutant(name: str, removed: str, added: str, status: str = "survived") -> dict:
-    return {
-        "id": f"{name}__mutmut_1",
-        "status": status,
-        "diff_sha256": "ab" * 32,
-        "removed": [removed],
-        "added": [added],
-    }
-
-
-@pytest.mark.parametrize(
-    ("row", "rule"),
-    [
-        (
-            mutant(
-                "gateway.backend_client.xǁBackendApiClientǁ__init__",
-                'headers={"Accept": "application/json"},',
-                'headers={"accept": "application/json"},',
-            ),
-            "header name case",
-        ),
-        (
-            mutant(
-                "gateway.backend_client.xǁBackendApiClientǁverify_order",
-                'self._request("POST", PATH)',
-                'self._request("post", PATH)',
-            ),
-            "http method case",
-        ),
-        (
-            mutant(
-                "gateway.knowledge.retrieval.x_load_knowledge",
-                'raw.decode("utf-8")',
-                'raw.decode("UTF-8")',
-            ),
-            "codec name case",
-        ),
-        (
-            mutant(
-                "gateway.storage.x_migrate_session_document",
-                'raise ValueError("unsupported")',
-                "raise ValueError(None)",
-            ),
-            "exception message text",
-        ),
-        (
-            mutant(
-                "gateway.localization.x_request_reference",
-                'replace("-", "")',
-                'replace("XX-XX", "")',
-            ),
-            "request reference uses the first eight characters",
-        ),
-        (
-            mutant(
-                "gateway.conversation.engine.xǁConversationEngineǁ_plan_turn",
-                "recovered_this_turn=recovered_this_turn,",
-                "recovered_this_turn=None,",
-            ),
-            "recovered flag already implied by the review check",
-        ),
-        (
-            mutant(
-                "gateway.conversation.flows.x_collect_details",
-                "return StepResult() if missing is None else StepResult(missing)",
-                "return StepResult() if (missing is None) and False else StepResult(missing)",
-            ),
-            "empty reply is the default reply",
-        ),
-    ],
-)
-def test_a_mutant_that_cannot_change_behaviour_is_recognised(row, rule) -> None:
-    assert builder.classify(row).name == rule
-
-
-@pytest.mark.parametrize(
-    "row",
-    [
-        # the same kind of change in a function no rule names
-        mutant(
-            "gateway.conversation.engine.xǁConversationEngineǁ_plan_turn",
-            "completed = False",
-            "completed = True",
-        ),
-        # a boundary change that does alter behaviour
-        mutant(
-            "gateway.config.x__backend_api_timeout",
-            "if not 0 < value <= MAX:",
-            "if not 0 <= value <= MAX:",
-        ),
-        # a header-looking line whose change is more than case
-        mutant(
-            "gateway.providers.client.x__build_client",
-            'headers = {"Accept": "a"}',
-            'headers = {"Accept": "b"}',
-        ),
-    ],
-)
-def test_anything_that_could_matter_is_left_unapproved(row) -> None:
-    assert builder.classify(row) is None
-
-
-def test_the_review_it_writes_passes_the_report_gate_and_covers_each_decision(
-    tmp_path: Path,
-) -> None:
-    approved = mutant(
-        "gateway.localization.x_request_reference",
-        'replace("-", "")',
-        'replace("-", "XXXX")',
-    )
-    stub = mutant(
-        "gateway.providers.client.xǁAIProviderǁsynthesize",
-        'language: str = "en"',
-        'language: str = "EN"',
-        "no tests",
-    )
-    open_gap = mutant(
-        "gateway.conversation.engine.xǁConversationEngineǁ_plan_turn",
-        "completed = False",
-        "completed = True",
-    )
-    results = tmp_path / "results.txt"
-    results.write_text(
-        "\n".join(
-            f"    {row['id']}: {row['status']}" for row in (approved, stub, open_gap)
+def rows():
+    return [
+        dict(
+            id=f"{name}__mutmut_1",
+            status=status,
+            diff_sha256="ab" * 32,
+            removed=[before],
+            added=[after],
         )
-        + "\n",
-        "utf-8",
-    )
-    diffs = tmp_path / "diffs.json"
-    diffs.write_text(json.dumps([approved, stub, open_gap]), "utf-8")
-    out = tmp_path / "review.json"
-
-    builder.main(
-        [
-            "--results",
-            str(results),
-            "--diffs",
-            str(diffs),
-            "--revision",
-            "abc123",
-            "--out",
-            str(out),
-            "--run-commit",
-            "def456",
+        for name, status, before, after in [
+            (
+                "gateway.audio.x_validate_wav",
+                "survived",
+                "if peak < 128:",
+                "if peak <= 128:",
+            ),
+            (
+                "gateway.replay.x_booking_digest",
+                "survived",
+                "starts_at=command.starts_at",
+                "starts_at=None",
+            ),
+            (
+                "gateway.backend.x_init",
+                "survived",
+                'url.rstrip("/")',
+                'url.rstrip("XX/XX")',
+            ),
+            (
+                "gateway.client.x_synthesize",
+                "no tests",
+                'language="en"',
+                'language="EN"',
+            ),
         ]
-    )
+    ]
 
-    review = json.loads(out.read_text("utf-8"))
-    assert (
-        review["source_revision"] == "abc123"
-        and review["mutation_run_commit"] == "def456"
+
+def draft(tmp_path, diffs, results=None):
+    results = diffs if results is None else results
+    (tmp_path / "results.txt").write_text(
+        "\n".join(f"{r['id']}: {r['status']}" for r in results), "utf-8"
     )
-    assert {a["mutant_id"]: a["status"] for a in review["approvals"]} == {
-        approved["id"]: "equivalent",
-        stub["id"]: "invalid",
-    }
-    errors: list[str] = []
-    revision, by_mutant = check_mutation_report.validate_review(review, errors)
-    assert errors == [] and revision == "abc123" and len(by_mutant) == 2
+    (tmp_path / "diffs.json").write_text(json.dumps(diffs), "utf-8")
+    output = tmp_path / "review.json"
+    assert (
+        builder.main(
+            [
+                "--results",
+                str(tmp_path / "results.txt"),
+                "--diffs",
+                str(tmp_path / "diffs.json"),
+                "--revision",
+                "a" * 40,
+                "--run-commit",
+                "b" * 40,
+                "--out",
+                str(output),
+            ]
+        )
+        == 0
+    )
+    return output
+
+
+def test_drafts_preserve_all_non_killed_diffs_without_approving_or_classifying_them(
+    tmp_path,
+):
+    data = json.loads(draft(tmp_path, rows()).read_text("utf-8"))
+    assert data["approvals"] == []
+    assert data["source_revision"] == "a" * 40
+    assert data["mutation_run_commit"] == "b" * 40
+    assert len(data["proposals"]) == 4
+    for proposal, original in zip(data["proposals"], rows(), strict=True):
+        assert proposal["mutant_id"] == original["id"]
+        assert proposal["framework_status"] == original["status"]
+        assert proposal["removed"] == original["removed"]
+        assert proposal["added"] == original["added"]
+        assert proposal["diff_sha256"] == original["diff_sha256"]
+        assert proposal["decision"] == "pending"
+        assert "verifier" not in proposal
+        assert "status" not in proposal
+
+
+def test_a_draft_cannot_make_the_mutation_gate_pass(tmp_path, monkeypatch):
+    output = draft(tmp_path, rows())
+    log = tmp_path / "run.txt"
+    log.write_text("5/5 🎉 1 🫥 1 ⏰ 0 🤔 0 🙁 3 🔇 0 🧙 0", "utf-8")
+    monkeypatch.setattr(gate, "SUMMARY_PATH", tmp_path / "summary.json")
+    monkeypatch.setattr(gate, "gated_input_revision", lambda: "a" * 40)
+    assert (
+        gate.main(
+            [
+                "--results",
+                str(tmp_path / "results.txt"),
+                "--run-log",
+                str(log),
+                "--review",
+                str(output),
+            ]
+        )
+        == 1
+    )
+    summary = json.loads((tmp_path / "summary.json").read_text("utf-8"))
+    assert summary["gate"] == "blocked" and summary["unresolved"] == 4
+    assert summary["equivalent_survivors"] == summary["invalid_variants"] == 0
+
+
+def test_all_killed_results_need_no_exclusions(tmp_path):
+    data = json.loads(draft(tmp_path, []).read_text("utf-8"))
+    assert data["approvals"] == data["proposals"] == []
+
+
+@pytest.mark.parametrize(
+    "problem", ["missing", "duplicate", "unknown", "status", "digest", "diff_lines"]
+)
+def test_inconsistent_evidence_is_rejected_without_writing_a_review(tmp_path, problem):
+    results, diffs = rows(), rows()
+    if problem == "missing":
+        diffs.pop()
+    elif problem == "duplicate":
+        diffs.append(diffs[0])
+    elif problem == "unknown":
+        diffs[0]["id"] = "gateway.unknown__mutmut_99"
+    elif problem == "status":
+        diffs[0]["status"] = "killed"
+    elif problem == "digest":
+        diffs[0]["diff_sha256"] = "not-a-hash"
+    else:
+        diffs[0]["removed"] = "not a list of diff lines"
+    with pytest.raises(SystemExit):
+        draft(tmp_path, diffs, results)
+    assert not (tmp_path / "review.json").exists()

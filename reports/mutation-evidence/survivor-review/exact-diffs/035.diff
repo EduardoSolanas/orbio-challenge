@@ -1,0 +1,12 @@
+# gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_20: not checked
+--- gateway/storage.py
++++ gateway/storage.py
+@@ -5,7 +5,7 @@
+     handle = None
+     staged_name: str | None = None
+     try:
+-        handle = tempfile.NamedTemporaryFile(dir=self.directory, delete=False)
++        handle = tempfile.NamedTemporaryFile(dir=self.directory, delete=None)
+         staged_name = handle.name
+         handle.write(payload)
+         handle.flush()

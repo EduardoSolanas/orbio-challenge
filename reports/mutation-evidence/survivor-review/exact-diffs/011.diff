@@ -1,0 +1,12 @@
+# gateway.config.x__embed__mutmut_12: not checked
+--- gateway/config.py
++++ gateway/config.py
+@@ -4,7 +4,7 @@
+     values = {field: env.get(f"EMBED_{field}", "") for field in EMBED_FIELDS}
+     if all(value == "" for value in values.values()):
+         return None
+-    if any(values[field] == "" for field in ("BASE_URL", "MODEL", "AUTH_MODE")):
++    if any(values[field] == "XXXX" for field in ("BASE_URL", "MODEL", "AUTH_MODE")):
+         _fail()
+     _auth(values["AUTH_MODE"], values["API_KEY"])
+     return ServiceProfile(

@@ -1,0 +1,12 @@
+# gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_50: survived
+--- gateway/conversation/engine.py
++++ gateway/conversation/engine.py
+@@ -37,7 +37,7 @@
+     status = session.status
+     citations: tuple[Citation, ...] = ()
+     completed = False
+-    intake_directed = False
++    intake_directed = None
+ 
+     if extraction.intent == "reject":
+         intake_directed = True

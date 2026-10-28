@@ -1,0 +1,12 @@
+# gateway.providers.audio.x_validate_wav__mutmut_61: survived
+--- gateway/providers/audio.py
++++ gateway/providers/audio.py
+@@ -32,7 +32,7 @@
+     peak = 0
+     for (sample,) in struct.iter_unpack("<h", frame_bytes):
+         magnitude = -sample if sample < 0 else sample
+-        if magnitude > peak:
++        if magnitude >= peak:
+             peak = magnitude
+     if peak < SILENCE_PEAK_THRESHOLD:
+         _fail(SILENT_AUDIO)

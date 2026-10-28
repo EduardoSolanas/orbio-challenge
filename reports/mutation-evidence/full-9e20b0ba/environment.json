@@ -1,0 +1,11 @@
+{
+  "framework": "mutmut",
+  "framework_version": "3.8.0",
+  "python": "3.11.17 (main, Oct 21 2026, 03:33:15) [GCC 14.2.0]",
+  "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.41",
+  "locale": "C.UTF-8",
+  "default_file_encoding": "UTF-8",
+  "utf8_mode": 0,
+  "workers": 24,
+  "cache_started_empty": true
+}

@@ -1,0 +1,12 @@
+# gateway.conversation.replay.x_booking_digest__mutmut_7: killed
+--- gateway/conversation/replay.py
++++ gateway/conversation/replay.py
+@@ -3,7 +3,7 @@
+         BOOKING_ENDPOINT,
+         session_id,
+         {
+-            "request_id": str(command.request_id),
++            "XXrequest_idXX": str(command.request_id),
+             "expected_revision": command.expected_revision,
+             "starts_at": command.starts_at,
+         },

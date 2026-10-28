@@ -1,0 +1,122 @@
+[
+  {
+    "id": "gateway.backend_client.x\u01c1BackendApiClient\u01c1__init____mutmut_16",
+    "status": "survived",
+    "diff_sha256": "22843c66df414589c13365a644bcf551ef65d0088a1db6690b7f74fbea487747",
+    "removed": [
+      "        headers={\"Accept\": \"application/json\"},"
+    ],
+    "added": [
+      "        headers={\"accept\": \"application/json\"},"
+    ],
+    "raw_diff_file": "mutation-backend-survivor-01.diff"
+  },
+  {
+    "id": "gateway.backend_client.x\u01c1BackendApiClient\u01c1__init____mutmut_17",
+    "status": "survived",
+    "diff_sha256": "34341107c165911fd92892a021fd2edc918d8a8071aff620e7f3e0334b1865a0",
+    "removed": [
+      "        headers={\"Accept\": \"application/json\"},"
+    ],
+    "added": [
+      "        headers={\"ACCEPT\": \"application/json\"},"
+    ],
+    "raw_diff_file": "mutation-backend-survivor-02.diff"
+  },
+  {
+    "id": "gateway.backend_client.x\u01c1BackendApiClient\u01c1verify_order__mutmut_16",
+    "status": "survived",
+    "diff_sha256": "13df12e4051e829602936e4ff71936289f68d69e0ecd48eebbf5a59abeeb9110",
+    "removed": [
+      "    response = await self._request(\"POST\", VERIFICATIONS_PATH, json=payload)"
+    ],
+    "added": [
+      "    response = await self._request(\"post\", VERIFICATIONS_PATH, json=payload)"
+    ],
+    "raw_diff_file": "mutation-backend-survivor-03.diff"
+  },
+  {
+    "id": "gateway.backend_client.x\u01c1BackendApiClient\u01c1lookup_order__mutmut_9",
+    "status": "survived",
+    "diff_sha256": "1063369cfd56bc84a973567393a749b07a0ae82a725f0a00f6e4383fec84f3a0",
+    "removed": [
+      "        \"GET\", f\"{ORDERS_PATH}/{quote(order_number, safe='')}\", allow_not_found=True"
+    ],
+    "added": [
+      "        \"get\", f\"{ORDERS_PATH}/{quote(order_number, safe='')}\", allow_not_found=True"
+    ],
+    "raw_diff_file": "mutation-backend-survivor-04.diff"
+  },
+  {
+    "id": "gateway.backend_client.x\u01c1BackendApiClient\u01c1lookup_order__mutmut_14",
+    "status": "survived",
+    "diff_sha256": "5108d6b15a5c4ca22ad73fe82c88f6ce7caf086d74bffdac287b3770cbbbcd63",
+    "removed": [
+      "        \"GET\", f\"{ORDERS_PATH}/{quote(order_number, safe='')}\", allow_not_found=True"
+    ],
+    "added": [
+      "        \"GET\", f\"{ORDERS_PATH}/{quote(order_number, safe='XXXX')}\", allow_not_found=True"
+    ],
+    "raw_diff_file": "mutation-backend-survivor-05.diff"
+  },
+  {
+    "id": "gateway.backend_client.x\u01c1BackendApiClient\u01c1installation__mutmut_9",
+    "status": "survived",
+    "diff_sha256": "bcd764980ea88d0fc5722eb4aefc8f5a43498f599edcbaa181a74f3fba8045d0",
+    "removed": [
+      "        f\"{ORDERS_PATH}/{quote(order_number, safe='')}/installation\","
+    ],
+    "added": [
+      "        f\"{ORDERS_PATH}/{quote(order_number, safe='XXXX')}/installation\","
+    ],
+    "raw_diff_file": "mutation-backend-survivor-06.diff"
+  },
+  {
+    "id": "gateway.backend_client.x\u01c1BackendApiClient\u01c1availability__mutmut_10",
+    "status": "survived",
+    "diff_sha256": "c79395e795b9cfb05ce02eab280d7885ee98197c4922914db28d9d7dd570238b",
+    "removed": [
+      "        Availability, await self._request(\"GET\", AVAILABILITY_PATH)"
+    ],
+    "added": [
+      "        Availability, await self._request(\"get\", AVAILABILITY_PATH)"
+    ],
+    "raw_diff_file": "mutation-backend-survivor-07.diff"
+  },
+  {
+    "id": "gateway.backend_client.x\u01c1BackendApiClient\u01c1book__mutmut_17",
+    "status": "survived",
+    "diff_sha256": "759845f0637126fe7c985ad1ab999a3151a08d32ec6cd4f25f90f2c15a53caf6",
+    "removed": [
+      "            code = None"
+    ],
+    "added": [
+      "            code = \"\""
+    ],
+    "raw_diff_file": "mutation-backend-survivor-08.diff"
+  },
+  {
+    "id": "gateway.backend_client.x\u01c1BackendApiClient\u01c1_request__mutmut_2",
+    "status": "survived",
+    "diff_sha256": "06d42ad1bb7b253753cf5c718a057986743199a3c4e57acb72089a7aa9c50065",
+    "removed": [
+      "    allow_conflict: bool = False,"
+    ],
+    "added": [
+      "    allow_conflict: bool = True,"
+    ],
+    "raw_diff_file": "mutation-backend-survivor-09.diff"
+  },
+  {
+    "id": "gateway.backend_client.x\u01c1BackendApiClient\u01c1_request__mutmut_23",
+    "status": "survived",
+    "diff_sha256": "032360fd9842345a0677e377b15b913257b3937d6c4de92589e381a9ebeeeae3",
+    "removed": [
+      "    if response.status_code == 409 and allow_conflict:"
+    ],
+    "added": [
+      "    if response.status_code == 409 or allow_conflict:"
+    ],
+    "raw_diff_file": "mutation-backend-survivor-10.diff"
+  }
+]

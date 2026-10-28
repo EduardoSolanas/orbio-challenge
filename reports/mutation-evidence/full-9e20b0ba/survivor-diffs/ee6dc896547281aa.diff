@@ -1,0 +1,9 @@
+# gateway.conversation.flows.x_collect_details__mutmut_15: survived
+--- gateway/conversation/flows.py
++++ gateway/conversation/flows.py
+@@ -6,4 +6,4 @@
+     if ctx.review_rejected:
+         return StepResult(text("reject_prompt", ctx.language))
+     missing = first_missing(ctx.slots, ctx.language)
+-    return StepResult() if missing is None else StepResult(missing)
++    return StepResult() if (missing is None) and False else StepResult(missing)

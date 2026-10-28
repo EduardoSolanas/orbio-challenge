@@ -1,0 +1,12 @@
+# gateway.providers.client.xǁOpenAICompatibleProviderǁ_audio_operation__mutmut_18: survived
+--- gateway/providers/client.py
++++ gateway/providers/client.py
+@@ -12,7 +12,7 @@
+     client = self._clients[role]
+ 
+     async def attempt(repair: bool) -> Parsed:
+-        async with client.stream("POST", url, files=files, data=data) as response:
++        async with client.stream("post", url, files=files, data=data) as response:
+             body = await _success_json_body(response)
+         return parse(body)
+ 

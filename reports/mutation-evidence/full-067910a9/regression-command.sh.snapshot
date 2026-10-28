@@ -1,0 +1,8 @@
+#!/bin/sh
+cd /tmp/orbio-regression-check
+python -m pytest tests/unit/gateway/test_utf8_configuration.py tests/integration/order_verification/test_flows_in_context.py -q > /work/reports/regression-baseline.txt 2>&1 || exit $?
+python -m mutmut run 'gateway.conversation.engine.xǁConversationEngineǁbook_slot__mutmut_41' 'gateway.conversation.engine.xǁConversationEngineǁbook_slot__mutmut_42' 'gateway.conversation.engine.xǁConversationEngineǁbook_slot__mutmut_43' 'gateway.conversation.engine.xǁConversationEngineǁbook_slot__mutmut_44' 'gateway.conversation.engine.xǁConversationEngineǁbook_slot__mutmut_45' 'gateway.conversation.engine.xǁConversationEngineǁbook_slot__mutmut_46' 'gateway.conversation.engine.xǁConversationEngineǁbook_slot__mutmut_48' 'gateway.conversation.engine.xǁConversationEngineǁbook_slot__mutmut_52' 'gateway.conversation.safety.x_load_examples__mutmut_3' 'backend_api.bookings.xǁBookingStoreǁ_seed__mutmut_3' --max-children 2 > /work/reports/regression-mutation-run.txt 2>&1
+result=$?
+printf '%s\n' "$result" > /work/reports/regression-mutation-exit-code
+python -m mutmut results --all true > /work/reports/regression-all-results.txt 2>&1
+exit "$result"

@@ -1,0 +1,7 @@
+{
+  "platform": "Linux Python 3.11",
+  "method": "real OS RLIMIT_FSIZE=0 in an isolated child process; SIGXFSZ ignored",
+  "empty_write": 0,
+  "four_byte_write": "OSError errno 27 File too large",
+  "conclusion": "Non-equivalent. This API counterexample is not a framework kill and does not certify the desired readiness contract."
+}

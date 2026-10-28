@@ -1,0 +1,16 @@
+{
+  "framework": "mutmut",
+  "framework_version": "3.8.0",
+  "python": "3.11.17",
+  "scope": "gateway.backend_client.*",
+  "complete_project_run": false,
+  "results": {
+    "killed": 131,
+    "survived": 10
+  },
+  "url_mutant": "gateway.backend_client.x\u01c1BackendApiClient\u01c1__init____mutmut_13",
+  "url_mutant_status": "killed",
+  "source_sha256": "eb9c0fb19d0a67d985eaf0b3cff21c4fd8c1f7498409847d6298fec750fe0fa9",
+  "regression_tests_sha256": "830dc5db089b4ba00422b8b508aa22de151c2bcd3081586683a0a8435476999a",
+  "diff_sha256": "7a4f0dc0b325b51b384c2036825b094c1cdf989ad315c6f3b88bbbb66ca638d5"
+}

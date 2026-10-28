@@ -1,0 +1,12 @@
+# gateway.conversation.flows.x_load_flows__mutmut_5: survived
+--- gateway/conversation/flows.py
++++ gateway/conversation/flows.py
+@@ -2,7 +2,7 @@
+     """Read and check the flows file; the key is the flow name."""
+ 
+     try:
+-        raw = json.loads(path.read_text("utf-8"))
++        raw = json.loads(path.read_text("UTF-8"))
+     except (OSError, ValueError) as error:
+         raise FlowsInvalid(f"cannot read flows from {path}: {error}") from error
+     if not isinstance(raw, dict) or not raw:

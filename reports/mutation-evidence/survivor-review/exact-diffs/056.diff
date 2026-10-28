@@ -1,0 +1,12 @@
+# gateway.conversation.flows.x_load_flows__mutmut_6: not checked
+--- gateway/conversation/flows.py
++++ gateway/conversation/flows.py
+@@ -6,7 +6,7 @@
+     except (OSError, ValueError) as error:
+         raise FlowsInvalid(f"cannot read flows from {path}: {error}") from error
+     if not isinstance(raw, dict) or not raw:
+-        raise FlowsInvalid("the flows file must be a non-empty object of flows")
++        raise FlowsInvalid("XXthe flows file must be a non-empty object of flowsXX")
+     intents = get_args(Intent)
+     flows: dict[str, FlowDefinition] = {}
+     for name, body in raw.items():

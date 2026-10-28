@@ -1,0 +1,9 @@
+# gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_47: survived
+--- gateway/providers/client.py
++++ gateway/providers/client.py
+@@ -36,4 +36,4 @@
+             if error.code != "provider_unavailable" or last:
+                 raise
+             await self._pause(deadline)
+-    raise app_error("provider_timeout")
++    raise app_error("PROVIDER_TIMEOUT")

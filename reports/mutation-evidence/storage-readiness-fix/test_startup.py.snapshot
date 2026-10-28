@@ -1,0 +1,463 @@
+"""Startup validation, health, isolation and sanitized errors.
+
+Each case runs the real `Settings` resolution and the real app lifespan
+(IC §13.2). Offline validation, the writable-storage probe, the immutable
+loaded knowledge base and the sanitized error surface are production code; only
+the external AI service is doubled, and no case performs a model call during
+startup or health.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import tempfile
+from contextlib import AsyncExitStack
+
+import httpx
+import pytest
+
+from gateway.errors import CONFIGURATION_INVALID_MESSAGE, STORAGE_UNAVAILABLE_MESSAGE
+from gateway.main import create_app
+from gateway.providers.client import OpenAICompatibleProvider
+from tests.integration.support.adapter import (
+    ROLES,
+    apply_env,
+    chat_valid,
+    env,
+    settings_from,
+)
+from tests.integration.support.api import ScriptedProvider, read_session
+from tests.integration.support.bounds import blocked_stream_responder
+from tests.integration.support.intake import PART_TEXT, start_session, turn_body
+from tests.integration.support.transcription import (
+    RoleTransport,
+    assert_error,
+    snapshot,
+    unexpected,
+)
+
+SENTINEL_KEY = "sk-live-provider-key-sentinel"
+SENTINEL_CUSTOMER = "customer NS-000999 payment details"
+INTERNAL_MESSAGE = "An internal error occurred."
+
+
+def none_auth_env(session_dir, **overrides):
+    values = env(
+        session_dir,
+        LLM_AUTH_MODE="none",
+        LLM_API_KEY=None,
+        RAG_AUTH_MODE="none",
+        RAG_API_KEY=None,
+        STT_AUTH_MODE="none",
+        STT_API_KEY=None,
+        TTS_AUTH_MODE="none",
+        TTS_API_KEY=None,
+        **overrides,
+    )
+    return values
+
+
+async def expect_configuration_failure(values, monkeypatch):
+    """Offline Settings validation and the real lifespan both fail before readiness."""
+
+    with pytest.raises(RuntimeError) as excinfo:
+        settings_from(values)
+    assert str(excinfo.value) == CONFIGURATION_INVALID_MESSAGE
+
+    apply_env(monkeypatch, values)
+    app = create_app()
+    with pytest.raises(RuntimeError) as excinfo:
+        async with app.router.lifespan_context(app):
+            pytest.fail("lifespan reached readiness with invalid settings")
+    assert str(excinfo.value) == CONFIGURATION_INVALID_MESSAGE
+    assert getattr(app.state, "ready", False) is False
+    assert not hasattr(app.state, "provider")
+    assert not hasattr(app.state, "engine")
+    return app
+
+
+class RaisingProvider(ScriptedProvider):
+    """Fake extraction raises an unexpected error carrying sensitive sentinels."""
+
+    async def extract(self, context):
+        self.calls.append(("extract", context))
+        raise RuntimeError(f"{SENTINEL_KEY} while handling {SENTINEL_CUSTOMER}")
+
+
+class ClosingTransport(httpx.MockTransport):
+    """Real mock transport that counts how often the client closes it."""
+
+    def __init__(self, handler):
+        super().__init__(handler)
+        self.close_count = 0
+
+    async def aclose(self) -> None:
+        self.close_count += 1
+        await super().aclose()
+
+
+def closing_provider(settings):
+    transports = {}
+    for role in ROLES:
+
+        def handler(request, _role=role):
+            raise AssertionError(f"unexpected {_role} wire call")
+
+        transports[role] = ClosingTransport(handler)
+    provider = OpenAICompatibleProvider(
+        {
+            "llm": settings.llm,
+            "rag": settings.rag,
+            "stt": settings.stt,
+            "tts": settings.tts,
+        },
+        transports=transports,
+    )
+    return provider, transports
+
+
+# invalid service url at real app startup..missing required tts voice: offline configuration validation -------------------------
+
+
+async def case_invalid_service_url_at_real_app_startup(session_dir, monkeypatch):
+    values = env(session_dir, LLM_BASE_URL="ftp://llm.test/v1")
+    await expect_configuration_failure(values, monkeypatch)
+
+
+async def case_bearer_role_missing_its_key(session_dir, monkeypatch):
+    values = env(
+        session_dir,
+        LLM_AUTH_MODE="bearer",
+        LLM_API_KEY=None,
+        OPENAI_API_KEY=SENTINEL_KEY,
+    )
+    # No developer/global key fallback: the bearer role stays invalid.
+    await expect_configuration_failure(values, monkeypatch)
+
+
+async def case_no_auth_role_configured_key(session_dir, monkeypatch):
+    values = env(session_dir, LLM_AUTH_MODE="none", LLM_API_KEY=SENTINEL_KEY)
+    await expect_configuration_failure(values, monkeypatch)
+
+
+async def case_missing_required_tts_voice(session_dir, monkeypatch):
+    values = none_auth_env(session_dir, TTS_VOICE=None)
+    await expect_configuration_failure(values, monkeypatch)
+
+
+# uppercase tts audio format rejected..wav input limit above 4000 rejected: TTS format/cap variants (PC §3) ---------------------------
+
+
+async def case_uppercase_tts_audio_format_rejected(session_dir, monkeypatch):
+    values = none_auth_env(session_dir, TTS_AUDIO_FORMAT="WAV")
+    await expect_configuration_failure(values, monkeypatch)
+
+
+async def case_mp3_200_character_input_limit_rejected(session_dir, monkeypatch):
+    values = none_auth_env(
+        session_dir, TTS_AUDIO_FORMAT="mp3", TTS_MAX_INPUT_CHARS="200"
+    )
+    await expect_configuration_failure(values, monkeypatch)
+
+
+async def case_wav_input_limit_above_4000_rejected(session_dir, monkeypatch):
+    values = none_auth_env(
+        session_dir, TTS_AUDIO_FORMAT="wav", TTS_MAX_INPUT_CHARS="4001"
+    )
+    await expect_configuration_failure(values, monkeypatch)
+
+
+# real startup scoped temp file creation write permissionerror: unwritable session storage ----------------------------------------
+
+
+async def case_real_startup_scoped_temp_file_creation_write_permissionerror(
+    session_dir, monkeypatch
+):
+    settings = settings_from(none_auth_env(session_dir))
+    provider = ScriptedProvider()
+    app = create_app(settings=settings, provider=provider)
+
+    def denied(*args, **kwargs):
+        raise PermissionError("scoped probe denial")
+
+    monkeypatch.setattr(tempfile, "TemporaryFile", denied)
+
+    with pytest.raises(RuntimeError) as excinfo:
+        async with app.router.lifespan_context(app):
+            pytest.fail("lifespan reached readiness without writable storage")
+
+    assert str(excinfo.value) == STORAGE_UNAVAILABLE_MESSAGE
+    assert provider.calls == []
+    # Resources constructed before the failure are closed exactly once.
+    assert provider.close_count == 1
+    assert getattr(app.state, "ready", False) is False
+    assert not hasattr(app.state, "engine")
+
+
+# valid health probe..after healthy startup inject permissionerror into actual: real health probe ----------------------------------------
+
+
+async def case_valid_health_probe(session_dir, monkeypatch):
+    settings = settings_from(none_auth_env(session_dir))
+    real_temp = tempfile.TemporaryFile
+    probes: list[str] = []
+
+    def counting(*args, **kwargs):
+        probes.append("probe")
+        return real_temp(*args, **kwargs)
+
+    monkeypatch.setattr(tempfile, "TemporaryFile", counting)
+
+    app = create_app(settings=settings)
+    async with app.router.lifespan_context(app):
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+        ) as client:
+            response = await client.get("/health")
+            assert response.status_code == 200
+            assert response.json() == {"status": "ok"}
+            assert len(probes) >= 2  # startup probe plus the health probe
+            # The probe really wrote and removed its temporary file.
+            assert list(session_dir.iterdir()) == []
+            knowledge_base = app.state.knowledge_base
+            assert knowledge_base.version == "2026-10-25"
+            assert len(knowledge_base.records) == 12
+            assert app.state.provider._in_use == 0
+
+    assert app.state.ready is False
+
+
+async def case_after_healthy_startup_inject_permissionerror_into_actual(
+    session_dir, monkeypatch
+):
+    settings = settings_from(none_auth_env(session_dir))
+    provider, transports = closing_provider(settings)
+    app = create_app(settings=settings, provider=provider)
+    async with app.router.lifespan_context(app):
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+        ) as client:
+            assert (await client.get("/health")).status_code == 200
+
+            calls: list[str] = []
+
+            def denied(*args, **kwargs):
+                calls.append("probe")
+                raise PermissionError("scoped probe denial")
+
+            monkeypatch.setattr(tempfile, "TemporaryFile", denied)
+            response = await client.get("/health")
+
+            assert_error(response, status=503, code="storage_unavailable")
+            assert calls == ["probe"]  # the real repository probe was invoked
+            assert all(transport.close_count == 0 for transport in transports.values())
+
+
+# normal lifespan exit: lifespan exit closes all four clients ------------------------------
+
+
+async def case_normal_lifespan_exit(session_dir):
+    # RAG profile fully absent: the inherited RAG client is a distinct client.
+    settings = settings_from(
+        env(
+            session_dir,
+            LLM_AUTH_MODE="none",
+            LLM_API_KEY=None,
+            RAG_AUTH_MODE=None,
+            RAG_API_KEY=None,
+            STT_AUTH_MODE="none",
+            STT_API_KEY=None,
+            TTS_AUTH_MODE="none",
+            TTS_API_KEY=None,
+            RAG_BASE_URL=None,
+            RAG_MODEL=None,
+            RAG_OUTPUT_MODE=None,
+        )
+    )
+    assert settings.rag == settings.llm
+    provider, transports = closing_provider(settings)
+    clients = list(provider._clients.values())
+    assert len({id(client) for client in clients}) == 4
+
+    app = create_app(settings=settings, provider=provider)
+    async with app.router.lifespan_context(app):
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+        ) as client:
+            assert (await client.get("/health")).json() == {"status": "ok"}
+            assert all(transport.close_count == 0 for transport in transports.values())
+
+    for role in ROLES:
+        assert transports[role].close_count == 1
+    assert all(client.is_closed for client in clients)
+    # close() is idempotent: a second call does not close anything again.
+    await provider.close()
+    for role in ROLES:
+        assert transports[role].close_count == 1
+
+
+# two app instances: two independent app instances --------------------------------------
+
+
+async def case_two_app_instances(tmp_path):
+    dir_a = tmp_path / "a" / "sessions"
+    dir_b = tmp_path / "b" / "sessions"
+    settings_a = settings_from(none_auth_env(dir_a))
+    settings_b = settings_from(none_auth_env(dir_b))
+
+    gate = asyncio.Event()
+    started = asyncio.Event()
+    responder_a = blocked_stream_responder(gate, started)
+    responder_b = chat_valid()
+
+    provider_a = OpenAICompatibleProvider(
+        {
+            "llm": settings_a.llm,
+            "rag": settings_a.rag,
+            "stt": settings_a.stt,
+            "tts": settings_a.tts,
+        },
+        transports={
+            role: RoleTransport(
+                role, responder_a if role == "llm" else unexpected(role)
+            ).transport
+            for role in ROLES
+        },
+        capacity=1,
+    )
+    provider_b = OpenAICompatibleProvider(
+        {
+            "llm": settings_b.llm,
+            "rag": settings_b.rag,
+            "stt": settings_b.stt,
+            "tts": settings_b.tts,
+        },
+        transports={
+            role: RoleTransport(
+                role, responder_b if role == "llm" else unexpected(role)
+            ).transport
+            for role in ROLES
+        },
+        capacity=1,
+    )
+
+    app_a = create_app(settings=settings_a, provider=provider_a)
+    app_b = create_app(settings=settings_b, provider=provider_b)
+
+    async with AsyncExitStack() as stack:
+        await stack.enter_async_context(app_a.router.lifespan_context(app_a))
+        await stack.enter_async_context(app_b.router.lifespan_context(app_b))
+        client_a = await stack.enter_async_context(
+            httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=app_a), base_url="http://testserver"
+            )
+        )
+        client_b = await stack.enter_async_context(
+            httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=app_b), base_url="http://testserver"
+            )
+        )
+
+        session_a1 = await start_session(client_a)
+        session_a2 = await start_session(client_a)
+        held = asyncio.create_task(
+            client_a.post(
+                f"/api/sessions/{session_a1}/turns", json=turn_body(PART_TEXT, 0)
+            )
+        )
+        await asyncio.wait_for(started.wait(), timeout=5)
+
+        # App A's provider capacity is exhausted; its second session cannot use
+        # app B's independent semaphore.
+        exhausted = await client_a.post(
+            f"/api/sessions/{session_a2}/turns", json=turn_body(PART_TEXT, 0)
+        )
+        assert_error(exhausted, status=429, code="provider_busy")
+
+        # App B keeps working with its own settings, store and semaphore.
+        session_b1 = await start_session(client_b)
+        completed = await client_b.post(
+            f"/api/sessions/{session_b1}/turns", json=turn_body(PART_TEXT, 0)
+        )
+        assert completed.status_code == 200, completed.text
+
+        # Independent stores: app A's session does not exist in app B.
+        missing = await client_b.get(f"/api/sessions/{session_a1}")
+        assert_error(missing, status=404, code="session_not_found")
+
+        gate.set()
+        finished = await asyncio.wait_for(held, timeout=10)
+        assert finished.status_code == 200, finished.text
+        assert read_session(dir_a, session_a1)["revision"] == 1
+
+
+# during real turn route fake extract raises runtimeerror: sanitized unexpected error on the real turn route ------------------
+
+
+async def case_during_real_turn_route_fake_extract_raises_runtimeerror(
+    session_dir, caplog
+):
+    settings = settings_from(none_auth_env(session_dir))
+    provider = RaisingProvider()
+    app = create_app(settings=settings, provider=provider)
+
+    async with app.router.lifespan_context(app):
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app, raise_app_exceptions=False),
+            base_url="http://testserver",
+        ) as client:
+            session_id = await start_session(client)
+            before = snapshot(session_dir, session_id)
+            with caplog.at_level("DEBUG"):
+                response = await client.post(
+                    f"/api/sessions/{session_id}/turns",
+                    json=turn_body(PART_TEXT, 0),
+                )
+
+            assert response.status_code == 500
+            body = response.json()
+            assert body["error"] == {
+                "code": "internal_error",
+                "message": INTERNAL_MESSAGE,
+                "retryable": False,
+            }
+            assert body["request_id"] == response.headers["x-request-id"]
+            assert "RuntimeError" in caplog.text
+            for sentinel in (SENTINEL_KEY, SENTINEL_CUSTOMER, "NS-000999", "payment"):
+                assert sentinel not in response.text
+                assert sentinel not in caplog.text
+            assert snapshot(session_dir, session_id) == before
+            assert provider.methods() == ["extract"]
+
+
+CASES = {
+    "invalid_service_url_at_real_app_startup": case_invalid_service_url_at_real_app_startup,
+    "bearer_role_missing_its_key": case_bearer_role_missing_its_key,
+    "no_auth_role_configured_key": case_no_auth_role_configured_key,
+    "missing_required_tts_voice": case_missing_required_tts_voice,
+    "uppercase_tts_audio_format_rejected": case_uppercase_tts_audio_format_rejected,
+    "mp3_200_character_input_limit_rejected": case_mp3_200_character_input_limit_rejected,
+    "wav_input_limit_above_4000_rejected": case_wav_input_limit_above_4000_rejected,
+    "real_startup_scoped_temp_file_creation_write_permissionerror": case_real_startup_scoped_temp_file_creation_write_permissionerror,
+    "valid_health_probe": case_valid_health_probe,
+    "after_healthy_startup_inject_permissionerror_into_actual": case_after_healthy_startup_inject_permissionerror_into_actual,
+    "normal_lifespan_exit": case_normal_lifespan_exit,
+    "two_app_instances": case_two_app_instances,
+    "during_real_turn_route_fake_extract_raises_runtimeerror": case_during_real_turn_route_fake_extract_raises_runtimeerror,
+}
+
+
+@pytest.mark.parametrize("case_id", sorted(CASES))
+async def test_startup(case_id, session_dir, tmp_path, monkeypatch, caplog):
+    case = CASES[case_id]
+    names = case.__code__.co_varnames[: case.__code__.co_argcount]
+    kwargs = {}
+    if "session_dir" in names:
+        kwargs["session_dir"] = session_dir
+    if "tmp_path" in names:
+        kwargs["tmp_path"] = tmp_path
+    if "monkeypatch" in names:
+        kwargs["monkeypatch"] = monkeypatch
+    if "caplog" in names:
+        kwargs["caplog"] = caplog
+    await case(**kwargs)

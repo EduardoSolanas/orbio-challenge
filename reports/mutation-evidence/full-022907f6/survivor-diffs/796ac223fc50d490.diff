@@ -1,0 +1,12 @@
+# gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_15: survived
+--- gateway/storage.py
++++ gateway/storage.py
+@@ -1,7 +1,7 @@
+ async def save(self, session: Session) -> None:
+     payload = json.dumps(
+         session.model_dump(mode="json"), ensure_ascii=False, indent=2
+-    ).encode("utf-8")
++    ).encode("UTF-8")
+     handle = None
+     staged_name: str | None = None
+     try:

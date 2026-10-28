@@ -1,0 +1,12 @@
+# gateway.backend_client.xǁBackendApiClientǁbook__mutmut_21: survived
+--- gateway/backend_client.py
++++ gateway/backend_client.py
+@@ -10,7 +10,7 @@
+     if replace:
+         body["replace"] = True
+     response = await self._request(
+-        "POST",
++        "post",
+         BOOKINGS_PATH,
+         json=body,
+         allow_conflict=True,

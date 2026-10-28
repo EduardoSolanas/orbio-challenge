@@ -1,0 +1,7 @@
+{
+  "source_snapshot_revision": "snapshot:022907f634b5bdfc87a012e15bd2271609c204324fa4cc2e328828268bc4ab04",
+  "revision_policy_git_commit": "967ca3b98df63afbff75869e87d4f3f14f949cf1",
+  "checked_files": 345,
+  "all_files_match_before_report_updates": true,
+  "gated_source_changes_after_snapshot": []
+}

@@ -1,0 +1,12 @@
+#!/bin/sh
+cd /work
+python -m pytest tests/unit/gateway/test_storage.py -q > reports/storage-baseline.txt 2>&1 || exit $?
+python -m pytest tests/unit tests/integration -q > reports/baseline.txt 2>&1
+baseline=$?
+printf '%s\n' "$baseline" > reports/baseline-exit-code
+if [ "$baseline" -ne 0 ]; then exit "$baseline"; fi
+python -m mutmut run 'gateway.storage.xǁJsonSessionRepositoryǁcheck_writable*' --max-children 2 > reports/mutation-run.txt 2>&1
+result=$?
+printf '%s\n' "$result" > reports/mutation-exit-code
+python -m mutmut results --all true > reports/all-results.txt 2>&1
+exit "$result"

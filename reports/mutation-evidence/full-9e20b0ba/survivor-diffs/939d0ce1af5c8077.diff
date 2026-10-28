@@ -1,0 +1,12 @@
+# gateway.providers.client.xǁOpenAICompatibleProviderǁ__init____mutmut_17: survived
+--- gateway/providers/client.py
++++ gateway/providers/client.py
+@@ -16,7 +16,7 @@
+     self._clock = clock if clock is not None else time.monotonic
+     self._capacity = capacity
+     self._in_use = 0
+-    self._closed = False
++    self._closed = None
+     self._clients: dict[Role, httpx.AsyncClient] = {
+         role: self._build_client(role, ROLE_BUDGETS[role], transports)
+         for role in self._profiles

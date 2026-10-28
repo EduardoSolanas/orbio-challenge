@@ -1,0 +1,12 @@
+# gateway.backend_client.xǁBackendApiClientǁinstallation__mutmut_14: survived
+--- gateway/backend_client.py
++++ gateway/backend_client.py
+@@ -3,7 +3,7 @@
+ 
+     response = await self._request(
+         "GET",
+-        f"{ORDERS_PATH}/{quote(order_number, safe='')}/installation",
++        f"{ORDERS_PATH}/{quote(order_number, safe='XXXX')}/installation",
+         allow_not_found=True,
+     )
+     if response.status_code == 404:

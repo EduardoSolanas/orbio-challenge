@@ -1,0 +1,16 @@
+{
+  "fixed_schema_json_is_ascii": {
+    "Extraction": true,
+    "KnowledgeAnswer": true
+  },
+  "httpx_normalizes_method": true,
+  "httpx_default_follow_redirects": false,
+  "positive_role_attempt_budgets": {
+    "llm": 2,
+    "rag": 2,
+    "stt": 2,
+    "tts": 1,
+    "tts_es": 1,
+    "embed": 2
+  }
+}

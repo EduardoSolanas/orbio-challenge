@@ -1,0 +1,14 @@
+import os, resource, signal, tempfile, json
+tempfile.gettempdir()
+signal.signal(signal.SIGXFSZ, signal.SIG_IGN)
+resource.setrlimit(resource.RLIMIT_FSIZE, (0, 0))
+results={}
+for payload in (bytes(), b"XXXX"):
+ fd,path=tempfile.mkstemp()
+ try:
+  results[str(len(payload))]=os.write(fd,payload)
+ except OSError as exc:
+  results[str(len(payload))]=str(exc)
+ finally:
+  os.close(fd);os.unlink(path)
+print(json.dumps(results))

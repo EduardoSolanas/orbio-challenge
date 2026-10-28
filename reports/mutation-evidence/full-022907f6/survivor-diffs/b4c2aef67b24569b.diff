@@ -1,0 +1,6 @@
+# gateway.providers.client.xǁAIProviderǁsynthesize__mutmut_2: no tests
+--- gateway/providers/client.py
++++ gateway/providers/client.py
+@@ -1 +1 @@
+-async def synthesize(self, text: str, language: str = "en") -> SynthesizedAudio: ...
++async def synthesize(self, text: str, language: str = "EN") -> SynthesizedAudio: ...

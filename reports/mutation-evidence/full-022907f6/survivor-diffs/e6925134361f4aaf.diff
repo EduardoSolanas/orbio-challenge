@@ -1,0 +1,11 @@
+# backend_api.bookings.xǁBookingStoreǁappointment__mutmut_8: survived
+--- backend_api/bookings.py
++++ backend_api/bookings.py
+@@ -1,6 +1,6 @@
+ def appointment(self, order_number: str) -> dict[str, str] | None:
+     row = self._db.execute(
+-        "SELECT starts_at, ends_at, reference FROM slots WHERE order_number = ?",
++        "SELECT STARTS_AT, ENDS_AT, REFERENCE FROM SLOTS WHERE ORDER_NUMBER = ?",
+         (order_number,),
+     ).fetchone()
+     return (

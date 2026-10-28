@@ -1,0 +1,12 @@
+# gateway.conversation.engine.xǁConversationEngineǁ_select_plan__mutmut_92: survived
+--- gateway/conversation/engine.py
++++ gateway/conversation/engine.py
+@@ -67,7 +67,7 @@
+             extraction,
+             outcome,
+             review_rejected=review_rejected,
+-            recovered_this_turn=recovered_this_turn,
++            recovered_this_turn=None,
+             current_review_valid=current_review_valid(session),
+         ):
+             raise app_error("turn_limit")

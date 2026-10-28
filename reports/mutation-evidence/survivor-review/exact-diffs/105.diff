@@ -1,0 +1,12 @@
+# gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_53: survived
+--- gateway/providers/speech_wav.py
++++ gateway/providers/speech_wav.py
+@@ -20,7 +20,7 @@
+         size = int.from_bytes(data[offset + 4 : offset + 8], "little")
+         body = offset + 8
+         if chunk_id == b"fmt ":
+-            if size < 16 or body + size > len(data):
++            if size < 16 or body + size >= len(data):
+                 raise ValueError("not a decodable PCM WAV")
+             format_tag, channels, rate, _, _, bits = struct.unpack_from(
+                 "<HHLLHH", data, body

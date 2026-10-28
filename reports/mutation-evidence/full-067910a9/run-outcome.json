@@ -1,0 +1,15 @@
+{
+  "complete": false,
+  "reason": "Exploratory run stopped after adding and verifying regression tests; superseded by a fresh full run in full-022907f6. Framework stopping exited zero, but 990 variants were not checked, so this is not a quality pass.",
+  "executed": 3897,
+  "generated": 4887,
+  "killed": 3792,
+  "survived": 103,
+  "no_tests": 2,
+  "not_checked": 990,
+  "regression_followup": {
+    "selected": 10,
+    "killed": 10,
+    "baseline_tests_passed": 23
+  }
+}

@@ -1,0 +1,11 @@
+# gateway.localization.x_build_summary__mutmut_19: survived
+--- gateway/localization.py
++++ gateway/localization.py
+@@ -4,6 +4,6 @@
+         raise ValueError("summary requires all four fields")
+     category_key = CATEGORY_LABEL_KEYS.get(str(values["category"]))
+     if category_key is None:
+-        raise ValueError("summary requires a canonical support category")
++        raise ValueError("SUMMARY REQUIRES A CANONICAL SUPPORT CATEGORY")
+     values["category"] = text(category_key, language)
+     return render("summary", language, values)

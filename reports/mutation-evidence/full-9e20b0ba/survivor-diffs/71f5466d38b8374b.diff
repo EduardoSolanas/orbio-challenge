@@ -1,0 +1,12 @@
+# backend_api.bookings.xǁBookingStoreǁbook__mutmut_40: survived
+--- backend_api/bookings.py
++++ backend_api/bookings.py
+@@ -24,7 +24,7 @@
+                 )
+             claimed = self._db.execute(
+                 "UPDATE slots SET order_number = ?, reference = ?"
+-                " WHERE starts_at = ? AND order_number IS NULL AND starts_at > ?",
++                " where starts_at = ? and order_number is null and starts_at > ?",
+                 (
+                     order_number,
+                     reference,

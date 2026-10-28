@@ -1,0 +1,12 @@
+# gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_17: not checked
+--- gateway/storage.py
++++ gateway/storage.py
+@@ -3,7 +3,7 @@
+         session.model_dump(mode="json"), ensure_ascii=False, indent=2
+     ).encode("utf-8")
+     handle = None
+-    staged_name: str | None = None
++    staged_name: str | None = ""
+     try:
+         handle = tempfile.NamedTemporaryFile(dir=self.directory, delete=False)
+         staged_name = handle.name

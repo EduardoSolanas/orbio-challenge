@@ -1,0 +1,12 @@
+# gateway.knowledge.retrieval.x_load_knowledge__mutmut_13: survived
+--- gateway/knowledge/retrieval.py
++++ gateway/knowledge/retrieval.py
+@@ -13,7 +13,7 @@
+     except OSError:
+         raise KnowledgeInvalid(MISSING_REASON) from None
+     try:
+-        document: Any = json.loads(raw.decode("utf-8"))
++        document: Any = json.loads(raw.decode("UTF-8"))
+     except (UnicodeDecodeError, json.JSONDecodeError):
+         raise KnowledgeInvalid(INVALID_DOCUMENT_REASON) from None
+     version, records = _validate_document(document)

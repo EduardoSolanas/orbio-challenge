@@ -1,0 +1,12 @@
+# gateway.storage.xǁJsonSessionRepositoryǁcheck_writable__mutmut_3: killed
+--- gateway/storage.py
++++ gateway/storage.py
+@@ -2,7 +2,7 @@
+     try:
+         with tempfile.TemporaryFile(dir=self.directory) as handle:
+             # A zero-byte write succeeds even when storage rejects all data writes.
+-            handle.write(b"\0")
++            handle.write(b"XX\0XX")
+             handle.flush()
+     except OSError:
+         raise app_error("storage_unavailable") from None

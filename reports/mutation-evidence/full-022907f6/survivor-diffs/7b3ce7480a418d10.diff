@@ -1,0 +1,11 @@
+# gateway.conversation.engine.xǁConversationEngineǁ_continue_flow__mutmut_42: survived
+--- gateway/conversation/engine.py
++++ gateway/conversation/engine.py
+@@ -18,6 +18,6 @@
+         slot_options=list(outcome.slot_options),
+     )
+     committed = _saved_copy(session, response, now, [assistant_message])
+-    committed.flow = flow_state_after(flow, outcome)
++    committed.flow = flow_state_after(None, outcome)
+     await self.repository.save(committed)
+     return response

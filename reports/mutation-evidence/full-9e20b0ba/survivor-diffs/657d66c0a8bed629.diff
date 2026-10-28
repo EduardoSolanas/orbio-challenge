@@ -1,0 +1,12 @@
+# gateway.providers.audio.x__fmt_fields__mutmut_5: survived
+--- gateway/providers/audio.py
++++ gateway/providers/audio.py
+@@ -2,7 +2,7 @@
+     """Read the RIFF/WAVE ``fmt `` chunk: format tag, channels, rate, bits."""
+ 
+     offset = 12
+-    while offset + 8 <= len(audio):
++    while offset + 8 < len(audio):
+         chunk_id = audio[offset : offset + 4]
+         size = struct.unpack("<I", audio[offset + 4 : offset + 8])[0]
+         payload_start = offset + 8

@@ -1,0 +1,12 @@
+# gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_25: survived
+--- gateway/providers/speech_wav.py
++++ gateway/providers/speech_wav.py
+@@ -14,7 +14,7 @@
+     # A RIFF chunk header is at least 8 bytes, so this bounds iteration even if
+     # a malformed chunk size would otherwise move the cursor backwards.
+     for _ in range(len(data) // 8):
+-        if offset + 8 > len(data):
++        if offset - 8 > len(data):
+             break
+         chunk_id = data[offset : offset + 4]
+         size = int.from_bytes(data[offset + 4 : offset + 8], "little")

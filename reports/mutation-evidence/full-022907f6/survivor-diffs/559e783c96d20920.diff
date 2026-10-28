@@ -1,0 +1,12 @@
+# gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_9: survived
+--- gateway/providers/client.py
++++ gateway/providers/client.py
+@@ -9,7 +9,7 @@
+     """At most ``budget.attempts`` attempts: retry, or one repair, never both."""
+ 
+     repair = False
+-    for attempt_number in range(1, budget.attempts + 1):
++    for attempt_number in range(1, budget.attempts + 2):
+         last = attempt_number == budget.attempts
+         remaining = deadline - self._clock()
+         if remaining <= 0:

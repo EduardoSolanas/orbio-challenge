@@ -1,0 +1,14 @@
+#!/bin/sh
+cd /work
+python -m pip install -r requirements-dev.txt > reports/install.txt 2>&1 || exit $?
+python -m pip check > reports/pip-check.txt 2>&1 || exit $?
+python -m pytest tests/unit tests/integration -q > reports/baseline.txt 2>&1
+baseline=$?
+printf '%s\n' "$baseline" > reports/baseline-exit-code
+if [ "$baseline" -ne 0 ]; then sleep infinity; fi
+python -m mutmut run --max-children 24 > reports/mutation-run.txt 2>&1
+result=$?
+printf '%s\n' "$result" > reports/mutation-exit-code
+python -m mutmut results > reports/mutation-results.txt 2>&1
+python -m mutmut results --all true > reports/all-results.txt 2>&1
+sleep infinity

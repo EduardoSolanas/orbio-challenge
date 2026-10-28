@@ -1,0 +1,7 @@
+# gateway.providers.client.x__media_type__mutmut_8: survived
+--- gateway/providers/client.py
++++ gateway/providers/client.py
+@@ -1,2 +1,2 @@
+ def _media_type(response: httpx.Response) -> str:
+-    return response.headers.get("content-type", "").split(";")[0].strip().lower()
++    return response.headers.get("CONTENT-TYPE", "").split(";")[0].strip().lower()

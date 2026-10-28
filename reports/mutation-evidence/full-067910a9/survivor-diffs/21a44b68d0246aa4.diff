@@ -1,0 +1,10 @@
+# gateway.backend_client.xǁBackendApiClientǁ__init____mutmut_16: survived
+--- gateway/backend_client.py
++++ gateway/backend_client.py
+@@ -9,5 +9,5 @@
+         base_url=base_url.rstrip("/"),
+         timeout=httpx.Timeout(timeout_seconds),
+         transport=transport,
+-        headers={"Accept": "application/json"},
++        headers={"accept": "application/json"},
+     )

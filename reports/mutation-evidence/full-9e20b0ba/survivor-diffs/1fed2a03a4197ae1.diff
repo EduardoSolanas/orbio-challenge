@@ -1,0 +1,12 @@
+# gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_15: survived
+--- gateway/storage.py
++++ gateway/storage.py
+@@ -9,7 +9,7 @@
+     try:
+         document = json.loads(raw)
+         if not isinstance(document, dict):
+-            raise ValueError("session document must be a JSON object")
++            raise ValueError("session document must be a json object")
+         return Session.model_validate(migrate_session_document(document))
+     except (ValidationError, ValueError, TypeError, AttributeError, KeyError):
+         raise app_error("storage_corrupt") from None

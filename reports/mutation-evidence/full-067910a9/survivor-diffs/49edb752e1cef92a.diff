@@ -1,0 +1,12 @@
+# gateway.providers.audio.x__fmt_fields__mutmut_38: survived
+--- gateway/providers/audio.py
++++ gateway/providers/audio.py
+@@ -10,7 +10,7 @@
+             if size < FMT_CHUNK_SIZE or payload_start + FMT_CHUNK_SIZE > len(audio):
+                 _fail(INVALID_AUDIO)
+             fmt, channels, rate, _byte_rate, _block_align, bits = struct.unpack(
+-                "<HHIIHH", audio[payload_start : payload_start + FMT_CHUNK_SIZE]
++                "<hhiihh", audio[payload_start : payload_start + FMT_CHUNK_SIZE]
+             )
+             return fmt, channels, rate, bits
+         offset = payload_start + size + (size % 2)

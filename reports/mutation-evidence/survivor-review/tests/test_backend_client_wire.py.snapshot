@@ -1,0 +1,161 @@
+"""What the backend client sends and how it reads refusals, with no network."""
+
+from __future__ import annotations
+
+import httpx
+import pytest
+
+from gateway.backend_client import BackendApiClient
+from gateway.errors import AppError
+from shared.models import ALREADY_BOOKED, SLOT_UNAVAILABLE
+
+APPOINTMENT = {
+    "starts_at": "2026-11-02T09:00",
+    "ends_at": "2026-11-02T11:00",
+    "reference": "BK-0D8B3C88",
+}
+
+
+def client_answering(
+    status: int, body: object, seen: list[httpx.Request] | None = None
+) -> BackendApiClient:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if seen is not None:
+            seen.append(request)
+        return httpx.Response(status, json=body)
+
+    return BackendApiClient(
+        "http://backend.test", transport=httpx.MockTransport(handler)
+    )
+
+
+async def refused(call) -> str:
+    with pytest.raises(AppError) as caught:
+        await call
+    return caught.value.code
+
+
+@pytest.mark.parametrize("prefix", ["/apiX", "/apiXXX/", "/prefix/X/"])
+async def test_base_url_preserves_prefix_characters_when_removing_trailing_slashes(
+    prefix,
+):
+    seen = []
+
+    def handler(request):
+        seen.append(request.url.path)
+        return httpx.Response(404)
+
+    client = BackendApiClient(
+        f"http://backend.test{prefix}", transport=httpx.MockTransport(handler)
+    )
+    try:
+        assert await client.lookup_order("NS-000123") is None
+    finally:
+        await client.aclose()
+
+    assert seen == [f"{prefix.rstrip('/')}/internal/v1/orders/NS-000123"]
+
+
+async def test_each_call_uses_its_own_http_method() -> None:
+    seen: list[httpx.Request] = []
+    client = client_answering(404, {}, seen)
+
+    await client.lookup_order("NS-000123")
+    await client.installation("NS-000123")
+    await refused(client.availability())
+    await refused(client.verify_order("NS-000123", "SW1A 1AA", "246810"))
+    await refused(client.book("NS-000123", "2026-11-02T09:00"))
+
+    assert [request.method for request in seen] == ["GET", "GET", "GET", "POST", "POST"]
+
+
+async def test_an_account_number_cannot_add_path_segments() -> None:
+    seen: list[httpx.Request] = []
+    client = client_answering(404, {}, seen)
+
+    await client.lookup_order("NS-1/../x")
+    await client.installation("NS-1/2")
+
+    assert seen[0].url.raw_path.decode() == "/internal/v1/orders/NS-1%2F..%2Fx"
+    assert seen[1].url.raw_path.decode() == "/internal/v1/orders/NS-1%2F2/installation"
+
+
+async def test_an_unknown_account_is_nothing_for_lookups_and_an_error_elsewhere() -> (
+    None
+):
+    client = client_answering(404, {})
+
+    assert await client.lookup_order("NS-999999") is None
+    assert await client.installation("NS-999999") is None
+    assert await refused(client.availability()) == "invalid_backend_api_response"
+
+
+@pytest.mark.parametrize("code", [SLOT_UNAVAILABLE, ALREADY_BOOKED])
+async def test_a_refused_booking_keeps_its_own_error_code(code) -> None:
+    assert (
+        await refused(client_answering(409, {"error": code}).book("NS-000123", "x"))
+        == code
+    )
+
+
+@pytest.mark.parametrize(
+    "body", [{"error": "something_else"}, {"error": 1}, {}, "not an object"]
+)
+async def test_an_unrecognised_booking_refusal_is_an_invalid_backend_response(
+    body,
+) -> None:
+    assert (
+        await refused(client_answering(409, body).book("NS-000123", "x"))
+        == "invalid_backend_api_response"
+    )
+
+
+async def test_only_a_booking_may_answer_with_a_conflict() -> None:
+    client = client_answering(409, {"error": SLOT_UNAVAILABLE})
+
+    assert (
+        await refused(client.lookup_order("NS-000123"))
+        == "invalid_backend_api_response"
+    )
+    assert (
+        await refused(client.verify_order("NS-000123", "SW1A 1AA", "246810"))
+        == "invalid_backend_api_response"
+    )
+
+
+async def test_a_successful_booking_is_returned() -> None:
+    appointment = await client_answering(200, APPOINTMENT).book(
+        "NS-000123", "2026-11-02T09:00"
+    )
+
+    assert appointment.reference == "BK-0D8B3C88"
+
+
+async def test_a_conflict_cannot_smuggle_a_valid_account_record_as_success():
+    body = {
+        "order_number": "NS-000123",
+        "first_name": "Demo",
+        "item_names": ["Meter"],
+        "status": "active",
+        "dispatch_date": None,
+        "delivery_date": None,
+    }
+    client = client_answering(409, body)
+    try:
+        assert (
+            await refused(client.lookup_order("NS-000123"))
+            == "invalid_backend_api_response"
+        )
+    finally:
+        await client.aclose()
+
+
+async def test_a_booking_error_cannot_smuggle_a_valid_appointment_as_success():
+    client = client_answering(400, APPOINTMENT)
+    try:
+        assert (
+            await refused(client.book("NS-000123", "2026-11-02T09:00"))
+            == "invalid_backend_api_response"
+        )
+    finally:
+        await client.aclose()

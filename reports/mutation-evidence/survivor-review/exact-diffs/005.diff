@@ -1,0 +1,12 @@
+# gateway.backend_client.xǁBackendApiClientǁlookup_order__mutmut_14: survived
+--- gateway/backend_client.py
++++ gateway/backend_client.py
+@@ -2,7 +2,7 @@
+     """Return the allowlisted record, or None when the Backend API has no match."""
+ 
+     response = await self._request(
+-        "GET", f"{ORDERS_PATH}/{quote(order_number, safe='')}", allow_not_found=True
++        "GET", f"{ORDERS_PATH}/{quote(order_number, safe='XXXX')}", allow_not_found=True
+     )
+     if response.status_code == 404:
+         return None

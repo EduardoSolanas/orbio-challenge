@@ -1,0 +1,12 @@
+# gateway.providers.audio.x_validate_wav__mutmut_48: survived
+--- gateway/providers/audio.py
++++ gateway/providers/audio.py
+@@ -29,7 +29,7 @@
+     if len(frame_bytes) != frame_count * frame_size:
+         _fail(INVALID_AUDIO)
+ 
+-    peak = 0
++    peak = 1
+     for (sample,) in struct.iter_unpack("<h", frame_bytes):
+         magnitude = -sample if sample < 0 else sample
+         if magnitude > peak:

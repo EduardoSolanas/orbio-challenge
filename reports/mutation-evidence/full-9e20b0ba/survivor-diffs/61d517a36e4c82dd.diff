@@ -1,0 +1,12 @@
+# gateway.localization.x_build_summary__mutmut_17: survived
+--- gateway/localization.py
++++ gateway/localization.py
+@@ -4,7 +4,7 @@
+         raise ValueError("summary requires all four fields")
+     category_key = CATEGORY_LABEL_KEYS.get(str(values["category"]))
+     if category_key is None:
+-        raise ValueError("summary requires a canonical support category")
++        raise ValueError(None)
+     values["category"] = text(category_key, language)
+     urgency_key = URGENCY_LABEL_KEYS.get(str(values["urgency"]))
+     if urgency_key is None:

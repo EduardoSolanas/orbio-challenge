@@ -1,0 +1,58 @@
+{
+  "framework": "mutmut",
+  "framework_version": "3.8.0",
+  "python": "3.11.17 (main, Oct 21 2026, 03:33:15) [GCC 14.2.0]",
+  "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.41",
+  "complete_project_run": false,
+  "scope": "gateway.storage.JsonSessionRepository.check_writable, every generated variant in the frozen current source",
+  "selected_mutants": 6,
+  "killed": 6,
+  "survived": 0,
+  "targeted_mutation_score": 100,
+  "run_counts": {
+    "generated": 4807,
+    "executed": 6,
+    "killed": 6,
+    "no_tests": 0,
+    "timeout": 0,
+    "suspicious": 0,
+    "survived": 0,
+    "skipped": 0,
+    "caught_by_type_check": 0
+  },
+  "source_sha256": "1b31d9cc9fba00dd05a2da5a5171e84f71a44d1a456227ee1722222669acb7ef",
+  "test_sha256": "78aefcb40978b0a5dcab8b69c1779e5796ac45a222937a58f03ce503afa5bed3",
+  "mutants": [
+    {
+      "mutant_id": "gateway.storage.x\u01c1JsonSessionRepository\u01c1check_writable__mutmut_1",
+      "status": "killed",
+      "diff_sha256": "b0be7a593426ae12649e38e9b32122db7498bba0a6814880d79b2042a854fc35"
+    },
+    {
+      "mutant_id": "gateway.storage.x\u01c1JsonSessionRepository\u01c1check_writable__mutmut_2",
+      "status": "killed",
+      "diff_sha256": "ce9ecdd9fc78e665f1e46a35bab3cf4f768276d776bae14138e1ebb700f5cf4a"
+    },
+    {
+      "mutant_id": "gateway.storage.x\u01c1JsonSessionRepository\u01c1check_writable__mutmut_3",
+      "status": "killed",
+      "diff_sha256": "2daf50ceb030e8528a4beae1dc461593b632988c6492c0ee285f8127ee2b4cb6"
+    },
+    {
+      "mutant_id": "gateway.storage.x\u01c1JsonSessionRepository\u01c1check_writable__mutmut_4",
+      "status": "killed",
+      "diff_sha256": "f9a2f1b72f78c90ccea5525dedc8c1e7eb0005d014c07ed23640961a998f2224"
+    },
+    {
+      "mutant_id": "gateway.storage.x\u01c1JsonSessionRepository\u01c1check_writable__mutmut_5",
+      "status": "killed",
+      "diff_sha256": "3a8f3faaf5194aa37d5838fb8083f2b9285560d97b6f3c215615d6dbb4fba6cc"
+    },
+    {
+      "mutant_id": "gateway.storage.x\u01c1JsonSessionRepository\u01c1check_writable__mutmut_6",
+      "status": "killed",
+      "diff_sha256": "1b40e5a8c1b3238efcd6cdde22661dfde8a797f75e62252ddab5bca2b818c53c"
+    }
+  ],
+  "historical_gap": "Fixed the zero-byte false-positive probe and failure cleanup. The historical source variant was superseded by this source correction, not reclassified as equivalent."
+}

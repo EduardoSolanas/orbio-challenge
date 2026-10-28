@@ -1,0 +1,11 @@
+# gateway.conversation.replay.x__digest__mutmut_5: survived
+--- gateway/conversation/replay.py
++++ gateway/conversation/replay.py
+@@ -3,6 +3,6 @@
+         {"endpoint": endpoint, "session_id": str(session_id), **body},
+         sort_keys=True,
+         separators=(",", ":"),
+-        ensure_ascii=False,
++        ensure_ascii=None,
+     )
+     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()

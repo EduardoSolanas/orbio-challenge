@@ -1,0 +1,12 @@
+# gateway.storage.x__upgrade_legacy_document__mutmut_33: survived
+--- gateway/storage.py
++++ gateway/storage.py
+@@ -7,7 +7,7 @@
+         for message in messages:
+             if isinstance(message, dict):
+                 message.setdefault("language", "en")
+-                message.setdefault("sentiment", None)
++                message.setdefault("sentiment", )
+                 message.setdefault("frustration", None)
+     requests = document.get("requests")
+     if isinstance(requests, list):

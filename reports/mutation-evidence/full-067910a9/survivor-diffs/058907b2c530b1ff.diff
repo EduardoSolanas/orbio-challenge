@@ -1,0 +1,11 @@
+# gateway.localization.x__read_dictionary__mutmut_2: survived
+--- gateway/localization.py
++++ gateway/localization.py
+@@ -1,6 +1,6 @@
+ def _read_dictionary(path: Path) -> dict[str, str]:
+     try:
+-        raw = path.read_text(encoding="utf-8")
++        raw = path.read_text(encoding=None)
+     except (OSError, UnicodeDecodeError) as exc:
+         raise LocalizationInvalid(f"unreadable dictionary: {path.name}") from exc
+     try:

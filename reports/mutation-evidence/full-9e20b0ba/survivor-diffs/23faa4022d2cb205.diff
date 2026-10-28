@@ -1,0 +1,11 @@
+# gateway.conversation.engine.xǁConversationEngineǁ_continue_flow__mutmut_29: survived
+--- gateway/conversation/engine.py
++++ gateway/conversation/engine.py
+@@ -14,7 +14,6 @@
+     response = _reply_response(
+         session,
+         assistant_message,
+-        order_verification_required=outcome.verification_required,
+         slot_options=list(outcome.slot_options),
+     )
+     committed = _saved_copy(session, response, now, [assistant_message])

@@ -1,0 +1,32 @@
+[
+  {
+    "mutant_id": "gateway.providers.wire.x_extract_json__mutmut_21",
+    "diff_sha256": "c7c361653257e60e847eba01ba20498b4779bfb0078c69d85b05bbad062c6cd4",
+    "framework_status": "killed"
+  },
+  {
+    "mutant_id": "gateway.providers.wire.x_extract_json__mutmut_22",
+    "diff_sha256": "ffd850c48ec36c2cc1c9d9511ceb341bf1ca35e4b5257175eed9380f41d18c41",
+    "framework_status": "killed"
+  },
+  {
+    "mutant_id": "gateway.providers.wire.x_extract_json__mutmut_31",
+    "diff_sha256": "c1bfc4284adc02522adb492205812464204066350e171d45e812fb189977c9fc",
+    "framework_status": "killed"
+  },
+  {
+    "mutant_id": "gateway.providers.wire.x_extract_json__mutmut_33",
+    "diff_sha256": "40315a89c3e5442a93a5a474df8e8e5a13f2a0b3340460a42f0f76f0fdb8eebc",
+    "framework_status": "killed"
+  },
+  {
+    "mutant_id": "gateway.conversation.engine.x\u01c1ConversationEngine\u01c1_awaiting_verification__mutmut_3",
+    "diff_sha256": "26c27a0938f595dea0e4ef9b33650e9d6b39275339c8a13682d3a39d42bae597",
+    "framework_status": "killed"
+  },
+  {
+    "mutant_id": "gateway.conversation.engine.x\u01c1ConversationEngine\u01c1_awaiting_verification__mutmut_5",
+    "diff_sha256": "370411afb9ee0537334ce0d0ad4f7bca20ac41dd7f7f40c40dd87fce9776b880",
+    "framework_status": "killed"
+  }
+]

@@ -1,0 +1,12 @@
+# gateway.providers.client.xǁOpenAICompatibleProviderǁ_text_operation__mutmut_16: survived
+--- gateway/providers/client.py
++++ gateway/providers/client.py
+@@ -11,7 +11,7 @@
+     client = self._clients[role]
+ 
+     async def attempt(repair: bool) -> Parsed:
+-        async with client.stream("POST", url, json=build(repair)) as response:
++        async with client.stream("post", url, json=build(repair)) as response:
+             body = await _success_json_body(response)
+         return parse(body)
+ 

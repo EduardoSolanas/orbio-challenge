@@ -1,0 +1,12 @@
+# gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_33: not checked
+--- gateway/storage.py
++++ gateway/storage.py
+@@ -13,7 +13,7 @@
+         handle.close()
+         handle = None
+         os.replace(staged_name, self._path(session.session_id))
+-        staged_name = None
++        staged_name = ""
+     except OSError:
+         raise app_error("storage_unavailable") from None
+     finally:

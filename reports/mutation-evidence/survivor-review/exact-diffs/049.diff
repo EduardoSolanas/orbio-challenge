@@ -1,0 +1,12 @@
+# gateway.conversation.engine.xǁConversationEngineǁbook_slot__mutmut_5: killed
+--- gateway/conversation/engine.py
++++ gateway/conversation/engine.py
+@@ -5,7 +5,7 @@
+ 
+     async with self.repository.locked(session_id):
+         session = await self.repository.load(session_id)
+-        digest = booking_digest(session_id, command)
++        digest = booking_digest(None, command)
+         replayed = self._replayed(
+             session, command.request_id, digest, command.expected_revision
+         )

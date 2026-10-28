@@ -1,0 +1,8 @@
+#!/bin/sh
+cd /tmp/orbio-followup-check
+python -m pytest tests/unit/gateway/providers/test_extract_json.py tests/integration/order_verification/test_flows_in_context.py -q > /work/reports/followup-baseline.txt 2>&1 || exit $?
+python -m mutmut run 'gateway.providers.wire.x_extract_json__mutmut_21' 'gateway.providers.wire.x_extract_json__mutmut_22' 'gateway.providers.wire.x_extract_json__mutmut_31' 'gateway.providers.wire.x_extract_json__mutmut_33' 'gateway.conversation.engine.xǁConversationEngineǁ_awaiting_verification__mutmut_3' 'gateway.conversation.engine.xǁConversationEngineǁ_awaiting_verification__mutmut_5' --max-children 4 > /work/reports/followup-mutation-run.txt 2>&1
+result=$?
+printf '%s\n' "$result" > /work/reports/followup-exit-code
+python -m mutmut results --all true > /work/reports/followup-all-results.txt 2>&1
+exit "$result"

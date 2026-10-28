@@ -1,0 +1,12 @@
+# gateway.config.x__tts_es__mutmut_12: not checked
+--- gateway/config.py
++++ gateway/config.py
+@@ -4,7 +4,7 @@
+     values = {field: env.get(f"TTS_ES_{field}", "") for field in TTS_ES_FIELDS}
+     if all(value == "" for value in values.values()):
+         return None
+-    if any(values[field] == "" for field in TTS_ES_FIELDS if field != "API_KEY"):
++    if any(values[field] == "XXXX" for field in TTS_ES_FIELDS if field != "API_KEY"):
+         _fail()
+     raw_format = values["AUDIO_FORMAT"]
+     if raw_format not in AUDIO_FORMATS:

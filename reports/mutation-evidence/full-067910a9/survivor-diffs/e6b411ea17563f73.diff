@@ -1,0 +1,11 @@
+# gateway.conversation.engine.xǁConversationEngineǁconfirm__mutmut_62: survived
+--- gateway/conversation/engine.py
++++ gateway/conversation/engine.py
+@@ -28,7 +28,6 @@
+             session,
+             assistant_message,
+             status="completed",
+-            pending_clarifications={},
+             pending_review_revision=None,
+             citations=[],
+         )

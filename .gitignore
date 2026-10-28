@@ -19,5 +19,15 @@ tests/e2e/.env.judge
 reports/e2e-docker/
 reports/*
 !reports/mutation-review.json
+!reports/mutation-evidence/
+reports/mutation-evidence/*
+!reports/mutation-evidence/6c197dc/
+!reports/mutation-evidence/backend-client-url-regression/
+!reports/mutation-evidence/survivor-review/
+!reports/mutation-evidence/storage-readiness-fix/
+!reports/mutation-evidence/full-9e20b0ba/
+!reports/mutation-evidence/full-09f307c6/
+!reports/mutation-evidence/full-022907f6/
+!reports/mutation-evidence/full-067910a9/
 .idea/
 node_modules/

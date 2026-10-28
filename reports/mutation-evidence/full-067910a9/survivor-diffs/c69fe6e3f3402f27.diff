@@ -1,0 +1,12 @@
+# gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_13: survived
+--- gateway/providers/client.py
++++ gateway/providers/client.py
+@@ -7,7 +7,7 @@
+     profile = self._profiles[role]
+     headers = {"Accept-Encoding": "identity"}
+     if profile.auth_mode == "bearer":
+-        headers["Authorization"] = f"Bearer {profile.api_key}"
++        headers["authorization"] = f"Bearer {profile.api_key}"
+     return httpx.AsyncClient(
+         transport=None if transports is None else transports.get(role),
+         follow_redirects=False,

@@ -1,0 +1,12 @@
+# gateway.backend_client.xǁBackendApiClientǁ__init____mutmut_13: killed
+--- gateway/backend_client.py
++++ gateway/backend_client.py
+@@ -6,7 +6,7 @@
+     transport: httpx.AsyncBaseTransport | None = None,
+ ) -> None:
+     self._client = httpx.AsyncClient(
+-        base_url=base_url.rstrip("/"),
++        base_url=base_url.rstrip("XX/XX"),
+         timeout=httpx.Timeout(timeout_seconds),
+         transport=transport,
+         headers={"Accept": "application/json"},

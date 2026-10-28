@@ -1,0 +1,12 @@
+# gateway.storage.x_migrate_session_document__mutmut_7: survived
+--- gateway/storage.py
++++ gateway/storage.py
+@@ -11,7 +11,7 @@
+ 
+     version = document.get("schema_version")
+     if isinstance(version, bool) or not isinstance(version, int):
+-        raise ValueError("unsupported session schema_version")
++        raise ValueError(None)
+     if version == SESSION_SCHEMA_VERSION:
+         return _fill_emotion_metadata(copy.deepcopy(document))
+     if version == LEGACY_SESSION_SCHEMA_VERSION:

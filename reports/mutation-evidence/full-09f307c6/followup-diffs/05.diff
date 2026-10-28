@@ -1,0 +1,10 @@
+# gateway.conversation.engine.xǁConversationEngineǁ_awaiting_verification__mutmut_5: killed
+--- gateway/conversation/engine.py
++++ gateway/conversation/engine.py
+@@ -2,5 +2,5 @@
+     pending = self.verification.pending_order(session.session_id)
+     return (
+         pending is not None
+-        and self.verification.grant(session.session_id) != pending
++        and self.verification.grant(None) != pending
+     )

@@ -1,0 +1,19 @@
+{
+  "all_match_historical_snapshot": true,
+  "source_sha256": {
+    "backend_api/bookings.py": "d7f2d0f7ebde682a55cc7b9cedf1a4bbcdf92ec6dfa09794fb895fb963d4f36e",
+    "gateway/backend_client.py": "eb9c0fb19d0a67d985eaf0b3cff21c4fd8c1f7498409847d6298fec750fe0fa9",
+    "gateway/config.py": "f85e6df2aab64d20eb1fe8f1c9809885d22fc055a0a218e5a24e1ca7bb11d83b",
+    "gateway/conversation/engine.py": "d61837935a62f35134ee084a1f2ef8f916566718222e465bb0ae1eeb7e69faa4",
+    "gateway/conversation/flows.py": "eebb16886aa8a5feebae3ce6555edbd3b5601d91ce44b04670818dea97f998a3",
+    "gateway/conversation/replay.py": "6915ddde6cf981d51eea252ed4c336a9ff33e940c018ffc60ed35555abdb96ff",
+    "gateway/conversation/visits.py": "e767991498696920879b1f647ddf8609dc7188c562bfc30130d014b6ea5e5696",
+    "gateway/knowledge/retrieval.py": "cce4f31f34ac6c377e49753fe7f76abe7d934ac45975bb56c2987af91a095300",
+    "gateway/localization.py": "2a3da9946517632b20b32dd0720e5ef5a3a06ad9b4e0ad263f09c74b88514589",
+    "gateway/providers/audio.py": "7743b8ad9209e668798874a176e33cf160d755b0c773723168d1d44c196d5fbd",
+    "gateway/providers/client.py": "1a69ba9dc384d908c79285333f90315fefa2ed221197d9b82394f800aae1b01d",
+    "gateway/providers/speech_wav.py": "19611f4b03c5d0401c8e619b5023275d36c4c5131bfa531ad46d1970c82213ab",
+    "gateway/providers/wire.py": "3aa827c56b282cfe9d056ceed53fad08c471d6659c5e857688df1aad27d18559",
+    "gateway/storage.py": "593f37c0c762c24dac043d22b1d17954bf14e06f2d52eb5a0d4ad1ded5ed20be"
+  }
+}

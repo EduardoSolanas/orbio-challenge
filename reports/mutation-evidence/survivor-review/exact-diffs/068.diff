@@ -1,0 +1,9 @@
+# gateway.conversation.visits.x_window_values__mutmut_11: survived
+--- gateway/conversation/visits.py
++++ gateway/conversation/visits.py
+@@ -1,4 +1,4 @@
+ def window_values(starts_at: str, ends_at: str) -> dict[str, str]:
+     """Split ``YYYY-MM-DDTHH:MM`` stamps into the date and clock parts of a reply."""
+ 
+-    return {"date": starts_at[:10], "start": starts_at[11:16], "end": ends_at[11:16]}
++    return {"date": starts_at[:10], "start": starts_at[11:16], "end": ends_at[11:17]}

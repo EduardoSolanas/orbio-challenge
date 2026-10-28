@@ -1,0 +1,12 @@
+# gateway.providers.wire.x_parse_embeddings__mutmut_27: killed
+--- gateway/providers/wire.py
++++ gateway/providers/wire.py
+@@ -7,7 +7,7 @@
+         raise InvalidContent
+     vectors: list[list[float]] = []
+     for item in sorted(
+-        items, key=lambda entry: entry.get("index", 0) if isinstance(entry, dict) else 0
++        items, key=lambda entry: entry.get("index", 0) if isinstance(entry, dict) else 1
+     ):
+         vector = item.get("embedding") if isinstance(item, dict) else None
+         if not isinstance(vector, list) or not vector:

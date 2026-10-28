@@ -1,0 +1,20 @@
+{
+  "framework": "mutmut",
+  "framework_version": "3.8.0",
+  "source_revision": "b7c36491e83b5ceb0ef7bc488303563e919be7a6",
+  "source_snapshot_revision": "snapshot:9e20b0ba06ee69b3d759455dc231fc6d0b29ff6b1f5943bb39267ea33d8bb27b",
+  "complete_project_run": true,
+  "generated": 5017,
+  "executed": 5017,
+  "killed": 4898,
+  "equivalent_survivors": 117,
+  "invalid_variants": 2,
+  "unresolved": 0,
+  "raw_kill_percent": 97.6281,
+  "non_equivalent_mutation_score_percent": 100.0,
+  "gate": "passed",
+  "unit_integration_passed": 2500,
+  "scope": "All configured eligible functions in gateway/, backend_api/ and shared/, including uncovered lines. No statement-wide regex exclusions. Documented wiring/schema/prompt files and module-level declarations are outside the operator scope.",
+  "test_repairs": "Enforced the existing two-second parser-test deadline; added two HTTP integration cases for an aside after credentials succeed but flow continuation fails. The six affected mutants were killed in both focused and full runs.",
+  "note": "117 equivalents and two invalid type-only stubs are not kills. No partial results or framework timeouts contribute to the score."
+}

@@ -1,0 +1,9 @@
+# gateway.providers.client.x__success_json_body__mutmut_14: survived
+--- gateway/providers/client.py
++++ gateway/providers/client.py
+@@ -4,4 +4,4 @@
+     if not 200 <= response.status_code < 300:
+         raise _status_error(response.status_code)
+     _reject_encoded(response)
+-    return (await _read_bounded(response, SUCCESS_JSON_LIMIT)).decode("utf-8")
++    return (await _read_bounded(response, SUCCESS_JSON_LIMIT)).decode("UTF-8")

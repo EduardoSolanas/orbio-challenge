@@ -1,0 +1,12 @@
+# gateway.backend_client.xǁBackendApiClientǁ_request__mutmut_2: survived
+--- gateway/backend_client.py
++++ gateway/backend_client.py
+@@ -4,7 +4,7 @@
+     path: str,
+     *,
+     allow_not_found: bool = False,
+-    allow_conflict: bool = False,
++    allow_conflict: bool = True,
+     **kwargs: Any,
+ ) -> httpx.Response:
+     try:

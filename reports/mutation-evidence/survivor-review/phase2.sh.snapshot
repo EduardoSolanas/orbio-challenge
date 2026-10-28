@@ -1,0 +1,11 @@
+#!/bin/sh
+cd /work
+python -m pytest tests/unit/gateway/conversation/test_survivor_regressions.py -q > reports/phase2-baseline.txt 2>&1
+baseline=$?
+printf '%s\n' "$baseline" > reports/phase2-baseline-exit-code
+if [ "$baseline" -ne 0 ]; then exit "$baseline"; fi
+python -m mutmut run 'gateway.conversation.engine.xǁConversationEngineǁ_answer_policy_question__mutmut_43' 'gateway.conversation.flows.x_load_flows__mutmut_6' 'gateway.conversation.flows.x_load_flows__mutmut_61' --max-children 2 > reports/phase2-run.txt 2>&1
+result=$?
+printf '%s\n' "$result" > reports/phase2-exit-code
+python -m mutmut results --all true > reports/phase2-all-results.txt 2>&1
+exit "$result"

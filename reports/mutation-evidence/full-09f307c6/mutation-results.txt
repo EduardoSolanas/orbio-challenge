@@ -1,0 +1,720 @@
+    gateway.backend_client.xǁBackendApiClientǁ__init____mutmut_16: survived
+    gateway.backend_client.xǁBackendApiClientǁ__init____mutmut_17: survived
+    gateway.backend_client.xǁBackendApiClientǁverify_order__mutmut_16: survived
+    gateway.backend_client.xǁBackendApiClientǁlookup_order__mutmut_9: survived
+    gateway.backend_client.xǁBackendApiClientǁlookup_order__mutmut_14: survived
+    gateway.backend_client.xǁBackendApiClientǁinstallation__mutmut_9: survived
+    gateway.backend_client.xǁBackendApiClientǁinstallation__mutmut_14: survived
+    gateway.backend_client.xǁBackendApiClientǁavailability__mutmut_10: survived
+    gateway.backend_client.xǁBackendApiClientǁbook__mutmut_21: survived
+    gateway.backend_client.xǁBackendApiClientǁbook__mutmut_28: survived
+    gateway.config.x__required__mutmut_1: not checked
+    gateway.config.x__required__mutmut_2: not checked
+    gateway.config.x__required__mutmut_3: not checked
+    gateway.config.x__base_url__mutmut_1: not checked
+    gateway.config.x__base_url__mutmut_2: not checked
+    gateway.config.x__base_url__mutmut_3: not checked
+    gateway.config.x__base_url__mutmut_4: not checked
+    gateway.config.x__base_url__mutmut_5: not checked
+    gateway.config.x__base_url__mutmut_6: not checked
+    gateway.config.x__base_url__mutmut_7: not checked
+    gateway.config.x__base_url__mutmut_8: not checked
+    gateway.config.x__base_url__mutmut_9: not checked
+    gateway.config.x__base_url__mutmut_10: not checked
+    gateway.config.x__base_url__mutmut_11: not checked
+    gateway.config.x__base_url__mutmut_12: not checked
+    gateway.config.x__base_url__mutmut_13: not checked
+    gateway.config.x__base_url__mutmut_14: not checked
+    gateway.config.x__base_url__mutmut_15: not checked
+    gateway.config.x__base_url__mutmut_16: not checked
+    gateway.config.x__base_url__mutmut_17: not checked
+    gateway.config.x__base_url__mutmut_18: not checked
+    gateway.config.x__base_url__mutmut_19: not checked
+    gateway.config.x__base_url__mutmut_20: not checked
+    gateway.config.x__base_url__mutmut_21: not checked
+    gateway.config.x__base_url__mutmut_22: not checked
+    gateway.config.x__base_url__mutmut_23: not checked
+    gateway.config.x__base_url__mutmut_24: not checked
+    gateway.config.x__model__mutmut_1: not checked
+    gateway.config.x__model__mutmut_2: not checked
+    gateway.config.x__api_key__mutmut_1: not checked
+    gateway.config.x__auth__mutmut_1: not checked
+    gateway.config.x__auth__mutmut_2: not checked
+    gateway.config.x__auth__mutmut_3: not checked
+    gateway.config.x__auth__mutmut_4: not checked
+    gateway.config.x__auth__mutmut_5: not checked
+    gateway.config.x__auth__mutmut_6: not checked
+    gateway.config.x__auth__mutmut_7: not checked
+    gateway.config.x__auth__mutmut_8: not checked
+    gateway.config.x__auth__mutmut_9: not checked
+    gateway.config.x__auth__mutmut_10: not checked
+    gateway.config.x__output_mode__mutmut_1: not checked
+    gateway.config.x__reasoning_effort__mutmut_1: not checked
+    gateway.config.x__reasoning_effort__mutmut_2: not checked
+    gateway.config.x__reasoning_effort__mutmut_3: not checked
+    gateway.config.x__concurrency__mutmut_1: not checked
+    gateway.config.x__concurrency__mutmut_2: not checked
+    gateway.config.x__concurrency__mutmut_3: not checked
+    gateway.config.x__concurrency__mutmut_4: not checked
+    gateway.config.x__concurrency__mutmut_5: not checked
+    gateway.config.x__concurrency__mutmut_6: not checked
+    gateway.config.x__concurrency__mutmut_7: not checked
+    gateway.config.x__audio_format__mutmut_1: not checked
+    gateway.config.x__audio_format__mutmut_2: not checked
+    gateway.config.x__audio_format__mutmut_3: not checked
+    gateway.config.x__tts_max_input_chars__mutmut_1: not checked
+    gateway.config.x__tts_max_input_chars__mutmut_2: not checked
+    gateway.config.x__tts_max_input_chars__mutmut_3: not checked
+    gateway.config.x__tts_max_input_chars__mutmut_4: not checked
+    gateway.config.x__tts_max_input_chars__mutmut_5: not checked
+    gateway.config.x__tts_max_input_chars__mutmut_6: not checked
+    gateway.config.x__tts_max_input_chars__mutmut_7: not checked
+    gateway.config.x__tts_max_input_chars__mutmut_8: not checked
+    gateway.config.x__backend_api_timeout__mutmut_1: not checked
+    gateway.config.x__backend_api_timeout__mutmut_2: not checked
+    gateway.config.x__backend_api_timeout__mutmut_3: not checked
+    gateway.config.x__backend_api_timeout__mutmut_4: not checked
+    gateway.config.x__backend_api_timeout__mutmut_5: not checked
+    gateway.config.x__backend_api_timeout__mutmut_6: not checked
+    gateway.config.x__backend_api_timeout__mutmut_7: not checked
+    gateway.config.x__backend_api_timeout__mutmut_8: not checked
+    gateway.config.x__backend_api_timeout__mutmut_9: not checked
+    gateway.config.x__embed__mutmut_1: not checked
+    gateway.config.x__embed__mutmut_2: not checked
+    gateway.config.x__embed__mutmut_3: not checked
+    gateway.config.x__embed__mutmut_4: not checked
+    gateway.config.x__embed__mutmut_5: not checked
+    gateway.config.x__embed__mutmut_6: not checked
+    gateway.config.x__embed__mutmut_7: not checked
+    gateway.config.x__embed__mutmut_8: not checked
+    gateway.config.x__embed__mutmut_9: not checked
+    gateway.config.x__embed__mutmut_10: not checked
+    gateway.config.x__embed__mutmut_11: not checked
+    gateway.config.x__embed__mutmut_12: not checked
+    gateway.config.x__embed__mutmut_13: not checked
+    gateway.config.x__embed__mutmut_14: not checked
+    gateway.config.x__embed__mutmut_15: not checked
+    gateway.config.x__embed__mutmut_16: not checked
+    gateway.config.x__embed__mutmut_17: not checked
+    gateway.config.x__embed__mutmut_18: not checked
+    gateway.config.x__embed__mutmut_19: not checked
+    gateway.config.x__embed__mutmut_20: not checked
+    gateway.config.x__embed__mutmut_21: not checked
+    gateway.config.x__embed__mutmut_22: not checked
+    gateway.config.x__embed__mutmut_23: not checked
+    gateway.config.x__embed__mutmut_24: not checked
+    gateway.config.x__embed__mutmut_25: not checked
+    gateway.config.x__embed__mutmut_26: not checked
+    gateway.config.x__embed__mutmut_27: not checked
+    gateway.config.x__embed__mutmut_28: not checked
+    gateway.config.x__embed__mutmut_29: not checked
+    gateway.config.x__embed__mutmut_30: not checked
+    gateway.config.x__embed__mutmut_31: not checked
+    gateway.config.x__embed__mutmut_32: not checked
+    gateway.config.x__embed__mutmut_33: not checked
+    gateway.config.x__embed__mutmut_34: not checked
+    gateway.config.x__embed__mutmut_35: not checked
+    gateway.config.x__embed__mutmut_36: not checked
+    gateway.config.x__embed__mutmut_37: not checked
+    gateway.config.x__embed__mutmut_38: not checked
+    gateway.config.x__embed__mutmut_39: not checked
+    gateway.config.x__embed__mutmut_40: not checked
+    gateway.config.x__embed__mutmut_41: not checked
+    gateway.config.x__embed__mutmut_42: not checked
+    gateway.config.x__embed__mutmut_43: not checked
+    gateway.config.x__embed__mutmut_44: not checked
+    gateway.config.x__embed__mutmut_45: not checked
+    gateway.config.x__min_similarity__mutmut_1: not checked
+    gateway.config.x__min_similarity__mutmut_2: not checked
+    gateway.config.x__min_similarity__mutmut_3: not checked
+    gateway.config.x__min_similarity__mutmut_4: not checked
+    gateway.config.x__min_similarity__mutmut_5: not checked
+    gateway.config.x__min_similarity__mutmut_6: not checked
+    gateway.config.x__min_similarity__mutmut_7: not checked
+    gateway.config.x__min_similarity__mutmut_8: not checked
+    gateway.config.x__min_similarity__mutmut_9: not checked
+    gateway.config.x__min_similarity__mutmut_10: not checked
+    gateway.config.x__tts_es__mutmut_1: not checked
+    gateway.config.x__tts_es__mutmut_2: not checked
+    gateway.config.x__tts_es__mutmut_3: not checked
+    gateway.config.x__tts_es__mutmut_4: not checked
+    gateway.config.x__tts_es__mutmut_5: not checked
+    gateway.config.x__tts_es__mutmut_6: not checked
+    gateway.config.x__tts_es__mutmut_7: not checked
+    gateway.config.x__tts_es__mutmut_8: not checked
+    gateway.config.x__tts_es__mutmut_9: not checked
+    gateway.config.x__tts_es__mutmut_10: not checked
+    gateway.config.x__tts_es__mutmut_11: not checked
+    gateway.config.x__tts_es__mutmut_12: not checked
+    gateway.config.x__tts_es__mutmut_13: not checked
+    gateway.config.x__tts_es__mutmut_14: not checked
+    gateway.config.x__tts_es__mutmut_15: not checked
+    gateway.config.x__tts_es__mutmut_16: not checked
+    gateway.config.x__tts_es__mutmut_17: not checked
+    gateway.config.x__tts_es__mutmut_18: not checked
+    gateway.config.x__tts_es__mutmut_19: not checked
+    gateway.config.x__tts_es__mutmut_20: not checked
+    gateway.config.x__tts_es__mutmut_21: not checked
+    gateway.config.x__tts_es__mutmut_22: not checked
+    gateway.config.x__tts_es__mutmut_23: not checked
+    gateway.config.x__tts_es__mutmut_24: not checked
+    gateway.config.x__tts_es__mutmut_25: not checked
+    gateway.config.x__tts_es__mutmut_26: not checked
+    gateway.config.x__tts_es__mutmut_27: not checked
+    gateway.config.x__tts_es__mutmut_28: not checked
+    gateway.config.x__tts_es__mutmut_29: not checked
+    gateway.config.x__tts_es__mutmut_30: not checked
+    gateway.config.x__tts_es__mutmut_31: not checked
+    gateway.config.x__tts_es__mutmut_32: not checked
+    gateway.config.x__tts_es__mutmut_33: not checked
+    gateway.config.x__tts_es__mutmut_34: not checked
+    gateway.config.x__tts_es__mutmut_35: not checked
+    gateway.config.x__tts_es__mutmut_36: not checked
+    gateway.config.x__tts_es__mutmut_37: not checked
+    gateway.config.x__tts_es__mutmut_38: not checked
+    gateway.config.x__tts_es__mutmut_39: not checked
+    gateway.config.x__tts_es__mutmut_40: not checked
+    gateway.config.x__tts_es__mutmut_41: not checked
+    gateway.config.x__tts_es__mutmut_42: not checked
+    gateway.config.x__tts_es__mutmut_43: not checked
+    gateway.config.x__tts_es__mutmut_44: not checked
+    gateway.config.x__tts_es__mutmut_45: not checked
+    gateway.config.x__tts_es__mutmut_46: not checked
+    gateway.config.x__tts_es__mutmut_47: not checked
+    gateway.config.x__tts_es__mutmut_48: not checked
+    gateway.config.x__tts_es__mutmut_49: not checked
+    gateway.config.x__tts_es__mutmut_50: not checked
+    gateway.config.x__tts_es__mutmut_51: not checked
+    gateway.config.x__tts_es__mutmut_52: not checked
+    gateway.config.x__tts_es__mutmut_53: not checked
+    gateway.config.x__tts_es__mutmut_54: not checked
+    gateway.config.x__tts_es__mutmut_55: not checked
+    gateway.config.x__tts_es__mutmut_56: not checked
+    gateway.config.x__tts_es__mutmut_57: not checked
+    gateway.config.x__tts_es__mutmut_58: not checked
+    gateway.config.x__tts_es__mutmut_59: not checked
+    gateway.config.x__tts_es__mutmut_60: not checked
+    gateway.config.x__tts_es__mutmut_61: not checked
+    gateway.config.x__tts_es__mutmut_62: not checked
+    gateway.config.x__tts_es__mutmut_63: not checked
+    gateway.config.x__tts_es__mutmut_64: not checked
+    gateway.config.x__tts_es__mutmut_65: not checked
+    gateway.config.x__tts_es__mutmut_66: not checked
+    gateway.config.x__tts_es__mutmut_67: not checked
+    gateway.config.x__tts_es__mutmut_68: not checked
+    gateway.config.x__tts_es__mutmut_69: not checked
+    gateway.config.x__role__mutmut_1: not checked
+    gateway.config.x__role__mutmut_2: not checked
+    gateway.config.x__role__mutmut_3: not checked
+    gateway.config.x__role__mutmut_4: not checked
+    gateway.config.x__role__mutmut_5: not checked
+    gateway.config.x__role__mutmut_6: not checked
+    gateway.config.x__role__mutmut_7: not checked
+    gateway.config.x__role__mutmut_8: not checked
+    gateway.config.x__role__mutmut_9: not checked
+    gateway.config.x__role__mutmut_10: not checked
+    gateway.config.x__role__mutmut_11: not checked
+    gateway.config.x__role__mutmut_12: not checked
+    gateway.config.x__role__mutmut_13: not checked
+    gateway.config.x__role__mutmut_14: not checked
+    gateway.config.x__role__mutmut_15: not checked
+    gateway.config.x__role__mutmut_16: not checked
+    gateway.config.x__role__mutmut_17: not checked
+    gateway.config.x__role__mutmut_18: not checked
+    gateway.config.x__role__mutmut_19: not checked
+    gateway.config.x__role__mutmut_20: not checked
+    gateway.config.x__role__mutmut_21: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_1: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_2: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_3: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_4: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_5: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_6: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_7: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_8: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_9: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_10: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_11: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_12: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_13: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_14: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_15: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_16: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_17: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_18: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_19: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_20: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_21: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_22: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_23: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_24: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_25: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_26: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_27: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_28: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_29: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_30: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_31: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_32: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_33: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_34: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_35: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_36: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_37: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_38: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_39: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_40: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_41: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_42: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_43: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_44: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_45: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_46: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_47: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_48: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_49: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_50: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_51: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_52: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_53: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_54: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_55: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_56: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_57: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_58: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_59: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_60: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_61: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_62: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_63: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_64: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_65: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_66: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_67: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_68: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_69: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_70: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_71: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_72: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_73: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_74: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_75: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_76: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_77: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_78: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_79: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_80: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_81: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_82: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_83: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_84: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_85: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_86: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_87: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_88: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_89: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_90: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_91: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_92: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_93: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_94: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_95: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_96: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_97: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_98: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_99: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_100: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_101: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_102: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_103: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_104: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_105: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_106: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_107: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_108: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_109: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_110: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_111: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_112: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_113: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_114: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_115: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_116: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_117: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_118: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_119: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_120: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_121: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_122: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_123: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_124: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_125: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_126: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_127: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_128: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_129: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_130: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_131: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_132: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_133: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_134: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_135: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_136: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_137: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_138: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_139: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_140: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_141: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_142: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_143: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_144: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_145: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_146: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_147: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_148: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_149: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_150: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_151: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_152: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_153: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_154: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_155: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_156: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_157: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_158: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_159: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_160: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_161: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_162: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_163: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_164: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_165: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_166: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_167: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_168: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_169: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_170: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_171: not checked
+    gateway.config.xǁSettingsǁfrom_env__mutmut_172: not checked
+    gateway.localization.x__read_dictionary__mutmut_4: survived
+    gateway.localization.x__check_language__mutmut_1: not checked
+    gateway.localization.x__check_language__mutmut_2: not checked
+    gateway.localization.xǁLocaleCatalogǁmapping__mutmut_1: not checked
+    gateway.localization.xǁLocaleCatalogǁtext__mutmut_1: not checked
+    gateway.localization.x_text__mutmut_1: not checked
+    gateway.localization.x_text__mutmut_2: not checked
+    gateway.localization.x_text__mutmut_3: not checked
+    gateway.localization.x_text__mutmut_4: not checked
+    gateway.localization.x_build_summary__mutmut_17: survived
+    gateway.localization.x_build_summary__mutmut_18: survived
+    gateway.localization.x_build_summary__mutmut_19: survived
+    gateway.localization.x_build_summary__mutmut_33: survived
+    gateway.localization.x_build_summary__mutmut_34: survived
+    gateway.localization.x_build_summary__mutmut_35: survived
+    gateway.localization.x_request_reference__mutmut_10: survived
+    gateway.localization.x_request_reference__mutmut_11: survived
+    gateway.storage.x_migrate_session_document__mutmut_1: not checked
+    gateway.storage.x_migrate_session_document__mutmut_2: not checked
+    gateway.storage.x_migrate_session_document__mutmut_3: not checked
+    gateway.storage.x_migrate_session_document__mutmut_4: not checked
+    gateway.storage.x_migrate_session_document__mutmut_5: not checked
+    gateway.storage.x_migrate_session_document__mutmut_6: not checked
+    gateway.storage.x_migrate_session_document__mutmut_7: not checked
+    gateway.storage.x_migrate_session_document__mutmut_8: not checked
+    gateway.storage.x_migrate_session_document__mutmut_9: not checked
+    gateway.storage.x_migrate_session_document__mutmut_10: not checked
+    gateway.storage.x_migrate_session_document__mutmut_11: not checked
+    gateway.storage.x_migrate_session_document__mutmut_12: not checked
+    gateway.storage.x_migrate_session_document__mutmut_13: not checked
+    gateway.storage.x_migrate_session_document__mutmut_14: not checked
+    gateway.storage.x_migrate_session_document__mutmut_15: not checked
+    gateway.storage.x_migrate_session_document__mutmut_16: not checked
+    gateway.storage.x_migrate_session_document__mutmut_17: not checked
+    gateway.storage.x_migrate_session_document__mutmut_18: not checked
+    gateway.storage.x_migrate_session_document__mutmut_19: not checked
+    gateway.storage.x_migrate_session_document__mutmut_20: not checked
+    gateway.storage.x__upgrade_legacy_document__mutmut_33: survived
+    gateway.storage.x__upgrade_legacy_document__mutmut_38: survived
+    gateway.storage.x__fill_emotion_metadata__mutmut_14: survived
+    gateway.storage.x__fill_emotion_metadata__mutmut_19: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁ__init____mutmut_1: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁ__init____mutmut_2: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁ__init____mutmut_3: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁ_path__mutmut_1: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁlocked__mutmut_1: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_13: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_14: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_15: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_16: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_18: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_20: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁload__mutmut_21: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_1: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_2: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_3: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_4: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_5: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_6: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_7: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_8: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_9: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_10: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_11: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_12: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_13: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_14: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_15: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_16: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_17: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_18: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_19: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_20: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_21: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_22: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_23: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_24: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_25: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_26: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_27: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_28: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_29: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_30: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_31: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_32: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_33: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_34: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_35: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_36: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_37: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_38: not checked
+    gateway.storage.xǁJsonSessionRepositoryǁsave__mutmut_39: not checked
+    gateway.conversation.engine.x__now__mutmut_1: not checked
+    gateway.conversation.engine.x__now__mutmut_2: not checked
+    gateway.conversation.engine.x__now__mutmut_3: not checked
+    gateway.conversation.engine.x__message__mutmut_1: not checked
+    gateway.conversation.engine.x__message__mutmut_2: not checked
+    gateway.conversation.engine.x__message__mutmut_3: not checked
+    gateway.conversation.engine.x__message__mutmut_4: not checked
+    gateway.conversation.engine.x__message__mutmut_5: not checked
+    gateway.conversation.engine.x__message__mutmut_6: not checked
+    gateway.conversation.engine.x__message__mutmut_7: not checked
+    gateway.conversation.engine.x__message__mutmut_8: not checked
+    gateway.conversation.engine.x__message__mutmut_9: not checked
+    gateway.conversation.engine.x__message__mutmut_10: not checked
+    gateway.conversation.engine.x__message__mutmut_11: not checked
+    gateway.conversation.engine.x__message__mutmut_12: not checked
+    gateway.conversation.engine.x__message__mutmut_13: not checked
+    gateway.conversation.engine.x__message__mutmut_14: not checked
+    gateway.conversation.engine.x__message__mutmut_15: not checked
+    gateway.conversation.engine.x__message__mutmut_16: not checked
+    gateway.conversation.engine.x__message__mutmut_17: not checked
+    gateway.conversation.engine.x__message__mutmut_18: not checked
+    gateway.conversation.engine.x__message__mutmut_19: not checked
+    gateway.conversation.engine.x__saved_copy__mutmut_2: survived
+    gateway.conversation.engine.x__saved_copy__mutmut_3: survived
+    gateway.conversation.engine.x__view__mutmut_1: not checked
+    gateway.conversation.engine.x__view__mutmut_2: not checked
+    gateway.conversation.engine.x__view__mutmut_3: not checked
+    gateway.conversation.engine.x__view__mutmut_4: not checked
+    gateway.conversation.engine.x__view__mutmut_5: not checked
+    gateway.conversation.engine.x__view__mutmut_6: not checked
+    gateway.conversation.engine.x__view__mutmut_7: not checked
+    gateway.conversation.engine.x__view__mutmut_8: not checked
+    gateway.conversation.engine.x__view__mutmut_9: not checked
+    gateway.conversation.engine.x__view__mutmut_10: not checked
+    gateway.conversation.engine.x__view__mutmut_11: not checked
+    gateway.conversation.engine.x__view__mutmut_12: not checked
+    gateway.conversation.engine.x__view__mutmut_13: not checked
+    gateway.conversation.engine.x__view__mutmut_14: not checked
+    gateway.conversation.engine.x__view__mutmut_15: not checked
+    gateway.conversation.engine.x__view__mutmut_16: not checked
+    gateway.conversation.engine.x__view__mutmut_17: not checked
+    gateway.conversation.engine.x__view__mutmut_18: not checked
+    gateway.conversation.engine.x__view__mutmut_19: not checked
+    gateway.conversation.engine.x__view__mutmut_20: not checked
+    gateway.conversation.engine.x__view__mutmut_21: not checked
+    gateway.conversation.engine.x__view__mutmut_22: not checked
+    gateway.conversation.engine.x__view__mutmut_23: not checked
+    gateway.conversation.engine.x__view__mutmut_24: not checked
+    gateway.conversation.engine.x__view__mutmut_25: not checked
+    gateway.conversation.engine.x__view__mutmut_26: not checked
+    gateway.conversation.engine.x__view__mutmut_27: not checked
+    gateway.conversation.engine.x__speech_available__mutmut_1: not checked
+    gateway.conversation.engine.x__speech_available__mutmut_2: not checked
+    gateway.conversation.engine.x__speech_available__mutmut_3: not checked
+    gateway.conversation.engine.x__speech_available__mutmut_4: not checked
+    gateway.conversation.engine.x__speech_available__mutmut_5: not checked
+    gateway.conversation.engine.xǁConversationEngineǁ__init____mutmut_1: not checked
+    gateway.conversation.engine.xǁConversationEngineǁ__init____mutmut_2: not checked
+    gateway.conversation.engine.xǁConversationEngineǁ__init____mutmut_3: not checked
+    gateway.conversation.engine.xǁConversationEngineǁ__init____mutmut_4: not checked
+    gateway.conversation.engine.xǁConversationEngineǁ__init____mutmut_5: not checked
+    gateway.conversation.engine.xǁConversationEngineǁ__init____mutmut_6: not checked
+    gateway.conversation.engine.xǁConversationEngineǁ__init____mutmut_7: not checked
+    gateway.conversation.engine.xǁConversationEngineǁ__init____mutmut_8: not checked
+    gateway.conversation.engine.xǁConversationEngineǁ__init____mutmut_9: not checked
+    gateway.conversation.engine.xǁConversationEngineǁ__init____mutmut_10: not checked
+    gateway.conversation.engine.xǁConversationEngineǁ__init____mutmut_11: not checked
+    gateway.conversation.engine.xǁConversationEngineǁ__init____mutmut_12: not checked
+    gateway.conversation.engine.xǁConversationEngineǁ__init____mutmut_13: not checked
+    gateway.conversation.engine.xǁConversationEngineǁ__init____mutmut_14: not checked
+    gateway.conversation.engine.xǁConversationEngineǁ__init____mutmut_15: not checked
+    gateway.conversation.engine.xǁConversationEngineǁcreate_session__mutmut_67: not checked
+    gateway.conversation.engine.xǁConversationEngineǁ_select_plan__mutmut_91: survived
+    gateway.conversation.engine.xǁConversationEngineǁ_select_plan__mutmut_92: survived
+    gateway.conversation.engine.xǁConversationEngineǁ_awaiting_verification__mutmut_3: survived
+    gateway.conversation.engine.xǁConversationEngineǁ_awaiting_verification__mutmut_5: survived
+    gateway.conversation.engine.xǁConversationEngineǁconfirm__mutmut_62: survived
+    gateway.conversation.engine.xǁConversationEngineǁconfirm__mutmut_64: survived
+    gateway.conversation.engine.xǁConversationEngineǁ_continue_flow__mutmut_29: survived
+    gateway.conversation.engine.xǁConversationEngineǁ_continue_flow__mutmut_41: survived
+    gateway.conversation.engine.xǁConversationEngineǁ_continue_flow__mutmut_42: survived
+    gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_34: survived
+    gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_35: survived
+    gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_48: survived
+    gateway.conversation.engine.xǁConversationEngineǁ_plan_turn__mutmut_50: survived
+    gateway.conversation.flows.x_collect_details__mutmut_15: survived
+    gateway.conversation.flows.x_load_flows__mutmut_1: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_2: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_3: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_4: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_5: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_6: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_7: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_8: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_9: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_10: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_11: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_12: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_13: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_14: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_15: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_16: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_17: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_18: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_19: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_20: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_21: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_22: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_23: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_24: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_25: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_26: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_27: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_28: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_29: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_30: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_31: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_32: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_33: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_34: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_35: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_36: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_37: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_38: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_39: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_40: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_41: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_42: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_43: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_44: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_45: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_46: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_47: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_48: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_49: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_50: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_51: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_52: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_53: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_54: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_55: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_56: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_57: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_58: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_59: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_60: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_61: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_62: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_63: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_64: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_65: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_66: not checked
+    gateway.conversation.flows.x_load_flows__mutmut_67: not checked
+    gateway.conversation.replay.x__digest__mutmut_5: survived
+    gateway.conversation.replay.x__digest__mutmut_22: survived
+    gateway.conversation.safety.x_load_examples__mutmut_6: survived
+    gateway.conversation.verification.xǁVerificationRegistryǁ__init____mutmut_1: not checked
+    gateway.conversation.verification.xǁVerificationRegistryǁ__init____mutmut_2: not checked
+    gateway.conversation.verification.xǁVerificationRegistryǁ__init____mutmut_3: not checked
+    gateway.conversation.verification.xǁVerificationRegistryǁ__init____mutmut_4: not checked
+    gateway.conversation.verification.xǁVerificationRegistryǁ__init____mutmut_5: not checked
+    gateway.conversation.verification.xǁVerificationRegistryǁ__init____mutmut_6: not checked
+    gateway.conversation.verification.xǁVerificationRegistryǁ__init____mutmut_7: not checked
+    gateway.conversation.visits.x_window_values__mutmut_7: survived
+    gateway.conversation.visits.x_window_values__mutmut_11: survived
+    gateway.knowledge.retrieval.x_load_knowledge__mutmut_13: survived
+    gateway.providers.audio.x__fmt_fields__mutmut_4: survived
+    gateway.providers.audio.x__fmt_fields__mutmut_5: survived
+    gateway.providers.audio.x__fmt_fields__mutmut_38: survived
+    gateway.providers.audio.x_validate_wav__mutmut_48: survived
+    gateway.providers.audio.x_validate_wav__mutmut_59: survived
+    gateway.providers.audio.x_validate_wav__mutmut_60: survived
+    gateway.providers.audio.x_validate_wav__mutmut_61: survived
+    gateway.providers.client.xǁAIProviderǁsynthesize__mutmut_1: no tests
+    gateway.providers.client.xǁAIProviderǁsynthesize__mutmut_2: no tests
+    gateway.providers.client.x__media_type__mutmut_8: survived
+    gateway.providers.client.x__media_type__mutmut_9: survived
+    gateway.providers.client.x__reject_encoded__mutmut_8: survived
+    gateway.providers.client.x__success_json_body__mutmut_14: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁ__init____mutmut_17: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_4: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_5: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_13: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_14: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁ_build_client__mutmut_21: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁembed__mutmut_27: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁembed__mutmut_37: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁembed__mutmut_42: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁ_speech_request__mutmut_35: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁ_text_operation__mutmut_16: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁ_audio_operation__mutmut_18: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁ_audio_operation__mutmut_25: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁ_audio_operation__mutmut_30: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_1: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_9: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_45: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_46: survived
+    gateway.providers.client.xǁOpenAICompatibleProviderǁ_retry__mutmut_47: survived
+    gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_3: survived
+    gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_4: survived
+    gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_25: survived
+    gateway.providers.speech_wav.x__parse_pcm_wav__mutmut_53: survived
+    gateway.providers.wire.x__schema_instruction__mutmut_3: survived
+    gateway.providers.wire.x__schema_instruction__mutmut_5: survived
+    gateway.providers.wire.x__schema_instruction__mutmut_6: survived
+    gateway.providers.wire.x_extract_json__mutmut_21: timeout
+    gateway.providers.wire.x_extract_json__mutmut_22: timeout
+    gateway.providers.wire.x_extract_json__mutmut_28: survived
+    gateway.providers.wire.x_extract_json__mutmut_31: timeout
+    gateway.providers.wire.x_extract_json__mutmut_33: timeout
+    backend_api.bookings.xǁBookingRefusedǁ__init____mutmut_1: survived
+    backend_api.bookings.xǁBookingStoreǁ_seed__mutmut_5: survived
+    backend_api.bookings.xǁBookingStoreǁ_seed__mutmut_32: survived
+    backend_api.bookings.xǁBookingStoreǁ_seed__mutmut_33: survived
+    backend_api.bookings.xǁBookingStoreǁopen_slots__mutmut_7: survived
+    backend_api.bookings.xǁBookingStoreǁopen_slots__mutmut_8: survived
+    backend_api.bookings.xǁBookingStoreǁopen_slots__mutmut_10: survived
+    backend_api.bookings.xǁBookingStoreǁopen_slots__mutmut_11: survived
+    backend_api.bookings.xǁBookingStoreǁopen_slots__mutmut_13: survived
+    backend_api.bookings.xǁBookingStoreǁopen_slots__mutmut_14: survived
+    backend_api.bookings.xǁBookingStoreǁappointment__mutmut_7: survived
+    backend_api.bookings.xǁBookingStoreǁappointment__mutmut_8: survived
+    backend_api.bookings.xǁBookingStoreǁbook__mutmut_26: survived
+    backend_api.bookings.xǁBookingStoreǁbook__mutmut_27: survived
+    backend_api.bookings.xǁBookingStoreǁbook__mutmut_29: survived
+    backend_api.bookings.xǁBookingStoreǁbook__mutmut_30: survived
+    backend_api.bookings.xǁBookingStoreǁbook__mutmut_37: survived
+    backend_api.bookings.xǁBookingStoreǁbook__mutmut_38: survived
+    backend_api.bookings.xǁBookingStoreǁbook__mutmut_40: survived
+    backend_api.bookings.xǁBookingStoreǁbook__mutmut_41: survived

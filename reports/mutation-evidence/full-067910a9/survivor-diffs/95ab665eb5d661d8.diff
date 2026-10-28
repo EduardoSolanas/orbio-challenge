@@ -1,0 +1,11 @@
+# gateway.conversation.safety.x_load_examples__mutmut_6: survived
+--- gateway/conversation/safety.py
++++ gateway/conversation/safety.py
+@@ -1,6 +1,6 @@
+ def load_examples(path: Path) -> SafetyExamples:
+     try:
+-        raw = json.loads(Path(path).read_text(encoding="utf-8"))
++        raw = json.loads(Path(path).read_text(encoding="UTF-8"))
+         groups = {key: tuple(raw[key]) for key in ("emergency", "ordinary")}
+     except (OSError, ValueError, KeyError, TypeError):
+         raise SafetyExamplesInvalid(str(path)) from None

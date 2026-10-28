@@ -1,0 +1,11 @@
+# gateway.conversation.replay.x_booking_digest__mutmut_13: killed
+--- gateway/conversation/replay.py
++++ gateway/conversation/replay.py
+@@ -5,6 +5,6 @@
+         {
+             "request_id": str(command.request_id),
+             "expected_revision": command.expected_revision,
+-            "starts_at": command.starts_at,
++            "STARTS_AT": command.starts_at,
+         },
+     )

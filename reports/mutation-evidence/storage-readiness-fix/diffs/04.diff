@@ -1,0 +1,9 @@
+# gateway.storage.xǁJsonSessionRepositoryǁcheck_writable__mutmut_5: killed
+--- gateway/storage.py
++++ gateway/storage.py
+@@ -5,4 +5,4 @@
+             handle.write(b"\0")
+             handle.flush()
+     except OSError:
+-        raise app_error("storage_unavailable") from None
++        raise app_error("XXstorage_unavailableXX") from None

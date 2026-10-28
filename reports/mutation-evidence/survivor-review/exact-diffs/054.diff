@@ -1,0 +1,10 @@
+# gateway.conversation.engine.xǁConversationEngineǁ_answer_policy_question__mutmut_43: survived
+--- gateway/conversation/engine.py
++++ gateway/conversation/engine.py
+@@ -23,5 +23,5 @@
+         answer, retrieved, self.knowledge_base.version
+     )
+     if not answer.answerable:
+-        return text("abstention", reply_language), ()
++        return text("abstention", ), ()
+     return answer.answer.strip(), citations

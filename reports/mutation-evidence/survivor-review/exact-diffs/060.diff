@@ -1,0 +1,11 @@
+# gateway.conversation.replay.x_booking_digest__mutmut_1: killed
+--- gateway/conversation/replay.py
++++ gateway/conversation/replay.py
+@@ -1,6 +1,6 @@
+ def booking_digest(session_id: UUID, command: BookingRequest) -> str:
+     return _digest(
+-        BOOKING_ENDPOINT,
++        None,
+         session_id,
+         {
+             "request_id": str(command.request_id),

@@ -1,0 +1,12 @@
+# gateway.storage.xǁJsonSessionRepositoryǁcheck_writable__mutmut_9: survived
+--- gateway/storage.py
++++ gateway/storage.py
+@@ -2,7 +2,7 @@
+     handle = None
+     try:
+         handle = tempfile.NamedTemporaryFile(dir=self.directory, delete=False)
+-        handle.write(b"")
++        handle.write(b"XXXX")
+         handle.flush()
+         name = handle.name
+         handle.close()

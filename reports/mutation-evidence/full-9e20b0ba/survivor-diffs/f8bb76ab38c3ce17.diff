@@ -1,0 +1,12 @@
+# gateway.backend_client.xǁBackendApiClientǁbook__mutmut_28: survived
+--- gateway/backend_client.py
++++ gateway/backend_client.py
+@@ -19,7 +19,7 @@
+         try:
+             code = response.json()["error"]
+         except (ValueError, KeyError, TypeError):
+-            code = None
++            code = ""
+         raise app_error(
+             code
+             if code in (SLOT_UNAVAILABLE, ALREADY_BOOKED)

@@ -1,0 +1,12 @@
+# gateway.storage.x__fill_emotion_metadata__mutmut_14: survived
+--- gateway/storage.py
++++ gateway/storage.py
+@@ -4,7 +4,7 @@
+     if isinstance(messages, list):
+         for message in messages:
+             if isinstance(message, dict):
+-                message.setdefault("sentiment", None)
++                message.setdefault("sentiment", )
+                 message.setdefault("frustration", None)
+     requests = document.get("requests")
+     if isinstance(requests, list):

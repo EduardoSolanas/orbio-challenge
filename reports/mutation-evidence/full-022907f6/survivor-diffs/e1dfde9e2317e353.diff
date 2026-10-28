@@ -1,0 +1,13 @@
+# gateway.conversation.engine.xǁConversationEngineǁconfirm__mutmut_64: survived
+--- gateway/conversation/engine.py
++++ gateway/conversation/engine.py
+@@ -30,8 +30,7 @@
+             status="completed",
+             pending_clarifications={},
+             pending_review_revision=None,
+-            citations=[],
+-        )
++            )
+         committed = _saved_copy(
+             session,
+             response,
