@@ -81,6 +81,7 @@ CHAT_COMPLETIONS_SUFFIX = "/chat/completions"
 TRANSCRIPTIONS_SUFFIX = "/audio/transcriptions"
 SPEECH_SUFFIX = "/audio/speech"
 ELEVENLABS_QUERY = "?output_format=mp3_44100_128"
+ELEVENLABS_TRANSCRIPTION_SUFFIX = "/speech-to-text"
 EMBEDDINGS_SUFFIX = "/embeddings"
 
 EXTRACTION_MAX_TOKENS = 1200
@@ -334,7 +335,12 @@ class OpenAICompatibleProvider:
         try:
             profile = self._profiles["stt"]
             files = {"file": ("upload.wav", audio, "audio/wav")}
-            data = {"model": profile.model, "response_format": "json"}
+            data = (
+                # Scribe tags sounds like "(laughter)" into the text unless told not to.
+                {"model_id": profile.model, "tag_audio_events": "false"}
+                if profile.auth_mode == ELEVENLABS
+                else {"model": profile.model, "response_format": "json"}
+            )
             return await self._audio_operation(
                 "stt", profile, files, data, parse_transcription, STT_BUDGET
             )
@@ -473,7 +479,12 @@ class OpenAICompatibleProvider:
         parse: Callable[[str], Parsed],
         budget: Budget,
     ) -> Parsed:
-        url = _join(profile.base_url, TRANSCRIPTIONS_SUFFIX)
+        suffix = (
+            ELEVENLABS_TRANSCRIPTION_SUFFIX
+            if profile.auth_mode == ELEVENLABS
+            else TRANSCRIPTIONS_SUFFIX
+        )
+        url = _join(profile.base_url, suffix)
         deadline = self._clock() + budget.total_deadline
         client = self._clients[role]
 

@@ -61,8 +61,8 @@ All three services are configured independently in `.env`; nothing is hard-coded
 |---|---|---|
 | LLM (extraction, RAG answers) | Any OpenAI-compatible chat model, set by `LLM_BASE_URL` and `LLM_MODEL` (used so far: `DeepSeek-V4.1-Flash-1017` and `GLM-5.3-Flash-EXL3`, both self-hosted on the Spark server, and `deepseek-v4.1-flash` on OpenCode Go, which is what the chat runs on now; the evaluation numbers below were measured on the first; JSON via `prompt_json`) | Fast and cheap enough for one call per turn; no provider-side structured output needed. To swap models change those variables, recreate the gateway and run `python scripts/evaluate.py`; the gateway reads JSON wrapped in code fences or `<think>` blocks, and the judged tests use the same server unless `E2E_JUDGE_*` is set |
 | Speech-to-text | `whisper-large-v3-turbo` on Groq | Low latency |
-| Text-to-speech | `canopylabs/orpheus-v1-english` on Groq, voice `troy`, WAV | Natural voice; replies are chunked and joined |
-| Spanish text-to-speech (optional) | `eleven_multilingual_v2` on ElevenLabs, a voice from the account, mp3 (`TTS_ES_*`, `TTS_ES_AUTH_MODE=elevenlabs`) | The English voice cannot speak Spanish; without this block Spanish replies have no audio |
+| Text-to-speech | `eleven_multilingual_v2` on ElevenLabs, one voice for English and Spanish, mp3 | One multilingual voice for both languages; replies are one request each |
+| Spanish text-to-speech | `TTS_ES_*`, set to the same ElevenLabs model and voice (`TTS_ES_AUTH_MODE=elevenlabs`) | Spanish replies only get audio when this block is set; it can point at a different voice |
 | RAG answers | The same LLM as above (`RAG_*` left blank) | One model to run; the answer is checked against the retrieved records |
 | Embeddings (optional) | `nvidia/nemotron-3-embed-1b:free` on OpenRouter (`EMBED_*`); any OpenAI-compatible `/v1/embeddings` model works | Semantic FAQ retrieval, handles Spanish; free tier, so rate-limited |
 
@@ -75,30 +75,31 @@ synthesis), at roughly 0.5–1.7 s each.
 
 Copy `.env.example` to `.env` and fill in the blocks you need. This is the setup the demo ran on.
 
-**Groq: speech-to-text and English text-to-speech.** Create a key at <https://console.groq.com/keys>.
+**Groq: speech-to-text.** Whisper is multilingual, so it transcribes English and Spanish. Create a key at <https://console.groq.com/keys>.
 
 ```bash
 STT_BASE_URL=https://api.groq.com/openai/v1
 STT_MODEL=whisper-large-v3-turbo
 STT_AUTH_MODE=bearer
 STT_API_KEY=<groq key>
-TTS_BASE_URL=https://api.groq.com/openai/v1
-TTS_MODEL=canopylabs/orpheus-v1-english
-TTS_AUTH_MODE=bearer
-TTS_API_KEY=<groq key>
-TTS_VOICE=troy
-TTS_AUDIO_FORMAT=wav
-TTS_MAX_INPUT_CHARS=200      # Orpheus accepts 200 characters per request; longer replies are chunked
 ```
 
-**ElevenLabs: the Spanish voice.** The English voice cannot speak Spanish, so Spanish replies use their own block.
+**ElevenLabs: the voice, for English and Spanish.** One multilingual model and voice speaks both, so the English block (`TTS_*`) and the Spanish block (`TTS_ES_*`) hold the same values. The Spanish block is what turns Spanish audio on.
 1. Create an API key at <https://elevenlabs.io/app/settings/api-keys>. Text to speech is the only permission it needs.
 2. Get a voice id from <https://elevenlabs.io/app/voices> (My Voices, the voice's menu, "Copy voice ID"), or make one at <https://elevenlabs.io/app/voice-lab>. A free plan gets HTTP 402 for voices taken from the public library, so use a voice in your own list.
 
 ```bash
+TTS_BASE_URL=https://api.elevenlabs.io/v1
+TTS_MODEL=eleven_multilingual_v2
+TTS_AUTH_MODE=elevenlabs     # xi-api-key header and ElevenLabs' own route, mp3 only
+TTS_API_KEY=<elevenlabs key>
+TTS_VOICE=<voice id>
+TTS_AUDIO_FORMAT=mp3
+TTS_MAX_INPUT_CHARS=4000
+# the same seven values again for Spanish:
 TTS_ES_BASE_URL=https://api.elevenlabs.io/v1
 TTS_ES_MODEL=eleven_multilingual_v2
-TTS_ES_AUTH_MODE=elevenlabs   # xi-api-key header and ElevenLabs' own route, mp3 only
+TTS_ES_AUTH_MODE=elevenlabs
 TTS_ES_API_KEY=<elevenlabs key>
 TTS_ES_VOICE=<voice id>
 TTS_ES_AUDIO_FORMAT=mp3

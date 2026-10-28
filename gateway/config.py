@@ -28,7 +28,8 @@ MAX_TTS_MAX_INPUT_CHARS = 4000
 AUDIO_FORMATS = ("mp3", "wav")
 OPENAI_COMPATIBLE = "openai_compatible"
 AUTH_MODES = ("none", "bearer")
-# Speech only: the xi-api-key header and ElevenLabs' own text-to-speech route, mp3 replies.
+# Speech only: the xi-api-key header and ElevenLabs' own routes (text-to-speech with mp3 replies,
+# speech-to-text).
 ELEVENLABS = "elevenlabs"
 OUTPUT_MODES = ("json_schema", "json_object", "prompt_json")
 REASONING_EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
@@ -132,13 +133,19 @@ def _headers(raw: str) -> tuple[tuple[str, str], ...]:
     return tuple(value.items())
 
 
-def _auth(auth_mode: str, api_key: str, audio_format: str | None = None) -> None:
-    """``audio_format`` is given for speech roles, the only ones that may use ElevenLabs."""
+def _auth(
+    auth_mode: str,
+    api_key: str,
+    audio_format: str | None = None,
+    *,
+    stt: bool = False,
+) -> None:
+    """Only speech roles may use ElevenLabs: ``audio_format`` is given for a voice, ``stt`` for transcription."""
 
-    speech = audio_format is not None
+    speech = audio_format is not None or stt
     if auth_mode not in AUTH_MODES and not (speech and auth_mode == ELEVENLABS):
         _fail()
-    if auth_mode == ELEVENLABS and audio_format != "mp3":
+    if auth_mode == ELEVENLABS and audio_format not in (None, "mp3"):
         _fail()
     if auth_mode in ("bearer", ELEVENLABS) and not api_key:
         _fail()
@@ -309,7 +316,12 @@ def _role(
         headers=_headers(get(f"{prefix}_HEADERS")),
         **extra,
     )
-    _auth(profile.auth_mode, profile.api_key, getattr(profile, "audio_format", None))
+    _auth(
+        profile.auth_mode,
+        profile.api_key,
+        getattr(profile, "audio_format", None),
+        stt=prefix == "STT",
+    )
     return profile
 
 

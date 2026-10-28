@@ -42,12 +42,22 @@ def test_an_elevenlabs_profile_needs_a_key_and_mp3(overrides) -> None:
     assert str(excinfo.value) == CONFIGURATION_INVALID_MESSAGE
 
 
-@pytest.mark.parametrize("role", ["LLM", "STT"])
-def test_elevenlabs_is_refused_for_roles_that_do_not_speak(role) -> None:
-    env = {**BASE_ENV, f"{role}_AUTH_MODE": ELEVENLABS, f"{role}_API_KEY": "xi-secret"}
+def test_elevenlabs_is_refused_for_the_chat_model() -> None:
+    env = {**BASE_ENV, "LLM_AUTH_MODE": ELEVENLABS, "LLM_API_KEY": "xi-secret"}
 
     with pytest.raises(RuntimeError):
         Settings.from_env(env)
+
+
+def test_elevenlabs_works_for_transcription() -> None:
+    env = {**BASE_ENV, "STT_AUTH_MODE": ELEVENLABS, "STT_API_KEY": "xi-secret"}
+
+    assert Settings.from_env(env).stt.auth_mode == ELEVENLABS
+
+
+def test_elevenlabs_transcription_needs_a_key() -> None:
+    with pytest.raises(RuntimeError):
+        Settings.from_env({**BASE_ENV, "STT_AUTH_MODE": ELEVENLABS})
 
 
 def test_elevenlabs_works_for_the_main_speech_role_too() -> None:

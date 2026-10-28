@@ -15,6 +15,7 @@ from tests.unit.gateway.providers.provider_support import (
     STT_PROFILE,
     TTS_PROFILE,
     build_provider,
+    json_response,
 )
 from tests.unit.gateway.providers.test_speech_synthesis import audio_responder
 
@@ -85,3 +86,31 @@ async def test_other_auth_modes_keep_the_openai_speech_route(auth_mode) -> None:
     assert request.url.path == "/v1/audio/speech"
     assert "xi-api-key" not in request.headers
     assert json.loads(request.content)["input"] == "Hello"
+
+
+async def test_transcription_goes_to_the_elevenlabs_route_with_its_header_and_fields() -> (
+    None
+):
+    stt = replace(
+        STT_PROFILE,
+        base_url="https://api.elevenlabs.io/v1",
+        model="scribe_v1",
+        auth_mode=ELEVENLABS,
+        api_key="xi-secret",
+    )
+    profiles = {"llm": LLM_PROFILE, "rag": RAG_PROFILE, "stt": stt, "tts": TTS_PROFILE}
+    provider, recorders = build_provider(
+        {"stt": lambda request, attempt: json_response({"text": "Hola, ¿qué tal?"})},
+        profiles=profiles,
+    )
+
+    assert await provider.transcribe(b"RIFFdata") == "Hola, ¿qué tal?"
+
+    request = recorders["stt"].requests[0]
+    assert str(request.url) == "https://api.elevenlabs.io/v1/speech-to-text"
+    assert request.headers["xi-api-key"] == "xi-secret"
+    assert "authorization" not in request.headers
+    body = request.content
+    assert b'name="model_id"' in body and b"scribe_v1" in body
+    assert b'name="tag_audio_events"' in body and b"false" in body
+    assert b'name="model"' not in body and b"response_format" not in body
