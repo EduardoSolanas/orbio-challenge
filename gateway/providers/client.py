@@ -246,6 +246,7 @@ class OpenAICompatibleProvider:
             headers["Authorization"] = f"Bearer {profile.api_key}"
         elif profile.auth_mode == ELEVENLABS:
             headers["xi-api-key"] = profile.api_key
+        headers.update(profile.headers)
         return httpx.AsyncClient(
             transport=None if transports is None else transports.get(role),
             follow_redirects=False,

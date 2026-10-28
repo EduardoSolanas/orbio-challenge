@@ -7,8 +7,10 @@ the configuration rules, never leaking the offending value.
 
 from __future__ import annotations
 
+import json
 import os
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Mapping, NoReturn
 from urllib.parse import unquote, urlsplit
@@ -32,6 +34,21 @@ OUTPUT_MODES = ("json_schema", "json_object", "prompt_json")
 REASONING_EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
 MAX_MODEL_LENGTH = 200
 MAX_API_KEY_LENGTH = 4096
+MAX_EXTRA_HEADERS = 8
+MAX_HEADER_VALUE_LENGTH = 256
+_HEADER_NAME = re.compile(r"[A-Za-z][A-Za-z0-9-]{0,63}")
+_HEADER_VALUE = re.compile(r"[ -~]+")
+# Set by the client itself; a configured value must not replace them.
+RESERVED_HEADERS = frozenset(
+    {
+        "authorization",
+        "xi-api-key",
+        "accept-encoding",
+        "content-type",
+        "host",
+        "content-length",
+    }
+)
 RAG_FIELDS = ("BASE_URL", "MODEL", "AUTH_MODE", "API_KEY", "OUTPUT_MODE")
 EMBED_FIELDS = ("BASE_URL", "MODEL", "AUTH_MODE", "API_KEY")
 DEFAULT_EMBED_MIN_SIMILARITY = 0.25
@@ -90,6 +107,29 @@ def _api_key(value: str) -> str:
     if len(value) > MAX_API_KEY_LENGTH:
         _fail()
     return value
+
+
+def _headers(raw: str) -> tuple[tuple[str, str], ...]:
+    """Extra static request headers from a JSON object, for providers that need one (a session id)."""
+
+    if raw == "":
+        return ()
+    try:
+        value = json.loads(raw)
+    except (ValueError, RecursionError):
+        _fail()
+    if not isinstance(value, dict) or not 1 <= len(value) <= MAX_EXTRA_HEADERS:
+        _fail()
+    for name, content in value.items():
+        if (
+            _HEADER_NAME.fullmatch(name) is None
+            or name.lower() in RESERVED_HEADERS
+            or not isinstance(content, str)
+            or len(content) > MAX_HEADER_VALUE_LENGTH
+            or _HEADER_VALUE.fullmatch(content) is None
+        ):
+            _fail()
+    return tuple(value.items())
 
 
 def _auth(auth_mode: str, api_key: str, audio_format: str | None = None) -> None:
@@ -237,6 +277,7 @@ class ServiceProfile:
     model: str
     auth_mode: str
     api_key: str
+    headers: tuple[tuple[str, str], ...] = field(default=(), kw_only=True)
 
 
 @dataclass(frozen=True)
@@ -265,6 +306,7 @@ def _role(
         model=_model(get(f"{prefix}_MODEL")),
         auth_mode=get(f"{prefix}_AUTH_MODE"),
         api_key=_api_key(get(f"{prefix}_API_KEY")),
+        headers=_headers(get(f"{prefix}_HEADERS")),
         **extra,
     )
     _auth(profile.auth_mode, profile.api_key, getattr(profile, "audio_format", None))
@@ -323,6 +365,7 @@ class Settings:
                 model=llm.model,
                 auth_mode=llm.auth_mode,
                 api_key=llm.api_key,
+                headers=llm.headers,
                 output_mode=llm.output_mode,
                 reasoning_effort=(
                     _reasoning_effort(get("RAG_REASONING_EFFORT"))
