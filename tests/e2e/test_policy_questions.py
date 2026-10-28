@@ -39,8 +39,11 @@ KNOWLEDGE = json.loads(
         / "northstar-faq.json"
     ).read_text(encoding="utf-8")
 )
+# The English record as the model receives it (no "es" translation).
 STANDING_CHARGE = next(
-    record for record in KNOWLEDGE["records"] if record["id"] == "faq-standing-charge"
+    {key: value for key, value in record.items() if key != "es"}
+    for record in KNOWLEDGE["records"]
+    if record["id"] == "faq-standing-charge"
 )
 KB_VERSION = KNOWLEDGE["version"]
 SNAPSHOT = {
