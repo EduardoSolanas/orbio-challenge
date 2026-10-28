@@ -59,15 +59,24 @@ All three services are configured independently in `.env`; nothing is hard-coded
 
 | Role | Model | Why |
 |---|---|---|
-| LLM (extraction, RAG answers) | Any OpenAI-compatible chat model, set by `LLM_BASE_URL` and `LLM_MODEL` (now `GLM-5.3-Flash-EXL3`, self-hosted, JSON via `prompt_json`) | Fast and cheap enough for one call per turn; no provider-side structured output needed. To swap models change those variables, recreate the gateway and run `python scripts/evaluate.py`; the gateway reads JSON wrapped in code fences or `<think>` blocks, and the judged tests use the same server unless `E2E_JUDGE_*` is set |
+| LLM (extraction, RAG answers) | Any OpenAI-compatible chat model, set by `LLM_BASE_URL` and `LLM_MODEL` (used so far: `DeepSeek-V4.1-Flash-1017` for the evaluation numbers below, and now `GLM-5.3-Flash-EXL3`, both self-hosted on the Spark server, JSON via `prompt_json`) | Fast and cheap enough for one call per turn; no provider-side structured output needed. To swap models change those variables, recreate the gateway and run `python scripts/evaluate.py`; the gateway reads JSON wrapped in code fences or `<think>` blocks, and the judged tests use the same server unless `E2E_JUDGE_*` is set |
 | Speech-to-text | `whisper-large-v3-turbo` on Groq | Low latency |
 | Text-to-speech | `canopylabs/orpheus-v1-english` on Groq, voice `troy`, WAV | Natural voice; replies are chunked and joined |
-| Spanish text-to-speech (optional) | `TTS_ES_*`, for example `eleven_multilingual_v2` on ElevenLabs (`TTS_ES_AUTH_MODE=elevenlabs`, mp3) | The English voice cannot speak Spanish; without this block Spanish replies have no audio |
+| Spanish text-to-speech (optional) | `eleven_multilingual_v2` on ElevenLabs, a voice from the account, mp3 (`TTS_ES_*`, `TTS_ES_AUTH_MODE=elevenlabs`) | The English voice cannot speak Spanish; without this block Spanish replies have no audio |
+| RAG answers | The same LLM as above (`RAG_*` left blank) | One model to run; the answer is checked against the retrieved records |
 | Embeddings (optional) | `nvidia/nemotron-3-embed-1b:free` on OpenRouter (`EMBED_*`); any OpenAI-compatible `/v1/embeddings` model works | Semantic FAQ retrieval, handles Spanish; free tier, so rate-limited |
 
-`scripts/check_backends.py` ran against these services on 2026-10-24 and passed all
+`scripts/check_backends.py` ran against the services of that date (DeepSeek as the LLM, before the
+switch above) on 2026-10-24 and passed all
 five calls (extraction, supported and unsupported RAG questions, transcription,
 synthesis), at roughly 0.5–1.7 s each.
+
+## Built with
+
+The code was written with two AI coding assistants, **Codex** and **Claude Code**, working in the same
+repository and reviewed by the author. The app itself was run and tested against two self-hosted chat
+models, **DeepSeek-V4.1-Flash-1017** and **GLM-5.3-Flash-EXL3**; either one can fill the LLM role
+(see the table above).
 
 ## Architecture
 
@@ -88,13 +97,13 @@ Docker runs three containers: `web` (nginx, the only published port: it serves t
 - `gateway/conversation/engine.py` is the turn transaction and state machine (`collecting` → `awaiting_confirmation` → `completed`); `intent.py`, `plans.py` and `replay.py` decide what an extraction means, what to reply and how duplicates are handled.
 - `gateway/providers/client.py` is one OpenAI-compatible adapter for every role, with timeouts, retries and a concurrency limit.
 - `backend_api/` is the only place that holds account data: the account check, installation status, technician windows (hours and days are edited in `availability.json`) and bookings, kept in one SQLite file. The gateway reaches it over the internal network only.
-- `web/` is the chat page with no build step: plain ES modules, one class per concern, everything injected so tests replace the network and microphone. CSS follows OOCSS: `objects.css` structure, `skins.css` colour, `base.css` tokens. The chat is one centred column, 720 px wide at most (the whole screen on a phone). Four quick-option buttons (report a problem, ask a question, installation status, book a technician) show under the greeting and under the "what I can do" reply, so a customer can start without typing; they send a ready-made message through the normal turn and disappear once the conversation moves on. After a saved request the receipt ends with "Is there anything else I can help with?" and the buttons return; pressing one opens a new conversation and sends that option. A hand-off or the gas-safety answer asks nothing, since the customer has something else to do.
+- `web/` is the chat page with no build step: plain ES modules, everything injected so tests replace the network and microphone, and CSS split into `objects.css` (structure), `skins.css` (colour) and `base.css` (tokens). It is one centred column with four quick-option buttons under the greeting, so a customer can start without typing.
 
 ## Key design decisions
 
 - **The model proposes, the code decides.** The LLM only extracts candidate facts and intent. Application code owns validation, state, the next question and completion, so a model mistake or prompt injection cannot save bad data or trigger actions. The real-stack tests try to jailbreak it and check that verification, bookings and saved data stayed untouched.
 - **Deterministic replies and summary.** Questions, the review and the summary come from templates, so the saved record matches what the customer confirmed. Only RAG answers are generated.
-- **Flows are data, the runner is code.** Installation status and technician booking are lists of step ids in [`gateway/flows.json`](gateway/flows.json): ask for the account, verify it, then show the status or offer windows. The model only starts a flow (its intent names one) and supplies what a step asks for, such as the account number; the code moves between steps, and the current step is saved in the session file. A message that is only an account number feeds a running flow, and any other message leaves it, so "NS-000123" can no longer be mistaken for a support request. An unknown step id, or a flow that mixes account steps with support-request steps, stops the gateway at startup. The support request is listed there too (collect details, then review), and the step it reaches sets the session's `status`. It is not stored in the session's `flow` field: the customer gives the four details in any order and can leave for a booking and come back to the same slots, so for that one the saved slots and `status` stay the source of truth. Confirming and the receipt are not steps.
+- **Flows are data, the runner is code.** Installation status and technician booking are lists of step ids in [`gateway/flows.json`](gateway/flows.json): ask for the account, verify it, then show the status or offer windows. The model only starts a flow and supplies what a step asks for; the code moves between steps and saves the current one in the session. The support request is listed there too, but its saved slots and `status` stay the source of truth, since the customer can give the four details in any order and leave for a booking and come back. An unknown step id stops the gateway at startup.
 - **Safety comes first.** "I smell gas" is a statement, so the intent label can send it to intake. Two independent checks run before intake, and either one is enough: the model's `safety_concern` flag, and an embedding check that asks whether the message is closer to a labelled emergency example or to an ordinary one. The examples are plain sentences in [`gateway/knowledge/safety-examples.json`](gateway/knowledge/safety-examples.json), so teaching it new wording means adding a sentence, not code. The embedding check runs beside the model call and still works when the model is down. The customer gets the gas-safety record at once (if the model is down, the record text as written), and a gas report wins over the angry-customer hand-off.
 - **Explicit confirmation.** Nothing is saved as submitted until the customer confirms a specific review; a correction invalidates it.
 - **Safe failure.** A failed model call, write or invalid answer leaves the session untouched and can be retried; repeated requests are de-duplicated.
@@ -128,6 +137,10 @@ The fictional corpus has twelve records. Retrieval depends on configuration:
 Either way the model only sees the retrieved records, and the app checks the citations
 (`gateway/knowledge/`).
 
+Each record also has a Spanish title and body (`es` in `northstar-faq.json`). They are shown to the
+model and cited when the reply is Spanish; ranking reads the English text, and the ids and
+numbers are the same. The Spanish text is a translation written for this demo, not reviewed policy.
+
 Records:
 `faq-delivery` Delivery times ·
 `faq-damaged` Damaged items ·
@@ -152,87 +165,12 @@ python scripts/check_backends.py     # live check against the services in your e
 npm ci && npm test                   # frontend unit tests (Jest)
 ```
 
-| Layer | What it covers | Result (2026-10-26) |
-|---|---|---|
-| Unit and integration | Validation, state machine, storage, HTTP routes, providers over a real socket, RAG, audio | 1963 unit and 427 integration passed, run as separate layers. Ruff checks and formatting run in CI first (unused imports, import order, undefined names, `ruff format --check`). Exact retry counts after a timeout are pinned without real timing; the real-socket timeout tests only check that the call returns within its bound, never exceeds the configured attempts and starts no work afterwards. |
-| Browser (Playwright) | Eleven Chromium tests of the user journeys, including voice and RAG | 11 passed |
-| Frontend (Jest) | The page's classes in jsdom, using the real `index.html` | 312 passed; 97.7% statements, 92% branches (CI gate 90% / 80%) |
-| Judge journeys | 31 tests with a scripted provider (29 browser journeys and 2 output-format checks); 26 of the journeys record a conversation that a judge LLM grades against a written rule. The greeting, thanks and capability journeys assert their fixed replies exactly and are not judged. Every intent, including verification before account actions, and frustration hand-off | 31 passed; 26 of 26 judged pass. Replies are mostly templates, so this checks wording rules, not model behaviour. |
-| Real Docker end-to-end | 34 tests on the deployed containers against the real LLM, speech services and embeddings, graded by the judge LLM. 21 cover every intent, RAG with abstention, intake edits, angry and nervous customers in both languages, and every flow end to end (booking, installation status, a full support request, a detour from a support request into a booking and back, leaving a flow on a question, booking in Spanish). 13 cover what goes wrong: a gas emergency alone, in the middle of a booking and in Spanish; an unknown account, five wrong codes, malformed values, nonsense, markup and the longest message; and six jailbreaks (prompt leak, role-play refund, staff override, someone else's account, orders hidden in a description, Spanish mid-booking). The jailbreak and emergency tests also check the state the reply leaves behind (no verification, no booking, nothing saved), not only the wording | The 13 scenario tests passed on the demo stack in two full runs; they never touch bookings. The other 21 last passed before the latest refactors and have not been rerun on a dedicated deployment since. The judge is the same DeepSeek model that serves the chat, so it grades itself. Journeys that touch bookings first reset the deployed booking store (`docker compose exec` into the backend of a dedicated Compose project whose name ends in `-e2e` and whose page is the origin under test; see Real-stack end-to-end tests below); one creates a reservation and checks it is reported back, another starts from a known existing visit. Each judged reply keeps its own numbered file under `reports/e2e-docker/judge/`. A reasoning judge needs `E2E_JUDGE_MAX_TOKENS=4096`. |
-| Live providers | `scripts/check_backends.py` | 5 of 5 (2026-10-24) |
-| Mutation testing | `mutmut` over `gateway/`, `backend_api/` and `shared/`, Linux only, in CI (about 70 minutes with four workers) | Last full run, on commit `6c197dc`: 4658 of 4769 mutants killed (97.7%). Of the 111 left, 105 are approved in `reports/mutation-review.json` as unable to change behaviour (header-name case, exception text, a default that equals the mutation and similar, each with its reason), 2 are interface stubs with no tests, and 4 were real gaps that new tests now kill (checked one by one; a fresh run has not confirmed it yet). `scripts/build_mutation_review.py` drafts the approvals from rules, so a mutant is approved only when its function and the exact kind of change match one; CI fails on any other survivor. |
-
-CI (`.github/workflows/quality.yml`) runs five jobs on every push: unit and integration tests with a 95% coverage gate and Ruff, Jest, the browser journeys with the evidence gate, mutation testing, and an image build with a non-root smoke test.
-
-### Real-stack end-to-end tests
-
-The judged real-stack tests (`tests/e2e/test_docker_e2e.py`, `test_docker_flows.py`, `test_docker_scenarios.py`, marker `docker_e2e`) talk only to the deployed page and API and never import the test fakes. Deploy a disposable stack as its own Compose project with its own volumes and port; the booking journeys empty every account's bookings, so they act only on a project whose name ends in `-e2e` and whose page is the origin under test:
-
-```bash
-APP_PUBLISH_PORT=8010 docker compose -p northstar-e2e up -d --build --wait
-export E2E_DOCKER_BASE_URL=http://127.0.0.1:8010 E2E_COMPOSE_PROJECT=northstar-e2e
-cp tests/e2e/.env.judge.example tests/e2e/.env.judge   # judge model, timeout, max tokens, prompt version
-python scripts/run_docker_e2e.py --with-deterministic
-docker compose -p northstar-e2e down -v --rmi local    # when finished
-```
-
-The runner probes `/health` and the judge's `/models` endpoint first, fails early rather than skipping or falling back to a fake provider, and writes the origin, model and prompt version to `reports/e2e-docker/run-config.json`, JUnit output to `reports/e2e-docker/docker.xml`, and one numbered verdict file per judged reply under `reports/e2e-docker/judge/`. Raw judge output is kept; the deterministic assertions stay authoritative. If the judge needs a key, set `E2E_JUDGE_API_KEY` in the process environment, never in a file. `--with-deterministic` also runs the scripted browser journeys (`-m browser_e2e`) as a separate, labelled suite; call that one "browser workflow E2E (controlled provider)", never plain "full E2E". `python scripts/check_e2e_layers.py` fails if controlled evidence is mislabelled or claims live coverage.
-
-## Evaluation
-
-The scripted tests prove what the app does once it knows the intent. They cannot show
-whether the real model picks the right intent or FAQ record, so an operator-run
-evaluation checks that against the live services (not part of the automatic run):
-
-```bash
-python scripts/evaluate.py            # also: intents, category, safety, frustration, retrieval
-```
-
-It uses the labelled utterances in [`tests/eval/utterances.json`](tests/eval/utterances.json)
-(99 English and Spanish messages, plus two FAQ question sets). Run on 2026-10-25 with
-`DeepSeek-V4.1-Flash-1017` and `nvidia/nemotron-3-embed-1b:free`.
-
-**Intent detection: 85 of 89 at first, 89 of 89 after a prompt-only fix.** The misses
-were "I want to report a problem" (and its Spanish and "Let me report a fault"
-variants) read as `provide_details`, and "What are the urgency levels?" read as
-`capability`. The fix was two prompt rules and three new examples worded differently
-from the test messages. The 89 are the messages that exposed the misses, so read 100%
-as a regression baseline, not general accuracy.
-
-Manual tests later showed "help me with something" and "I have a problem" being sent to intake, which asked for an account reference before the customer had said what they wanted. Saying only that there is a problem, or asking for help, is now a `capability` turn: the reply lists what the assistant can do and asks what the customer needs. An explicit request to report, raise or log a problem still starts an intake. Ten such messages joined the set, and the score on the live model is 99 of 99 (the explicit report requests are still 8 of 8).
-
-**Safety triage (gas): each check alone, and both together, caught 15 of 15 gas reports with 0 false alarms on 19 look-alikes and 0 on 99 everyday messages.** The set has English and Spanish, indirect wording ("smells like rotten eggs", "hissing by the meter", a carbon monoxide alarm) and look-alikes (a high gas bill, a gas meter installation, "I smelled new paint"). Recall is the number that matters, since a false alarm only shows safety advice. The first run of the embedding check raised one false alarm ("How's it going?"); adding two greeting sentences to the examples file fixed it with no code change. A later end-to-end run showed it also flagged "Tell me a joke about pizza.": for text far from every example, "nearest" is close to a coin flip. The check now also needs a minimum similarity to an emergency example (0.35, picked from the gap between real emergencies at 0.47 or more and unrelated messages at 0.22 or less), and five off-topic messages joined the look-alikes. The examples share nothing with the evaluation messages (a test enforces that). The messages were written by one author and 29 is a small set: read it as a check that both work, not as a guarantee. Adding the safety checks did not move the other scores (intents still 99 of 99, hand-off 9 of 9 and 8 of 8).
-
-**Support area (what the stored category should be): 8 of 27 at first, 27 of 27 after a prompt-only fix.** A manual test showed "i have overcharged in my last bill" saved as "other energy issue". The prompt named the category codes but never said what they meant, so the model put almost everything under `other`: bills, power cuts, wrong readings and broken equipment alike. The fix is one prompt sentence that defines each area (supply, equipment, meter reading, billing, other) and says to leave the category empty when the message does not make it clear. The 27 messages (English and Spanish, five or more per area) were written before the fix; run `python scripts/evaluate.py category`.
-
-**Frustration hand-off: 9 of 9 angry messages handed off, 8 of 8 calm or nervous kept.**
-The messages were written by one author and judged one at a time, so milder or
-sarcastic complaints may differ. The Docker tests cover it end to end.
-
-**FAQ retrieval.** The *tuning set* chose the similarity floor, so its scores are
-optimistic. The *held-out set* was run once at the chosen floor; its first ten
-questions were written before any score was seen, the last seven were added with the
-new records they test.
-
-| Retrieval | Tuning: right record | Tuning: correctly no answer | Held-out: right record | Held-out: correctly no answer |
-|---|---|---|---|---|
-| 5 records, keywords | 11 of 13 | 4 of 5 | 3 of 10 | 5 of 5 |
-| 5 records, embeddings (floor 0.25) | 12 of 13 | 5 of 5 | 9 of 10 | 5 of 5 |
-| 12 records, keywords | 21 of 21 | 3 of 4 | 12 of 17 | 5 of 5 |
-| 12 records, embeddings (floor 0.25) | 21 of 21 | 4 of 4 | 17 of 17 | 5 of 5 |
-
-On fresh wordings keywords collapse ("I want my money back" shares no keyword with the
-records) while embeddings still find the record, and keywords wrongly answered "Do you
-ship internationally?" with the delivery record. The 12-record corpus rewrote the shop
-sounding records in energy terms and added seven new ones; the floor was not retuned.
-Some held-out misses were fixed after being seen, so that gain is partly by
-construction, and the questions are few and written by the records' author.
-
-The floor of 0.25 was chosen on the tuning set (0.35 dropped correct paraphrases, 0.20
-let "Do you ship internationally?" through), so treat it as a sensible value for this
-model, not an optimum; re-run `scripts/evaluate.py retrieval` if the model changes.
-Of four free OpenRouter embedding models tried, three tied and the 8B one timed out,
-so the first was kept.
+Unit, integration, browser, Jest, judged real-stack and mutation tests run in CI
+(`.github/workflows/quality.yml`). Latest recorded results (2026-10-26): about 2,500 unit and
+integration tests, 11 Playwright journeys, 312 Jest tests, and mutation testing with every
+non-equivalent variant killed. The per-layer table, the real-stack runbook and the
+model evaluation (intent, safety, category, frustration, retrieval) are in
+[docs/TESTING.md](docs/TESTING.md).
 
 ## Limitations
 
@@ -242,7 +180,7 @@ so the first was kept.
 - The receipt shows a short reference (`REQ-` and the first eight characters of the session id, for example `REQ-2B0737BE`), not the full id. The session file is named after the full id, so the reference is enough to find it, but eight characters are not unique at scale.
 - Answers come from twelve short fictional records. Keyword matching can miss a differently worded question; embedding retrieval depends on `EMBED_MIN_SIMILARITY`, tuned for one model on a small set. The gas-safety record quotes the UK National Gas Emergency number from memory; check it before relying on it. A citation shows which record was used, not that the model summarised it correctly.
 - Bookings (SQLite): one visit per account. Asking to book again shows the existing visit with the free times to move it to; choosing one moves the visit in a single step and keeps its reference. There is no cancelling, and the offered times disappear if the page is reloaded (ask again).
-- Only gas (a smell, a leak or a carbon monoxide alarm) gets the immediate safety answer. Other emergencies (sparks, smoke) are not in the knowledge base, so the assistant treats them like any other message. Both checks can miss: the model's flag, and the embedding check, which needs the embedding service and is switched off when none is configured (the model's flag alone then applies). Both were measured on 29 messages (see Evaluation).
+- Only gas (a smell, a leak or a carbon monoxide alarm) gets the immediate safety answer. Other emergencies (sparks, smoke) are not in the knowledge base, so the assistant treats them like any other message. Both checks can miss: the model's flag, and the embedding check, which needs the embedding service and is switched off when none is configured (the model's flag alone then applies). Both were measured on 29 messages (see [docs/TESTING.md](docs/TESTING.md)).
 - Jailbreak resistance is tested with six attempts and three gas reports on the real model; that shows the obvious attacks fail, not that it is secure.
 - Voice accepts PCM WAV only, with no streaming.
 - Frustration and sentiment come from one LLM call and can misread sarcasm or mixed feelings.

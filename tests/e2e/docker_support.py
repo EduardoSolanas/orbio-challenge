@@ -117,7 +117,7 @@ def reset_demo_bookings(app_url: str) -> None:
     if not project.endswith("-e2e"):
         pytest.fail(
             "booking journeys reset the booking store, so they need a dedicated deployment: set "
-            "E2E_COMPOSE_PROJECT to a Compose project named like northstar-e2e (see the README)"
+            "E2E_COMPOSE_PROJECT to a Compose project named like northstar-e2e (see docs/TESTING.md)"
         )
     if urlparse(app_url).hostname not in LOOPBACK_HOSTS:
         pytest.fail(
