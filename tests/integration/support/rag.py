@@ -20,7 +20,11 @@ SEED = json.loads(
 
 KB_VERSION = SEED["version"]
 
-SEED_RECORDS = {record["id"]: record for record in SEED["records"]}
+# The English records as the model receives them for an English reply (no "es" translation).
+SEED_RECORDS = {
+    record["id"]: {key: value for key, value in record.items() if key != "es"}
+    for record in SEED["records"]
+}
 
 RETURN_Q = "Can I return an unused item?"
 
@@ -30,8 +34,15 @@ RETURN_ANSWER_TEXT = (
 )
 
 
-def seed_citation(record_id: str) -> dict:
-    record = SEED_RECORDS[record_id]
+SPANISH_RECORDS = {
+    record["id"]: record["es"] for record in SEED["records"] if "es" in record
+}
+
+
+def seed_citation(record_id: str, language: str = "en") -> dict:
+    """The citation for a record, from its Spanish version when the reply is Spanish."""
+
+    record = SPANISH_RECORDS[record_id] if language == "es" else SEED_RECORDS[record_id]
     return {
         "source_id": record_id,
         "title": record["title"],

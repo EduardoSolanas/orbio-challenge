@@ -37,6 +37,9 @@ MAX_ANSWER_CHARS = 1200
 
 TOP_LEVEL_KEYS = frozenset({"schema_version", "version", "records"})
 RECORD_KEYS = frozenset({"id", "title", "keywords", "body"})
+# A Spanish title and body shown in place of the English ones; ranking never reads them.
+OPTIONAL_RECORD_KEYS = frozenset({"es"})
+TRANSLATION_KEYS = frozenset({"title", "body"})
 
 _ID_PATTERN = re.compile(r"[a-z0-9-]{1,64}")
 _KEYWORD_PATTERN = re.compile(r"[a-z0-9]+")
@@ -155,7 +158,7 @@ def _is_text(value: object, minimum: int, maximum: int) -> bool:
 
 def _validate_document(
     document: object,
-) -> tuple[str, tuple[ImmutableKnowledgeRecord, ...]]:
+) -> tuple[str, tuple[ImmutableKnowledgeRecord, ...], dict[str, tuple[str, str]]]:
     if not isinstance(document, dict) or set(document) != TOP_LEVEL_KEYS:
         raise KnowledgeInvalid(INVALID_DOCUMENT_REASON)
     if (
@@ -174,9 +177,12 @@ def _validate_document(
         raise KnowledgeInvalid(INVALID_DOCUMENT_REASON)
 
     records: list[ImmutableKnowledgeRecord] = []
+    spanish: dict[str, tuple[str, str]] = {}
     seen_ids: set[str] = set()
     for raw_record in raw_records:
-        if not isinstance(raw_record, dict) or set(raw_record) != RECORD_KEYS:
+        if not isinstance(raw_record, dict) or not (
+            RECORD_KEYS <= set(raw_record) <= RECORD_KEYS | OPTIONAL_RECORD_KEYS
+        ):
             raise KnowledgeInvalid(INVALID_DOCUMENT_REASON)
         record_id = raw_record["id"]
         if (
@@ -200,6 +206,16 @@ def _validate_document(
             for keyword in keywords
         ):
             raise KnowledgeInvalid(INVALID_DOCUMENT_REASON)
+        if "es" in raw_record:
+            translation = raw_record["es"]
+            if (
+                not isinstance(translation, dict)
+                or set(translation) != TRANSLATION_KEYS
+                or not _is_text(translation["title"], 1, MAX_TITLE_CHARS)
+                or not _is_text(translation["body"], 1, MAX_BODY_CHARS)
+            ):
+                raise KnowledgeInvalid(INVALID_DOCUMENT_REASON)
+            spanish[record_id] = (translation["title"], translation["body"])
         records.append(
             ImmutableKnowledgeRecord(
                 id=record_id,
@@ -208,17 +224,21 @@ def _validate_document(
                 body=raw_record["body"],
             )
         )
-    return version, tuple(records)
+    return version, tuple(records), spanish
 
 
 class KnowledgeBase:
     """Immutable knowledge base: one validated version and its frozen records."""
 
     def __init__(
-        self, version: str, records: tuple[ImmutableKnowledgeRecord, ...]
+        self,
+        version: str,
+        records: tuple[ImmutableKnowledgeRecord, ...],
+        spanish: dict[str, tuple[str, str]] | None = None,
     ) -> None:
         self.version = version
         self.records = tuple(records)
+        self._spanish = dict(spanish or {})
         self._keywords = {
             record.id: frozenset(record.keywords) for record in self.records
         }
@@ -226,6 +246,15 @@ class KnowledgeBase:
             record.id: tokenize(record.title + " " + record.body)
             for record in self.records
         }
+
+    def localize(self, record: KnowledgeRecord, language: str) -> KnowledgeRecord:
+        """The record with its Spanish title and body when it has them and Spanish is asked for."""
+
+        translation = self._spanish.get(record.id) if language == "es" else None
+        if translation is None:
+            return record
+        title, body = translation
+        return record.model_copy(update={"title": title, "body": body})
 
     def retrieve(self, question: str) -> list[ImmutableKnowledgeRecord]:
         """Rank records by the RAG section 3 score and return at most two."""
@@ -292,5 +321,5 @@ def load_knowledge(path: str | Path) -> KnowledgeBase:
         document: Any = json.loads(raw.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError):
         raise KnowledgeInvalid(INVALID_DOCUMENT_REASON) from None
-    version, records = _validate_document(document)
-    return KnowledgeBase(version, records)
+    version, records, spanish = _validate_document(document)
+    return KnowledgeBase(version, records, spanish)

@@ -53,7 +53,11 @@ KB = json.loads(
     ).read_text(encoding="utf-8")
 )
 KB_VERSION = KB["version"]
-SEED_RECORDS = {record["id"]: record for record in KB["records"]}
+# The English records as the model receives them (no "es" translation).
+SEED_RECORDS = {
+    record["id"]: {key: value for key, value in record.items() if key != "es"}
+    for record in KB["records"]
+}
 
 RETURN_Q = "Can I return an unused item?"
 PAYMENT_Q = "Which payment methods are accepted?"

@@ -348,7 +348,7 @@ async def test_numeric_only_reply_retains_the_spanish_reply_language(client, pro
     assert body["slots"]["order_number"] == "NS-000042"
 
 
-async def test_spanish_faq_answer_keeps_english_source_citations(client, provider):
+async def test_spanish_faq_answer_cites_the_spanish_record(client, provider):
     session_id = await start_session(client)
     provider.script_extraction(
         make_extraction(intent="question", has_question=True, detected_language="es")
@@ -373,13 +373,14 @@ async def test_spanish_faq_answer_keeps_english_source_citations(client, provide
     assert body["reply"] == "La entrega estándar tarda de 2 a 5 días laborables."
     assert [citation["source_id"] for citation in body["citations"]] == ["faq-delivery"]
     citation = body["citations"][0]
-    assert citation["title"] == "Delivery times"
+    assert citation["title"] == "Plazos de entrega"
     assert citation["kb_version"] == "2026-10-25"
-    assert "Standard delivery takes 2 to 5 business days" in citation["excerpt"]
+    assert "La entrega estándar tarda de 2 a 5 días laborables" in citation["excerpt"]
 
     method, context = provider.calls[-1]
     assert method == "answer_knowledge"
     assert context.reply_language == "es"
+    assert [source.title for source in context.sources] == ["Plazos de entrega"]
 
 
 async def test_spanish_abstention_is_localized_without_citations(client, provider):

@@ -126,6 +126,8 @@ class KnowledgeBase(Protocol):
 
     def retrieve(self, question: str) -> list[KnowledgeRecord]: ...
 
+    def localize(self, record: KnowledgeRecord, language: str) -> KnowledgeRecord: ...
+
 
 def _is_aside(extraction: Extraction) -> bool:
     """A question, thanks or small talk that carries no facts; a safety report is never an aside."""
@@ -1074,7 +1076,10 @@ class ConversationEngine:
     async def _answer_policy_question(
         self, question: str, reply_language: Language, *, urgent: bool
     ) -> tuple[str, tuple[Citation, ...]]:
-        retrieved = await self._retrieve(question)
+        retrieved = [
+            self.knowledge_base.localize(record, reply_language)
+            for record in await self._retrieve(question)
+        ]
         if not retrieved:
             return text("abstention", reply_language), ()
         context = KnowledgeContext(

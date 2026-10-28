@@ -40,7 +40,12 @@ KB_LIMIT = 256 * 1024
 
 SEED_PATH = Path(main_module.__file__).parent / "knowledge" / "northstar-faq.json"
 SEED = json.loads(SEED_PATH.read_text(encoding="utf-8"))
-SEED_RECORDS = {record["id"]: record for record in SEED["records"]}
+# The English records as loaded: the optional "es" translation is not part of a record.
+ENGLISH_RECORDS = [
+    {key: value for key, value in record.items() if key != "es"}
+    for record in SEED["records"]
+]
+SEED_RECORDS = {record["id"]: record for record in ENGLISH_RECORDS}
 
 RETURN_Q = "Can I return an unused item?"
 RETURN_ANSWER_TEXT = (
@@ -133,9 +138,9 @@ async def case_exact_valid_seed_corpus(settings, provider, session_dir, tmp_path
 
         knowledge_base = app.state.knowledge_base
         assert knowledge_base.version == SEED["version"]
-        assert [record.model_dump() for record in knowledge_base.records] == SEED[
-            "records"
-        ]
+        assert [
+            record.model_dump() for record in knowledge_base.records
+        ] == ENGLISH_RECORDS
         assert len(knowledge_base.records) == len(SEED["records"])
         # Startup and health never probe the AI service.
         assert provider.calls == []

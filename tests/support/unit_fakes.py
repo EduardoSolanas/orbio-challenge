@@ -208,3 +208,6 @@ class FakeKnowledgeBase:
         if question not in self._answers:
             raise AssertionError(f"unexpected retrieval: {question!r}")
         return list(self._answers[question])
+
+    def localize(self, record: KnowledgeRecord, language: str) -> KnowledgeRecord:
+        return record

@@ -597,12 +597,11 @@ async def test_context_04_rag_context_carries_only_its_question_sources_and_lang
         assert method == "answer_knowledge"
         assert context.question == RETURN_Q
         assert [source.id for source in context.sources] == ["faq-returns"]
-        assert [source.title for source in context.sources] == [
-            seed_citation("faq-returns")["title"]
-        ]
-        assert answered["citations"] == [seed_citation("faq-returns")]
+        spanish = seed_citation("faq-returns", "es")
+        assert [source.title for source in context.sources] == [spanish["title"]]
+        assert answered["citations"] == [spanish]
         disk = read_session(session_dir, session_id)
-        assert disk["messages"][-1]["citations"] == [seed_citation("faq-returns")]
+        assert disk["messages"][-1]["citations"] == [spanish]
         assert context.reply_language == "es"
         assert context.kb_version == seed_citation("faq-returns")["kb_version"]
         assert set(context.model_dump()) == {
