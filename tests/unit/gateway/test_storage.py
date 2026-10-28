@@ -289,3 +289,29 @@ async def test_save_into_missing_directory_is_storage_unavailable(tmp_path):
 
     assert excinfo.value.code == "storage_unavailable"
     assert excinfo.value.retryable is True
+
+
+@pytest.mark.parametrize("byte_limit", [0, 1])
+async def test_check_writable_checks_a_minimal_data_write_and_cleans_up(
+    tmp_path, byte_limit
+):
+    resource = pytest.importorskip("resource", reason="requires POSIX file-size limits")
+    import signal
+
+    repo = repository(tmp_path)
+    original_limit = resource.getrlimit(resource.RLIMIT_FSIZE)
+    original_handler = signal.signal(signal.SIGXFSZ, signal.SIG_IGN)
+    try:
+        resource.setrlimit(resource.RLIMIT_FSIZE, (byte_limit, original_limit[1]))
+        if byte_limit:
+            await repo.check_writable()
+        else:
+            with pytest.raises(AppError) as caught:
+                await repo.check_writable()
+            assert caught.value.code == "storage_unavailable"
+            assert caught.value.retryable is True
+    finally:
+        resource.setrlimit(resource.RLIMIT_FSIZE, original_limit)
+        signal.signal(signal.SIGXFSZ, original_handler)
+
+    assert list(tmp_path.iterdir()) == []

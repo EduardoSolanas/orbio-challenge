@@ -180,7 +180,7 @@ async def case_real_startup_scoped_temp_file_creation_write_permissionerror(
     def denied(*args, **kwargs):
         raise PermissionError("scoped probe denial")
 
-    monkeypatch.setattr(tempfile, "NamedTemporaryFile", denied)
+    monkeypatch.setattr(tempfile, "TemporaryFile", denied)
 
     with pytest.raises(RuntimeError) as excinfo:
         async with app.router.lifespan_context(app):
@@ -199,14 +199,14 @@ async def case_real_startup_scoped_temp_file_creation_write_permissionerror(
 
 async def case_valid_health_probe(session_dir, monkeypatch):
     settings = settings_from(none_auth_env(session_dir))
-    real_named_temp = tempfile.NamedTemporaryFile
+    real_temp = tempfile.TemporaryFile
     probes: list[str] = []
 
     def counting(*args, **kwargs):
         probes.append("probe")
-        return real_named_temp(*args, **kwargs)
+        return real_temp(*args, **kwargs)
 
-    monkeypatch.setattr(tempfile, "NamedTemporaryFile", counting)
+    monkeypatch.setattr(tempfile, "TemporaryFile", counting)
 
     app = create_app(settings=settings)
     async with app.router.lifespan_context(app):
@@ -245,7 +245,7 @@ async def case_after_healthy_startup_inject_permissionerror_into_actual(
                 calls.append("probe")
                 raise PermissionError("scoped probe denial")
 
-            monkeypatch.setattr(tempfile, "NamedTemporaryFile", denied)
+            monkeypatch.setattr(tempfile, "TemporaryFile", denied)
             response = await client.get("/health")
 
             assert_error(response, status=503, code="storage_unavailable")

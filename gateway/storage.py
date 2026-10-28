@@ -166,17 +166,10 @@ class JsonSessionRepository:
                     pass
 
     async def check_writable(self) -> None:
-        handle = None
         try:
-            handle = tempfile.NamedTemporaryFile(dir=self.directory, delete=False)
-            handle.write(b"")
-            handle.flush()
-            name = handle.name
-            handle.close()
-            handle = None
-            os.unlink(name)
+            with tempfile.TemporaryFile(dir=self.directory) as handle:
+                # A zero-byte write succeeds even when storage rejects all data writes.
+                handle.write(b"\0")
+                handle.flush()
         except OSError:
             raise app_error("storage_unavailable") from None
-        finally:
-            if handle is not None:
-                handle.close()
