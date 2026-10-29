@@ -214,6 +214,17 @@ def test_voice_success(case_id, ui, server, provider, tmp_path):
     assert server.session_bytes(sid) == before_play
     ui.cp("voice_success.saved-reply-plays-mp3")
 
+    # The playing reply becomes Stop; clicking it releases audio without another request.
+    stop_button = ui.page.get_by_role("button", name="Stop reply 2", exact=True)
+    expect(stop_button).to_be_visible()
+    stop_button.click()
+    expect(ui.audio).to_have_js_property("paused", True)
+    expect(ui.audio).not_to_have_attribute("src", re.compile(r".+"))
+    expect(
+        ui.page.get_by_role("button", name="Play reply 2", exact=True)
+    ).to_be_visible()
+    assert len(ui.speech_posts()) == 1
+
     # Second checkpoint: the same saved reply played from a PCM WAV response.
     wav_reply = make_wav(seconds=0.5, peak=1200)
     provider.script_synthesize(reply["text"], wav_reply, media_type="audio/wav")
@@ -238,6 +249,10 @@ def test_voice_success(case_id, ui, server, provider, tmp_path):
     assert spy["created"][1]["url"] == src_wav
     assert spy["created"][0]["url"] in spy["revoked"], "MP3 object URL replaced by WAV"
     assert server.session_bytes(sid) == before_play
+    # Natural completion restores the speaker.
+    expect(
+        ui.page.get_by_role("button", name="Play reply 2", exact=True)
+    ).to_be_visible()
     ui.cp("voice_success.saved-reply-plays-wav")
 
     # Confirmation still succeeds after voice input and playback.

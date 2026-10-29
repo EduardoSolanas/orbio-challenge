@@ -60,6 +60,80 @@ describe("playing a reply", () => {
     expect(http.to("POST", SPEECH)).toHaveLength(1);
   });
 
+  test("speaker toggles to stop, stops without another request, and can replay", async () => {
+    const { app, http } = await withReply();
+    http.on("POST", SPEECH, audio());
+    const button = app.dom.log.querySelector(`button[data-message-id="${REPLY_ID}"]`);
+    const speaker = button.querySelector("path").getAttribute("d");
+    button.click();
+    await flush();
+    await flush();
+    expect(button.getAttribute("aria-label")).toBe("Stop reply 2");
+    expect(button.querySelector("path").getAttribute("d")).not.toBe(speaker);
+    button.click();
+    expect(window.HTMLMediaElement.prototype.pause).toHaveBeenCalled();
+    expect(app.dom.audio.hasAttribute("src")).toBe(false);
+    expect(button.getAttribute("aria-label")).toBe("Play reply 2");
+    expect(button.querySelector("path").getAttribute("d")).toBe(speaker);
+    expect(http.to("POST", SPEECH)).toHaveLength(1);
+    button.click();
+    await flush();
+    await flush();
+    expect(http.to("POST", SPEECH)).toHaveLength(2);
+  });
+
+  test.each(["ended", "error", "pause"])("%s restores the speaker", async (event) => {
+    const { app, http } = await withReply();
+    http.on("POST", SPEECH, audio());
+    await app.voice.playReply(REPLY_ID);
+    const button = app.dom.log.querySelector(`button[data-message-id="${REPLY_ID}"]`);
+    expect(button.getAttribute("aria-label")).toBe("Stop reply 2");
+    app.dom.audio.dispatchEvent(new Event(event));
+    expect(button.getAttribute("aria-label")).toBe("Play reply 2");
+  });
+
+  test("stop remains usable while the browser play promise is pending", async () => {
+    const { app, http } = await withReply();
+    http.on("POST", SPEECH, audio());
+    const playback = deferred();
+    window.HTMLMediaElement.prototype.play.mockReturnValueOnce(playback.promise);
+    const playing = app.voice.playReply(REPLY_ID);
+    await flush();
+    const button = app.dom.log.querySelector(`button[data-message-id="${REPLY_ID}"]`);
+    expect(button.disabled).toBe(false);
+    expect(button.getAttribute("aria-label")).toBe("Stop reply 2");
+    button.click();
+    playback.reject(new Error("interrupted"));
+    await playing;
+    expect(button.getAttribute("aria-label")).toBe("Play reply 2");
+    expect(app.dom.alert.hidden).toBe(true);
+  });
+
+  test("switching replies restores the previous speaker, including after redraw", async () => {
+    const { app, http } = await withReply();
+    http.on("POST", SPEECH, audio());
+    await app.voice.playReply(REPLY_ID);
+    await app.voice.playReply("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+    app.view.renderTranscript();
+    const buttons = app.dom.log.querySelectorAll("button[data-message-id]");
+    expect(buttons[0].getAttribute("aria-label")).toBe("Stop reply 1");
+    expect(buttons[1].getAttribute("aria-label")).toBe("Play reply 2");
+  });
+
+  test("failed playback restores the speaker and Spanish uses a translated stop label", async () => {
+    const { app, http } = await withReply();
+    http.on("POST", SPEECH, audio());
+    await app.i18n.load("es");
+    app.state.language = "es";
+    await app.voice.playReply(REPLY_ID);
+    const button = app.dom.log.querySelector(`button[data-message-id="${REPLY_ID}"]`);
+    expect(button.getAttribute("aria-label")).toBe("Detener respuesta 2");
+    button.click();
+    window.HTMLMediaElement.prototype.play.mockRejectedValueOnce(new Error("blocked"));
+    await app.voice.playReply(REPLY_ID);
+    expect(button.getAttribute("aria-label")).toBe("Reproducir respuesta 2");
+  });
+
   test("marks the reply as loading while it is fetched and ignores a second click on it", async () => {
     const { app, http } = await withReply();
     const response = deferred();

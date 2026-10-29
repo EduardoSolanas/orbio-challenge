@@ -109,6 +109,7 @@
   "social_acknowledgment": "¡Hola! ¿En qué puedo ayudarte con Northstar Energy?",
   "speech.disclosure": "La voz es generada por IA",
   "speech.loading": "Generando audio…",
+  "speech.stop": "Detener respuesta {ordinal}",
   "speech.play": "Reproducir respuesta {ordinal}",
   "speech.unavailable": "El audio no está disponible para el idioma de esta respuesta.",
   "urgency.low": "baja",

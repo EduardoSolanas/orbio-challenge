@@ -20,6 +20,13 @@ export class VoiceController extends Controller {
   async playReply(messageId) {
     const { state, view, api, player } = this;
     if (!state.sessionId) return;
+    if (state.playingMessageId === messageId) {
+      state.bumpPlayback();
+      state.speechPending = null;
+      player.release();
+      view.updateSpeechButtons();
+      return;
+    }
     if (state.speechPending && state.speechPending.generation === state.generation) {
       if (state.speechPending.messageId === messageId) return;
       state.bumpPlayback();
@@ -53,10 +60,17 @@ export class VoiceController extends Controller {
         return;
       }
       player.use(url);
+      state.playingMessageId = messageId;
+      state.speechPending = null;
+      view.updateSpeechButtons();
       try {
         await player.play();
       } catch (_) {
-        if (!this.isStale(gen, token)) view.showAlert(this.ui("ui.playback_fallback"));
+        if (!this.isStale(gen, token)) {
+          player.release();
+          view.updateSpeechButtons();
+          view.showAlert(this.ui("ui.playback_fallback"));
+        }
       }
     } catch (error) {
       if (this.isStale(gen, token)) return;

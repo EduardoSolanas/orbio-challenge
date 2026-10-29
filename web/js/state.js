@@ -16,6 +16,7 @@ export class ChatState {
     this.generation = 0;
     this.playbackToken = 0;
     this.objectUrl = null;
+    this.playingMessageId = null;
     this.pending = false;
     this.sttPending = false;
     this.sttAbort = null;

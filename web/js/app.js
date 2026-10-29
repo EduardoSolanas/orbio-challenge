@@ -81,6 +81,13 @@ export class App {
 
   bindEvents() {
     const { dom, window: win } = this;
+    for (const event of ["ended", "error", "pause"]) {
+      dom.audio.addEventListener(event, () => {
+        if (event === "pause" && !dom.audio.paused) return;
+        this.state.playingMessageId = null;
+        this.view.updateSpeechButtons();
+      });
+    }
     dom.send.addEventListener("click", () => this.turns.onSend());
     dom.retry.addEventListener("click", () => this.session.onRetry());
     dom.confirm.addEventListener("click", () => this.turns.onConfirm());

@@ -29,8 +29,9 @@ export class ChatView {
     return this.i18n.t(this.state.language, key, values);
   }
 
-  speechLabel(playable, pending, ordinal) {
+  speechLabel(playable, pending, ordinal, playing = false) {
     if (!playable) return this.ui("speech.unavailable");
+    if (playing) return this.ui("speech.stop", { ordinal });
     if (pending) return this.ui("speech.loading");
     return this.ui("speech.play", { ordinal });
   }
@@ -285,14 +286,14 @@ export class ChatView {
     return element;
   }
 
-  speakerIcon(loading = false) {
+  speakerIcon(loading = false, playing = false) {
     const svg = this.document.createElementNS(SVG_NS, "svg");
     svg.setAttribute("aria-hidden", "true");
     svg.setAttribute("viewBox", "0 0 24 24");
     svg.setAttribute("focusable", "false");
     svg.setAttribute("class", "icon icon--s");
     const path = this.document.createElementNS(SVG_NS, "path");
-    path.setAttribute("d", loading ? CLOCK_PATH : SPEAKER_PATH);
+    path.setAttribute("d", playing ? "M7 7h10v10H7z" : loading ? CLOCK_PATH : SPEAKER_PATH);
     svg.appendChild(path);
     return svg;
   }
@@ -331,15 +332,16 @@ export class ChatView {
     button.type = "button";
     button.dataset.messageId = message.id;
     const playable = message.speech_available !== false;
-    const pending = playable && this.speechIsPending(message.id);
+    const playing = playable && this.state.playingMessageId === message.id;
+    const pending = playable && !playing && this.speechIsPending(message.id);
     button.dataset.playable = playable ? "true" : "false";
     button.dataset.ordinal = String(playbackNumber);
-    const label = this.speechLabel(playable, pending, playbackNumber);
+    const label = this.speechLabel(playable, pending, playbackNumber, playing);
     button.setAttribute("aria-label", label);
     button.title = label;
     button.setAttribute("aria-busy", pending ? "true" : "false");
     button.disabled = !playable || pending;
-    button.appendChild(this.speakerIcon(pending));
+    button.appendChild(this.speakerIcon(pending, playing));
     if (playable) button.addEventListener("click", () => this.handlers.playReply(message.id));
     holder.appendChild(button);
     return holder;
@@ -397,14 +399,15 @@ export class ChatView {
   updateSpeechButtons() {
     for (const button of this.dom.log.querySelectorAll(".btn--mini[data-message-id]")) {
       if (button.dataset.playable !== "true") continue;
-      const pending = this.speechIsPending(button.dataset.messageId);
+      const playing = this.state.playingMessageId === button.dataset.messageId;
+      const pending = !playing && this.speechIsPending(button.dataset.messageId);
       button.disabled = pending;
       button.setAttribute("aria-busy", pending ? "true" : "false");
-      const label = this.speechLabel(true, pending, Number(button.dataset.ordinal));
+      const label = this.speechLabel(true, pending, Number(button.dataset.ordinal), playing);
       button.setAttribute("aria-label", label);
       button.title = label;
       this.setText(button, "");
-      button.appendChild(this.speakerIcon(pending));
+      button.appendChild(this.speakerIcon(pending, playing));
     }
   }
 }

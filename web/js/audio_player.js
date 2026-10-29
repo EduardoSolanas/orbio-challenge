@@ -24,6 +24,7 @@ export class AudioPlayer {
 
   /** Stop playback and free the current URL, if any. */
   release() {
+    this.state.playingMessageId = null;
     if (this.state.objectUrl) {
       this.pause();
       this.revokeUrl(this.state.objectUrl);
